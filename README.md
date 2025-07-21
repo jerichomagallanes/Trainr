@@ -2,6 +2,11 @@
 
 Trainr is an Android fitness application that creates personalized workout routines using AI. Built with Kotlin and Jetpack Compose, it follows Clean Architecture principles to provide users with customized training plans based on their individual fitness goals, experience level, and available equipment.
 
+App Demo
+
+<img src="https://github.com/user-attachments/assets/4cd6258d-f9b7-4db6-97d7-9d79c03b9902" width="300" alt="Trainr App Demo">
+
+
 ## 📋 Features
 
 - **Personalized Onboarding**: Complete fitness assessment including age, gender, experience level, and body metrics
