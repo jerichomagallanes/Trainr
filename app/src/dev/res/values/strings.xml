@@ -1,0 +1,181 @@
+<resources>
+    <string name="app_name">Trainr</string>
+    
+    <!-- Home Screen -->
+    <string name="welcome_to_home">Welcome to Trainr!</string>
+    <string name="home_coming_soon">Your personalized workout dashboard is coming soon.</string>
+    
+    <!-- Welcome Screen -->
+    <string name="welcome_to">WELCOME TO</string>
+    <string name="trainr_description">Your AI-powered personal trainer.</string>
+    <string name="get_started">Get Started</string>
+    <string name="personalized_workout_plans">Personalized workout plans</string>
+    <string name="ai_generated_routines">AI-generated routines</string>
+    <string name="track_your_progress">Track your progress</string>
+    
+    <!-- Basic Info Screen -->
+    <string name="tell_us_about_yourself">TELL US ABOUT YOURSELF</string>
+    <string name="age">Age</string>
+    <string name="enter_your_age">Enter your age</string>
+    <string name="gender">Gender</string>
+    <string name="male">Male</string>
+    <string name="female">Female</string>
+    <string name="other">Other</string>
+    <string name="fitness_experience">Fitness Experience</string>
+    <string name="beginner">Beginner</string>
+    <string name="beginner_description">New to working out or getting back into it.</string>
+    <string name="intermediate">Intermediate</string>
+    <string name="intermediate_description">Working out regularly for 6+ months.</string>
+    <string name="advanced">Advanced</string>
+    <string name="advanced_description">Training consistently for years.</string>
+    
+    <!-- Body Metrics Screen -->
+    <string name="your_measurements">YOUR MEASUREMENTS</string>
+    <string name="measurements_description">This helps us calculate your fitness metrics.</string>
+    <string name="metric">Metric</string>
+    <string name="imperial">Imperial</string>
+    <string name="height_cm">Height (cm)</string>
+    <string name="height_ft_in">Height (ft\'in\")</string>
+    <string name="weight_kg">Weight (kg)</string>
+    <string name="weight_lbs">Weight (lbs)</string>
+    <string name="height_placeholder_cm">170</string>
+    <string name="height_placeholder_imperial">5\'10\"</string>
+    <string name="weight_placeholder_kg">70</string>
+    <string name="weight_placeholder_lbs">155</string>
+    <string name="bmi_label">BMI:</string>
+    <string name="underweight">Underweight</string>
+    <string name="normal_weight">Normal weight</string>
+    <string name="overweight">Overweight</string>
+    <string name="obese">Obese</string>
+    
+    <!-- Fitness Goal Screen -->
+    <string name="main_fitness_goal">WHAT\'S YOUR MAIN FITNESS GOAL?</string>
+    <string name="goal_description">We\'ll tailor your workouts to help you achieve this</string>
+    <string name="lose_weight">Lose Weight</string>
+    <string name="lose_weight_description">Burn fat and slim down.</string>
+    <string name="build_muscle">Build Muscle</string>
+    <string name="build_muscle_description">Gain muscle mass and size</string>
+    <string name="get_stronger">Get Stronger</string>
+    <string name="get_stronger_description">Increase strength and power.</string>
+    <string name="improve_endurance">Improve Endurance</string>
+    <string name="improve_endurance_description">Build stamina and cardiovascular health.</string>
+    <string name="general_fitness">General Fitness</string>
+    <string name="general_fitness_description">Overall health and wellness.</string>
+    <string name="flexibility_mobility">Flexibility &amp; Mobility</string>
+    <string name="flexibility_mobility_description">Improve range of motion and prevent injuries.</string>
+    
+    <!-- Workout Setup Screen -->
+    <string name="set_up_your_workout">SET UP YOUR WORKOUT</string>
+    <string name="where_will_you_work_out">Where will you work out?</string>
+    <string name="home">Home</string>
+    <string name="gym">Gym</string>
+    <string name="both">Both</string>
+    <string name="available_equipment">Available Equipment</string>
+    <string name="bodyweight_only">Bodyweight only</string>
+    <string name="dumbbells">Dumbbells</string>
+    <string name="resistance_bands">Resistance bands</string>
+    <string name="pull_up_bar">Pull-up bar</string>
+    <string name="kettlebells">Kettlebells</string>
+    <string name="barbell_plates">Barbell &amp; plates</string>
+    <string name="bench">Bench</string>
+    <string name="cardio_equipment">Cardio equipment</string>
+    <string name="cable_machine">Cable machine</string>
+    <string name="squat_rack">Squat rack</string>
+    <string name="others">Others</string>
+    <string name="workout_days_per_week">How many days per week can you work out?</string>
+    <string name="session_duration">Session Duration</string>
+    <string name="preferred_workout_time">Preferred Workout Time</string>
+    <string name="early_morning_time">Early Morning (5-7 AM)</string>
+    <string name="morning_time">Morning (7-12 PM)</string>
+    <string name="afternoon_time">Afternoon (12-5 PM)</string>
+    <string name="evening_time">Evening (5-10 PM)</string>
+    <string name="flexible_anytime">Flexible/Anytime</string>
+    <string name="duration_mins">%d mins</string>
+    <string name="workout_days_option">%d %s</string>
+    <string name="day">day</string>
+    <string name="days">days</string>
+    
+    <!-- Limitations Screen -->
+    <string name="lets_keep_you_safe">LET\'S KEEP YOU SAFE</string>
+    <string name="limitations_description">Tell us about any limitations so we can adapt your workouts</string>
+    <string name="any_injuries_or_areas">Any injuries or areas to be careful with?</string>
+    <string name="lower_back_pain">Lower Back Pain</string>
+    <string name="knee_problems">Knee Problems</string>
+    <string name="shoulder_injury">Shoulder Injury</string>
+    <string name="wrist_pain">Wrist Pain</string>
+    <string name="ankle_issues">Ankle Issues</string>
+    <string name="hip_problems">Hip Problems</string>
+    <string name="neck_pain">Neck Pain</string>
+    <string name="none">None</string>
+    <string name="preferred_workout_style">Preferred Workout Style</string>
+    <string name="strength_training">Strength Training</string>
+    <string name="strength_training_description">Focus on building muscle and strength.</string>
+    <string name="cardio">Cardio</string>
+    <string name="cardio_description">Improve endurance and burn calories.</string>
+    <string name="hiit">HIIT</string>
+    <string name="hiit_description">High intensity interval training.</string>
+    <string name="mixed_balanced">Mixed/Balanced</string>
+    <string name="mixed_balanced_description">Combination of different training styles.</string>
+    
+    <!-- Review Screen -->
+    <string name="your_fitness_profile">YOUR FITNESS PROFILE</string>
+    <string name="review_description">Review your information before we create your plan</string>
+    <string name="personal_information">Personal Information</string>
+    <string name="years_old">%d years old</string>
+    <string name="height_cm_value">%d cm</string>
+    <string name="weight_kg_value">%.1f kg</string>
+    <string name="experience">Experience</string>
+    <string name="fitness_goals">Fitness Goals</string>
+    <string name="main_goal">Main Goal</string>
+    <string name="workout_style">Workout Style</string>
+    <string name="workout_setup">Workout Setup</string>
+    <string name="location">Location</string>
+    <string name="equipment">Equipment</string>
+    <string name="schedule">Schedule</string>
+    <string name="flexible">Flexible</string>
+    <string name="days_per_week">%d days/week</string>
+    <string name="duration_minutes">%d minutes</string>
+    <string name="duration">Duration</string>
+    <string name="preferred_time">Preferred Time</string>
+    <string name="limitations">Limitations</string>
+    <string name="injuries_concerns">Injuries/Concerns</string>
+    <string name="ai_routine_preview">AI Routine Preview</string>
+    <string name="generate_my_workout_plan">GENERATE MY WORKOUT PLAN</string>
+    
+    <!-- Generating Screen -->
+    <string name="generating_your_workout_routine">Generating your workout routine</string>
+    
+    <!-- Workout Screens -->
+    <string name="your_weekly_workout_plan">YOUR WEEKLY WORKOUT PLAN</string>
+    <string name="track_weekly_progress">Track Weekly Progress</string>
+    <string name="weekly_progress">WEEKLY PROGRESS</string>
+    <string name="week_progress">Week %d Progress</string>
+    <string name="completed_percentage">%d%% Completed (%d%%)</string>
+    <string name="start_todays_workout">START TODAY\'S WORKOUT</string>
+    <string name="day_number">DAY %d</string>
+    <string name="full_body_strength">Full Body Strength</string>
+    <string name="cardio_and_core">Cardio &amp; Core</string>
+    <string name="lower_body_power">Lower Body Power</string>
+    <string name="upper_body_strength">Upper Body Strength</string>
+    <string name="minutes">%d mins</string>
+    <string name="exercises_count">%d Exercises</string>
+    <string name="equipment_label">Equipment:</string>
+    <string name="yoga_mat">Yoga Mat</string>
+    <string name="treadmill">Treadmill</string>
+    <string name="completed">Completed</string>
+    <string name="in_progress">In Progress</string>
+    <string name="not_started">Not started</string>
+    <string name="warm_up_jog">Warm-up Jog</string>
+    <string name="hide_video_tutorial">Hide video tutorial</string>
+    <string name="start_timer">Start timer</string>
+    <string name="edit">Edit</string>
+    
+    <!-- Common -->
+    <string name="next">NEXT</string>
+    <string name="submit">SUBMIT</string>
+    <string name="back">Back</string>
+    <string name="trainr">Trainr</string>
+    <string name="ai_powered">AI-powered</string>
+    <string name="your">Your</string>
+    <string name="personal_trainer">personal trainer.</string>
+</resources>

@@ -1,0 +1,108 @@
+# Android/IntelliJ/JetBrains
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Kotlin compiler cache and sessions
+.kotlin/
+
+# Gradle
+.gradle/
+build/
+app/build/
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+
+# Local properties and secrets
+local.properties
+app.properties
+*.keystore
+*.jks
+*.pem
+*.p12
+*.key
+*.crt
+*.der
+*.env
+.env.*
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+
+# Crashlytics/Firebase
+crashlytics-build.properties
+fabric.properties
+
+# Android Studio/IntelliJ cache files
+.navigation/
+captures/
+*.hprof
+*.trace
+
+# Misc
+*.swp
+*.swo
+
+# Ignore test output
+/test-output/
+
+# Ignore coverage reports
+coverage/
+*.ec
+
+# Ignore generated files
+/captures/
+output.json
+
+# Ignore node_modules if using React Native or hybrid
+node_modules/
+
+# Ignore backup files
+*~
+
+# Ignore APKs and Bundles
+*.apk
+*.ap_*
+*.aab
+
+# Ignore NDK build artifacts
+obj/
+.externalNativeBuild/
+.cxx/
+
+# Ignore fastlane metadata
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/
+fastlane/test_output/
+
+# Ignore Google Services (if present)
+google-services.json
+app/google-services.json
+
+# Ignore signing configs
+signing.properties
+
+# Ignore lint/intermediate files
+lint/intermediates/
+
+# Ignore .vscode
+.vscode/
+
+# Ignore backup files
+*.bak
+
+# Ignore Python cache (if any scripts)
+__pycache__/
+*.pyc
+
+# Ignore temporary files
+*.tmp
+*.temp
+
+# End of .gitignore
