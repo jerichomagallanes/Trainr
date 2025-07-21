@@ -57,7 +57,7 @@ The app follows Clean Architecture principles with three main layers:
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/jerichojericx/Trainr.git
+   git clone https://github.com/jerichomagallanes/Trainr.git
    ```
 
 2. Open the project in Android Studio
