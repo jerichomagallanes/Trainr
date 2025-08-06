@@ -1,12 +1,10 @@
 package com.jericx.trainr.domain.model
 
-import com.jericx.trainr.common.Constants
-
 data class WeeklyWorkoutPlan(
     val id: Long = 0,
     val userId: Long,
     val weekNumber: Int,
-    val title: String = Constants.Workout.DEFAULT_WEEKLY_PLAN_TITLE,
+    val title: String = "YOUR WEEKLY WORKOUT PLAN",
     val workoutDays: List<WorkoutDay>,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()

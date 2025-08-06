@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Trainr</string>
+    
+    <!-- Home Screen -->
+    <string name="welcome_to_home">Trainrへようこそ！</string>
+    <string name="home_coming_soon">あなた専用のワークアウトダッシュボードは近日公開予定です。</string>
+    
+    <!-- Welcome Screen -->
+    <string name="welcome_to">ようこそ</string>
+    <string name="trainr_description">AI搭載のパーソナルトレーナー。</string>
+    <string name="get_started">始める</string>
+    <string name="personalized_workout_plans">パーソナライズされたワークアウトプラン</string>
+    <string name="ai_generated_routines">AI生成ルーティン</string>
+    <string name="track_your_progress">進歩を追跡</string>
+    
+    <!-- Basic Info Screen -->
+    <string name="tell_us_about_yourself">あなたについて教えてください</string>
+    <string name="preferred_first_name">お名前</string>
+    <string name="enter_your_first_name">お名前を入力してください</string>
+    <string name="age">年齢</string>
+    <string name="enter_your_age">年齢を入力してください</string>
+    <string name="gender">性別</string>
+    <string name="male">男性</string>
+    <string name="female">女性</string>
+    <string name="other">その他</string>
+    <string name="fitness_experience">フィットネス経験</string>
+    <string name="beginner">初心者</string>
+    <string name="beginner_description">ワークアウト初心者または復帰者。</string>
+    <string name="intermediate">中級者</string>
+    <string name="intermediate_description">6ヶ月以上定期的にワークアウトしている。</string>
+    <string name="advanced">上級者</string>
+    <string name="advanced_description">何年も継続してトレーニングしている。</string>
+    
+    <!-- Body Metrics Screen -->
+    <string name="your_measurements">あなたの測定値</string>
+    <string name="measurements_description">フィットネス指標を計算するために必要です。</string>
+    <string name="metric">メートル法</string>
+    <string name="imperial">ヤード・ポンド法</string>
+    <string name="height_cm">身長 (cm)</string>
+    <string name="height_ft_in">身長 (ft\'in\")</string>
+    <string name="weight_kg">体重 (kg)</string>
+    <string name="weight_lbs">体重 (lbs)</string>
+    <string name="height_placeholder_cm">170</string>
+    <string name="height_placeholder_imperial">5\'10\"</string>
+    <string name="weight_placeholder_kg">70</string>
+    <string name="weight_placeholder_lbs">155</string>
+    <string name="bmi_label">BMI:</string>
+    <string name="underweight">体重不足</string>
+    <string name="normal_weight">標準体重</string>
+    <string name="overweight">体重過多</string>
+    <string name="obese">肥満</string>
+    
+    <!-- Fitness Goal Screen -->
+    <string name="main_fitness_goal">メインのフィットネスゴールは何ですか？</string>
+    <string name="goal_description">これを達成するためにワークアウトをカスタマイズします</string>
+    <string name="lose_weight">減量</string>
+    <string name="lose_weight_description">脂肪を燃やしてスリムになる。</string>
+    <string name="build_muscle">筋肉増量</string>
+    <string name="build_muscle_description">筋肉量とサイズを増やす</string>
+    <string name="get_stronger">筋力向上</string>
+    <string name="get_stronger_description">筋力とパワーを向上させる。</string>
+    <string name="improve_endurance">持久力向上</string>
+    <string name="improve_endurance_description">スタミナと心血管系の健康を構築。</string>
+    <string name="general_fitness">一般的なフィットネス</string>
+    <string name="general_fitness_description">全体的な健康とウェルネス。</string>
+    <string name="flexibility_mobility">柔軟性・可動性</string>
+    <string name="flexibility_mobility_description">可動域を改善し、怪我を予防する。</string>
+    
+    <!-- Workout Setup Screen -->
+    <string name="set_up_your_workout">ワークアウトをセットアップ</string>
+    <string name="where_will_you_work_out">どこでワークアウトしますか？</string>
+    <string name="home">自宅</string>
+    <string name="gym">ジム</string>
+    <string name="both">両方</string>
+    <string name="available_equipment">利用可能な器具</string>
+    <string name="bodyweight_only">自重のみ</string>
+    <string name="dumbbells">ダンベル</string>
+    <string name="resistance_bands">レジスタンスバンド</string>
+    <string name="pull_up_bar">プルアップバー</string>
+    <string name="kettlebells">ケトルベル</string>
+    <string name="barbell_plates">バーベル＆プレート</string>
+    <string name="bench">ベンチ</string>
+    <string name="cardio_equipment">有酸素運動器具</string>
+    <string name="cable_machine">ケーブルマシン</string>
+    <string name="squat_rack">スクワットラック</string>
+    <string name="others">その他</string>
+    <string name="workout_days_per_week">週に何日ワークアウトできますか？</string>
+    <string name="session_duration">セッション時間</string>
+    <string name="preferred_workout_time">好みのワークアウト時間</string>
+    <string name="early_morning_time">早朝 (5-7時)</string>
+    <string name="morning_time">午前 (7-12時)</string>
+    <string name="afternoon_time">午後 (12-17時)</string>
+    <string name="evening_time">夜 (17-22時)</string>
+    <string name="flexible_anytime">柔軟/いつでも</string>
+    <string name="duration_mins">%d分</string>
+    <string name="workout_days_option" formatted="false">%d %s</string>
+    <string name="day">日</string>
+    <string name="days">日</string>
+    
+    <!-- Limitations Screen -->
+    <string name="lets_keep_you_safe">安全を保ちましょう</string>
+    <string name="limitations_description">制限事項を教えてください。ワークアウトを適応させます</string>
+    <string name="any_injuries_or_areas">怪我や注意が必要な部位はありますか？</string>
+    <string name="lower_back_pain">腰痛</string>
+    <string name="knee_problems">膝の問題</string>
+    <string name="shoulder_injury">肩の怪我</string>
+    <string name="wrist_pain">手首の痛み</string>
+    <string name="ankle_issues">足首の問題</string>
+    <string name="hip_problems">腰の問題</string>
+    <string name="neck_pain">首の痛み</string>
+    <string name="none">なし</string>
+    <string name="preferred_workout_style">好みのワークアウトスタイル</string>
+    <string name="strength_training">筋力トレーニング</string>
+    <string name="strength_training_description">筋肉と筋力の構築に重点を置く。</string>
+    <string name="cardio">有酸素運動</string>
+    <string name="cardio_description">持久力を向上させ、カロリーを燃やす。</string>
+    <string name="hiit">HIIT</string>
+    <string name="hiit_description">高強度インターバルトレーニング。</string>
+    <string name="mixed_balanced">ミックス/バランス</string>
+    <string name="mixed_balanced_description">さまざまなトレーニングスタイルの組み合わせ。</string>
+    
+    <!-- Review Screen -->
+    <string name="your_fitness_profile">あなたのフィットネスプロフィール</string>
+    <string name="review_description">プランを作成する前に情報を確認してください</string>
+    <string name="personal_information">個人情報</string>
+    <string name="years_old">%d歳</string>
+    <string name="height_cm_value">%d cm</string>
+    <string name="weight_kg_value">%.1f kg</string>
+    <string name="experience">経験</string>
+    <string name="fitness_goals">フィットネスゴール</string>
+    <string name="main_goal">メインゴール</string>
+    <string name="workout_style">ワークアウトスタイル</string>
+    <string name="workout_setup">ワークアウトセットアップ</string>
+    <string name="location">場所</string>
+    <string name="equipment">器具</string>
+    <string name="schedule">スケジュール</string>
+    <string name="flexible">柔軟</string>
+    <string name="days_per_week">週%d日</string>
+    <string name="duration_minutes">%d分</string>
+    <string name="duration">時間</string>
+    <string name="preferred_time">好みの時間</string>
+    <string name="limitations">制限事項</string>
+    <string name="injuries_concerns">怪我/懸念事項</string>
+    <string name="ai_routine_preview">AIルーティンプレビュー</string>
+    <string name="generate_my_workout_plan">ワークアウトプランを生成</string>
+    
+    <!-- Generating Screen -->
+    <string name="generating_your_workout_routine">ワークアウトルーティンを生成中</string>
+    
+    <!-- Workout Screens -->
+    <string name="your_weekly_workout_plan">あなたの週間ワークアウトプラン</string>
+    <string name="track_weekly_progress">週間進歩を追跡</string>
+    <string name="weekly_progress">週間進歩</string>
+    <string name="week_progress">第%d週の進歩</string>
+    <string name="completed_percentage" formatted="false">%d%% 完了 (%d%%)</string>
+    <string name="start_todays_workout">今日のワークアウトを開始</string>
+    <string name="day_number">第%d日</string>
+    <string name="full_body_strength">全身筋力</string>
+    <string name="cardio_and_core">有酸素運動＆コア</string>
+    <string name="lower_body_power">下半身パワー</string>
+    <string name="upper_body_strength">上半身筋力</string>
+    <string name="minutes">%d分</string>
+    <string name="exercises_count">%d エクササイズ</string>
+    <string name="equipment_label">器具:</string>
+    <string name="yoga_mat">ヨガマット</string>
+    <string name="treadmill">トレッドミル</string>
+    <string name="completed">完了</string>
+    <string name="in_progress">進行中</string>
+    <string name="not_started">未開始</string>
+    <string name="warm_up_jog">ウォームアップジョギング</string>
+    <string name="hide_video_tutorial">ビデオチュートリアルを非表示</string>
+    <string name="start_timer">タイマーを開始</string>
+    <string name="edit">編集</string>
+    
+    <!-- Common -->
+    <string name="next">次へ</string>
+    <string name="submit">送信</string>
+    <string name="back">戻る</string>
+    <string name="trainr">Trainr</string>
+    <string name="ai_powered">AI搭載</string>
+    <string name="your">あなたの</string>
+    <string name="personal_trainer">パーソナルトレーナー。</string>
+    <string name="version_format">v%s</string>
+    
+    <!-- Review Screen Labels -->
+    <string name="name_label">名前</string>
+    <string name="age_label">年齢</string>
+    <string name="gender_label">性別</string>
+    <string name="height_label">身長</string>
+    <string name="weight_label">体重</string>
+    <string name="experience_label">経験</string>
+    <string name="fitness_goals_label">フィットネスゴール</string>
+    <string name="main_goal_label">メインゴール</string>
+    <string name="workout_style_label">ワークアウトスタイル</string>
+    <string name="workout_setup_label">ワークアウトセットアップ</string>
+    <string name="location_label">場所</string>
+    <string name="equipment_label_full">器具</string>
+    <string name="schedule_label">スケジュール</string>
+    <string name="duration_label">時間</string>
+    <string name="preferred_time_label">好みの時間</string>
+    <string name="limitations_label">制限事項</string>
+    <string name="injuries_concerns_label">怪我/懸念事項</string>
+    <string name="ai_routine_preview_label">AIルーティンプレビュー</string>
+    <string name="ai_routine_description" formatted="false">あなたのプロフィールに基づいて、%sに焦点を当てた%s筋力プログラムを作成します。</string>
+    <string name="bodyweight_only_label">自重のみ</string>
+    <string name="flexible_schedule">柔軟</string>
+    <string name="days_per_week_format">週%d日</string>
+    <string name="duration_minutes_format">%d分</string>
+    <string name="years_old_format">%d歳</string>
+    <string name="height_cm_format">%d cm</string>
+    <string name="weight_kg_format">%.1f kg</string>
+    
+    <!-- Accessibility -->
+    <string name="dropdown_content_description">ドロップダウンメニュー</string>
+    
+    <!-- Weekly Plan -->
+    <string name="weekly_plan_title">あなたの週間ワークアウトプラン</string>
+    
+    <!-- Gender Options -->
+    <string name="male_gender">男性</string>
+    <string name="female_gender">女性</string>
+    <string name="other_gender">その他</string>
+    
+    <!-- Experience Levels -->
+    <string name="beginner_level">初心者</string>
+    <string name="intermediate_level">中級者</string>
+    <string name="advanced_level">上級者</string>
+    
+    <!-- Fitness Goals -->
+    <string name="lose_weight_goal">減量</string>
+    <string name="build_muscle_goal">筋肉増量</string>
+    <string name="get_stronger_goal">筋力向上</string>
+    <string name="improve_endurance_goal">持久力向上</string>
+    <string name="general_fitness_goal">一般的なフィットネス</string>
+    <string name="flexibility_mobility_goal">柔軟性・可動性</string>
+    
+    <!-- Workout Locations -->
+    <string name="home_location">自宅</string>
+    <string name="gym_location">ジム</string>
+    <string name="both_location">両方</string>
+    
+    <!-- Workout Styles -->
+    <string name="strength_training_style">筋力トレーニング</string>
+    <string name="cardio_style">有酸素運動</string>
+    <string name="hiit_style">HIIT</string>
+    <string name="mixed_balanced_style">ミックス/バランス</string>
+    
+    <!-- Workout Times -->
+    <string name="early_morning">早朝</string>
+    <string name="morning">午前</string>
+    <string name="afternoon">午後</string>
+    <string name="evening">夜</string>
+    <string name="flexible_anytime_time">柔軟/いつでも</string>
+    
+    <!-- Injury Options -->
+    <string name="lower_back_pain_injury">腰痛</string>
+    <string name="knee_problems_injury">膝の問題</string>
+    <string name="shoulder_injury_injury">肩の怪我</string>
+    <string name="wrist_pain_injury">手首の痛み</string>
+    <string name="ankle_issues_injury">足首の問題</string>
+    <string name="hip_problems_injury">腰の問題</string>
+    <string name="neck_pain_injury">首の痛み</string>
+    <string name="none_injury">なし</string>
+    
+    <!-- Language Selection -->
+    <string name="language_selection">言語選択</string>
+    <string name="select_language">言語を選択</string>
+    <string name="language_english">English</string>
+    <string name="language_tagalog">Tagalog</string>
+    <string name="language_japanese">日本語</string>
+</resources>

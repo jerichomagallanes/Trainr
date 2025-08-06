@@ -81,16 +81,16 @@ fun ReviewScreen(
                 Spacer(modifier = Modifier.height(Spacing.extraLarge))
 
                 ProfileSection(
-                    title = "Personal Information",
+                    title = stringResource(R.string.personal_information),
                     items = listOf(
-                        "Name" to userProfile.firstName,
-                        "Age" to "${userProfile.age} years old",
-                        "Gender" to userProfile.gender.name.replace("_", " ")
+                        stringResource(R.string.name_label) to userProfile.firstName,
+                        stringResource(R.string.age_label) to stringResource(R.string.years_old_format, userProfile.age),
+                        stringResource(R.string.gender_label) to userProfile.gender.name.replace("_", " ")
                             .lowercase()
                             .replaceFirstChar { it.titlecase() },
-                        "Height" to "${userProfile.height.toInt()} cm",
-                        "Weight" to "${userProfile.weight} kg",
-                        "Experience" to userProfile.experienceLevel.name
+                        stringResource(R.string.height_label) to stringResource(R.string.height_cm_format, userProfile.height.toInt()),
+                        stringResource(R.string.weight_label) to stringResource(R.string.weight_kg_format, userProfile.weight),
+                        stringResource(R.string.experience_label) to userProfile.experienceLevel.name
                             .lowercase()
                             .replaceFirstChar { it.titlecase() }
                     )
@@ -99,12 +99,12 @@ fun ReviewScreen(
                 Spacer(modifier = Modifier.height(Spacing.large))
 
                 ProfileSection(
-                    title = "Fitness Goals",
+                    title = stringResource(R.string.fitness_goals_label),
                     items = listOf(
-                        "Main Goal" to userProfile.fitnessGoal.name.replace("_", " ")
+                        stringResource(R.string.main_goal_label) to userProfile.fitnessGoal.name.replace("_", " ")
                             .lowercase()
                             .replaceFirstChar { it.titlecase() },
-                        "Workout Style" to userProfile.workoutType.name
+                        stringResource(R.string.workout_style_label) to userProfile.workoutType.name
                             .lowercase()
                             .replaceFirstChar { it.titlecase() }
                     )
@@ -113,26 +113,26 @@ fun ReviewScreen(
                 Spacer(modifier = Modifier.height(Spacing.large))
 
                 ProfileSection(
-                    title = "Workout Setup",
+                    title = stringResource(R.string.workout_setup_label),
                     items = listOf(
-                        "Location" to userProfile.workoutLocation.name
+                        stringResource(R.string.location_label) to userProfile.workoutLocation.name
                             .lowercase()
                             .replaceFirstChar { it.titlecase() },
-                        "Equipment" to if (userProfile.availableEquipment.isEmpty() ||
+                        stringResource(R.string.equipment_label_full) to if (userProfile.availableEquipment.isEmpty() ||
                             userProfile.availableEquipment.contains(Equipment.NONE))
-                            "Bodyweight only"
+                            stringResource(R.string.bodyweight_only_label)
                         else
                             userProfile.availableEquipment.joinToString(", ") { equipment ->
                                 equipment.name.replace("_", " ")
                                     .lowercase()
                                     .replaceFirstChar { it.titlecase() }
                             },
-                        "Schedule" to if (userProfile.workoutDaysPerWeek == 0)
-                            "Flexible"
+                        stringResource(R.string.schedule_label) to if (userProfile.workoutDaysPerWeek == 0)
+                            stringResource(R.string.flexible_schedule)
                         else
-                            "${userProfile.workoutDaysPerWeek} days/week",
-                        "Duration" to "${userProfile.workoutDuration} minutes",
-                        "Preferred Time" to userProfile.preferredWorkoutTime.name.replace("_", " ")
+                            stringResource(R.string.days_per_week_format, userProfile.workoutDaysPerWeek),
+                        stringResource(R.string.duration_label) to stringResource(R.string.duration_minutes_format, userProfile.workoutDuration),
+                        stringResource(R.string.preferred_time_label) to userProfile.preferredWorkoutTime.name.replace("_", " ")
                             .lowercase()
                             .replaceFirstChar { it.titlecase() }
                     )
@@ -142,9 +142,9 @@ fun ReviewScreen(
                     Spacer(modifier = Modifier.height(Spacing.large))
 
                     ProfileSection(
-                        title = "Limitations",
+                        title = stringResource(R.string.limitations_label),
                         items = listOf(
-                            "Injuries/Concerns" to userProfile.injuries.joinToString(", ")
+                            stringResource(R.string.injuries_concerns_label) to userProfile.injuries.joinToString(", ")
                         )
                     )
                 }
@@ -247,7 +247,7 @@ private fun AIPreviewCard(userProfile: UserProfile) {
                     modifier = Modifier.weight(1f)
                 ) {
                     Text(
-                        text = "AI Routine Preview",
+                        text = stringResource(R.string.ai_routine_preview_label),
                         style = MaterialTheme.typography.bodyLarge.copy(
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp
@@ -256,10 +256,12 @@ private fun AIPreviewCard(userProfile: UserProfile) {
                     )
                     Spacer(modifier = Modifier.height(Spacing.extraSmall))
                     Text(
-                        text = "Based on your profile, we'll create a ${
-                            if (userProfile.workoutDaysPerWeek == 0) "flexible" 
-                            else "${userProfile.workoutDaysPerWeek}-day"
-                        } strength program focused on general fitness.",
+                        text = stringResource(
+                            R.string.ai_routine_description,
+                            if (userProfile.workoutDaysPerWeek == 0) stringResource(R.string.flexible_schedule)
+                            else "${userProfile.workoutDaysPerWeek}-day",
+                            stringResource(R.string.general_fitness_goal).lowercase()
+                        ),
                         style = MaterialTheme.typography.bodyMedium.copy(
                             fontSize = 14.sp,
                             lineHeight = 20.sp
