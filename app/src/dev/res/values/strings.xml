@@ -15,6 +15,8 @@
     
     <!-- Basic Info Screen -->
     <string name="tell_us_about_yourself">TELL US ABOUT YOURSELF</string>
+    <string name="preferred_first_name">Preferred first name</string>
+    <string name="enter_your_first_name">Enter your first name</string>
     <string name="age">Age</string>
     <string name="enter_your_age">Enter your age</string>
     <string name="gender">Gender</string>

@@ -2,7 +2,14 @@ package com.jericx.trainr.presentation.onboarding
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.jericx.trainr.domain.model.*
+import com.jericx.trainr.domain.model.Equipment
+import com.jericx.trainr.domain.model.ExperienceLevel
+import com.jericx.trainr.domain.model.FitnessGoal
+import com.jericx.trainr.domain.model.Gender
+import com.jericx.trainr.domain.model.UserProfile
+import com.jericx.trainr.domain.model.WorkoutLocation
+import com.jericx.trainr.domain.model.WorkoutTime
+import com.jericx.trainr.domain.model.WorkoutType
 import com.jericx.trainr.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,9 +26,10 @@ class OnboardingViewModel @Inject constructor(
     private val _onboardingState = MutableStateFlow(OnboardingState())
     val onboardingState: StateFlow<OnboardingState> = _onboardingState.asStateFlow()
 
-    fun updateBasicInfo(age: Int, gender: Gender, experience: ExperienceLevel) {
+    fun updateBasicInfo(firstName: String, age: Int, gender: Gender, experience: ExperienceLevel) {
         _onboardingState.value = _onboardingState.value.copy(
             userProfile = _onboardingState.value.userProfile.copy(
+                firstName = firstName,
                 age = age,
                 gender = gender,
                 experienceLevel = experience

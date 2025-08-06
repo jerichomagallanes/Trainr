@@ -12,9 +12,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -26,7 +23,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jericx.trainr.R
@@ -40,7 +36,6 @@ import com.jericx.trainr.presentation.onboarding.components.layout.OnboardingScr
 import com.jericx.trainr.presentation.onboarding.components.layout.OnboardingTopBar
 import com.jericx.trainr.presentation.onboarding.components.typography.OnboardingScreenTitle
 import com.jericx.trainr.presentation.onboarding.components.typography.OnboardingSubtitle
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -88,6 +83,7 @@ fun ReviewScreen(
                 ProfileSection(
                     title = "Personal Information",
                     items = listOf(
+                        "Name" to userProfile.firstName,
                         "Age" to "${userProfile.age} years old",
                         "Gender" to userProfile.gender.name.replace("_", " ")
                             .lowercase()

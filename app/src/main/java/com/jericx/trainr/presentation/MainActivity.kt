@@ -117,8 +117,8 @@ fun AppContent(versionName: String) {
 
                 composable(Screen.BasicInfo.route) {
                     BasicInfoScreen(
-                        onNextClick = { age, gender, experience ->
-                            onboardingViewModel.updateBasicInfo(age, gender, experience)
+                        onNextClick = { firstName, age, gender, experience ->
+                            onboardingViewModel.updateBasicInfo(firstName, age, gender, experience)
                             navController.navigate(Screen.BodyMetrics.route)
                         },
                         onBackClick = { navController.popBackStack() }

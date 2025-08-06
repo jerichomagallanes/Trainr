@@ -34,14 +34,16 @@ import com.jericx.trainr.presentation.onboarding.components.typography.Onboardin
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BasicInfoScreen(
-    onNextClick: (age: Int, gender: Gender, experience: ExperienceLevel) -> Unit,
+    onNextClick: (firstName: String, age: Int, gender: Gender, experience: ExperienceLevel) -> Unit,
     onBackClick: () -> Unit
 ) {
+    var firstName by remember { mutableStateOf("") }
     var age by remember { mutableStateOf("") }
     var selectedGender by remember { mutableStateOf<Gender?>(null) }
     var selectedExperience by remember { mutableStateOf<ExperienceLevel?>(null) }
 
-    val isFormValid = age.isNotBlank() &&
+    val isFormValid = firstName.isNotBlank() &&
+            age.isNotBlank() &&
             (age.toIntOrNull() ?: 0) in 13..100 &&
             selectedGender != null &&
             selectedExperience != null
@@ -55,7 +57,7 @@ fun BasicInfoScreen(
                     val ageInt = age.toIntOrNull() ?: 0
                     selectedGender?.let { gender ->
                         selectedExperience?.let { experience ->
-                            onNextClick(ageInt, gender, experience)
+                            onNextClick(firstName, ageInt, gender, experience)
                         }
                     }
                 },
@@ -81,6 +83,14 @@ fun BasicInfoScreen(
                 OnboardingScreenTitle(text = stringResource(R.string.tell_us_about_yourself))
 
                 Spacer(modifier = Modifier.height(Spacing.large))
+
+                OnboardingFormSection(title = stringResource(R.string.preferred_first_name)) {
+                    OnboardingTextField(
+                        value = firstName,
+                        onValueChange = { firstName = it },
+                        placeholder = stringResource(R.string.enter_your_first_name)
+                    )
+                }
 
                 OnboardingFormSection(title = stringResource(R.string.age)) {
                     OnboardingTextField(

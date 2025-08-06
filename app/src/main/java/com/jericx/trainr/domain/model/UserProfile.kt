@@ -4,6 +4,7 @@ import com.jericx.trainr.common.Constants
 
 data class UserProfile(
     val id: Long = 0,
+    val firstName: String = "",
     val age: Int = 0,
     val gender: Gender = Gender.PREFER_NOT_TO_SAY,
     val height: Float = 0f,
