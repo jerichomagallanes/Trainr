@@ -112,8 +112,8 @@ fun FitnessGoalScreen(
 
                     OnboardingIconCard(
                         iconRes = R.drawable.ic_self_improvement,
-                        title = "Flexibility & Mobility",
-                        description = "Improve range of motion and prevent injuries.",
+                        title = stringResource(R.string.flexibility_mobility),
+                        description = stringResource(R.string.flexibility_mobility_description),
                         isSelected = selectedGoal == FitnessGoal.FLEXIBILITY,
                         onClick = { selectedGoal = FitnessGoal.FLEXIBILITY }
                     )

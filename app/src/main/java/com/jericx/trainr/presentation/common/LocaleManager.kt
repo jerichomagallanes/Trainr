@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.res.Configuration
 import android.os.Build
 import androidx.activity.ComponentActivity
+import com.jericx.trainr.R
 import java.util.Locale
 
 /**
@@ -57,6 +58,13 @@ object LocaleManager {
             "ja" -> Locale.JAPANESE
             else -> Locale.ENGLISH
         }
+    }
+    
+    /**
+     * Get available language codes from resources
+     */
+    fun getAvailableLanguageCodes(context: Context): Array<String> {
+        return context.resources.getStringArray(R.array.language_codes)
     }
 
 }

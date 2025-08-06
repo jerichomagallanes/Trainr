@@ -36,6 +36,7 @@ import com.jericx.trainr.presentation.onboarding.components.layout.OnboardingScr
 import com.jericx.trainr.presentation.onboarding.components.layout.OnboardingTopBar
 import com.jericx.trainr.presentation.onboarding.components.typography.OnboardingScreenTitle
 import com.jericx.trainr.presentation.onboarding.components.typography.OnboardingSubtitle
+import com.jericx.trainr.presentation.common.getLocalizedName
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -80,61 +81,59 @@ fun ReviewScreen(
 
                 Spacer(modifier = Modifier.height(Spacing.extraLarge))
 
+                val genderText = userProfile.gender.getLocalizedName()
+                val experienceText = userProfile.experienceLevel.getLocalizedName()
+                
                 ProfileSection(
                     title = stringResource(R.string.personal_information),
                     items = listOf(
                         stringResource(R.string.name_label) to userProfile.firstName,
                         stringResource(R.string.age_label) to stringResource(R.string.years_old_format, userProfile.age),
-                        stringResource(R.string.gender_label) to userProfile.gender.name.replace("_", " ")
-                            .lowercase()
-                            .replaceFirstChar { it.titlecase() },
+                        stringResource(R.string.gender_label) to genderText,
                         stringResource(R.string.height_label) to stringResource(R.string.height_cm_format, userProfile.height.toInt()),
                         stringResource(R.string.weight_label) to stringResource(R.string.weight_kg_format, userProfile.weight),
-                        stringResource(R.string.experience_label) to userProfile.experienceLevel.name
-                            .lowercase()
-                            .replaceFirstChar { it.titlecase() }
+                        stringResource(R.string.experience_label) to experienceText
                     )
                 )
 
                 Spacer(modifier = Modifier.height(Spacing.large))
 
+                val fitnessGoalText = userProfile.fitnessGoal.getLocalizedName()
+                val workoutTypeText = userProfile.workoutType.getLocalizedName()
+                
                 ProfileSection(
                     title = stringResource(R.string.fitness_goals_label),
                     items = listOf(
-                        stringResource(R.string.main_goal_label) to userProfile.fitnessGoal.name.replace("_", " ")
-                            .lowercase()
-                            .replaceFirstChar { it.titlecase() },
-                        stringResource(R.string.workout_style_label) to userProfile.workoutType.name
-                            .lowercase()
-                            .replaceFirstChar { it.titlecase() }
+                        stringResource(R.string.main_goal_label) to fitnessGoalText,
+                        stringResource(R.string.workout_style_label) to workoutTypeText
                     )
                 )
 
                 Spacer(modifier = Modifier.height(Spacing.large))
 
+                val locationText = userProfile.workoutLocation.getLocalizedName()
+                val equipmentText = if (userProfile.availableEquipment.isEmpty() ||
+                    userProfile.availableEquipment.contains(Equipment.NONE))
+                    stringResource(R.string.bodyweight_only_label)
+                else {
+                    val equipmentNames = userProfile.availableEquipment.map { equipment ->
+                        equipment.getLocalizedName()
+                    }
+                    equipmentNames.joinToString(", ")
+                }
+                val preferredTimeText = userProfile.preferredWorkoutTime.getLocalizedName()
+                
                 ProfileSection(
                     title = stringResource(R.string.workout_setup_label),
                     items = listOf(
-                        stringResource(R.string.location_label) to userProfile.workoutLocation.name
-                            .lowercase()
-                            .replaceFirstChar { it.titlecase() },
-                        stringResource(R.string.equipment_label_full) to if (userProfile.availableEquipment.isEmpty() ||
-                            userProfile.availableEquipment.contains(Equipment.NONE))
-                            stringResource(R.string.bodyweight_only_label)
-                        else
-                            userProfile.availableEquipment.joinToString(", ") { equipment ->
-                                equipment.name.replace("_", " ")
-                                    .lowercase()
-                                    .replaceFirstChar { it.titlecase() }
-                            },
+                        stringResource(R.string.location_label) to locationText,
+                        stringResource(R.string.equipment_label_full) to equipmentText,
                         stringResource(R.string.schedule_label) to if (userProfile.workoutDaysPerWeek == 0)
                             stringResource(R.string.flexible_schedule)
                         else
                             stringResource(R.string.days_per_week_format, userProfile.workoutDaysPerWeek),
                         stringResource(R.string.duration_label) to stringResource(R.string.duration_minutes_format, userProfile.workoutDuration),
-                        stringResource(R.string.preferred_time_label) to userProfile.preferredWorkoutTime.name.replace("_", " ")
-                            .lowercase()
-                            .replaceFirstChar { it.titlecase() }
+                        stringResource(R.string.preferred_time_label) to preferredTimeText
                     )
                 )
 

@@ -4,7 +4,7 @@ data class WeeklyWorkoutPlan(
     val id: Long = 0,
     val userId: Long,
     val weekNumber: Int,
-    val title: String = "YOUR WEEKLY WORKOUT PLAN",
+    val title: String,
     val workoutDays: List<WorkoutDay>,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()

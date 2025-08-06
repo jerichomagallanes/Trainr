@@ -50,7 +50,9 @@ class MainActivity : ComponentActivity() {
 
         val languagePreferences = LanguagePreferences(this)
         val savedLanguageCode = languagePreferences.currentLanguage
-        if (savedLanguageCode != "en") {
+        val availableLanguageCodes = LocaleManager.getAvailableLanguageCodes(this)
+        val defaultLanguage = availableLanguageCodes.firstOrNull() ?: "en"
+        if (savedLanguageCode != defaultLanguage) {
             LocaleManager.updateAppLocale(this, savedLanguageCode)
         }
 

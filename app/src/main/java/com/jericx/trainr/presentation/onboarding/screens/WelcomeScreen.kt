@@ -61,7 +61,7 @@ fun WelcomeScreen(
 ) {
     val context = LocalContext.current
     val languagePreferences = remember { LanguagePreferences(context) }
-    var currentLanguage by remember { mutableStateOf(languagePreferences.getCurrentLanguageObject()) }
+    var currentLanguage by remember { mutableStateOf(languagePreferences.getCurrentLanguageObject(context)) }
     val pages = listOf(
         OnboardingPage(R.drawable.img_skipping, stringResource(R.string.personalized_workout_plans)),
         OnboardingPage(R.drawable.img_exercising, stringResource(R.string.ai_generated_routines)),
@@ -135,7 +135,7 @@ fun WelcomeScreen(
         LanguageSelector(
             currentLanguage = currentLanguage,
             onLanguageSelected = { language ->
-                languagePreferences.setLanguage(language.code)
+                languagePreferences.setLanguage(context, language.code)
                 currentLanguage = language
                 onLanguageChanged?.invoke(language)
 

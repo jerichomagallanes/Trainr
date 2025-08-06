@@ -25,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -44,6 +45,9 @@ fun LanguageSelector(
     modifier: Modifier = Modifier,
     compact: Boolean = true
 ) {
+    val context = LocalContext.current
+    val languagePreferences = remember { LanguagePreferences(context) }
+    val availableLanguages = remember { languagePreferences.getAvailableLanguages(context) }
     var expanded by remember { mutableStateOf(false) }
 
     Box(modifier = modifier) {
@@ -96,7 +100,7 @@ fun LanguageSelector(
             onDismissRequest = { expanded = false },
             modifier = Modifier.background(MaterialTheme.colorScheme.surface)
         ) {
-            LanguagePreferences.AVAILABLE_LANGUAGES.forEach { language ->
+            availableLanguages.forEach { language ->
                 DropdownMenuItem(
                     text = {
                         Row(verticalAlignment = Alignment.CenterVertically) {
