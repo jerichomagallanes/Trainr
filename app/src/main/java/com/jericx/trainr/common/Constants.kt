@@ -28,16 +28,5 @@ object Constants {
         // Days per week options
         val DAYS_PER_WEEK_OPTIONS = (1..7).toList()
         
-        // Common injury types
-        val COMMON_INJURIES = listOf(
-            "Lower Back Pain",
-            "Knee Problems", 
-            "Shoulder Injury",
-            "Wrist Pain",
-            "Ankle Issues",
-            "Hip Problems",
-            "Neck Pain",
-            "None"
-        )
     }
 }

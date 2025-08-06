@@ -243,6 +243,7 @@
     <string name="strength_training_style">Strength Training</string>
     <string name="cardio_style">Cardio</string>
     <string name="hiit_style">HIIT</string>
+    <string name="flexibility_mobility_style">Flexibility &amp; Mobility</string>
     <string name="mixed_balanced_style">Mixed/Balanced</string>
     
     <!-- Workout Times -->
@@ -268,4 +269,34 @@
     <string name="language_english">English</string>
     <string name="language_tagalog">Tagalog</string>
     <string name="language_japanese">日本語</string>
+    
+    <!-- String Arrays -->
+    <string-array name="common_injuries">
+        <item>@string/lower_back_pain_injury</item>
+        <item>@string/knee_problems_injury</item>
+        <item>@string/shoulder_injury_injury</item>
+        <item>@string/wrist_pain_injury</item>
+        <item>@string/ankle_issues_injury</item>
+        <item>@string/hip_problems_injury</item>
+        <item>@string/neck_pain_injury</item>
+        <item>@string/none_injury</item>
+    </string-array>
+    
+    <string-array name="language_codes">
+        <item>en</item>
+        <item>tl</item>
+        <item>ja</item>
+    </string-array>
+    
+    <string-array name="language_display_names">
+        <item>@string/language_english</item>
+        <item>@string/language_tagalog</item>
+        <item>@string/language_japanese</item>
+    </string-array>
+    
+    <string-array name="language_native_names">
+        <item>English</item>
+        <item>Tagalog</item>
+        <item>日本語</item>
+    </string-array>
 </resources>

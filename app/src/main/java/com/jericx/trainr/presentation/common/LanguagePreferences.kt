@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.edit
+import com.jericx.trainr.R
 
 /**
  * Language preferences manager using SharedPreferences.
@@ -34,11 +35,6 @@ class LanguagePreferences(context: Context) {
         private const val KEY_LANGUAGE_CODE = "language_code"
         private const val DEFAULT_LANGUAGE = "en"
         
-        val AVAILABLE_LANGUAGES = listOf(
-            Language("en", "English", "English"),
-            Language("tl", "Tagalog", "Tagalog"),
-            Language("ja", "Japanese", "日本語")
-        )
     }
     
     /**
@@ -51,8 +47,9 @@ class LanguagePreferences(context: Context) {
     /**
      * Set the current language and persist it
      */
-    fun setLanguage(languageCode: String) {
-        if (AVAILABLE_LANGUAGES.any { it.code == languageCode }) {
+    fun setLanguage(context: Context, languageCode: String) {
+        val availableLanguages = getAvailableLanguages(context)
+        if (availableLanguages.any { it.code == languageCode }) {
             sharedPreferences.edit {
                 putString(KEY_LANGUAGE_CODE, languageCode)
             }
@@ -61,11 +58,29 @@ class LanguagePreferences(context: Context) {
     }
     
     /**
+     * Get available languages from resources
+     */
+    fun getAvailableLanguages(context: Context): List<Language> {
+        val codes = context.resources.getStringArray(R.array.language_codes)
+        val displayNames = context.resources.getStringArray(R.array.language_display_names)
+        val nativeNames = context.resources.getStringArray(R.array.language_native_names)
+        
+        return codes.mapIndexed { index, code ->
+            Language(
+                code = code,
+                displayName = displayNames.getOrNull(index) ?: code,
+                nativeName = nativeNames.getOrNull(index) ?: code
+            )
+        }
+    }
+    
+    /**
      * Get the current language object
      */
-    fun getCurrentLanguageObject(): Language {
-        return AVAILABLE_LANGUAGES.find { it.code == currentLanguage }
-            ?: AVAILABLE_LANGUAGES.first()
+    fun getCurrentLanguageObject(context: Context): Language {
+        val availableLanguages = getAvailableLanguages(context)
+        return availableLanguages.find { it.code == currentLanguage }
+            ?: availableLanguages.first()
     }
 
 }
