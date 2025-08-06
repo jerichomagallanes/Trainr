@@ -26,7 +26,7 @@ fun SplashScreen(versionName: String) {
                 modifier = Modifier.padding(top = 16.dp)
             )
             Text(
-                text = "v$versionName",
+                text = stringResource(R.string.version_format, versionName),
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(top = 8.dp)
             )

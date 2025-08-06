@@ -22,9 +22,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.jericx.trainr.R
 import com.jericx.trainr.presentation.common.theme.ComponentHeight
 import com.jericx.trainr.presentation.common.theme.Spacing
 
@@ -64,7 +66,7 @@ fun OnboardingDropdown(
                 
                 Icon(
                     imageVector = Icons.Default.ArrowDropDown,
-                    contentDescription = "Dropdown",
+                    contentDescription = stringResource(R.string.dropdown_content_description),
                     modifier = Modifier.align(Alignment.CenterEnd),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )

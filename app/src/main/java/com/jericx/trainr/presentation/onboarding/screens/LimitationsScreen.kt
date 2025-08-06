@@ -39,7 +39,17 @@ fun LimitationsScreen(
     var selectedInjuries by remember { mutableStateOf<Set<String>>(emptySet()) }
     var selectedWorkoutType by remember { mutableStateOf(WorkoutType.MIXED) }
 
-    val commonInjuries = Constants.Workout.COMMON_INJURIES
+    val injuryOptions = listOf(
+        stringResource(R.string.lower_back_pain_injury),
+        stringResource(R.string.knee_problems_injury),
+        stringResource(R.string.shoulder_injury_injury),
+        stringResource(R.string.wrist_pain_injury),
+        stringResource(R.string.ankle_issues_injury),
+        stringResource(R.string.hip_problems_injury),
+        stringResource(R.string.neck_pain_injury),
+        stringResource(R.string.none_injury)
+    )
+    val noneOption = stringResource(R.string.none_injury)
     val noneLabel = stringResource(R.string.none)
 
     OnboardingScaffold(
@@ -87,8 +97,8 @@ fun LimitationsScreen(
                     verticalArrangement = Arrangement.spacedBy(Spacing.small),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    commonInjuries.forEach { injury ->
-                        val isNone = injury == "None"
+                    injuryOptions.forEach { injury ->
+                        val isNone = injury == noneOption
 
                         OnboardingCheckboxChip(
                             text = injury,
@@ -101,7 +111,7 @@ fun LimitationsScreen(
                                         emptySet()
                                     }
                                 } else {
-                                    val withoutNone = selectedInjuries - "None"
+                                    val withoutNone = selectedInjuries - noneOption
                                     if (isChecked) {
                                         withoutNone + injury
                                     } else {

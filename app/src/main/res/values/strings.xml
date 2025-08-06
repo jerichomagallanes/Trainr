@@ -15,6 +15,8 @@
     
     <!-- Basic Info Screen -->
     <string name="tell_us_about_yourself">TELL US ABOUT YOURSELF</string>
+    <string name="preferred_first_name">Preferred First Name</string>
+    <string name="enter_your_first_name">Enter your first name</string>
     <string name="age">Age</string>
     <string name="enter_your_age">Enter your age</string>
     <string name="gender">Gender</string>
@@ -91,7 +93,7 @@
     <string name="evening_time">Evening (5-10 PM)</string>
     <string name="flexible_anytime">Flexible/Anytime</string>
     <string name="duration_mins">%d mins</string>
-    <string name="workout_days_option">%d %s</string>
+    <string name="workout_days_option" formatted="false">%d %s</string>
     <string name="day">day</string>
     <string name="days">days</string>
     
@@ -150,7 +152,7 @@
     <string name="track_weekly_progress">Track Weekly Progress</string>
     <string name="weekly_progress">WEEKLY PROGRESS</string>
     <string name="week_progress">Week %d Progress</string>
-    <string name="completed_percentage">%d%% Completed (%d%%)</string>
+    <string name="completed_percentage" formatted="false">%d%% Completed (%d%%)</string>
     <string name="start_todays_workout">START TODAY\'S WORKOUT</string>
     <string name="day_number">DAY %d</string>
     <string name="full_body_strength">Full Body Strength</string>
@@ -178,4 +180,92 @@
     <string name="ai_powered">AI-powered</string>
     <string name="your">Your</string>
     <string name="personal_trainer">personal trainer.</string>
+    <string name="version_format">v%s</string>
+    
+    <!-- Review Screen Labels -->
+    <string name="name_label">Name</string>
+    <string name="age_label">Age</string>
+    <string name="gender_label">Gender</string>
+    <string name="height_label">Height</string>
+    <string name="weight_label">Weight</string>
+    <string name="experience_label">Experience</string>
+    <string name="fitness_goals_label">Fitness Goals</string>
+    <string name="main_goal_label">Main Goal</string>
+    <string name="workout_style_label">Workout Style</string>
+    <string name="workout_setup_label">Workout Setup</string>
+    <string name="location_label">Location</string>
+    <string name="equipment_label_full">Equipment</string>
+    <string name="schedule_label">Schedule</string>
+    <string name="duration_label">Duration</string>
+    <string name="preferred_time_label">Preferred Time</string>
+    <string name="limitations_label">Limitations</string>
+    <string name="injuries_concerns_label">Injuries/Concerns</string>
+    <string name="ai_routine_preview_label">AI Routine Preview</string>
+    <string name="ai_routine_description" formatted="false">Based on your profile, we\'ll create a %s strength program focused on %s.</string>
+    <string name="bodyweight_only_label">Bodyweight only</string>
+    <string name="flexible_schedule">Flexible</string>
+    <string name="days_per_week_format">%d days/week</string>
+    <string name="duration_minutes_format">%d minutes</string>
+    <string name="years_old_format">%d years old</string>
+    <string name="height_cm_format">%d cm</string>
+    <string name="weight_kg_format">%.1f kg</string>
+    
+    <!-- Accessibility -->
+    <string name="dropdown_content_description">Dropdown menu</string>
+    
+    <!-- Weekly Plan -->
+    <string name="weekly_plan_title">YOUR WEEKLY WORKOUT PLAN</string>
+    
+    <!-- Gender Options -->
+    <string name="male_gender">Male</string>
+    <string name="female_gender">Female</string>
+    <string name="other_gender">Other</string>
+    
+    <!-- Experience Levels -->
+    <string name="beginner_level">Beginner</string>
+    <string name="intermediate_level">Intermediate</string>
+    <string name="advanced_level">Advanced</string>
+    
+    <!-- Fitness Goals -->
+    <string name="lose_weight_goal">Lose Weight</string>
+    <string name="build_muscle_goal">Build Muscle</string>
+    <string name="get_stronger_goal">Get Stronger</string>
+    <string name="improve_endurance_goal">Improve Endurance</string>
+    <string name="general_fitness_goal">General Fitness</string>
+    <string name="flexibility_mobility_goal">Flexibility &amp; Mobility</string>
+    
+    <!-- Workout Locations -->
+    <string name="home_location">Home</string>
+    <string name="gym_location">Gym</string>
+    <string name="both_location">Both</string>
+    
+    <!-- Workout Styles -->
+    <string name="strength_training_style">Strength Training</string>
+    <string name="cardio_style">Cardio</string>
+    <string name="hiit_style">HIIT</string>
+    <string name="mixed_balanced_style">Mixed/Balanced</string>
+    
+    <!-- Workout Times -->
+    <string name="early_morning">Early Morning</string>
+    <string name="morning">Morning</string>
+    <string name="afternoon">Afternoon</string>
+    <string name="evening">Evening</string>
+    <string name="flexible_anytime_time">Flexible/Anytime</string>
+    
+    <!-- Injury Options -->
+    <string name="lower_back_pain_injury">Lower Back Pain</string>
+    <string name="knee_problems_injury">Knee Problems</string>
+    <string name="shoulder_injury_injury">Shoulder Injury</string>
+    <string name="wrist_pain_injury">Wrist Pain</string>
+    <string name="ankle_issues_injury">Ankle Issues</string>
+    <string name="hip_problems_injury">Hip Problems</string>
+    <string name="neck_pain_injury">Neck Pain</string>
+    <string name="none_injury">None</string>
+    
+    <!-- Language Selection -->
+    <string name="language_selection">Language Selection</string>
+    <string name="select_language">Select Language</string>
+    <string name="language_english">English</string>
+    <string name="language_tagalog">Tagalog</string>
+    <string name="language_japanese">日本語</string>
 </resources>

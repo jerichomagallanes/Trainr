@@ -27,6 +27,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.activity.ComponentActivity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
@@ -39,7 +41,10 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jericx.trainr.R
+import com.jericx.trainr.presentation.common.LanguagePreferences
+import com.jericx.trainr.presentation.common.LocaleManager
 import com.jericx.trainr.presentation.common.components.InfiniteHorizontalPager
+import com.jericx.trainr.presentation.common.components.LanguageSelector
 import com.jericx.trainr.presentation.common.theme.Orange500
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.onboarding.components.core.OnboardingButton
@@ -51,8 +56,12 @@ data class OnboardingPage(
 
 @Composable
 fun WelcomeScreen(
-    onGetStartedClick: () -> Unit
+    onGetStartedClick: () -> Unit,
+    onLanguageChanged: ((LanguagePreferences.Language) -> Unit)? = null
 ) {
+    val context = LocalContext.current
+    val languagePreferences = remember { LanguagePreferences(context) }
+    var currentLanguage by remember { mutableStateOf(languagePreferences.getCurrentLanguageObject()) }
     val pages = listOf(
         OnboardingPage(R.drawable.img_skipping, stringResource(R.string.personalized_workout_plans)),
         OnboardingPage(R.drawable.img_exercising, stringResource(R.string.ai_generated_routines)),
@@ -61,12 +70,15 @@ fun WelcomeScreen(
 
     var currentPage by remember { mutableStateOf(0) }
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .statusBarsPadding()
     ) {
-        WelcomeHeader()
+        Column(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            WelcomeHeader()
 
         Spacer(modifier = Modifier.height(Spacing.large))
 
@@ -118,6 +130,28 @@ fun WelcomeScreen(
                 )
             }
         }
+        }
+
+        LanguageSelector(
+            currentLanguage = currentLanguage,
+            onLanguageSelected = { language ->
+                languagePreferences.setLanguage(language.code)
+                currentLanguage = language
+                onLanguageChanged?.invoke(language)
+
+                val activity = context as? ComponentActivity
+                activity?.let {
+                    LocaleManager.setAppLocale(it, language.code)
+                }
+            },
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(
+                    top = Spacing.medium,
+                    end = Spacing.medium
+                ),
+            compact = true
+        )
     }
 }
 

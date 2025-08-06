@@ -91,7 +91,7 @@
     <string name="evening_time">Evening (5-10 PM)</string>
     <string name="flexible_anytime">Flexible/Anytime</string>
     <string name="duration_mins">%d mins</string>
-    <string name="workout_days_option">%d %s</string>
+    <string name="workout_days_option" formatted="false">%d %s</string>
     <string name="day">day</string>
     <string name="days">days</string>
     
@@ -150,7 +150,7 @@
     <string name="track_weekly_progress">Track Weekly Progress</string>
     <string name="weekly_progress">WEEKLY PROGRESS</string>
     <string name="week_progress">Week %d Progress</string>
-    <string name="completed_percentage">%d%% Completed (%d%%)</string>
+    <string name="completed_percentage" formatted="false">%d%% Completed (%d%%)</string>
     <string name="start_todays_workout">START TODAY\'S WORKOUT</string>
     <string name="day_number">DAY %d</string>
     <string name="full_body_strength">Full Body Strength</string>

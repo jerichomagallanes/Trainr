@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Trainr</string>
+    
+    <!-- Home Screen -->
+    <string name="welcome_to_home">Maligayang pagdating sa Trainr!</string>
+    <string name="home_coming_soon">Ang inyong personalized na workout dashboard ay malapit nang dumating.</string>
+    
+    <!-- Welcome Screen -->
+    <string name="welcome_to">MALIGAYANG PAGDATING SA</string>
+    <string name="trainr_description">Ang inyong AI-powered na personal trainer.</string>
+    <string name="get_started">Magsimula</string>
+    <string name="personalized_workout_plans">Personalized na workout plans</string>
+    <string name="ai_generated_routines">AI-generated na mga rutina</string>
+    <string name="track_your_progress">Subaybayan ang inyong progreso</string>
+    
+    <!-- Basic Info Screen -->
+    <string name="tell_us_about_yourself">SABIHIN NINYO SA AMIN ANG TUNGKOL SA INYO</string>
+    <string name="preferred_first_name">Gustong Pangalan</string>
+    <string name="enter_your_first_name">Ilagay ang inyong pangalan</string>
+    <string name="age">Edad</string>
+    <string name="enter_your_age">Ilagay ang inyong edad</string>
+    <string name="gender">Kasarian</string>
+    <string name="male">Lalaki</string>
+    <string name="female">Babae</string>
+    <string name="other">Iba pa</string>
+    <string name="fitness_experience">Karanasan sa Fitness</string>
+    <string name="beginner">Nagsisimula</string>
+    <string name="beginner_description">Bago sa pag-eexercise o bumabalik sa routine.</string>
+    <string name="intermediate">Intermediate</string>
+    <string name="intermediate_description">Nag-eexercise nang regular ng mahigit 6 buwan.</string>
+    <string name="advanced">Advanced</string>
+    <string name="advanced_description">Tuloy-tuloy na nag-ttraining ng mga taon.</string>
+    
+    <!-- Body Metrics Screen -->
+    <string name="your_measurements">ANG INYONG MGA SUKAT</string>
+    <string name="measurements_description">Tumutulong ito sa amin na kalkulahin ang inyong fitness metrics.</string>
+    <string name="metric">Metric</string>
+    <string name="imperial">Imperial</string>
+    <string name="height_cm">Taas (cm)</string>
+    <string name="height_ft_in">Taas (ft\'in\")</string>
+    <string name="weight_kg">Timbang (kg)</string>
+    <string name="weight_lbs">Timbang (lbs)</string>
+    <string name="height_placeholder_cm">170</string>
+    <string name="height_placeholder_imperial">5\'10\"</string>
+    <string name="weight_placeholder_kg">70</string>
+    <string name="weight_placeholder_lbs">155</string>
+    <string name="bmi_label">BMI:</string>
+    <string name="underweight">Kulang sa timbang</string>
+    <string name="normal_weight">Normal na timbang</string>
+    <string name="overweight">Sobra sa timbang</string>
+    <string name="obese">Mataba</string>
+    
+    <!-- Fitness Goal Screen -->
+    <string name="main_fitness_goal">ANO ANG INYONG PANGUNAHING FITNESS GOAL?</string>
+    <string name="goal_description">Iaangkop namin ang inyong mga workout para makamit ninyo ito</string>
+    <string name="lose_weight">Magbawas ng Timbang</string>
+    <string name="lose_weight_description">Magsunog ng taba at pumayat.</string>
+    <string name="build_muscle">Magpatayo ng Muscle</string>
+    <string name="build_muscle_description">Magdagdag ng muscle mass at laki</string>
+    <string name="get_stronger">Lumakas</string>
+    <string name="get_stronger_description">Dagdagan ang lakas at power.</string>
+    <string name="improve_endurance">Pagbutihin ang Endurance</string>
+    <string name="improve_endurance_description">Palakasin ang stamina at cardiovascular health.</string>
+    <string name="general_fitness">General Fitness</string>
+    <string name="general_fitness_description">Kabuuang kalusugan at wellness.</string>
+    <string name="flexibility_mobility">Flexibility &amp; Mobility</string>
+    <string name="flexibility_mobility_description">Pagbutihin ang range of motion at maiwasan ang mga injury.</string>
+    
+    <!-- Workout Setup Screen -->
+    <string name="set_up_your_workout">I-SETUP ANG INYONG WORKOUT</string>
+    <string name="where_will_you_work_out">Saan ninyo gagawin ang workout?</string>
+    <string name="home">Bahay</string>
+    <string name="gym">Gym</string>
+    <string name="both">Pareho</string>
+    <string name="available_equipment">Available na Equipment</string>
+    <string name="bodyweight_only">Bodyweight lang</string>
+    <string name="dumbbells">Dumbbells</string>
+    <string name="resistance_bands">Resistance bands</string>
+    <string name="pull_up_bar">Pull-up bar</string>
+    <string name="kettlebells">Kettlebells</string>
+    <string name="barbell_plates">Barbell &amp; plates</string>
+    <string name="bench">Bench</string>
+    <string name="cardio_equipment">Cardio equipment</string>
+    <string name="cable_machine">Cable machine</string>
+    <string name="squat_rack">Squat rack</string>
+    <string name="others">Iba pa</string>
+    <string name="workout_days_per_week">Ilang araw sa isang linggo ninyo magagawa ang workout?</string>
+    <string name="session_duration">Tagal ng Session</string>
+    <string name="preferred_workout_time">Preferred na Workout Time</string>
+    <string name="early_morning_time">Maaga sa Umaga (5-7 AM)</string>
+    <string name="morning_time">Umaga (7-12 PM)</string>
+    <string name="afternoon_time">Hapon (12-5 PM)</string>
+    <string name="evening_time">Gabi (5-10 PM)</string>
+    <string name="flexible_anytime">Flexible/Kahit Kailan</string>
+    <string name="duration_mins">%d mins</string>
+    <string name="workout_days_option" formatted="false">%d %s</string>
+    <string name="day">araw</string>
+    <string name="days">araw</string>
+    
+    <!-- Limitations Screen -->
+    <string name="lets_keep_you_safe">PANATILIHIN NATIN KAYONG LIGTAS</string>
+    <string name="limitations_description">Sabihin ninyo sa amin ang mga limitations para ma-adapt namin ang inyong mga workout</string>
+    <string name="any_injuries_or_areas">May mga injury ba o mga part na dapat mag-ingat?</string>
+    <string name="lower_back_pain">Lower Back Pain</string>
+    <string name="knee_problems">Knee Problems</string>
+    <string name="shoulder_injury">Shoulder Injury</string>
+    <string name="wrist_pain">Wrist Pain</string>
+    <string name="ankle_issues">Ankle Issues</string>
+    <string name="hip_problems">Hip Problems</string>
+    <string name="neck_pain">Neck Pain</string>
+    <string name="none">Wala</string>
+    <string name="preferred_workout_style">Preferred na Workout Style</string>
+    <string name="strength_training">Strength Training</string>
+    <string name="strength_training_description">Focus sa pagbuo ng muscle at lakas.</string>
+    <string name="cardio">Cardio</string>
+    <string name="cardio_description">Pagbutihin ang endurance at magsunog ng calories.</string>
+    <string name="hiit">HIIT</string>
+    <string name="hiit_description">High intensity interval training.</string>
+    <string name="mixed_balanced">Mixed/Balanced</string>
+    <string name="mixed_balanced_description">Kombinasyon ng iba\'t ibang training styles.</string>
+    
+    <!-- Review Screen -->
+    <string name="your_fitness_profile">ANG INYONG FITNESS PROFILE</string>
+    <string name="review_description">I-review ang inyong impormasyon bago namin gumawa ng plan</string>
+    <string name="personal_information">Personal na Impormasyon</string>
+    <string name="years_old">%d taong gulang</string>
+    <string name="height_cm_value">%d cm</string>
+    <string name="weight_kg_value">%.1f kg</string>
+    <string name="experience">Karanasan</string>
+    <string name="fitness_goals">Fitness Goals</string>
+    <string name="main_goal">Main Goal</string>
+    <string name="workout_style">Workout Style</string>
+    <string name="workout_setup">Workout Setup</string>
+    <string name="location">Lugar</string>
+    <string name="equipment">Equipment</string>
+    <string name="schedule">Schedule</string>
+    <string name="flexible">Flexible</string>
+    <string name="days_per_week">%d araw/linggo</string>
+    <string name="duration_minutes">%d minuto</string>
+    <string name="duration">Tagal</string>
+    <string name="preferred_time">Preferred na Oras</string>
+    <string name="limitations">Limitations</string>
+    <string name="injuries_concerns">Mga Injury/Concern</string>
+    <string name="ai_routine_preview">AI Routine Preview</string>
+    <string name="generate_my_workout_plan">I-GENERATE ANG AKING WORKOUT PLAN</string>
+    
+    <!-- Generating Screen -->
+    <string name="generating_your_workout_routine">Ginagawa ang inyong workout routine</string>
+    
+    <!-- Workout Screens -->
+    <string name="your_weekly_workout_plan">ANG INYONG LINGGUHANG WORKOUT PLAN</string>
+    <string name="track_weekly_progress">I-track ang Lingguhang Progress</string>
+    <string name="weekly_progress">LINGGUHANG PROGRESS</string>
+    <string name="week_progress">Linggo %d Progress</string>
+    <string name="completed_percentage" formatted="false">%d%% Tapos na (%d%%)</string>
+    <string name="start_todays_workout">SIMULAN ANG WORKOUT NGAYONG ARAW</string>
+    <string name="day_number">ARAW %d</string>
+    <string name="full_body_strength">Full Body Strength</string>
+    <string name="cardio_and_core">Cardio &amp; Core</string>
+    <string name="lower_body_power">Lower Body Power</string>
+    <string name="upper_body_strength">Upper Body Strength</string>
+    <string name="minutes">%d mins</string>
+    <string name="exercises_count">%d Exercises</string>
+    <string name="equipment_label">Equipment:</string>
+    <string name="yoga_mat">Yoga Mat</string>
+    <string name="treadmill">Treadmill</string>
+    <string name="completed">Tapos na</string>
+    <string name="in_progress">Ginagawa</string>
+    <string name="not_started">Hindi pa nasimulan</string>
+    <string name="warm_up_jog">Warm-up Jog</string>
+    <string name="hide_video_tutorial">Itago ang video tutorial</string>
+    <string name="start_timer">Simulan ang timer</string>
+    <string name="edit">I-edit</string>
+    
+    <!-- Common -->
+    <string name="next">SUSUNOD</string>
+    <string name="submit">IPASA</string>
+    <string name="back">Balik</string>
+    <string name="trainr">Trainr</string>
+    <string name="ai_powered">AI-powered</string>
+    <string name="your">Ang inyong</string>
+    <string name="personal_trainer">personal trainer.</string>
+    <string name="version_format">v%s</string>
+    
+    <!-- Review Screen Labels -->
+    <string name="name_label">Pangalan</string>
+    <string name="age_label">Edad</string>
+    <string name="gender_label">Kasarian</string>
+    <string name="height_label">Taas</string>
+    <string name="weight_label">Timbang</string>
+    <string name="experience_label">Karanasan</string>
+    <string name="fitness_goals_label">Fitness Goals</string>
+    <string name="main_goal_label">Main Goal</string>
+    <string name="workout_style_label">Workout Style</string>
+    <string name="workout_setup_label">Workout Setup</string>
+    <string name="location_label">Lugar</string>
+    <string name="equipment_label_full">Equipment</string>
+    <string name="schedule_label">Schedule</string>
+    <string name="duration_label">Tagal</string>
+    <string name="preferred_time_label">Preferred na Oras</string>
+    <string name="limitations_label">Limitations</string>
+    <string name="injuries_concerns_label">Mga Injury/Concern</string>
+    <string name="ai_routine_preview_label">AI Routine Preview</string>
+    <string name="ai_routine_description" formatted="false">Base sa inyong profile, gagawa kami ng %s strength program na focused sa %s.</string>
+    <string name="bodyweight_only_label">Bodyweight lang</string>
+    <string name="flexible_schedule">Flexible</string>
+    <string name="days_per_week_format">%d araw/linggo</string>
+    <string name="duration_minutes_format">%d minuto</string>
+    <string name="years_old_format">%d taong gulang</string>
+    <string name="height_cm_format">%d cm</string>
+    <string name="weight_kg_format">%.1f kg</string>
+    
+    <!-- Accessibility -->
+    <string name="dropdown_content_description">Dropdown menu</string>
+    
+    <!-- Weekly Plan -->
+    <string name="weekly_plan_title">ANG INYONG LINGGUHANG WORKOUT PLAN</string>
+    
+    <!-- Gender Options -->
+    <string name="male_gender">Lalaki</string>
+    <string name="female_gender">Babae</string>
+    <string name="other_gender">Iba pa</string>
+    
+    <!-- Experience Levels -->
+    <string name="beginner_level">Nagsisimula</string>
+    <string name="intermediate_level">Intermediate</string>
+    <string name="advanced_level">Advanced</string>
+    
+    <!-- Fitness Goals -->
+    <string name="lose_weight_goal">Magbawas ng Timbang</string>
+    <string name="build_muscle_goal">Magpatayo ng Muscle</string>
+    <string name="get_stronger_goal">Lumakas</string>
+    <string name="improve_endurance_goal">Pagbutihin ang Endurance</string>
+    <string name="general_fitness_goal">General Fitness</string>
+    <string name="flexibility_mobility_goal">Flexibility &amp; Mobility</string>
+    
+    <!-- Workout Locations -->
+    <string name="home_location">Bahay</string>
+    <string name="gym_location">Gym</string>
+    <string name="both_location">Pareho</string>
+    
+    <!-- Workout Styles -->
+    <string name="strength_training_style">Strength Training</string>
+    <string name="cardio_style">Cardio</string>
+    <string name="hiit_style">HIIT</string>
+    <string name="mixed_balanced_style">Mixed/Balanced</string>
+    
+    <!-- Workout Times -->
+    <string name="early_morning">Maaga sa Umaga</string>
+    <string name="morning">Umaga</string>
+    <string name="afternoon">Hapon</string>
+    <string name="evening">Gabi</string>
+    <string name="flexible_anytime_time">Flexible/Kahit Kailan</string>
+    
+    <!-- Injury Options -->
+    <string name="lower_back_pain_injury">Lower Back Pain</string>
+    <string name="knee_problems_injury">Knee Problems</string>
+    <string name="shoulder_injury_injury">Shoulder Injury</string>
+    <string name="wrist_pain_injury">Wrist Pain</string>
+    <string name="ankle_issues_injury">Ankle Issues</string>
+    <string name="hip_problems_injury">Hip Problems</string>
+    <string name="neck_pain_injury">Neck Pain</string>
+    <string name="none_injury">Wala</string>
+    
+    <!-- Language Selection -->
+    <string name="language_selection">Pagpili ng Wika</string>
+    <string name="select_language">Pumili ng Wika</string>
+    <string name="language_english">English</string>
+    <string name="language_tagalog">Tagalog</string>
+    <string name="language_japanese">日本語</string>
+</resources>

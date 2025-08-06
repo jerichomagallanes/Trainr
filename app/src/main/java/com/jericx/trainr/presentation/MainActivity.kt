@@ -37,6 +37,8 @@ import com.jericx.trainr.presentation.onboarding.screens.ReviewScreen
 import com.jericx.trainr.presentation.onboarding.screens.WelcomeScreen
 import com.jericx.trainr.presentation.onboarding.screens.WorkoutSetupScreen
 import com.jericx.trainr.presentation.splash.SplashScreen
+import com.jericx.trainr.presentation.common.LanguagePreferences
+import com.jericx.trainr.presentation.common.LocaleManager
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
@@ -45,6 +47,12 @@ import kotlinx.coroutines.delay
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val languagePreferences = LanguagePreferences(this)
+        val savedLanguageCode = languagePreferences.currentLanguage
+        if (savedLanguageCode != "en") {
+            LocaleManager.updateAppLocale(this, savedLanguageCode)
+        }
 
         enableEdgeToEdge()
 

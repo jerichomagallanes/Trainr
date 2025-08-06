@@ -9,7 +9,6 @@ object Constants {
     
     // Workout Constants
     object Workout {
-        const val DEFAULT_WEEKLY_PLAN_TITLE = "YOUR WEEKLY WORKOUT PLAN"
         const val DEFAULT_WORKOUT_DURATION = 45
         const val DEFAULT_WORKOUT_DAYS_PER_WEEK = 3
         
