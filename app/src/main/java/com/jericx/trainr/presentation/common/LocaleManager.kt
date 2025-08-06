@@ -33,7 +33,7 @@ object LocaleManager {
     }
     
     /**
-     * Set app locale for the current activity
+     * Set app locale for the current activity and save navigation state
      */
     fun setAppLocale(activity: ComponentActivity, languageCode: String) {
         val locale = getLocaleForLanguageCode(languageCode)

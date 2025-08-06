@@ -39,6 +39,7 @@ import com.jericx.trainr.presentation.onboarding.screens.WorkoutSetupScreen
 import com.jericx.trainr.presentation.splash.SplashScreen
 import com.jericx.trainr.presentation.common.LanguagePreferences
 import com.jericx.trainr.presentation.common.LocaleManager
+import com.jericx.trainr.presentation.common.NavigationStateManager
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
@@ -95,6 +96,19 @@ fun AppContent(versionName: String) {
     val splashScreenDuration = 2000L
     var showSplashScreen by remember { mutableStateOf(true) }
 
+    LaunchedEffect(Unit) {
+        if (NavigationStateManager.isLanguageChangePending(context)) {
+            val savedRoute = NavigationStateManager.getCurrentRoute(context)
+            if (savedRoute != null && savedRoute != Screen.SplashScreen.route) {
+                showSplashScreen = false
+                navController.navigate(savedRoute) {
+                    popUpTo(Screen.SplashScreen.route) { inclusive = true }
+                }
+                NavigationStateManager.clearNavigationState(context)
+            }
+        }
+    }
+
     LaunchedEffect(showSplashScreen) {
         if (showSplashScreen) {
             delay(splashScreenDuration)
@@ -118,8 +132,12 @@ fun AppContent(versionName: String) {
                 }
 
                 composable(Screen.Welcome.route) {
+                    LaunchedEffect(Unit) {
+                        NavigationStateManager.saveCurrentRoute(context, Screen.Welcome.route)
+                    }
                     WelcomeScreen(
                         onGetStartedClick = {
+                            NavigationStateManager.saveCurrentRoute(context, Screen.BasicInfo.route)
                             navController.navigate(Screen.BasicInfo.route)
                         }
                     )

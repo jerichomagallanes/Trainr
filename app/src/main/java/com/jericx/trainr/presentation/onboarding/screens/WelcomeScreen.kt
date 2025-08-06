@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.sp
 import com.jericx.trainr.R
 import com.jericx.trainr.presentation.common.LanguagePreferences
 import com.jericx.trainr.presentation.common.LocaleManager
+import com.jericx.trainr.presentation.common.NavigationStateManager
 import com.jericx.trainr.presentation.common.components.InfiniteHorizontalPager
 import com.jericx.trainr.presentation.common.components.LanguageSelector
 import com.jericx.trainr.presentation.common.theme.Orange500
@@ -139,6 +140,7 @@ fun WelcomeScreen(
                 currentLanguage = language
                 onLanguageChanged?.invoke(language)
 
+                NavigationStateManager.setLanguageChangePending(context, true)
                 val activity = context as? ComponentActivity
                 activity?.let {
                     LocaleManager.setAppLocale(it, language.code)
