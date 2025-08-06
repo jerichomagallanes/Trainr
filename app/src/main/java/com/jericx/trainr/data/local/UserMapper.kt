@@ -7,6 +7,7 @@ class UserMapper {
     fun mapToEntity(user: UserProfile): UserEntity {
         return UserEntity(
             id = user.id,
+            firstName = user.firstName,
             age = user.age,
             gender = user.gender.name,
             height = user.height,
@@ -27,6 +28,7 @@ class UserMapper {
     fun mapToDomain(entity: UserEntity): UserProfile {
         return UserProfile(
             id = entity.id,
+            firstName = entity.firstName,
             age = entity.age,
             gender = Gender.valueOf(entity.gender),
             height = entity.height,

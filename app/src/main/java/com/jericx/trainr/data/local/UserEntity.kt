@@ -8,6 +8,7 @@ import androidx.room.TypeConverters
 data class UserEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
+    val firstName: String,
     val age: Int,
     val gender: String,
     val height: Float,
