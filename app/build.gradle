@@ -8,12 +8,12 @@ plugins {
 
 android {
     namespace 'com.jericx.trainr'
-    compileSdk 35
+    compileSdk 36
 
     defaultConfig {
         applicationId "com.jericx.trainr"
         minSdk 24
-        targetSdk 35
+        targetSdk 36
         versionCode 1
         versionName "1.0"
 
@@ -75,6 +75,7 @@ android {
 
     kotlinOptions {
         jvmTarget = '17'
+        freeCompilerArgs += '-Xannotation-default-target=param-property'
     }
 
     packagingOptions {

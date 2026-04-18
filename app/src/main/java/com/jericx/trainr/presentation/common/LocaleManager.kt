@@ -54,7 +54,7 @@ object LocaleManager {
     private fun getLocaleForLanguageCode(languageCode: String): Locale {
         return when (languageCode) {
             "en" -> Locale.ENGLISH
-            "tl" -> Locale("tl")
+            "tl" -> Locale.forLanguageTag("tl")
             "ja" -> Locale.JAPANESE
             else -> Locale.ENGLISH
         }
