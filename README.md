@@ -17,6 +17,7 @@ App Demo
 - **Injury Considerations**: Safe workout modifications based on reported limitations
 - **Progress Tracking**: Monitor your fitness journey over time
 - **Dark Mode Support**: Comfortable viewing in low-light conditions
+- **Multi-Language Support**: Available in English, Japanese, and Tagalog with runtime locale switching
 
 ## 🎯 Fitness Goals Supported
 
@@ -40,7 +41,9 @@ App Demo
 - **Clean Architecture**: Separation of concerns with Domain, Data, and Presentation layers
 - **MVVM Pattern**: Model-View-ViewModel architecture
 - **Dagger Hilt**: Dependency injection framework
+- **KSP**: Kotlin Symbol Processing for Hilt and Room code generation
 - **Room Database**: Local data persistence
+- **Gson**: JSON serialization for Room type converters
 - **Kotlin Coroutines & Flow**: Asynchronous programming and reactive streams
 - **Material Design 3**: Modern UI components and theming
 - **Navigation Compose**: Type-safe navigation
@@ -77,8 +80,8 @@ Each variant supports both debug and release build types for comprehensive testi
 ## 📱 Minimum Requirements
 
 - Android API Level 24 (Android 7.0)
-- Target SDK 35
-- Kotlin 1.9+
+- Target SDK 36
+- Kotlin 2.3+
 
 ## 🏃‍♀️ Start Your Fitness Journey
 
