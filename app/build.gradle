@@ -110,14 +110,8 @@ dependencies {
     // Debug dependencies
     debugImplementation libs.bundles.compose.debug
 
-    // Coil Compose
-    implementation libs.coil.compose
-
     // Lifecycle
     implementation libs.bundles.lifecycle
-
-    // Accompanist
-    implementation libs.accompanist.flowlayout
 
     // Dagger - Hilt (using KSP instead of KAPT)
     implementation libs.hilt.android
@@ -125,16 +119,10 @@ dependencies {
     implementation libs.androidx.navigation.compose
     implementation libs.androidx.hilt.navigation.compose
 
-    // Paging
-    implementation libs.bundles.paging
-
-    // Networking (ready for AI API integration)
-    implementation libs.bundles.networking
-    // Note: moshi-kotlin-codegen KSP will be added when we start using Moshi annotations
-
     // Room (using KSP)
     implementation libs.bundles.room
     ksp libs.room.compiler
+    implementation libs.gson
 
     // Testing
     testImplementation libs.junit
