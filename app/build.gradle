@@ -132,6 +132,7 @@ dependencies {
     androidTestImplementation libs.androidx.test.espresso.core
     androidTestImplementation libs.compose.ui.test.junit4
     androidTestImplementation libs.hilt.android.testing
+    androidTestImplementation libs.truth
     testImplementation libs.kotlinx.coroutines.test
     testImplementation libs.junit.jupiter.api
     testRuntimeOnly libs.junit.jupiter.engine
