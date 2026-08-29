@@ -43,6 +43,7 @@ import com.jericx.trainr.presentation.common.theme.TrainrTheme
 import com.jericx.trainr.presentation.workout.components.ExerciseCard
 import com.jericx.trainr.presentation.workout.components.ExerciseTimer
 import com.jericx.trainr.presentation.workout.components.VideoTutorial
+import com.jericx.trainr.domain.model.ExerciseSet
 import com.jericx.trainr.presentation.workout.model.ExerciseUi
 import com.jericx.trainr.presentation.workout.model.YouTubeVideo
 import com.jericx.trainr.presentation.workout.util.WorkoutDateFormatter
@@ -62,6 +63,8 @@ fun RoutineDetailRoute(
         onDayCompleted = onDayCompleted,
         onWeekCompleted = onWeekCompleted,
         onToggleExercise = viewModel::toggleExercise,
+        onSetChanged = viewModel::updateSet,
+        onAddSet = viewModel::addSet,
         onCompleteRoutine = viewModel::completeRoutine,
         onStartTimer = viewModel::startTimer,
         onPauseTimer = viewModel::pauseTimer,
@@ -79,6 +82,8 @@ fun RoutineDetailScreen(
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit = {},
     onToggleExercise: (Int) -> Unit = {},
+    onSetChanged: (Int, ExerciseSet) -> Unit = { _, _ -> },
+    onAddSet: (Int) -> Unit = {},
     onCompleteRoutine: () -> Unit = {},
     onStartTimer: (ExerciseUi) -> Unit = {},
     onPauseTimer: () -> Unit = {},
@@ -190,7 +195,9 @@ fun RoutineDetailScreen(
                 routine.exercises.forEach { exercise ->
                     ExerciseCard(
                         exercise = exercise,
-                        onToggleCompleted = { onToggleExercise(exercise.position) }
+                        onToggleCompleted = { onToggleExercise(exercise.position) },
+                        onSetChanged = { onSetChanged(exercise.position, it) },
+                        onAddSet = { onAddSet(exercise.position) }
                     ) {
                         if (!exercise.isCompleted) {
                             ExerciseTimer(

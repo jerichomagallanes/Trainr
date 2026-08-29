@@ -1,5 +1,6 @@
 package com.jericx.trainr.data.local
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -90,7 +91,10 @@ data class WorkoutExerciseEntity(
     val id: Long = 0,
     val workoutDayId: Long,
     val name: String,
-    val sets: Int?,
+    val measure: String,
+    // The column predates the set table and still holds the prescribed count.
+    @ColumnInfo(name = "sets")
+    val setCount: Int?,
     val reps: String?,
     val duration: String?,
     val durationMinutes: Int,
@@ -101,4 +105,30 @@ data class WorkoutExerciseEntity(
     val videoTutorialUrl: String?,
     val isCompleted: Boolean,
     val notes: String
+)
+
+@Entity(
+    tableName = "exercise_sets",
+    foreignKeys = [
+        ForeignKey(
+            entity = WorkoutExerciseEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["workoutExerciseId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index("workoutExerciseId")]
+)
+data class ExerciseSetEntity(
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
+    val workoutExerciseId: Long,
+    val setNumber: Int,
+    val targetReps: Int?,
+    val targetWeightKg: Float?,
+    val targetSeconds: Int?,
+    val actualReps: Int?,
+    val actualWeightKg: Float?,
+    val actualSeconds: Int?,
+    val isCompleted: Boolean
 )

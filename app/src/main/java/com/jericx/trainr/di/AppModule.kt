@@ -26,7 +26,7 @@ object AppModule {
             context,
             TrainrDatabase::class.java,
             Constants.DATABASE_NAME
-        ).addMigrations(TrainrDatabase.MIGRATION_1_2).build()
+        ).addMigrations(TrainrDatabase.MIGRATION_1_2, TrainrDatabase.MIGRATION_2_3).build()
     }
 
     @Provides

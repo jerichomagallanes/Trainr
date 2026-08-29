@@ -11,9 +11,10 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         UserEntity::class,
         WeeklyWorkoutPlanEntity::class,
         WorkoutDayEntity::class,
-        WorkoutExerciseEntity::class
+        WorkoutExerciseEntity::class,
+        ExerciseSetEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -32,6 +33,39 @@ abstract class TrainrDatabase : RoomDatabase() {
                 db.execSQL(
                     "ALTER TABLE workout_exercises " +
                         "ADD COLUMN prescription TEXT NOT NULL DEFAULT ''"
+                )
+            }
+        }
+
+        // Per-set logging: how an exercise is measured, and a row per set
+        // holding both what was asked for and what was done.
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE workout_exercises " +
+                        "ADD COLUMN measure TEXT NOT NULL DEFAULT 'REPS'"
+                )
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS exercise_sets (
+                        id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                        workoutExerciseId INTEGER NOT NULL,
+                        setNumber INTEGER NOT NULL,
+                        targetReps INTEGER,
+                        targetWeightKg REAL,
+                        targetSeconds INTEGER,
+                        actualReps INTEGER,
+                        actualWeightKg REAL,
+                        actualSeconds INTEGER,
+                        isCompleted INTEGER NOT NULL,
+                        FOREIGN KEY(workoutExerciseId) REFERENCES workout_exercises(id)
+                            ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS index_exercise_sets_workoutExerciseId " +
+                        "ON exercise_sets (workoutExerciseId)"
                 )
             }
         }
