@@ -82,11 +82,6 @@ class RoutineDetailViewModel @Inject constructor() : ViewModel() {
         _uiState.update { it.copy(timer = null) }
     }
 
-    override fun onCleared() {
-        cancelTick()
-        super.onCleared()
-    }
-
     private fun cancelTick() {
         tickJob?.cancel()
         tickJob = null
