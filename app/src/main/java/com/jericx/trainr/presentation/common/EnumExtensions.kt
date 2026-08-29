@@ -35,6 +35,28 @@ fun FitnessGoal.getLocalizedName(): String = when (this) {
     FitnessGoal.FLEXIBILITY -> stringResource(R.string.flexibility_mobility_goal)
 }
 
+// The routine sentence reads "...a 3-day strength program focused on building
+// muscle", so the goal needs a gerund and the style a bare noun; neither of the
+// display labels fits that shape.
+@Composable
+fun FitnessGoal.getFocusPhrase(): String = when (this) {
+    FitnessGoal.WEIGHT_LOSS -> stringResource(R.string.goal_focus_lose_weight)
+    FitnessGoal.MUSCLE_GAIN -> stringResource(R.string.goal_focus_build_muscle)
+    FitnessGoal.STRENGTH -> stringResource(R.string.goal_focus_get_stronger)
+    FitnessGoal.ENDURANCE -> stringResource(R.string.goal_focus_improve_endurance)
+    FitnessGoal.GENERAL_FITNESS -> stringResource(R.string.goal_focus_general_fitness)
+    FitnessGoal.FLEXIBILITY -> stringResource(R.string.goal_focus_flexibility)
+}
+
+@Composable
+fun WorkoutType.getProgramPhrase(): String = when (this) {
+    WorkoutType.STRENGTH -> stringResource(R.string.program_strength)
+    WorkoutType.CARDIO -> stringResource(R.string.program_cardio)
+    WorkoutType.HIIT -> stringResource(R.string.program_hiit)
+    WorkoutType.YOGA -> stringResource(R.string.program_flexibility)
+    WorkoutType.MIXED -> stringResource(R.string.program_mixed)
+}
+
 @Composable
 fun WorkoutLocation.getLocalizedName(): String = when (this) {
     WorkoutLocation.HOME -> stringResource(R.string.home_location)

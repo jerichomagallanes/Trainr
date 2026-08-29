@@ -225,7 +225,7 @@
     <string name="limitations_label">Limitations</string>
     <string name="injuries_concerns_label">Injuries/Concerns</string>
     <string name="ai_routine_preview_label">AI Routine Preview</string>
-    <string name="ai_routine_description" formatted="false">Based on your profile, we\'ll create a %s strength program focused on %s.</string>
+    <string name="ai_routine_description">Based on your profile, we\'ll create a %1$s %2$s program focused on %3$s.</string>
     <string name="bodyweight_only_label">Bodyweight only</string>
     <string name="flexible_schedule">Flexible</string>
     <plurals name="days_per_week_format">
@@ -266,6 +266,18 @@
     <string name="improve_endurance_goal">Improve Endurance</string>
     <string name="general_fitness_goal">General Fitness</string>
     <string name="flexibility_mobility_goal">Flexibility &amp; Mobility</string>
+    <string name="program_length_format">%d-day</string>
+    <string name="goal_focus_lose_weight">losing weight</string>
+    <string name="goal_focus_build_muscle">building muscle</string>
+    <string name="goal_focus_get_stronger">getting stronger</string>
+    <string name="goal_focus_improve_endurance">improving endurance</string>
+    <string name="goal_focus_general_fitness">general fitness</string>
+    <string name="goal_focus_flexibility">flexibility and mobility</string>
+    <string name="program_strength">strength</string>
+    <string name="program_cardio">cardio</string>
+    <string name="program_hiit">HIIT</string>
+    <string name="program_flexibility">mobility</string>
+    <string name="program_mixed">balanced</string>
     
     <!-- Workout Locations -->
     <string name="home_location">Home</string>

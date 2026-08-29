@@ -35,7 +35,9 @@ import com.jericx.trainr.presentation.common.components.layout.TrainrScreenConte
 import com.jericx.trainr.presentation.common.components.layout.TrainrTopBar
 import com.jericx.trainr.presentation.common.components.typography.TrainrScreenTitle
 import com.jericx.trainr.presentation.common.components.typography.TrainrSubtitle
+import com.jericx.trainr.presentation.common.getFocusPhrase
 import com.jericx.trainr.presentation.common.getLocalizedName
+import com.jericx.trainr.presentation.common.getProgramPhrase
 import com.jericx.trainr.presentation.common.theme.Spacing
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -254,9 +256,16 @@ private fun AIPreviewCard(userProfile: UserProfile) {
                     Text(
                         text = stringResource(
                             R.string.ai_routine_description,
-                            if (userProfile.workoutDaysPerWeek == 0) stringResource(R.string.flexible_schedule)
-                            else "${userProfile.workoutDaysPerWeek}-day",
-                            stringResource(R.string.general_fitness_goal).lowercase()
+                            if (userProfile.workoutDaysPerWeek == 0) {
+                                stringResource(R.string.flexible_schedule)
+                            } else {
+                                stringResource(
+                                    R.string.program_length_format,
+                                    userProfile.workoutDaysPerWeek
+                                )
+                            },
+                            userProfile.workoutType.getProgramPhrase(),
+                            userProfile.fitnessGoal.getFocusPhrase()
                         ),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.background.copy(alpha = 0.9f)
