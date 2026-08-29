@@ -2,10 +2,12 @@ package com.jericx.trainr.presentation.onboarding.components.layout
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -19,9 +21,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.jericx.trainr.R
 import com.jericx.trainr.presentation.common.theme.Spacing
+import com.jericx.trainr.presentation.common.theme.TrainrTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,4 +67,18 @@ fun OnboardingTopBar(
         ),
         modifier = modifier
     )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun OnboardingTopBarPreview() {
+    TrainrTheme {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(Spacing.medium),
+            modifier = Modifier.padding(Spacing.medium)
+        ) {
+            OnboardingTopBar(onBackClick = {})
+            OnboardingTopBar(onBackClick = {}, showLogo = false)
+        }
+    }
 }

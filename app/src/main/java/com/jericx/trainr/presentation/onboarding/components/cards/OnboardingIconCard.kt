@@ -3,6 +3,7 @@ package com.jericx.trainr.presentation.onboarding.components.cards
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,8 +24,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.jericx.trainr.R
 import com.jericx.trainr.presentation.common.theme.Spacing
+import com.jericx.trainr.presentation.common.theme.TrainrTheme
 
 @Composable
 fun OnboardingIconCard(
@@ -106,6 +110,32 @@ fun OnboardingIconCard(
                     )
                 }
             }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun OnboardingIconCardPreview() {
+    TrainrTheme {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(Spacing.small),
+            modifier = Modifier.padding(Spacing.medium)
+        ) {
+            OnboardingIconCard(
+                iconRes = R.drawable.ic_fitness_center,
+                title = "Muscle Gain",
+                description = "Hypertrophy and mass-building programs",
+                isSelected = true,
+                onClick = {}
+            )
+            OnboardingIconCard(
+                iconRes = R.drawable.ic_directions_run,
+                title = "Endurance",
+                description = "Cardiovascular and stamina improvement",
+                isSelected = false,
+                onClick = {}
+            )
         }
     }
 }

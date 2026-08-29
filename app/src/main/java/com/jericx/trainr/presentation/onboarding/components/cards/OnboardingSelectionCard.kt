@@ -20,8 +20,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.jericx.trainr.presentation.common.theme.Spacing
+import com.jericx.trainr.presentation.common.theme.TrainrTheme
 
 @Composable
 fun OnboardingSelectionCard(
@@ -90,6 +92,25 @@ fun OnboardingSelectionCard(
                     )
                 }
             }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun OnboardingSelectionCardPreview() {
+    TrainrTheme {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(Spacing.small),
+            modifier = Modifier.padding(Spacing.medium)
+        ) {
+            OnboardingSelectionCard(
+                title = "Strength Training",
+                description = "Power and strength development",
+                isSelected = true,
+                onClick = {}
+            )
+            OnboardingSelectionCard(title = "General Fitness", isSelected = false, onClick = {})
         }
     }
 }

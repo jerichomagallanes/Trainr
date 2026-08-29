@@ -3,7 +3,9 @@ package com.jericx.trainr.presentation.common.components
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
@@ -28,11 +30,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jericx.trainr.R
 import com.jericx.trainr.data.preferences.LanguagePreferences
 import com.jericx.trainr.presentation.common.theme.Spacing
+import com.jericx.trainr.presentation.common.theme.TrainrTheme
 
 /**
  * Language selector component following app design patterns.
@@ -132,6 +136,29 @@ fun LanguageSelector(
                     }
                 )
             }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun LanguageSelectorPreview() {
+    TrainrTheme {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(Spacing.small),
+            modifier = Modifier.padding(Spacing.medium)
+        ) {
+            val english = LanguagePreferences.Language(
+                code = "en",
+                displayName = "English",
+                nativeName = "English"
+            )
+            LanguageSelector(currentLanguage = english, onLanguageSelected = {})
+            LanguageSelector(
+                currentLanguage = english,
+                onLanguageSelected = {},
+                compact = false
+            )
         }
     }
 }
