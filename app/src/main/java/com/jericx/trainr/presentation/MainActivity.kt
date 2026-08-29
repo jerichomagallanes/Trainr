@@ -19,7 +19,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
+import androidx.navigation.NavType
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import androidx.navigation.compose.rememberNavController
 import com.jericx.trainr.BuildConfig
 import com.jericx.trainr.data.preferences.LanguagePreferences
@@ -36,6 +38,7 @@ import com.jericx.trainr.presentation.onboarding.screens.ReviewScreen
 import com.jericx.trainr.presentation.onboarding.screens.WelcomeScreen
 import com.jericx.trainr.presentation.onboarding.screens.WorkoutSetupScreen
 import com.jericx.trainr.presentation.splash.SplashScreen
+import com.jericx.trainr.presentation.workout.DayCompletedScreen
 import com.jericx.trainr.presentation.workout.RoutineDetailRoute
 import com.jericx.trainr.presentation.workout.WeeklyPlanRoute
 import com.jericx.trainr.presentation.workout.WeeklyProgressScreen
@@ -203,7 +206,35 @@ fun AppContent(versionName: String) {
                 }
 
                 composable(Screen.RoutineDetail.route) {
-                    RoutineDetailRoute(onBackClick = { navController.popBackStack() })
+                    RoutineDetailRoute(
+                        onBackClick = { navController.popBackStack() },
+                        onRoutineCompleted = { dayNumber ->
+                            navController.navigate(Screen.DayCompleted.createRoute(dayNumber)) {
+                                popUpTo(Screen.RoutineDetail.route) { inclusive = true }
+                            }
+                        }
+                    )
+                }
+
+                composable(
+                    route = Screen.DayCompleted.route,
+                    arguments = listOf(
+                        navArgument(Screen.DayCompleted.ARG_DAY_NUMBER) { type = NavType.IntType }
+                    )
+                ) { entry ->
+                    DayCompletedScreen(
+                        dayNumber = entry.arguments
+                            ?.getInt(Screen.DayCompleted.ARG_DAY_NUMBER) ?: 1,
+                        onBackClick = { navController.popBackStack() },
+                        onViewProgressClick = {
+                            navController.navigate(Screen.WeeklyProgress.route)
+                        },
+                        onBackToRoutineClick = {
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(Screen.Home.route) { inclusive = true }
+                            }
+                        }
+                    )
                 }
 
                 composable(Screen.Home.route) {

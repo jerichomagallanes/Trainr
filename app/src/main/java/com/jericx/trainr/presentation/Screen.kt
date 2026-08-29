@@ -13,4 +13,9 @@ sealed class Screen(val route: String) {
     data object Home : Screen("home_screen")
     data object WeeklyProgress : Screen("weekly_progress_screen")
     data object RoutineDetail : Screen("routine_detail_screen")
+    data object DayCompleted : Screen("day_completed_screen/{dayNumber}") {
+        const val ARG_DAY_NUMBER = "dayNumber"
+
+        fun createRoute(dayNumber: Int) = "day_completed_screen/$dayNumber"
+    }
 }

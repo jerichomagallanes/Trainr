@@ -34,6 +34,24 @@ class RoutineDetailViewModelTest {
 
     private fun RoutineDetailViewModel.isCompleted(position: Int) = exercise(position).isCompleted
 
+    // The design's completion screen reads "Day 2": Cardio & Core is the second
+    // workout day of the week, even though its dayNumber is 3 (Wednesday).
+    @Test
+    fun theRoutineKnowsWhichWorkoutDayOfTheWeekItIs() = runTest {
+        assertThat(RoutineDetailViewModel().uiState.value.dayNumber).isEqualTo(2)
+    }
+
+    @Test
+    fun aRoutineIsNotCompleteUntilEveryExerciseIs() = runTest {
+        val viewModel = RoutineDetailViewModel()
+
+        assertThat(viewModel.uiState.value.routine.isComplete).isFalse()
+
+        viewModel.completeRoutine()
+
+        assertThat(viewModel.uiState.value.routine.isComplete).isTrue()
+    }
+
     @Test
     fun startingATimerCountsDownFromTheExerciseDuration() = runTest {
         val viewModel = RoutineDetailViewModel()

@@ -5,6 +5,7 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -63,9 +64,9 @@ fun TrainrButton(
     val textColor by animateColorAsState(
         targetValue = when {
             !enabled && isPrimary -> MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
-            !enabled && !isPrimary -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+            !enabled && !isPrimary -> MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
             isPrimary -> MaterialTheme.colorScheme.onPrimary
-            else -> MaterialTheme.colorScheme.onSurface
+            else -> MaterialTheme.colorScheme.primary
         },
         animationSpec = tween(
             durationMillis = Animation.DurationShort,
@@ -105,6 +106,11 @@ fun TrainrButton(
                 containerColor = buttonColor,
                 disabledContainerColor = buttonColor
             ),
+            border = if (isPrimary) {
+                null
+            } else {
+                BorderStroke(2.dp, MaterialTheme.colorScheme.onBackground)
+            },
             shape = MaterialTheme.shapes.medium
         ) {
             Text(

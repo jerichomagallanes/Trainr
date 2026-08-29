@@ -14,6 +14,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,9 +47,16 @@ import com.jericx.trainr.presentation.workout.util.WorkoutDateFormatter
 @Composable
 fun RoutineDetailRoute(
     onBackClick: () -> Unit = {},
+    onRoutineCompleted: (Int) -> Unit = {},
     viewModel: RoutineDetailViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // However the last exercise gets ticked — the slider or its own checkbox —
+    // finishing the routine is what ends the day.
+    LaunchedEffect(state.routine.isComplete) {
+        if (state.routine.isComplete) onRoutineCompleted(state.dayNumber)
+    }
 
     RoutineDetailScreen(
         state = state,

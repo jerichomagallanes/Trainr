@@ -23,7 +23,8 @@ data class RoutineDetailUiState(
     val dateMillis: Long,
     val timer: ExerciseTimerUi? = null,
     val expandedVideos: Set<Int> = emptySet(),
-    val playingVideo: Int? = null
+    val playingVideo: Int? = null,
+    val dayNumber: Int = 1
 )
 
 @HiltViewModel
@@ -137,13 +138,16 @@ class RoutineDetailViewModel @Inject constructor() : ViewModel() {
         // Only the Cardio & Core day has exercises, so the screen shows that one
         // until routines are generated.
         fun sampleState(): RoutineDetailUiState {
-            val day = SampleWorkoutData.weekOne.workoutDays
-                .first { it.dayNumber == SampleRoutine.DAY_NUMBER }
+            val days = SampleWorkoutData.weekOne.workoutDays
+            val index = days.indexOfFirst { it.dayNumber == SampleRoutine.DAY_NUMBER }
+            val day = days[index]
 
             return RoutineDetailUiState(
                 routine = SampleRoutine.cardioAndCore,
                 equipment = day.equipment,
-                dateMillis = SampleWorkoutData.dateOf(day.dayNumber)
+                dateMillis = SampleWorkoutData.dateOf(day.dayNumber),
+                // "Day 2", not day 3: the design counts workout days, not weekdays.
+                dayNumber = index + 1
             )
         }
     }
