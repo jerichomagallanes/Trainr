@@ -16,7 +16,8 @@ fun WorkoutDay.toRoutineUi(): RoutineUi = RoutineUi(
             detail = exercise.prescription,
             measure = exercise.measure,
             sets = exercise.sets,
-            videoUrl = exercise.videoTutorialUrl,
+            videoUrl = exercise.videoTutorialUrl
+                ?: ExerciseVideoCatalog.urlFor(exercise.exerciseKey),
             isCompleted = exercise.isCompleted
         )
     }

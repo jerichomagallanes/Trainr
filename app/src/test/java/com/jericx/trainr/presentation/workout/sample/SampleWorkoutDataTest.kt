@@ -184,13 +184,16 @@ class SampleWorkoutDataTest {
     }
 
     // A tutorial the parser cannot read is a card with a dead toggle on it.
+    // The design shows one on every card, so every day must resolve a video
+    // for each of its exercises through the catalog.
     @Test
     fun everyExerciseLinksAVideoTheParserCanRead() {
-        val videos = SampleWorkoutData.dayFor(SampleWorkoutData.DEFAULT_DAY_NUMBER)
-            .toRoutineUi().exercises.map { YouTubeVideo.from(it.videoUrl) }
+        SampleWorkoutData.weekOne.workoutDays.forEach { day ->
+            val videos = day.toRoutineUi().exercises.map { YouTubeVideo.from(it.videoUrl) }
 
-        assertThat(videos).doesNotContain(null)
-        assertThat(videos.map { it?.id }.toSet()).hasSize(videos.size)
+            assertThat(videos).doesNotContain(null)
+            assertThat(videos.map { it?.id }.toSet()).hasSize(videos.size)
+        }
     }
 
 }

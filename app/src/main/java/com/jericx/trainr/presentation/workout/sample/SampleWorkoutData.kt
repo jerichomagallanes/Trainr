@@ -130,7 +130,6 @@ object SampleWorkoutData {
                             durationMinutes = 5,
                             prescription = "5 minutes",
                             instructions = "Light jogging in place to get your heart rate up and muscles warm.",
-                            videoTutorialUrl = "https://www.youtube.com/watch?v=xmkYBO85leM",
                             isCompleted = true
                         ),
                         WorkoutExercise(
@@ -141,8 +140,7 @@ object SampleWorkoutData {
                             durationMinutes = 10,
                             prescription = "5 sets of 1 minute",
                             instructions = "Quick bursts of intense effort with short rest to boost " +
-                                "cardio, burn fat, and build endurance.",
-                            videoTutorialUrl = "https://www.youtube.com/watch?v=WofWmk-4qU4"
+                                "cardio, burn fat, and build endurance."
                         ),
                         WorkoutExercise(
                             exerciseKey = "bicycle_crunch",
@@ -151,8 +149,7 @@ object SampleWorkoutData {
                             sets = repSets(3, reps = 20),
                             durationMinutes = 5,
                             prescription = "3 sets of 20 reps",
-                            instructions = "Core exercise with alternating elbow-to-knee twists to target abs and obliques.",
-                            videoTutorialUrl = "https://www.youtube.com/watch?v=kDPxFoCmb-w"
+                            instructions = "Core exercise with alternating elbow-to-knee twists to target abs and obliques."
                         ),
                         WorkoutExercise(
                             exerciseKey = "russian_twist",
@@ -161,8 +158,7 @@ object SampleWorkoutData {
                             sets = repSets(3, reps = 15),
                             durationMinutes = 4,
                             prescription = "3 sets of 15 reps",
-                            instructions = "Seated core exercise involving torso rotation to engage abs and obliques.",
-                            videoTutorialUrl = "https://www.youtube.com/watch?v=IJDOoVyVjhc"
+                            instructions = "Seated core exercise involving torso rotation to engage abs and obliques."
                         ),
                         WorkoutExercise(
                             exerciseKey = "leg_raise",
@@ -171,8 +167,7 @@ object SampleWorkoutData {
                             sets = repSets(3, reps = 12),
                             durationMinutes = 4,
                             prescription = "3 sets of 12 reps",
-                            instructions = "Lying core exercise that lifts legs to strengthen lower abs and hip flexors.",
-                            videoTutorialUrl = "https://www.youtube.com/watch?v=0tzBVqiDwSs"
+                            instructions = "Lying core exercise that lifts legs to strengthen lower abs and hip flexors."
                         )
                     )
                 ),

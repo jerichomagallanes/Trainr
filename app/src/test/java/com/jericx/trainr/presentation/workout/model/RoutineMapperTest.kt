@@ -10,6 +10,7 @@ class RoutineMapperTest {
 
     private fun exercise(
         name: String,
+        exerciseKey: String = "",
         durationMinutes: Int = 5,
         prescription: String = "3 sets of 10 reps",
         instructions: String = "Do the thing.",
@@ -17,6 +18,7 @@ class RoutineMapperTest {
         isCompleted: Boolean = false
     ) = WorkoutExercise(
         name = name,
+        exerciseKey = exerciseKey,
         durationMinutes = durationMinutes,
         prescription = prescription,
         instructions = instructions,
@@ -89,9 +91,33 @@ class RoutineMapperTest {
     }
 
     @Test
-    fun anExerciseWithNoVideoMapsToNoVideo() {
-        val routine = day(exercise("Plank", videoTutorialUrl = null)).toRoutineUi()
+    fun anExerciseUnknownToTheCatalogMapsToNoVideo() {
+        val routine = day(
+            exercise("Basket Weaving", exerciseKey = "basket_weaving", videoTutorialUrl = null)
+        ).toRoutineUi()
 
         assertThat(routine.exercises.single().videoUrl).isNull()
+    }
+
+    @Test
+    fun anExerciseWithoutAStoredVideoFallsBackToTheCatalog() {
+        val routine = day(exercise("Plank", exerciseKey = "plank")).toRoutineUi()
+
+        val videoUrl = routine.exercises.single().videoUrl
+        assertThat(videoUrl).isNotNull()
+        assertThat(videoUrl).isEqualTo(ExerciseVideoCatalog.urlFor("plank"))
+    }
+
+    @Test
+    fun aStoredVideoWinsOverTheCatalog() {
+        val routine = day(
+            exercise(
+                "Plank",
+                exerciseKey = "plank",
+                videoTutorialUrl = "https://youtu.be/abcdefghijk"
+            )
+        ).toRoutineUi()
+
+        assertThat(routine.exercises.single().videoUrl).isEqualTo("https://youtu.be/abcdefghijk")
     }
 }
