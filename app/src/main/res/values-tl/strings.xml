@@ -158,6 +158,10 @@
     <string name="weekly_progress">LINGGUHANG PROGRESS</string>
     <string name="completed_percentage" formatted="false">%d%% Tapos na (%d%%)</string>
     <string name="start_todays_workout">SIMULAN ANG WORKOUT NGAYONG ARAW</string>
+    <string name="day_completed_format">TAPOS NA ANG ARAW %d</string>
+    <string name="day_completed_message">Magaling! Natapos mo na ang workout ngayong araw. Ituloy mo lang ang momentum.</string>
+    <string name="view_weekly_progress">Tingnan ang Lingguhang Progreso</string>
+    <string name="back_to_weekly_routine">Bumalik sa Lingguhang Rutina</string>
     <string name="slide_to_complete_routine">I-SLIDE PARA TAPUSIN ANG BUONG RUTINA</string>
     <string name="day_number">ARAW %d</string>
     <string name="full_body_strength">Full Body Strength</string>

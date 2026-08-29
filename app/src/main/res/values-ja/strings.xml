@@ -157,6 +157,10 @@
     <string name="weekly_progress">週間進歩</string>
     <string name="completed_percentage" formatted="false">%d%% 完了 (%d%%)</string>
     <string name="start_todays_workout">今日のワークアウトを開始</string>
+    <string name="day_completed_format">%d日目 完了</string>
+    <string name="day_completed_message">お疲れさまでした！今日のワークアウトが完了しました。この調子で続けましょう。</string>
+    <string name="view_weekly_progress">週間の進捗を見る</string>
+    <string name="back_to_weekly_routine">週間ルーティンに戻る</string>
     <string name="slide_to_complete_routine">スライドしてルーティンをすべて完了</string>
     <string name="day_number">第%d日</string>
     <string name="full_body_strength">全身筋力</string>

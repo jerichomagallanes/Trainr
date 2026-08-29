@@ -157,6 +157,10 @@
     <string name="weekly_progress">WEEKLY PROGRESS</string>
     <string name="completed_percentage" formatted="false">%d%% Completed (%d%%)</string>
     <string name="start_todays_workout">START TODAY\'S WORKOUT</string>
+    <string name="day_completed_format">DAY %d COMPLETED</string>
+    <string name="day_completed_message">Nice job! You\'ve completed today\'s workout. Keep the momentum going.</string>
+    <string name="view_weekly_progress">View Weekly Progress</string>
+    <string name="back_to_weekly_routine">Back to Weekly Routine</string>
     <string name="slide_to_complete_routine">SLIDE TO COMPLETE ALL ROUTINE</string>
     <string name="day_number">DAY %d</string>
     <string name="full_body_strength">Full Body Strength</string>
