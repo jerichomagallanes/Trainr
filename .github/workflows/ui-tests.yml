@@ -1,0 +1,90 @@
+name: UI tests
+
+# Instrumentation tests need a booted emulator, so they are kept out of the CI
+# workflow: they run automatically on every PR, but they are deliberately NOT a
+# required check. Emulator flakes should never be able to block a merge on their
+# own — read the result, re-run if it looks like a flake, investigate if it
+# doesn't. The nightly run on main catches anything that slipped through.
+on:
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.gitignore'
+      - '.editorconfig'
+  schedule:
+    - cron: '0 18 * * *'  # 03:00 JST daily, against main
+  workflow_dispatch:
+
+concurrency:
+  group: ui-tests-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  instrumentation:
+    name: Instrumentation tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      checks: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: ./.github/actions/setup-android
+
+      # Hardware acceleration. Without KVM the emulator falls back to software
+      # and either times out or never finishes booting on a hosted runner.
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      # A hosted runner has ~14 GB free, and the system image plus the build
+      # output can exhaust it — which surfaces as a confusing "connection
+      # refused" from adb rather than an out-of-space error. Only toolchains
+      # that are irrelevant to an Android build are removed; the Android SDK and
+      # NDK are left alone.
+      - name: Free up disk space
+        run: |
+          df -h /
+          sudo rm -rf /usr/share/dotnet /opt/ghc /opt/hostedtoolcache/CodeQL
+          sudo docker image prune --all --force || true
+          df -h /
+
+      # The device is declared in app/build.gradle.kts as a Gradle Managed
+      # Device, so `./gradlew ciAtdDevDebugAndroidTest` runs the identical
+      # emulator locally and in CI. Gradle creates, boots and tears down the
+      # device itself, and swiftshader_indirect gives a stable software GPU.
+      - name: Run instrumentation tests
+        run: |
+          ./gradlew ciAtdDevDebugAndroidTest \
+            -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect
+
+      - name: Publish test results
+        if: ${{ !cancelled() }}
+        uses: mikepenz/action-junit-report@a9170d5795813c01ab4901ffb045b52bab4ab09d # v6.5.0
+        with:
+          report_paths: app/build/outputs/androidTest-results/**/TEST-*.xml
+          check_name: Instrumentation test results
+          detailed_summary: true
+          include_passed: false
+          job_summary: true
+          require_tests: false
+
+      - name: Upload test report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: instrumentation-test-report
+          path: |
+            app/build/reports/androidTests/
+            app/build/outputs/androidTest-results/
+          retention-days: 14

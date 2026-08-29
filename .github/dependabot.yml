@@ -1,0 +1,43 @@
+version: 2
+
+updates:
+  # Gradle dependencies, read from gradle/libs.versions.toml.
+  - package-ecosystem: gradle
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+    # Grouped so a week of updates arrives as a few reviewable PRs instead of
+    # twenty. Each group still has to pass CI before it can merge.
+    groups:
+      androidx:
+        patterns:
+          - 'androidx.*'
+      compose:
+        patterns:
+          - 'androidx.compose*'
+      kotlin:
+        patterns:
+          - 'org.jetbrains.kotlin*'
+          - 'com.google.devtools.ksp*'
+      hilt:
+        patterns:
+          - 'com.google.dagger*'
+      test:
+        patterns:
+          - 'junit*'
+          - 'io.mockk*'
+          - 'com.google.truth*'
+
+  # Keeps the pinned action SHAs in .github/workflows current.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    labels:
+      - dependencies
+      - ci

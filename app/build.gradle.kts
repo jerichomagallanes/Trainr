@@ -76,10 +76,30 @@ android {
         }
     }
 
+    lint {
+        // Emit SARIF so CI can publish lint findings into GitHub code scanning.
+        sarifReport = true
+        abortOnError = true
+    }
+
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
             isReturnDefaultValues = true
+        }
+
+        // Gradle Managed Devices: the emulator definition lives in the build file
+        // instead of the CI config, so local runs and CI use the exact same device.
+        // ATD (Automated Test Device) images boot faster and are far less flaky on
+        // headless runners than the full google_apis images.
+        managedDevices {
+            localDevices {
+                create("ciAtd") {
+                    device = "Pixel 6"
+                    apiLevel = 34
+                    systemImageSource = "aosp-atd"
+                }
+            }
         }
     }
 }
