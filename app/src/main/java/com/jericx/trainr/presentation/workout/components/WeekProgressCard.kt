@@ -73,8 +73,13 @@ fun WeekProgressCard(
         Column(
             modifier = Modifier
                 .weight(1f)
-                .padding(horizontal = Spacing.small + Spacing.extraSmall, vertical = Spacing.small + Spacing.extraSmall),
-            verticalArrangement = Arrangement.spacedBy(Spacing.small)
+                .padding(
+                    start = Spacing.small + Spacing.extraSmall,
+                    end = Spacing.small + Spacing.extraSmall,
+                    top = Spacing.small + Spacing.extraSmall,
+                    bottom = Spacing.small + Spacing.extraSmall
+                ),
+            verticalArrangement = Arrangement.spacedBy(Spacing.screen)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -105,28 +110,32 @@ fun WeekProgressCard(
                 WeekStatusChip(status = status)
             }
 
-            Text(
-                text = stringResource(
-                    R.string.days_completed_format,
-                    completedDays,
-                    totalDays,
-                    completionPercentage
-                ),
-                style = MaterialTheme.typography.labelMedium,
-                color = Slate800,
-                modifier = Modifier
-                    .background(Gray100, MaterialTheme.shapes.medium)
-                    .padding(horizontal = Spacing.card, vertical = 5.dp)
-            )
-        }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(
+                        R.string.days_completed_format,
+                        completedDays,
+                        totalDays,
+                        completionPercentage
+                    ),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Slate800,
+                    modifier = Modifier
+                        .background(Gray100, MaterialTheme.shapes.medium)
+                        .padding(horizontal = Spacing.card, vertical = 5.dp)
+                )
 
-        Image(
-            painter = painterResource(R.drawable.ic_arrow_forward_circle),
-            contentDescription = null,
-            modifier = Modifier
-                .padding(end = Spacing.small)
-                .size(30.dp)
-        )
+                Image(
+                    painter = painterResource(R.drawable.ic_arrow_forward_circle),
+                    contentDescription = null,
+                    modifier = Modifier.size(30.dp)
+                )
+            }
+        }
     }
 }
 
