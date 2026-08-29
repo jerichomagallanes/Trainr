@@ -99,7 +99,7 @@ private fun LoadingIndicator(
     totalCount: Int
 ) {
     Row(
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
         verticalAlignment = Alignment.CenterVertically
     ) {
         repeat(totalCount) { index ->

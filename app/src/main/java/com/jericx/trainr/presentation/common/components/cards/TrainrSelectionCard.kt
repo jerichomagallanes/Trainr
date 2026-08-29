@@ -68,7 +68,7 @@ fun TrainrSelectionCard(
             )
 
             Column(
-                modifier = Modifier.padding(end = 48.dp)
+                modifier = Modifier.padding(end = Spacing.huge)
             ) {
                 Text(
                     text = title,

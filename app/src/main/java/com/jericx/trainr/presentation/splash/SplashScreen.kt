@@ -10,8 +10,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.jericx.trainr.R
+import com.jericx.trainr.presentation.common.theme.Spacing
 
 @Composable
 fun SplashScreen(versionName: String) {
@@ -23,12 +23,12 @@ fun SplashScreen(versionName: String) {
             Text(
                 text = stringResource(R.string.app_name),
                 style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.padding(top = 16.dp)
+                modifier = Modifier.padding(top = Spacing.medium)
             )
             Text(
                 text = stringResource(R.string.version_format, versionName),
                 style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(top = 8.dp)
+                modifier = Modifier.padding(top = Spacing.small)
             )
         }
     }
