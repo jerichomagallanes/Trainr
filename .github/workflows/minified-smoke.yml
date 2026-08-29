@@ -61,28 +61,4 @@ jobs:
           arch: x86_64
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          script: |
-            set -e
-            adb install -r app/build/outputs/apk/dev/minified/app-dev-minified.apk
-            adb logcat -c
-            adb shell am start -n com.jericx.trainr.dev/com.jericx.trainr.presentation.MainActivity
-            sleep 10
-
-            # Walk past the splash and into the first onboarding step, so the
-            # check covers more than Application.onCreate.
-            adb shell input tap 540 2008 || true
-            sleep 5
-
-            if ! adb shell pidof com.jericx.trainr.dev > /dev/null; then
-              echo "::error::The minified app is not running — it crashed after launch."
-              adb logcat -d | tail -n 100
-              exit 1
-            fi
-
-            if adb logcat -d | grep -q 'FATAL EXCEPTION'; then
-              echo "::error::FATAL EXCEPTION in the minified build — most likely a missing R8 keep rule."
-              adb logcat -d | grep -A 30 'FATAL EXCEPTION' | head -60
-              exit 1
-            fi
-
-            echo "Minified build launched and survived navigation."
+          script: bash scripts/minified-smoke.sh
