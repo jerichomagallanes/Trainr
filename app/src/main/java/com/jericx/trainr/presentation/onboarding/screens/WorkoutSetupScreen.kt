@@ -30,22 +30,22 @@ import com.jericx.trainr.domain.model.WorkoutLocation
 import com.jericx.trainr.domain.model.WorkoutTime
 import com.jericx.trainr.presentation.common.components.TrainrTopBar
 import com.jericx.trainr.presentation.common.theme.Spacing
-import com.jericx.trainr.presentation.onboarding.components.cards.OnboardingLocationCard
-import com.jericx.trainr.presentation.onboarding.components.cards.OnboardingSelectionCard
-import com.jericx.trainr.presentation.onboarding.components.core.OnboardingButton
-import com.jericx.trainr.presentation.onboarding.components.core.OnboardingCheckboxChip
-import com.jericx.trainr.presentation.onboarding.components.core.OnboardingDropdown
-import com.jericx.trainr.presentation.onboarding.components.core.OnboardingMultiSelectChip
-import com.jericx.trainr.presentation.onboarding.components.core.OnboardingProgress
-import com.jericx.trainr.presentation.onboarding.components.core.OnboardingRadioChip
-import com.jericx.trainr.presentation.onboarding.components.core.OnboardingToggleChip
-import com.jericx.trainr.presentation.onboarding.components.layout.OnboardingChipGroup
-import com.jericx.trainr.presentation.onboarding.components.layout.OnboardingFlowRow
-import com.jericx.trainr.presentation.onboarding.components.layout.OnboardingFormSection
-import com.jericx.trainr.presentation.onboarding.components.layout.OnboardingScaffold
-import com.jericx.trainr.presentation.onboarding.components.layout.OnboardingScreenContent
-import com.jericx.trainr.presentation.onboarding.components.typography.OnboardingScreenTitle
-import com.jericx.trainr.presentation.onboarding.components.typography.OnboardingSectionTitle
+import com.jericx.trainr.presentation.common.components.cards.TrainrLocationCard
+import com.jericx.trainr.presentation.common.components.cards.TrainrSelectionCard
+import com.jericx.trainr.presentation.common.components.core.TrainrButton
+import com.jericx.trainr.presentation.common.components.core.TrainrCheckboxChip
+import com.jericx.trainr.presentation.common.components.core.TrainrDropdown
+import com.jericx.trainr.presentation.common.components.core.TrainrMultiSelectChip
+import com.jericx.trainr.presentation.common.components.core.TrainrProgress
+import com.jericx.trainr.presentation.common.components.core.TrainrRadioChip
+import com.jericx.trainr.presentation.common.components.core.TrainrToggleChip
+import com.jericx.trainr.presentation.common.components.layout.TrainrChipGroup
+import com.jericx.trainr.presentation.common.components.layout.TrainrFlowRow
+import com.jericx.trainr.presentation.common.components.layout.TrainrFormSection
+import com.jericx.trainr.presentation.common.components.layout.TrainrScaffold
+import com.jericx.trainr.presentation.common.components.layout.TrainrScreenContent
+import com.jericx.trainr.presentation.common.components.typography.TrainrScreenTitle
+import com.jericx.trainr.presentation.common.components.typography.TrainrSectionTitle
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -65,13 +65,13 @@ fun WorkoutSetupScreen(
     var selectedDuration by remember { mutableIntStateOf(Constants.Workout.DEFAULT_WORKOUT_DURATION) }
     var selectedTime by remember { mutableStateOf(WorkoutTime.MORNING) }
 
-    OnboardingScaffold(
+    TrainrScaffold(
         onBackClick = onBackClick,
         topBar = {
             TrainrTopBar(onBackClick = onBackClick, showLogo = true)
         },
         bottomButton = {
-            OnboardingButton(
+            TrainrButton(
                 text = stringResource(R.string.next),
                 onClick = {
                     selectedLocation?.let { location ->
@@ -92,20 +92,20 @@ fun WorkoutSetupScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            OnboardingProgress(
+            TrainrProgress(
                 currentStep = 4,
                 totalSteps = 7,
                 modifier = Modifier.padding(horizontal = Spacing.large)
             )
 
-            OnboardingScreenContent {
+            TrainrScreenContent {
                 Spacer(modifier = Modifier.height(Spacing.extraLarge))
 
-                OnboardingScreenTitle(text = stringResource(R.string.set_up_your_workout))
+                TrainrScreenTitle(text = stringResource(R.string.set_up_your_workout))
 
                 Spacer(modifier = Modifier.height(Spacing.extraLarge))
 
-                OnboardingSectionTitle(stringResource(R.string.where_will_you_work_out))
+                TrainrSectionTitle(stringResource(R.string.where_will_you_work_out))
 
                 Spacer(modifier = Modifier.height(Spacing.medium))
 
@@ -113,7 +113,7 @@ fun WorkoutSetupScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(Spacing.small)
                 ) {
-                    OnboardingLocationCard(
+                    TrainrLocationCard(
                         text = stringResource(R.string.home),
                         iconRes = R.drawable.ic_house,
                         isSelected = selectedLocation == WorkoutLocation.HOME,
@@ -123,7 +123,7 @@ fun WorkoutSetupScreen(
                         },
                         modifier = Modifier.weight(1f)
                     )
-                    OnboardingLocationCard(
+                    TrainrLocationCard(
                         text = stringResource(R.string.gym),
                         iconRes = R.drawable.ic_fitness_center,
                         isSelected = selectedLocation == WorkoutLocation.GYM,
@@ -133,7 +133,7 @@ fun WorkoutSetupScreen(
                         },
                         modifier = Modifier.weight(1f)
                     )
-                    OnboardingLocationCard(
+                    TrainrLocationCard(
                         text = stringResource(R.string.both),
                         iconRes = R.drawable.ic_sync_alt,
                         isSelected = selectedLocation == WorkoutLocation.BOTH,
@@ -148,7 +148,7 @@ fun WorkoutSetupScreen(
                 if (selectedLocation != null) {
                     Spacer(modifier = Modifier.height(Spacing.large))
 
-                    OnboardingFormSection(title = stringResource(R.string.available_equipment)) {
+                    TrainrFormSection(title = stringResource(R.string.available_equipment)) {
                         val equipmentOptions = when (selectedLocation) {
                             WorkoutLocation.HOME -> listOf(
                                 Equipment.NONE to stringResource(R.string.bodyweight_only),
@@ -175,7 +175,7 @@ fun WorkoutSetupScreen(
                             verticalArrangement = Arrangement.spacedBy(Spacing.small)
                         ) {
                             equipmentOptions.forEach { (equipment, label) ->
-                                OnboardingToggleChip(
+                                TrainrToggleChip(
                                     text = label,
                                     selected = selectedEquipment.contains(equipment),
                                     onClick = {
@@ -202,8 +202,8 @@ fun WorkoutSetupScreen(
 
                 Spacer(modifier = Modifier.height(Spacing.large))
 
-                OnboardingFormSection(title = stringResource(R.string.workout_days_per_week)) {
-                    OnboardingDropdown(
+                TrainrFormSection(title = stringResource(R.string.workout_days_per_week)) {
+                    TrainrDropdown(
                         selectedValue = selectedDays.toString(),
                         options = Constants.Workout.DAYS_PER_WEEK_OPTIONS.map { days ->
                             stringResource(
@@ -220,14 +220,14 @@ fun WorkoutSetupScreen(
 
                 Spacer(modifier = Modifier.height(Spacing.large))
 
-                OnboardingFormSection(title = stringResource(R.string.session_duration)) {
+                TrainrFormSection(title = stringResource(R.string.session_duration)) {
                     FlowRow(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(Spacing.small),
                         verticalArrangement = Arrangement.spacedBy(Spacing.small)
                     ) {
                         Constants.Workout.DURATION_OPTIONS.forEach { duration ->
-                            OnboardingToggleChip(
+                            TrainrToggleChip(
                                 text = stringResource(R.string.duration_mins, duration),
                                 selected = selectedDuration == duration,
                                 onClick = { selectedDuration = duration }
@@ -238,31 +238,31 @@ fun WorkoutSetupScreen(
 
                 Spacer(modifier = Modifier.height(Spacing.large))
 
-                OnboardingFormSection(title = stringResource(R.string.preferred_workout_time)) {
+                TrainrFormSection(title = stringResource(R.string.preferred_workout_time)) {
                     Column(
                         verticalArrangement = Arrangement.spacedBy(Spacing.small)
                     ) {
-                        OnboardingRadioChip(
+                        TrainrRadioChip(
                             text = stringResource(R.string.early_morning_time),
                             selected = selectedTime == WorkoutTime.EARLY_MORNING,
                             onClick = { selectedTime = WorkoutTime.EARLY_MORNING }
                         )
-                        OnboardingRadioChip(
+                        TrainrRadioChip(
                             text = stringResource(R.string.morning_time),
                             selected = selectedTime == WorkoutTime.MORNING,
                             onClick = { selectedTime = WorkoutTime.MORNING }
                         )
-                        OnboardingRadioChip(
+                        TrainrRadioChip(
                             text = stringResource(R.string.afternoon_time),
                             selected = selectedTime == WorkoutTime.AFTERNOON,
                             onClick = { selectedTime = WorkoutTime.AFTERNOON }
                         )
-                        OnboardingRadioChip(
+                        TrainrRadioChip(
                             text = stringResource(R.string.evening_time),
                             selected = selectedTime == WorkoutTime.EVENING,
                             onClick = { selectedTime = WorkoutTime.EVENING }
                         )
-                        OnboardingRadioChip(
+                        TrainrRadioChip(
                             text = stringResource(R.string.flexible_anytime),
                             selected = selectedTime == WorkoutTime.ANYTIME,
                             onClick = { selectedTime = WorkoutTime.ANYTIME }

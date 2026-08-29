@@ -29,15 +29,15 @@ import androidx.compose.ui.text.withStyle
 import com.jericx.trainr.R
 import com.jericx.trainr.common.Constants
 import com.jericx.trainr.presentation.common.theme.Spacing
-import com.jericx.trainr.presentation.onboarding.components.core.OnboardingButton
-import com.jericx.trainr.presentation.onboarding.components.core.OnboardingProgress
-import com.jericx.trainr.presentation.onboarding.components.core.OnboardingTextField
-import com.jericx.trainr.presentation.onboarding.components.core.OnboardingToggleChip
-import com.jericx.trainr.presentation.onboarding.components.layout.OnboardingFormSection
-import com.jericx.trainr.presentation.onboarding.components.layout.OnboardingScaffold
-import com.jericx.trainr.presentation.onboarding.components.layout.OnboardingScreenContent
-import com.jericx.trainr.presentation.onboarding.components.typography.OnboardingScreenTitle
-import com.jericx.trainr.presentation.onboarding.components.typography.OnboardingSubtitle
+import com.jericx.trainr.presentation.common.components.core.TrainrButton
+import com.jericx.trainr.presentation.common.components.core.TrainrProgress
+import com.jericx.trainr.presentation.common.components.core.TrainrTextField
+import com.jericx.trainr.presentation.common.components.core.TrainrToggleChip
+import com.jericx.trainr.presentation.common.components.layout.TrainrFormSection
+import com.jericx.trainr.presentation.common.components.layout.TrainrScaffold
+import com.jericx.trainr.presentation.common.components.layout.TrainrScreenContent
+import com.jericx.trainr.presentation.common.components.typography.TrainrScreenTitle
+import com.jericx.trainr.presentation.common.components.typography.TrainrSubtitle
 import com.jericx.trainr.presentation.onboarding.util.BodyMetricsConverter
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -76,10 +76,10 @@ fun BodyMetricsScreen(
         useMetric = toMetric
     }
 
-    OnboardingScaffold(
+    TrainrScaffold(
         onBackClick = onBackClick,
         bottomButton = {
-            OnboardingButton(
+            TrainrButton(
                 text = stringResource(R.string.next),
                 onClick = {
                     val (h, w) = BodyMetricsConverter.parseMetrics(height, weight, useMetric)
@@ -94,20 +94,20 @@ fun BodyMetricsScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            OnboardingProgress(
+            TrainrProgress(
                 currentStep = 2,
                 totalSteps = 7,
                 modifier = Modifier.padding(horizontal = Spacing.large)
             )
 
-            OnboardingScreenContent {
+            TrainrScreenContent {
                 Spacer(modifier = Modifier.height(Spacing.extraLarge))
 
-                OnboardingScreenTitle(text = stringResource(R.string.your_measurements))
+                TrainrScreenTitle(text = stringResource(R.string.your_measurements))
 
                 Spacer(modifier = Modifier.height(Spacing.small))
 
-                OnboardingSubtitle(
+                TrainrSubtitle(
                     text = stringResource(R.string.measurements_description)
                 )
 
@@ -117,13 +117,13 @@ fun BodyMetricsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
                 ) {
-                    OnboardingToggleChip(
+                    TrainrToggleChip(
                         text = stringResource(R.string.metric),
                         selected = useMetric,
                         onClick = { switchUnits(toMetric = true) },
                         modifier = Modifier.weight(1f)
                     )
-                    OnboardingToggleChip(
+                    TrainrToggleChip(
                         text = stringResource(R.string.imperial),
                         selected = !useMetric,
                         onClick = { switchUnits(toMetric = false) },
@@ -133,10 +133,10 @@ fun BodyMetricsScreen(
 
                 Spacer(modifier = Modifier.height(Spacing.extraLarge))
 
-                OnboardingFormSection(
+                TrainrFormSection(
                     title = if (useMetric) stringResource(R.string.height_cm) else stringResource(R.string.height_ft_in)
                 ) {
-                    OnboardingTextField(
+                    TrainrTextField(
                         value = height,
                         onValueChange = {
                             if (useMetric) {
@@ -156,10 +156,10 @@ fun BodyMetricsScreen(
 
                 Spacer(modifier = Modifier.height(Spacing.extraLarge))
 
-                OnboardingFormSection(
+                TrainrFormSection(
                     title = if (useMetric) stringResource(R.string.weight_kg) else stringResource(R.string.weight_lbs)
                 ) {
-                    OnboardingTextField(
+                    TrainrTextField(
                         value = weight,
                         onValueChange = {
                             if (it.matches(Regex("^\\d{0,3}(\\.\\d{0,1})?$"))) {

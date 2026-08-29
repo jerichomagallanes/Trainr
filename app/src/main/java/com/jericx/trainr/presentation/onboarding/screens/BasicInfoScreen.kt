@@ -21,15 +21,15 @@ import com.jericx.trainr.R
 import com.jericx.trainr.domain.model.ExperienceLevel
 import com.jericx.trainr.domain.model.Gender
 import com.jericx.trainr.presentation.common.theme.Spacing
-import com.jericx.trainr.presentation.onboarding.components.core.OnboardingButton
-import com.jericx.trainr.presentation.onboarding.components.core.OnboardingProgress
-import com.jericx.trainr.presentation.onboarding.components.layout.OnboardingScaffold
-import com.jericx.trainr.presentation.onboarding.components.cards.OnboardingSelectionCard
-import com.jericx.trainr.presentation.onboarding.components.core.OnboardingRadioChip
-import com.jericx.trainr.presentation.onboarding.components.core.OnboardingTextField
-import com.jericx.trainr.presentation.onboarding.components.layout.OnboardingFormSection
-import com.jericx.trainr.presentation.onboarding.components.layout.OnboardingScreenContent
-import com.jericx.trainr.presentation.onboarding.components.typography.OnboardingScreenTitle
+import com.jericx.trainr.presentation.common.components.core.TrainrButton
+import com.jericx.trainr.presentation.common.components.core.TrainrProgress
+import com.jericx.trainr.presentation.common.components.layout.TrainrScaffold
+import com.jericx.trainr.presentation.common.components.cards.TrainrSelectionCard
+import com.jericx.trainr.presentation.common.components.core.TrainrRadioChip
+import com.jericx.trainr.presentation.common.components.core.TrainrTextField
+import com.jericx.trainr.presentation.common.components.layout.TrainrFormSection
+import com.jericx.trainr.presentation.common.components.layout.TrainrScreenContent
+import com.jericx.trainr.presentation.common.components.typography.TrainrScreenTitle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,10 +48,10 @@ fun BasicInfoScreen(
             selectedGender != null &&
             selectedExperience != null
 
-    OnboardingScaffold(
+    TrainrScaffold(
         onBackClick = onBackClick,
         bottomButton = {
-            OnboardingButton(
+            TrainrButton(
                 text = stringResource(R.string.next),
                 onClick = {
                     val ageInt = age.toIntOrNull() ?: 0
@@ -70,7 +70,7 @@ fun BasicInfoScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            OnboardingProgress(
+            TrainrProgress(
                 currentStep = 1,
                 totalSteps = 7,
                 modifier = Modifier.padding(
@@ -79,21 +79,21 @@ fun BasicInfoScreen(
                 )
             )
 
-            OnboardingScreenContent {
-                OnboardingScreenTitle(text = stringResource(R.string.tell_us_about_yourself))
+            TrainrScreenContent {
+                TrainrScreenTitle(text = stringResource(R.string.tell_us_about_yourself))
 
                 Spacer(modifier = Modifier.height(Spacing.large))
 
-                OnboardingFormSection(title = stringResource(R.string.preferred_first_name)) {
-                    OnboardingTextField(
+                TrainrFormSection(title = stringResource(R.string.preferred_first_name)) {
+                    TrainrTextField(
                         value = firstName,
                         onValueChange = { firstName = it },
                         placeholder = stringResource(R.string.enter_your_first_name)
                     )
                 }
 
-                OnboardingFormSection(title = stringResource(R.string.age)) {
-                    OnboardingTextField(
+                TrainrFormSection(title = stringResource(R.string.age)) {
+                    TrainrTextField(
                         value = age,
                         onValueChange = { newAge ->
                             if (newAge.all { char -> char.isDigit() } && newAge.length <= 3) {
@@ -105,24 +105,24 @@ fun BasicInfoScreen(
                     )
                 }
 
-                OnboardingFormSection(title = stringResource(R.string.gender)) {
+                TrainrFormSection(title = stringResource(R.string.gender)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(Spacing.small)
                     ) {
-                        OnboardingRadioChip(
+                        TrainrRadioChip(
                             text = stringResource(R.string.male),
                             selected = selectedGender == Gender.MALE,
                             onClick = { selectedGender = Gender.MALE },
                             modifier = Modifier.weight(1f)
                         )
-                        OnboardingRadioChip(
+                        TrainrRadioChip(
                             text = stringResource(R.string.female),
                             selected = selectedGender == Gender.FEMALE,
                             onClick = { selectedGender = Gender.FEMALE },
                             modifier = Modifier.weight(1f)
                         )
-                        OnboardingRadioChip(
+                        TrainrRadioChip(
                             text = stringResource(R.string.other),
                             selected = selectedGender == Gender.NON_BINARY,
                             onClick = { selectedGender = Gender.NON_BINARY },
@@ -131,25 +131,25 @@ fun BasicInfoScreen(
                     }
                 }
 
-                OnboardingFormSection(title = stringResource(R.string.fitness_experience)) {
+                TrainrFormSection(title = stringResource(R.string.fitness_experience)) {
                     Column(
                         verticalArrangement = Arrangement.spacedBy(Spacing.small)
                     ) {
-                        OnboardingSelectionCard(
+                        TrainrSelectionCard(
                             title = stringResource(R.string.beginner),
                             description = stringResource(R.string.beginner_description),
                             isSelected = selectedExperience == ExperienceLevel.BEGINNER,
                             onClick = { selectedExperience = ExperienceLevel.BEGINNER }
                         )
 
-                        OnboardingSelectionCard(
+                        TrainrSelectionCard(
                             title = stringResource(R.string.intermediate),
                             description = stringResource(R.string.intermediate_description),
                             isSelected = selectedExperience == ExperienceLevel.INTERMEDIATE,
                             onClick = { selectedExperience = ExperienceLevel.INTERMEDIATE }
                         )
 
-                        OnboardingSelectionCard(
+                        TrainrSelectionCard(
                             title = stringResource(R.string.advanced),
                             description = stringResource(R.string.advanced_description),
                             isSelected = selectedExperience == ExperienceLevel.ADVANCED,

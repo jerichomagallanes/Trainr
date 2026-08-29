@@ -1,4 +1,4 @@
-package com.jericx.trainr.presentation.onboarding.components.core
+package com.jericx.trainr.presentation.common.components.core
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -30,7 +30,7 @@ import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 
 @Composable
-fun OnboardingButton(
+fun TrainrButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -118,15 +118,15 @@ fun OnboardingButton(
 
 @Preview(showBackground = true)
 @Composable
-private fun OnboardingButtonPreview() {
+private fun TrainrButtonPreview() {
     TrainrTheme {
         Column(
             verticalArrangement = Arrangement.spacedBy(Spacing.small),
             modifier = Modifier.padding(Spacing.medium)
         ) {
-            OnboardingButton(text = "CONTINUE", onClick = {})
-            OnboardingButton(text = "CONTINUE", onClick = {}, enabled = false)
-            OnboardingButton(text = "SKIP", onClick = {}, isPrimary = false)
+            TrainrButton(text = "CONTINUE", onClick = {})
+            TrainrButton(text = "CONTINUE", onClick = {}, enabled = false)
+            TrainrButton(text = "SKIP", onClick = {}, isPrimary = false)
         }
     }
 }

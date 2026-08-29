@@ -1,4 +1,4 @@
-package com.jericx.trainr.presentation.onboarding.components.core
+package com.jericx.trainr.presentation.common.components.core
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -33,7 +33,7 @@ import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 
 @Composable
-fun OnboardingDropdown(
+fun TrainrDropdown(
     selectedValue: String,
     options: List<String>,
     onSelectionChange: (String) -> Unit,
@@ -100,14 +100,14 @@ fun OnboardingDropdown(
 
 @Preview(showBackground = true)
 @Composable
-private fun OnboardingDropdownPreview() {
+private fun TrainrDropdownPreview() {
     TrainrTheme {
         Column(
             verticalArrangement = Arrangement.spacedBy(Spacing.small),
             modifier = Modifier.padding(Spacing.medium)
         ) {
             val selected = remember { mutableStateOf("Beginner") }
-            OnboardingDropdown(
+            TrainrDropdown(
                 selectedValue = selected.value,
                 options = listOf("Beginner", "Intermediate", "Advanced"),
                 onSelectionChange = { selected.value = it }

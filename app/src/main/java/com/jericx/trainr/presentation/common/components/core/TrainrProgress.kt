@@ -1,4 +1,4 @@
-package com.jericx.trainr.presentation.onboarding.components.core
+package com.jericx.trainr.presentation.common.components.core
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -19,7 +19,7 @@ import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 
 @Composable
-fun OnboardingProgress(
+fun TrainrProgress(
     currentStep: Int,
     totalSteps: Int,
     modifier: Modifier = Modifier
@@ -42,15 +42,15 @@ fun OnboardingProgress(
 
 @Preview(showBackground = true)
 @Composable
-private fun OnboardingProgressPreview() {
+private fun TrainrProgressPreview() {
     TrainrTheme {
         Column(
             verticalArrangement = Arrangement.spacedBy(Spacing.small),
             modifier = Modifier.padding(Spacing.medium)
         ) {
-            OnboardingProgress(currentStep = 1, totalSteps = 7)
-            OnboardingProgress(currentStep = 4, totalSteps = 7)
-            OnboardingProgress(currentStep = 7, totalSteps = 7)
+            TrainrProgress(currentStep = 1, totalSteps = 7)
+            TrainrProgress(currentStep = 4, totalSteps = 7)
+            TrainrProgress(currentStep = 7, totalSteps = 7)
         }
     }
 }

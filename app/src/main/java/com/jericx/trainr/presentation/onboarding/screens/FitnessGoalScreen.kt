@@ -16,13 +16,13 @@ import androidx.compose.ui.res.stringResource
 import com.jericx.trainr.R
 import com.jericx.trainr.domain.model.FitnessGoal
 import com.jericx.trainr.presentation.common.theme.Spacing
-import com.jericx.trainr.presentation.onboarding.components.cards.OnboardingIconCard
-import com.jericx.trainr.presentation.onboarding.components.core.OnboardingButton
-import com.jericx.trainr.presentation.onboarding.components.core.OnboardingProgress
-import com.jericx.trainr.presentation.onboarding.components.layout.OnboardingScaffold
-import com.jericx.trainr.presentation.onboarding.components.layout.OnboardingScreenContent
-import com.jericx.trainr.presentation.onboarding.components.typography.OnboardingScreenTitle
-import com.jericx.trainr.presentation.onboarding.components.typography.OnboardingSubtitle
+import com.jericx.trainr.presentation.common.components.cards.TrainrIconCard
+import com.jericx.trainr.presentation.common.components.core.TrainrButton
+import com.jericx.trainr.presentation.common.components.core.TrainrProgress
+import com.jericx.trainr.presentation.common.components.layout.TrainrScaffold
+import com.jericx.trainr.presentation.common.components.layout.TrainrScreenContent
+import com.jericx.trainr.presentation.common.components.typography.TrainrScreenTitle
+import com.jericx.trainr.presentation.common.components.typography.TrainrSubtitle
 
 @Composable
 fun FitnessGoalScreen(
@@ -31,10 +31,10 @@ fun FitnessGoalScreen(
 ) {
     var selectedGoal by remember { mutableStateOf<FitnessGoal?>(null) }
 
-    OnboardingScaffold(
+    TrainrScaffold(
         onBackClick = onBackClick,
         bottomButton = {
-            OnboardingButton(
+            TrainrButton(
                 text = stringResource(R.string.next),
                 onClick = {
                     selectedGoal?.let { onNextClick(it) }
@@ -48,20 +48,20 @@ fun FitnessGoalScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            OnboardingProgress(
+            TrainrProgress(
                 currentStep = 3,
                 totalSteps = 7,
                 modifier = Modifier.padding(horizontal = Spacing.large)
             )
 
-            OnboardingScreenContent {
+            TrainrScreenContent {
                 Spacer(modifier = Modifier.height(Spacing.extraLarge))
 
-                OnboardingScreenTitle(text = stringResource(R.string.main_fitness_goal))
+                TrainrScreenTitle(text = stringResource(R.string.main_fitness_goal))
 
                 Spacer(modifier = Modifier.height(Spacing.small))
 
-                OnboardingSubtitle(
+                TrainrSubtitle(
                     text = stringResource(R.string.goal_description)
                 )
 
@@ -70,7 +70,7 @@ fun FitnessGoalScreen(
                 Column(
                     verticalArrangement = Arrangement.spacedBy(Spacing.medium)
                 ) {
-                    OnboardingIconCard(
+                    TrainrIconCard(
                         iconRes = R.drawable.ic_mode_heat,
                         title = stringResource(R.string.lose_weight),
                         description = stringResource(R.string.lose_weight_description),
@@ -78,7 +78,7 @@ fun FitnessGoalScreen(
                         onClick = { selectedGoal = FitnessGoal.WEIGHT_LOSS }
                     )
 
-                    OnboardingIconCard(
+                    TrainrIconCard(
                         iconRes = R.drawable.ic_exercise,
                         title = stringResource(R.string.build_muscle),
                         description = stringResource(R.string.build_muscle_description),
@@ -86,7 +86,7 @@ fun FitnessGoalScreen(
                         onClick = { selectedGoal = FitnessGoal.MUSCLE_GAIN }
                     )
 
-                    OnboardingIconCard(
+                    TrainrIconCard(
                         iconRes = R.drawable.ic_electric_bolt,
                         title = stringResource(R.string.get_stronger),
                         description = stringResource(R.string.get_stronger_description),
@@ -94,7 +94,7 @@ fun FitnessGoalScreen(
                         onClick = { selectedGoal = FitnessGoal.STRENGTH }
                     )
 
-                    OnboardingIconCard(
+                    TrainrIconCard(
                         iconRes = R.drawable.ic_directions_run,
                         title = stringResource(R.string.improve_endurance),
                         description = stringResource(R.string.improve_endurance_description),
@@ -102,7 +102,7 @@ fun FitnessGoalScreen(
                         onClick = { selectedGoal = FitnessGoal.ENDURANCE }
                     )
 
-                    OnboardingIconCard(
+                    TrainrIconCard(
                         iconRes = R.drawable.ic_emoji_people,
                         title = stringResource(R.string.general_fitness),
                         description = stringResource(R.string.general_fitness_description),
@@ -110,7 +110,7 @@ fun FitnessGoalScreen(
                         onClick = { selectedGoal = FitnessGoal.GENERAL_FITNESS }
                     )
 
-                    OnboardingIconCard(
+                    TrainrIconCard(
                         iconRes = R.drawable.ic_self_improvement,
                         title = stringResource(R.string.flexibility_mobility),
                         description = stringResource(R.string.flexibility_mobility_description),

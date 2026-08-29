@@ -1,4 +1,4 @@
-package com.jericx.trainr.presentation.onboarding.components.core
+package com.jericx.trainr.presentation.common.components.core
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -16,7 +16,7 @@ import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 
 @Composable
-fun OnboardingMultiSelectChip(
+fun TrainrMultiSelectChip(
     selected: Boolean,
     onClick: () -> Unit,
     label: @Composable () -> Unit,
@@ -50,18 +50,18 @@ fun OnboardingMultiSelectChip(
 
 @Preview(showBackground = true)
 @Composable
-private fun OnboardingMultiSelectChipPreview() {
+private fun TrainrMultiSelectChipPreview() {
     TrainrTheme {
         Column(
             verticalArrangement = Arrangement.spacedBy(Spacing.small),
             modifier = Modifier.padding(Spacing.medium)
         ) {
-            OnboardingMultiSelectChip(
+            TrainrMultiSelectChip(
                 selected = true,
                 onClick = {},
                 label = { Text("Yoga Mat") }
             )
-            OnboardingMultiSelectChip(
+            TrainrMultiSelectChip(
                 selected = false,
                 onClick = {},
                 label = { Text("Treadmill") }

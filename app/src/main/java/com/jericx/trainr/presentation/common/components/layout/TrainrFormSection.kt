@@ -1,4 +1,4 @@
-package com.jericx.trainr.presentation.onboarding.components.layout
+package com.jericx.trainr.presentation.common.components.layout
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,17 +10,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
-import com.jericx.trainr.presentation.onboarding.components.core.OnboardingTextField
-import com.jericx.trainr.presentation.onboarding.components.typography.OnboardingSectionTitle
+import com.jericx.trainr.presentation.common.components.core.TrainrTextField
+import com.jericx.trainr.presentation.common.components.typography.TrainrSectionTitle
 
 @Composable
-fun OnboardingFormSection(
+fun TrainrFormSection(
     title: String,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
     Column(modifier = modifier.padding(vertical = Spacing.medium)) {
-        OnboardingSectionTitle(text = title)
+        TrainrSectionTitle(text = title)
         Spacer(modifier = Modifier.height(Spacing.small))
         content()
     }
@@ -28,14 +28,14 @@ fun OnboardingFormSection(
 
 @Preview(showBackground = true)
 @Composable
-private fun OnboardingFormSectionPreview() {
+private fun TrainrFormSectionPreview() {
     TrainrTheme {
         Column(
             verticalArrangement = Arrangement.spacedBy(Spacing.small),
             modifier = Modifier.padding(Spacing.medium)
         ) {
-            OnboardingFormSection(title = "Height (cm)") {
-                OnboardingTextField(value = "170", onValueChange = {}, placeholder = "170")
+            TrainrFormSection(title = "Height (cm)") {
+                TrainrTextField(value = "170", onValueChange = {}, placeholder = "170")
             }
         }
     }

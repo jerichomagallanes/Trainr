@@ -48,7 +48,7 @@ import com.jericx.trainr.presentation.common.components.InfiniteHorizontalPager
 import com.jericx.trainr.presentation.common.components.LanguageSelector
 import com.jericx.trainr.presentation.common.theme.Orange500
 import com.jericx.trainr.presentation.common.theme.Spacing
-import com.jericx.trainr.presentation.onboarding.components.core.OnboardingButton
+import com.jericx.trainr.presentation.common.components.core.TrainrButton
 
 data class OnboardingPage(
     val imageRes: Int,
@@ -122,7 +122,7 @@ fun WelcomeScreen(
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                OnboardingButton(
+                TrainrButton(
                     text = stringResource(R.string.get_started),
                     onClick = onGetStartedClick,
                     modifier = Modifier
