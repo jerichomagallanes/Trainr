@@ -76,7 +76,7 @@ fun TrainrIconCard(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(end = 48.dp),
+                    .padding(end = Spacing.huge),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
