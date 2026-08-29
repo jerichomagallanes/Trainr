@@ -1,7 +1,6 @@
 package com.jericx.trainr.di
 
 import android.content.Context
-import android.content.SharedPreferences
 import androidx.room.Room
 import com.jericx.trainr.common.Constants
 import com.jericx.trainr.data.local.TrainrDatabase
@@ -49,11 +48,5 @@ object AppModule {
         mapper: UserMapper
     ): UserRepository {
         return UserRepositoryImpl(userDao, mapper)
-    }
-
-    @Provides
-    @Singleton
-    fun provideSharedPreferences(@ApplicationContext context: Context): SharedPreferences {
-        return context.getSharedPreferences(Constants.KEY_SHARED_PREF, Context.MODE_PRIVATE)
     }
 }

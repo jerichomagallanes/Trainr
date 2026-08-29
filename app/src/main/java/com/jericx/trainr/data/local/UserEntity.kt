@@ -1,8 +1,9 @@
 package com.jericx.trainr.data.local
 
 import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
-import androidx.room.TypeConverters
 
 @Entity(tableName = "users")
 data class UserEntity(
@@ -16,18 +17,27 @@ data class UserEntity(
     val fitnessGoal: String,
     val experienceLevel: String,
     val workoutLocation: String,
-    @TypeConverters(Converters::class)
     val availableEquipment: List<String>,
     val workoutDaysPerWeek: Int,
     val workoutDuration: Int,
     val preferredWorkoutTime: String,
-    @TypeConverters(Converters::class)
     val injuries: List<String>,
     val workoutType: String,
     val createdAt: Long
 )
 
-@Entity(tableName = "weekly_workout_plans")
+@Entity(
+    tableName = "weekly_workout_plans",
+    foreignKeys = [
+        ForeignKey(
+            entity = UserEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["userId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index("userId")]
+)
 data class WeeklyWorkoutPlanEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
@@ -38,7 +48,18 @@ data class WeeklyWorkoutPlanEntity(
     val updatedAt: Long
 )
 
-@Entity(tableName = "workout_days")
+@Entity(
+    tableName = "workout_days",
+    foreignKeys = [
+        ForeignKey(
+            entity = WeeklyWorkoutPlanEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["weeklyPlanId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index("weeklyPlanId")]
+)
 data class WorkoutDayEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
@@ -48,12 +69,22 @@ data class WorkoutDayEntity(
     val status: String,
     val duration: Int,
     val exerciseCount: Int,
-    @TypeConverters(Converters::class)
     val equipment: List<String>,
     val completedAt: Long?
 )
 
-@Entity(tableName = "workout_exercises")
+@Entity(
+    tableName = "workout_exercises",
+    foreignKeys = [
+        ForeignKey(
+            entity = WorkoutDayEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["workoutDayId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index("workoutDayId")]
+)
 data class WorkoutExerciseEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
@@ -63,7 +94,6 @@ data class WorkoutExerciseEntity(
     val reps: String?,
     val duration: String?,
     val restTime: Int?,
-    @TypeConverters(Converters::class)
     val equipment: List<String>,
     val instructions: String,
     val videoTutorialUrl: String?,

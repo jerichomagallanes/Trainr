@@ -1,10 +1,7 @@
-package com.jericx.trainr.presentation.common
+package com.jericx.trainr.data.preferences
 
 import android.content.Context
 import android.content.SharedPreferences
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.core.content.edit
 import com.jericx.trainr.R
 
@@ -13,14 +10,14 @@ import com.jericx.trainr.R
  * Handles language selection and persistence across app sessions.
  */
 class LanguagePreferences(context: Context) {
-    
+
     private val sharedPreferences: SharedPreferences = context.getSharedPreferences(
         PREFS_NAME, Context.MODE_PRIVATE
     )
-    
-    var currentLanguage by mutableStateOf(getStoredLanguage())
+
+    var currentLanguage: String = getStoredLanguage()
         private set
-    
+
     /**
      * Available languages with their codes and display names
      */
@@ -29,21 +26,20 @@ class LanguagePreferences(context: Context) {
         val displayName: String,
         val nativeName: String
     )
-    
+
     companion object {
         private const val PREFS_NAME = "language_preferences"
         private const val KEY_LANGUAGE_CODE = "language_code"
         private const val DEFAULT_LANGUAGE = "en"
-        
     }
-    
+
     /**
      * Get the current language code from SharedPreferences
      */
     private fun getStoredLanguage(): String {
         return sharedPreferences.getString(KEY_LANGUAGE_CODE, DEFAULT_LANGUAGE) ?: DEFAULT_LANGUAGE
     }
-    
+
     /**
      * Set the current language and persist it
      */
@@ -56,7 +52,7 @@ class LanguagePreferences(context: Context) {
             currentLanguage = languageCode
         }
     }
-    
+
     /**
      * Get available languages from resources
      */
@@ -64,7 +60,7 @@ class LanguagePreferences(context: Context) {
         val codes = context.resources.getStringArray(R.array.language_codes)
         val displayNames = context.resources.getStringArray(R.array.language_display_names)
         val nativeNames = context.resources.getStringArray(R.array.language_native_names)
-        
+
         return codes.mapIndexed { index, code ->
             Language(
                 code = code,
@@ -73,7 +69,7 @@ class LanguagePreferences(context: Context) {
             )
         }
     }
-    
+
     /**
      * Get the current language object
      */
@@ -82,5 +78,4 @@ class LanguagePreferences(context: Context) {
         return availableLanguages.find { it.code == currentLanguage }
             ?: availableLanguages.first()
     }
-
 }

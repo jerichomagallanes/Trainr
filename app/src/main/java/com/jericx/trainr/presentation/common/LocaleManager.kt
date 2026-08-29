@@ -2,7 +2,6 @@ package com.jericx.trainr.presentation.common
 
 import android.content.Context
 import android.content.res.Configuration
-import android.os.Build
 import androidx.activity.ComponentActivity
 import com.jericx.trainr.R
 import java.util.Locale
@@ -19,17 +18,11 @@ object LocaleManager {
     fun updateAppLocale(context: Context, languageCode: String): Context {
         val locale = getLocaleForLanguageCode(languageCode)
         Locale.setDefault(locale)
-        
+
         val config = Configuration(context.resources.configuration)
         config.setLocale(locale)
-        
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            context.createConfigurationContext(config)
-        } else {
-            @Suppress("DEPRECATION")
-            context.resources.updateConfiguration(config, context.resources.displayMetrics)
-            context
-        }
+
+        return context.createConfigurationContext(config)
     }
     
     /**

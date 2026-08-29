@@ -9,11 +9,11 @@ import com.jericx.trainr.presentation.onboarding.components.core.OnboardingToggl
 @Composable
 fun <T> OnboardingChipGroup(
     items: List<T>,
-    selectedItem: T? = null,
-    selectedItems: Set<T>? = null,
     onItemClick: (T) -> Unit,
     itemLabel: (T) -> String,
     modifier: Modifier = Modifier,
+    selectedItem: T? = null,
+    selectedItems: Set<T>? = null,
     multiSelect: Boolean = false,
     horizontalSpacing: Dp = Spacing.small,
     verticalSpacing: Dp = Spacing.small

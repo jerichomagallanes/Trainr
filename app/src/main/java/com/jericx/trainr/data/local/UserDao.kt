@@ -41,7 +41,7 @@ interface UserDao {
     suspend fun insertWorkoutDay(day: WorkoutDayEntity): Long
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertWorkoutDays(days: List<WorkoutDayEntity>)
+    suspend fun insertWorkoutDays(days: List<WorkoutDayEntity>): List<Long>
 
     @Query("SELECT * FROM workout_days WHERE weeklyPlanId = :weeklyPlanId ORDER BY dayNumber")
     suspend fun getWorkoutDaysForPlan(weeklyPlanId: Long): List<WorkoutDayEntity>

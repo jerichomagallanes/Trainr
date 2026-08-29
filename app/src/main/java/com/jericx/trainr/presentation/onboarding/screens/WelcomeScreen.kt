@@ -20,6 +20,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -41,9 +42,9 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jericx.trainr.R
-import com.jericx.trainr.presentation.common.LanguagePreferences
+import com.jericx.trainr.data.preferences.LanguagePreferences
 import com.jericx.trainr.presentation.common.LocaleManager
-import com.jericx.trainr.presentation.common.NavigationStateManager
+import com.jericx.trainr.data.preferences.NavigationStateManager
 import com.jericx.trainr.presentation.common.components.InfiniteHorizontalPager
 import com.jericx.trainr.presentation.common.components.LanguageSelector
 import com.jericx.trainr.presentation.common.theme.Orange500
@@ -57,8 +58,7 @@ data class OnboardingPage(
 
 @Composable
 fun WelcomeScreen(
-    onGetStartedClick: () -> Unit,
-    onLanguageChanged: ((LanguagePreferences.Language) -> Unit)? = null
+    onGetStartedClick: () -> Unit
 ) {
     val context = LocalContext.current
     val languagePreferences = remember { LanguagePreferences(context) }
@@ -69,7 +69,7 @@ fun WelcomeScreen(
         OnboardingPage(R.drawable.img_task_done, stringResource(R.string.track_your_progress))
     )
 
-    var currentPage by remember { mutableStateOf(0) }
+    var currentPage by remember { mutableIntStateOf(0) }
 
     Box(
         modifier = Modifier
@@ -138,7 +138,6 @@ fun WelcomeScreen(
             onLanguageSelected = { language ->
                 languagePreferences.setLanguage(context, language.code)
                 currentLanguage = language
-                onLanguageChanged?.invoke(language)
 
                 NavigationStateManager.setLanguageChangePending(context, true)
                 val activity = context as? ComponentActivity

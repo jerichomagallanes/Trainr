@@ -17,6 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -60,8 +61,8 @@ fun WorkoutSetupScreen(
 ) {
     var selectedLocation by remember { mutableStateOf<WorkoutLocation?>(null) }
     var selectedEquipment by remember { mutableStateOf<Set<Equipment>>(emptySet()) }
-    var selectedDays by remember { mutableStateOf(Constants.Workout.DEFAULT_WORKOUT_DAYS_PER_WEEK) }
-    var selectedDuration by remember { mutableStateOf(Constants.Workout.DEFAULT_WORKOUT_DURATION) }
+    var selectedDays by remember { mutableIntStateOf(Constants.Workout.DEFAULT_WORKOUT_DAYS_PER_WEEK) }
+    var selectedDuration by remember { mutableIntStateOf(Constants.Workout.DEFAULT_WORKOUT_DURATION) }
     var selectedTime by remember { mutableStateOf(WorkoutTime.MORNING) }
 
     OnboardingScaffold(

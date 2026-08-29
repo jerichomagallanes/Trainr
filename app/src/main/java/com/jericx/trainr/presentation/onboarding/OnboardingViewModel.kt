@@ -83,7 +83,7 @@ class OnboardingViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 _onboardingState.value = _onboardingState.value.copy(isLoading = true)
-                val userId = userRepository.saveUser(_onboardingState.value.userProfile)
+                userRepository.saveUser(_onboardingState.value.userProfile)
                 _onboardingState.value = _onboardingState.value.copy(
                     isLoading = false,
                     isCompleted = true
