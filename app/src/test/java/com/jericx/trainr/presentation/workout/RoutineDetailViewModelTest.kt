@@ -1,0 +1,176 @@
+package com.jericx.trainr.presentation.workout
+
+import com.google.common.truth.Truth.assertThat
+import com.jericx.trainr.presentation.workout.model.ExerciseUi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import org.junit.After
+import org.junit.Before
+import org.junit.Test
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class RoutineDetailViewModelTest {
+
+    private val testDispatcher = StandardTestDispatcher()
+
+    @Before
+    fun setUp() {
+        Dispatchers.setMain(testDispatcher)
+    }
+
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
+
+    private fun RoutineDetailViewModel.exercise(position: Int): ExerciseUi =
+        uiState.value.routine.exercises.first { it.position == position }
+
+    private fun RoutineDetailViewModel.isCompleted(position: Int) = exercise(position).isCompleted
+
+    @Test
+    fun startingATimerCountsDownFromTheExerciseDuration() = runTest {
+        val viewModel = RoutineDetailViewModel()
+
+        viewModel.startTimer(viewModel.exercise(2))
+        assertThat(viewModel.uiState.value.timer?.remainingSeconds).isEqualTo(600)
+
+        advanceTimeBy(3_000)
+        runCurrent()
+
+        assertThat(viewModel.uiState.value.timer?.remainingSeconds).isEqualTo(597)
+    }
+
+    @Test
+    fun pausingHoldsTheCountdownWhereItIs() = runTest {
+        val viewModel = RoutineDetailViewModel()
+
+        viewModel.startTimer(viewModel.exercise(2))
+        advanceTimeBy(3_000)
+        runCurrent()
+        viewModel.pauseTimer()
+        advanceTimeBy(10_000)
+        runCurrent()
+
+        assertThat(viewModel.uiState.value.timer?.remainingSeconds).isEqualTo(597)
+        assertThat(viewModel.uiState.value.timer?.isRunning).isFalse()
+    }
+
+    @Test
+    fun resumingCarriesOnFromWhereItPaused() = runTest {
+        val viewModel = RoutineDetailViewModel()
+
+        viewModel.startTimer(viewModel.exercise(2))
+        advanceTimeBy(3_000)
+        runCurrent()
+        viewModel.pauseTimer()
+        viewModel.resumeTimer()
+        advanceTimeBy(2_000)
+        runCurrent()
+
+        assertThat(viewModel.uiState.value.timer?.remainingSeconds).isEqualTo(595)
+        assertThat(viewModel.uiState.value.timer?.isRunning).isTrue()
+    }
+
+    @Test
+    fun stoppingClearsTheTimerWithoutCompletingTheExercise() = runTest {
+        val viewModel = RoutineDetailViewModel()
+
+        viewModel.startTimer(viewModel.exercise(2))
+        advanceTimeBy(3_000)
+        runCurrent()
+        viewModel.stopTimer()
+
+        assertThat(viewModel.uiState.value.timer).isNull()
+        assertThat(viewModel.isCompleted(2)).isFalse()
+    }
+
+    // Running out of time is what finishes an exercise.
+    @Test
+    fun theCountdownReachingZeroCompletesTheExercise() = runTest {
+        val viewModel = RoutineDetailViewModel()
+
+        viewModel.startTimer(viewModel.exercise(4))
+        advanceTimeBy(4 * 60 * 1_000L)
+        runCurrent()
+
+        assertThat(viewModel.uiState.value.timer).isNull()
+        assertThat(viewModel.isCompleted(4)).isTrue()
+    }
+
+    @Test
+    fun theCountdownKeepsRunningRightUpToTheLastSecond() = runTest {
+        val viewModel = RoutineDetailViewModel()
+
+        viewModel.startTimer(viewModel.exercise(4))
+        advanceTimeBy(4 * 60 * 1_000L - 1_000L)
+        runCurrent()
+
+        assertThat(viewModel.uiState.value.timer?.remainingSeconds).isEqualTo(1)
+        assertThat(viewModel.isCompleted(4)).isFalse()
+    }
+
+    // Two countdowns racing would be nonsense, so a new one replaces the old.
+    @Test
+    fun startingAnotherExerciseReplacesTheRunningTimer() = runTest {
+        val viewModel = RoutineDetailViewModel()
+
+        viewModel.startTimer(viewModel.exercise(2))
+        advanceTimeBy(3_000)
+        runCurrent()
+        viewModel.startTimer(viewModel.exercise(3))
+        advanceTimeBy(1_000)
+        runCurrent()
+
+        assertThat(viewModel.uiState.value.timer?.position).isEqualTo(3)
+        assertThat(viewModel.uiState.value.timer?.remainingSeconds).isEqualTo(299)
+    }
+
+    @Test
+    fun tickingTheExerciseOffClearsItsTimer() = runTest {
+        val viewModel = RoutineDetailViewModel()
+
+        viewModel.startTimer(viewModel.exercise(2))
+        advanceTimeBy(3_000)
+        runCurrent()
+        viewModel.toggleExercise(2)
+        advanceTimeBy(5_000)
+        runCurrent()
+
+        assertThat(viewModel.uiState.value.timer).isNull()
+        assertThat(viewModel.isCompleted(2)).isTrue()
+    }
+
+    @Test
+    fun untickingAnExerciseLeavesAnotherExercisesTimerAlone() = runTest {
+        val viewModel = RoutineDetailViewModel()
+
+        viewModel.startTimer(viewModel.exercise(2))
+        advanceTimeBy(3_000)
+        runCurrent()
+        viewModel.toggleExercise(1)
+
+        assertThat(viewModel.uiState.value.timer?.position).isEqualTo(2)
+    }
+
+    @Test
+    fun completingTheWholeRoutineClearsTheTimer() = runTest {
+        val viewModel = RoutineDetailViewModel()
+
+        viewModel.startTimer(viewModel.exercise(2))
+        advanceTimeBy(3_000)
+        runCurrent()
+        viewModel.completeRoutine()
+        advanceTimeBy(5_000)
+        runCurrent()
+
+        assertThat(viewModel.uiState.value.timer).isNull()
+        assertThat(viewModel.uiState.value.routine.isComplete).isTrue()
+    }
+}

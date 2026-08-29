@@ -21,6 +21,12 @@ data class RoutineUi(
         }
     )
 
+    fun markCompleted(position: Int): RoutineUi = copy(
+        exercises = exercises.map {
+            if (it.position == position) it.copy(isCompleted = true) else it
+        }
+    )
+
     fun completeAll(): RoutineUi = copy(
         exercises = exercises.map { it.copy(isCompleted = true) }
     )
