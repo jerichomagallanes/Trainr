@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,6 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
@@ -73,7 +73,7 @@ fun WeekProgressCard(
         Column(
             modifier = Modifier
                 .weight(1f)
-                .padding(horizontal = Spacing.small + Spacing.extraSmall, vertical = Spacing.card),
+                .padding(horizontal = Spacing.small + Spacing.extraSmall, vertical = Spacing.small + Spacing.extraSmall),
             verticalArrangement = Arrangement.spacedBy(Spacing.small)
         ) {
             Row(
@@ -88,11 +88,18 @@ fun WeekProgressCard(
                     text = buildAnnotatedString {
                         append(stringResource(R.string.week_number_format, weekNumber))
                         append(" ")
-                        withStyle(SpanStyle(fontSize = MaterialTheme.typography.bodyMedium.fontSize)) {
+                        withStyle(
+                            SpanStyle(
+                                fontSize = MaterialTheme.typography.bodyMedium.fontSize,
+                                fontWeight = FontWeight.Normal
+                            )
+                        ) {
                             append(stringResource(R.string.week_range_parens, dateRange))
                         }
                     },
-                    style = MaterialTheme.typography.titleSmall,
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontWeight = FontWeight.Medium
+                    ),
                     color = Slate800
                 )
                 WeekStatusChip(status = status)
@@ -132,7 +139,7 @@ private fun WeekStatusChip(status: WeekStatus, modifier: Modifier = Modifier) {
         maxLines = 1,
         softWrap = false,
         modifier = modifier
-            .background(status.chipColor, RoundedCornerShape(8.dp))
+            .background(status.chipColor, MaterialTheme.shapes.small)
             .padding(horizontal = Spacing.small, vertical = 3.dp)
     )
 }

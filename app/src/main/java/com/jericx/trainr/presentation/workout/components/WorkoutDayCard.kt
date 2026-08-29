@@ -123,7 +123,7 @@ fun WorkoutDayCard(
                             }
                             append(day.equipment.joinToString(", "))
                         },
-                        style = MaterialTheme.typography.labelMedium,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = Slate800
                     )
                 }
