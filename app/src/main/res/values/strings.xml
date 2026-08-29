@@ -179,6 +179,8 @@
     <string name="not_started">Not started</string>
     <string name="warm_up_jog">Warm-up Jog</string>
     <string name="hide_video_tutorial">Hide video tutorial</string>
+    <string name="show_video_tutorial">Show video tutorial</string>
+    <string name="play_video_tutorial">Play video tutorial</string>
     <string name="start_timer">Start timer</string>
     <string name="pause_timer">Pause</string>
     <string name="resume_timer">Resume</string>

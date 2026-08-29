@@ -160,6 +160,58 @@ class RoutineDetailViewModelTest {
     }
 
     @Test
+    fun tutorialsStartCollapsedAndToggleIndependently() = runTest {
+        val viewModel = RoutineDetailViewModel()
+
+        assertThat(viewModel.uiState.value.expandedVideos).isEmpty()
+
+        viewModel.toggleVideo(2)
+        viewModel.toggleVideo(3)
+        assertThat(viewModel.uiState.value.expandedVideos).containsExactly(2, 3)
+
+        viewModel.toggleVideo(2)
+        assertThat(viewModel.uiState.value.expandedVideos).containsExactly(3)
+    }
+
+    // Only one WebView should ever be alive, so playing one stops the other.
+    @Test
+    fun playingATutorialStopsWhicheverWasPlaying() = runTest {
+        val viewModel = RoutineDetailViewModel()
+
+        viewModel.toggleVideo(2)
+        viewModel.playVideo(2)
+        assertThat(viewModel.uiState.value.playingVideo).isEqualTo(2)
+
+        viewModel.toggleVideo(3)
+        viewModel.playVideo(3)
+        assertThat(viewModel.uiState.value.playingVideo).isEqualTo(3)
+    }
+
+    @Test
+    fun collapsingAPlayingTutorialStopsIt() = runTest {
+        val viewModel = RoutineDetailViewModel()
+
+        viewModel.toggleVideo(2)
+        viewModel.playVideo(2)
+        viewModel.toggleVideo(2)
+
+        assertThat(viewModel.uiState.value.playingVideo).isNull()
+        assertThat(viewModel.uiState.value.expandedVideos).isEmpty()
+    }
+
+    @Test
+    fun collapsingADifferentTutorialLeavesThePlayingOneAlone() = runTest {
+        val viewModel = RoutineDetailViewModel()
+
+        viewModel.toggleVideo(2)
+        viewModel.playVideo(2)
+        viewModel.toggleVideo(3)
+        viewModel.toggleVideo(3)
+
+        assertThat(viewModel.uiState.value.playingVideo).isEqualTo(2)
+    }
+
+    @Test
     fun completingTheWholeRoutineClearsTheTimer() = runTest {
         val viewModel = RoutineDetailViewModel()
 

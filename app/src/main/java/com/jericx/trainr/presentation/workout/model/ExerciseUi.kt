@@ -10,5 +10,6 @@ data class ExerciseUi(
     val description: String,
     val minutes: Int,
     val detail: String,
+    val videoUrl: String? = null,
     val isCompleted: Boolean = false
 )

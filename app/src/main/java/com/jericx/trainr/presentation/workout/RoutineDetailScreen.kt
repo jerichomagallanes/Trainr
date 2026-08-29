@@ -38,7 +38,9 @@ import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 import com.jericx.trainr.presentation.workout.components.ExerciseCard
 import com.jericx.trainr.presentation.workout.components.ExerciseTimer
+import com.jericx.trainr.presentation.workout.components.VideoTutorial
 import com.jericx.trainr.presentation.workout.model.ExerciseUi
+import com.jericx.trainr.presentation.workout.model.YouTubeVideo
 import com.jericx.trainr.presentation.workout.util.WorkoutDateFormatter
 
 @Composable
@@ -56,7 +58,9 @@ fun RoutineDetailRoute(
         onStartTimer = viewModel::startTimer,
         onPauseTimer = viewModel::pauseTimer,
         onResumeTimer = viewModel::resumeTimer,
-        onStopTimer = viewModel::stopTimer
+        onStopTimer = viewModel::stopTimer,
+        onToggleVideo = viewModel::toggleVideo,
+        onPlayVideo = viewModel::playVideo
     )
 }
 
@@ -70,7 +74,9 @@ fun RoutineDetailScreen(
     onStartTimer: (ExerciseUi) -> Unit = {},
     onPauseTimer: () -> Unit = {},
     onResumeTimer: () -> Unit = {},
-    onStopTimer: () -> Unit = {}
+    onStopTimer: () -> Unit = {},
+    onToggleVideo: (Int) -> Unit = {},
+    onPlayVideo: (Int) -> Unit = {}
 ) {
     val locale = LocalLocale.current.platformLocale
     val routine = state.routine
@@ -164,6 +170,16 @@ fun RoutineDetailScreen(
                                 onResume = onResumeTimer,
                                 onStop = onStopTimer
                             )
+
+                            YouTubeVideo.from(exercise.videoUrl)?.let { video ->
+                                VideoTutorial(
+                                    video = video,
+                                    isExpanded = exercise.position in state.expandedVideos,
+                                    isPlaying = state.playingVideo == exercise.position,
+                                    onToggle = { onToggleVideo(exercise.position) },
+                                    onPlay = { onPlayVideo(exercise.position) }
+                                )
+                            }
                         }
                     }
                 }
