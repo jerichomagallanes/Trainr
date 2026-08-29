@@ -193,6 +193,7 @@
     <string name="pause_timer">I-pause</string>
     <string name="resume_timer">Ituloy</string>
     <string name="stop_timer">Itigil</string>
+    <string name="reset_timer">I-reset</string>
     <string name="exercise_in_progress">Isinasagawa ang ehersisyo…</string>
     <string name="timer_paused">Naka-pause ang timer</string>
     <string name="edit">I-edit</string>

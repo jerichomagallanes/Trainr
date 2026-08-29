@@ -161,6 +161,51 @@ class RoutineDetailViewModelTest {
     }
 
     @Test
+    fun resettingReturnsToTheFullIntervalAndHoldsItThere() = runTest {
+        val viewModel = viewModel()
+
+        viewModel.startTimer(viewModel.exercise(2))
+        advanceTimeBy(30_000)
+        runCurrent()
+        assertThat(viewModel.uiState.value.timer?.remainingSeconds).isEqualTo(570)
+
+        viewModel.resetTimer()
+
+        assertThat(viewModel.uiState.value.timer?.remainingSeconds).isEqualTo(600)
+        assertThat(viewModel.uiState.value.timer?.isRunning).isFalse()
+    }
+
+    // Reset prepares another go; it does not start one.
+    @Test
+    fun aResetTimerDoesNotTickUntilItIsResumed() = runTest {
+        val viewModel = viewModel()
+
+        viewModel.startTimer(viewModel.exercise(2))
+        advanceTimeBy(30_000)
+        runCurrent()
+        viewModel.resetTimer()
+        advanceTimeBy(10_000)
+        runCurrent()
+
+        assertThat(viewModel.uiState.value.timer?.remainingSeconds).isEqualTo(600)
+
+        viewModel.resumeTimer()
+        advanceTimeBy(3_000)
+        runCurrent()
+
+        assertThat(viewModel.uiState.value.timer?.remainingSeconds).isEqualTo(597)
+    }
+
+    @Test
+    fun resettingWithNoTimerRunningChangesNothing() = runTest {
+        val viewModel = viewModel()
+
+        viewModel.resetTimer()
+
+        assertThat(viewModel.uiState.value.timer).isNull()
+    }
+
+    @Test
     fun stoppingClearsTheTimerWithoutCompletingTheExercise() = runTest {
         val viewModel = viewModel()
 

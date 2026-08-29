@@ -66,6 +66,7 @@ fun RoutineDetailRoute(
         onStartTimer = viewModel::startTimer,
         onPauseTimer = viewModel::pauseTimer,
         onResumeTimer = viewModel::resumeTimer,
+        onResetTimer = viewModel::resetTimer,
         onStopTimer = viewModel::stopTimer,
         onToggleVideo = viewModel::toggleVideo,
         onPlayVideo = viewModel::playVideo
@@ -82,6 +83,7 @@ fun RoutineDetailScreen(
     onStartTimer: (ExerciseUi) -> Unit = {},
     onPauseTimer: () -> Unit = {},
     onResumeTimer: () -> Unit = {},
+    onResetTimer: () -> Unit = {},
     onStopTimer: () -> Unit = {},
     onToggleVideo: (Int) -> Unit = {},
     onPlayVideo: (Int) -> Unit = {},
@@ -196,6 +198,7 @@ fun RoutineDetailScreen(
                                 onStart = { onStartTimer(exercise) },
                                 onPause = onPauseTimer,
                                 onResume = onResumeTimer,
+                                onReset = onResetTimer,
                                 onStop = onStopTimer
                             )
 
