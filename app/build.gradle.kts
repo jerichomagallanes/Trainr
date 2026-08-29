@@ -171,6 +171,10 @@ dependencies {
     implementation(libs.bundles.room)
     ksp(libs.room.compiler)
 
+    // Video tutorials
+    implementation(libs.youtube.player)
+    implementation(libs.bundles.coil)
+
     // Unit tests
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

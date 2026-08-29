@@ -2,6 +2,7 @@ package com.jericx.trainr.presentation.workout.sample
 
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.domain.model.WorkoutStatus
+import com.jericx.trainr.presentation.workout.model.YouTubeVideo
 import com.jericx.trainr.presentation.workout.sample.SampleRoutine
 import com.jericx.trainr.presentation.workout.util.WorkoutDateFormatter
 import java.util.Locale
@@ -112,6 +113,15 @@ class SampleWorkoutDataTest {
         val cardioAndCore = SampleWorkoutData.weekOne.workoutDays.first { it.title == "Cardio & Core" }
 
         assertThat(cardioAndCore.duration).isEqualTo(SampleRoutine.cardioAndCore.totalMinutes)
+    }
+
+    // A tutorial the parser cannot read is a card with a dead toggle on it.
+    @Test
+    fun everyExerciseLinksAVideoTheParserCanRead() {
+        val videos = SampleRoutine.cardioAndCore.exercises.map { YouTubeVideo.from(it.videoUrl) }
+
+        assertThat(videos).doesNotContain(null)
+        assertThat(videos.map { it?.id }.toSet()).hasSize(videos.size)
     }
 
     @Test
