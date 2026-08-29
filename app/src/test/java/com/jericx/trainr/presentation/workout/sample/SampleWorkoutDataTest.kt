@@ -111,13 +111,13 @@ class SampleWorkoutDataTest {
     fun theRoutineDurationIsTheSumOfItsExercises() {
         val cardioAndCore = SampleWorkoutData.weekOne.workoutDays.first { it.title == "Cardio & Core" }
 
-        assertThat(cardioAndCore.duration).isEqualTo(SampleRoutine.cardioAndCore.sumOf { it.minutes })
+        assertThat(cardioAndCore.duration).isEqualTo(SampleRoutine.cardioAndCore.totalMinutes)
     }
 
     @Test
     fun theRoutineExerciseCountMatchesItsExercises() {
         val cardioAndCore = SampleWorkoutData.weekOne.workoutDays.first { it.title == "Cardio & Core" }
 
-        assertThat(cardioAndCore.exerciseCount).isEqualTo(SampleRoutine.cardioAndCore.size)
+        assertThat(cardioAndCore.exerciseCount).isEqualTo(SampleRoutine.cardioAndCore.exercises.size)
     }
 }

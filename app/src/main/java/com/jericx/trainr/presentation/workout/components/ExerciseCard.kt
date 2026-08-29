@@ -142,10 +142,10 @@ fun ExerciseCard(
 private fun ExerciseCardPreview() {
     TrainrTheme {
         Column(
-            verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge - Spacing.extraSmall),
+            verticalArrangement = Arrangement.spacedBy(Spacing.section),
             modifier = Modifier.padding(Spacing.screen)
         ) {
-            SampleRoutine.cardioAndCore.take(3).forEach { exercise ->
+            SampleRoutine.cardioAndCore.exercises.take(3).forEach { exercise ->
                 ExerciseCard(exercise = exercise, onToggleCompleted = {})
             }
         }

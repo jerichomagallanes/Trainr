@@ -36,6 +36,7 @@ import com.jericx.trainr.presentation.onboarding.screens.ReviewScreen
 import com.jericx.trainr.presentation.onboarding.screens.WelcomeScreen
 import com.jericx.trainr.presentation.onboarding.screens.WorkoutSetupScreen
 import com.jericx.trainr.presentation.splash.SplashScreen
+import com.jericx.trainr.presentation.workout.RoutineDetailRoute
 import com.jericx.trainr.presentation.workout.WeeklyPlanRoute
 import com.jericx.trainr.presentation.workout.WeeklyProgressScreen
 import com.jericx.trainr.presentation.workout.sample.SampleWeeklyProgress
@@ -201,10 +202,17 @@ fun AppContent(versionName: String) {
                     )
                 }
 
+                composable(Screen.RoutineDetail.route) {
+                    RoutineDetailRoute(onBackClick = { navController.popBackStack() })
+                }
+
                 composable(Screen.Home.route) {
                     WeeklyPlanRoute(
                         onTrackProgressClick = {
                             navController.navigate(Screen.WeeklyProgress.route)
+                        },
+                        onStartTodayClick = {
+                            navController.navigate(Screen.RoutineDetail.route)
                         },
                         onLeavePlanConfirmed = {
                             navController.navigate(Screen.Review.route) {
