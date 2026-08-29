@@ -28,7 +28,7 @@ import com.jericx.trainr.common.Constants
 import com.jericx.trainr.domain.model.Equipment
 import com.jericx.trainr.domain.model.WorkoutLocation
 import com.jericx.trainr.domain.model.WorkoutTime
-import com.jericx.trainr.presentation.common.components.TrainrTopBar
+import com.jericx.trainr.presentation.common.components.layout.TrainrTopBar
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.components.cards.TrainrLocationCard
 import com.jericx.trainr.presentation.common.components.cards.TrainrSelectionCard

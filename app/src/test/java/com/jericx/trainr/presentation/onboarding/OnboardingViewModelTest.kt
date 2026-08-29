@@ -49,7 +49,9 @@ class OnboardingViewModelTest {
         val state = viewModel.onboardingState.value
 
         // Assert
-        assertThat(state.userProfile).isEqualTo(UserProfile())
+        // createdAt defaults to System.currentTimeMillis(), so comparing whole
+        // profiles fails whenever the clock ticks between the two constructions.
+        assertThat(state.userProfile).isEqualTo(UserProfile(createdAt = state.userProfile.createdAt))
         assertThat(state.isLoading).isFalse()
         assertThat(state.isCompleted).isFalse()
         assertThat(state.error).isNull()

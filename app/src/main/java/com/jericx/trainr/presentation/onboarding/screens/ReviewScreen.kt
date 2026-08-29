@@ -27,7 +27,7 @@ import androidx.compose.ui.unit.dp
 import com.jericx.trainr.R
 import com.jericx.trainr.domain.model.Equipment
 import com.jericx.trainr.domain.model.UserProfile
-import com.jericx.trainr.presentation.common.components.TrainrTopBar
+import com.jericx.trainr.presentation.common.components.layout.TrainrTopBar
 import com.jericx.trainr.presentation.common.getLocalizedName
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.components.core.TrainrButton

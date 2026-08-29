@@ -1,4 +1,4 @@
-package com.jericx.trainr.presentation.common.components
+package com.jericx.trainr.presentation.common.components.layout
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
