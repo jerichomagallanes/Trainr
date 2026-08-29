@@ -108,7 +108,7 @@ fun BasicInfoScreen(
                 TrainrFormSection(title = stringResource(R.string.gender)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(Spacing.small)
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.card)
                     ) {
                         TrainrRadioChip(
                             text = stringResource(R.string.male),
