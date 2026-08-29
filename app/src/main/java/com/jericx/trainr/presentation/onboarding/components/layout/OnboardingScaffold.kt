@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.jericx.trainr.presentation.common.components.TrainrTopBar
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 import com.jericx.trainr.presentation.onboarding.components.core.OnboardingButton
@@ -24,7 +25,7 @@ fun OnboardingScaffold(
     onBackClick: (() -> Unit)? = null,
     topBar: @Composable () -> Unit = {
         if (onBackClick != null) {
-            OnboardingTopBar(onBackClick = onBackClick)
+            TrainrTopBar(onBackClick = onBackClick)
         }
     },
     bottomButton: @Composable () -> Unit,

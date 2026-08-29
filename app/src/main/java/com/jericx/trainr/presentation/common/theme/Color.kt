@@ -34,9 +34,14 @@ val GreenSuccess = Color(0xFF4CAF50)  // #4CAF50 - Success Green
 val RedError = Color(0xFFE74C3C)      // #E74C3C - Error Red
 val YellowWarning = Color(0xFFF39C12) // #F39C12 - Warning Yellow
 
+// Workout Screen Colors
+val Slate800 = Color(0xFF243036)          // #243036 - Card headers and primary text
+val AccentOrange = Color(0xFFD37200)      // #D37200 - Primary actions and links
+val OutlineGray = Color(0xFFB0BEC5)       // #B0BEC5 - Card borders
+
 // Workout Status Colors
 val StatusCompleted = Color(0xFF5F8C32)   // #5F8C32 - Completed Green
-val StatusInProgress = Color(0xFFD37200)  // #D37200 - In Progress Orange
+val StatusInProgress = AccentOrange
 val StatusNotStarted = Color(0xFF626262)  // #626262 - Not Started Gray
 
 // Surface Colors
