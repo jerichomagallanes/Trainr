@@ -13,6 +13,7 @@ import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -111,6 +112,26 @@ class RoutineDetailScreenTest {
             .fetchSemanticsNodes()
 
         assertThat(starts).hasSize(state.routine.exercises.count { !it.isCompleted })
+    }
+
+    // The stored routine arrives after the sample one is already on screen;
+    // swapping in an already-finished day must not read as finishing it.
+    @Test
+    fun aFinishedRoutineArrivingFromStorageReportsNothing() {
+        var reported: Int? = null
+
+        composeTestRule.setContent {
+            var current by remember { mutableStateOf(state.copy(isLoaded = false)) }
+            TrainrTheme {
+                RoutineDetailScreen(state = current, onDayCompleted = { reported = it })
+                LaunchedEffect(Unit) {
+                    current = state.copy(routine = state.routine.completeAll())
+                }
+            }
+        }
+
+        composeTestRule.waitForIdle()
+        assertThat(reported).isNull()
     }
 
     // Tapping a day you already finished should show you the routine, not bounce

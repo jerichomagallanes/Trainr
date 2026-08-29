@@ -7,6 +7,7 @@ import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.domain.repository.UserRepository
 import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
+import com.jericx.trainr.presentation.workout.util.WorkoutWeek
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -42,6 +43,10 @@ class WeeklyPlanViewModel @Inject constructor(
     val uiState: StateFlow<WeeklyPlanUiState> = _uiState.asStateFlow()
 
     init {
+        refresh()
+    }
+
+    fun refresh() {
         viewModelScope.launch {
             val stored = userRepository.getCurrentUser()
                 ?.let { userRepository.getWeeklyWorkoutPlan(it.id, FIRST_WEEK) }
@@ -56,14 +61,21 @@ class WeeklyPlanViewModel @Inject constructor(
 
     companion object {
         private const val FIRST_WEEK = 1
+        private const val LAST_ISO_DAY = 7
 
-        // Dates come from the sample week until generated plans carry their own.
-        fun stateFor(plan: WeeklyWorkoutPlan, isSample: Boolean) = WeeklyPlanUiState(
-            plan = plan,
-            days = plan.workoutDays.map {
-                WeeklyPlanDay(day = it, dateMillis = SampleWorkoutData.dateOf(it.dayNumber))
-            },
-            isSampleData = isSample
-        )
+        // Plans stored before startDateMillis existed fall back to the sample week.
+        fun stateFor(plan: WeeklyWorkoutPlan, isSample: Boolean): WeeklyPlanUiState {
+            val start = plan.startDateMillis ?: SampleWorkoutData.weekStartMillis
+
+            return WeeklyPlanUiState(
+                plan = plan,
+                days = plan.workoutDays.map {
+                    WeeklyPlanDay(day = it, dateMillis = WorkoutWeek.dateOfDay(start, it.dayNumber))
+                },
+                weekStartMillis = start,
+                weekEndMillis = WorkoutWeek.dateOfDay(start, LAST_ISO_DAY),
+                isSampleData = isSample
+            )
+        }
     }
 }

@@ -8,6 +8,7 @@ import com.jericx.trainr.data.local.TrainrDatabase
 import com.jericx.trainr.data.local.UserMapper
 import com.jericx.trainr.data.repository.UserRepositoryImpl
 import com.jericx.trainr.domain.model.ExerciseMeasure
+import com.jericx.trainr.domain.model.ExerciseSet
 import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
 import kotlinx.coroutines.test.runTest
@@ -101,5 +102,33 @@ class WorkoutPersistenceTest {
             assertThat(isCompleted).isTrue()
         }
         assertThat(reread.sets[0].actualReps).isNull()
+    }
+
+    @Test
+    fun anAddedSetComesBackWithItsGeneratedId() = runTest {
+        val userId = seedSamplePlan()
+        val exercise = repository.getWeeklyWorkoutPlan(userId, 1)!!
+            .workoutDays.first().exercises.first()
+
+        val id = repository.addExerciseSet(
+            ExerciseSet(setNumber = exercise.sets.size + 1, targetReps = 12),
+            exercise.id
+        )
+
+        assertThat(id).isGreaterThan(0)
+        val reread = repository.getWorkoutExercise(exercise.id)!!
+        assertThat(reread.sets.last().id).isEqualTo(id)
+        assertThat(reread.sets.last().setNumber).isEqualTo(exercise.sets.size + 1)
+    }
+
+    // Redoing onboarding REPLACEs the user row, which must cascade the old plan
+    // away so the reseed starts clean instead of leaving two week ones.
+    @Test
+    fun replacingAUserCascadesAwayTheirOldPlan() = runTest {
+        val userId = seedSamplePlan()
+
+        repository.saveUser(repository.getUser(userId)!!.copy(firstName = "Again"))
+
+        assertThat(repository.getWeeklyWorkoutPlan(userId, 1)).isNull()
     }
 }

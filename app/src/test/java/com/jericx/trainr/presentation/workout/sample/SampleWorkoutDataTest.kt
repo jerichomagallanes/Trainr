@@ -1,6 +1,7 @@
 package com.jericx.trainr.presentation.workout.sample
 
 import com.google.common.truth.Truth.assertThat
+import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
 import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.presentation.workout.model.YouTubeVideo
 import com.jericx.trainr.presentation.workout.model.toRoutineUi
@@ -175,6 +176,44 @@ class SampleWorkoutDataTest {
             keys.forEach { assertThat(it).matches("[a-z][a-z0-9_]*") }
             assertThat(keys.toSet()).hasSize(keys.size)
         }
+    }
+
+    // What onboarding seeds must be the sample plan minus every trace of the
+    // pre-baked progress the previews need.
+    @Test
+    fun aFreshWeekStartsWithNothingDone() {
+        val fresh = SampleWorkoutData.freshWeekOne(userId = 42, startDateMillis = 123L)
+
+        assertThat(fresh.userId).isEqualTo(42)
+        assertThat(fresh.startDateMillis).isEqualTo(123L)
+        assertThat(fresh.workoutDays.map { it.status }.toSet())
+            .containsExactly(WorkoutStatus.NOT_STARTED)
+        assertThat(fresh.workoutDays.mapNotNull { it.completedAt }).isEmpty()
+        fresh.workoutDays.flatMap { it.exercises }.forEach { exercise ->
+            assertThat(exercise.isCompleted).isFalse()
+            exercise.sets.forEach { set ->
+                assertThat(set.isCompleted).isFalse()
+                assertThat(set.actualReps).isNull()
+                assertThat(set.actualWeightKg).isNull()
+                assertThat(set.actualSeconds).isNull()
+            }
+        }
+    }
+
+    @Test
+    fun aFreshWeekKeepsEveryPrescription() {
+        val fresh = SampleWorkoutData.freshWeekOne(userId = 42, startDateMillis = 123L)
+
+        fun targets(plan: WeeklyWorkoutPlan) =
+            plan.workoutDays.flatMap { it.exercises }.map { exercise ->
+                Triple(
+                    exercise.exerciseKey,
+                    exercise.prescription,
+                    exercise.sets.map { Triple(it.targetReps, it.targetWeightKg, it.targetSeconds) }
+                )
+            }
+
+        assertThat(targets(fresh)).isEqualTo(targets(SampleWorkoutData.weekOne))
     }
 
     @Test

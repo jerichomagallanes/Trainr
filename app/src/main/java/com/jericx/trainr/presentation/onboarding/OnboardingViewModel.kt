@@ -11,6 +11,8 @@ import com.jericx.trainr.domain.model.WorkoutLocation
 import com.jericx.trainr.domain.model.WorkoutTime
 import com.jericx.trainr.domain.model.WorkoutType
 import com.jericx.trainr.domain.repository.UserRepository
+import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
+import com.jericx.trainr.presentation.workout.util.WorkoutWeek
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -79,11 +81,22 @@ class OnboardingViewModel @Inject constructor(
         )
     }
 
+    suspend fun hasCompletedOnboarding(): Boolean = userRepository.hasUsers()
+
     fun saveUserProfile(onSuccess: () -> Unit) {
         viewModelScope.launch {
             try {
                 _onboardingState.value = _onboardingState.value.copy(isLoading = true)
-                userRepository.saveUser(_onboardingState.value.userProfile)
+                // Redoing onboarding replaces the existing user; the REPLACE
+                // cascades the old plan away, so the reseed below starts clean.
+                val profile = _onboardingState.value.userProfile
+                val existing = userRepository.getCurrentUser()
+                val userId = userRepository.saveUser(
+                    if (existing == null) profile else profile.copy(id = existing.id)
+                )
+                userRepository.saveWeeklyWorkoutPlan(
+                    SampleWorkoutData.freshWeekOne(userId, WorkoutWeek.mondayOf())
+                )
                 _onboardingState.value = _onboardingState.value.copy(
                     isLoading = false,
                     isCompleted = true

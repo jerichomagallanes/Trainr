@@ -4,13 +4,23 @@ import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.presentation.Screen
 import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
+import com.jericx.trainr.domain.model.ExerciseMeasure
+import com.jericx.trainr.domain.model.ExerciseSet
+import com.jericx.trainr.domain.model.UserProfile
+import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
 import com.jericx.trainr.domain.model.WorkoutDay
+import com.jericx.trainr.domain.model.WorkoutExercise
 import com.jericx.trainr.domain.model.WorkoutStatus
+import com.jericx.trainr.domain.repository.UserRepository
 import com.jericx.trainr.presentation.workout.model.ExerciseUi
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -34,8 +44,15 @@ class RoutineDetailViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun viewModel(dayNumber: Int = SampleWorkoutData.DEFAULT_DAY_NUMBER) = RoutineDetailViewModel(
-        SavedStateHandle(mapOf(Screen.RoutineDetail.ARG_DAY_NUMBER to dayNumber))
+    private fun emptyRepository(): UserRepository = mockk<UserRepository>(relaxed = true)
+        .also { coEvery { it.getCurrentUser() } returns null }
+
+    private fun viewModel(
+        dayNumber: Int = SampleWorkoutData.DEFAULT_DAY_NUMBER,
+        repository: UserRepository = emptyRepository()
+    ) = RoutineDetailViewModel(
+        SavedStateHandle(mapOf(Screen.RoutineDetail.ARG_DAY_NUMBER to dayNumber)),
+        repository
     )
 
     private fun RoutineDetailViewModel.exercise(position: Int): ExerciseUi =
@@ -351,5 +368,171 @@ class RoutineDetailViewModelTest {
 
         assertThat(viewModel.uiState.value.timer).isNull()
         assertThat(viewModel.uiState.value.routine.isComplete).isTrue()
+    }
+
+    private fun storedExercise(id: Long, key: String, name: String, done: Boolean = false) =
+        WorkoutExercise(
+            id = id,
+            exerciseKey = key,
+            name = name,
+            measure = ExerciseMeasure.WEIGHT_AND_REPS,
+            sets = listOf(
+                ExerciseSet(id = id * 10, setNumber = 1, targetReps = 12, targetWeightKg = 20f),
+                ExerciseSet(id = id * 10 + 1, setNumber = 2, targetReps = 12, targetWeightKg = 20f)
+            ),
+            durationMinutes = 8,
+            prescription = "2 sets of 12 reps",
+            instructions = "Stored instructions.",
+            isCompleted = done
+        )
+
+    private val storedPlan = WeeklyWorkoutPlan(
+        id = 7,
+        userId = 1,
+        weekNumber = 1,
+        title = "Stored week",
+        startDateMillis = 1_000_000_000_000L,
+        workoutDays = listOf(
+            WorkoutDay(
+                id = 21,
+                dayNumber = 1,
+                title = "Stored Strength",
+                status = WorkoutStatus.COMPLETED,
+                duration = 8,
+                exerciseCount = 1,
+                equipment = listOf("Dumbbells"),
+                exercises = listOf(storedExercise(30, "plank", "Plank", done = true)),
+                completedAt = 1L
+            ),
+            WorkoutDay(
+                id = 22,
+                dayNumber = 3,
+                title = "Stored Pull",
+                status = WorkoutStatus.NOT_STARTED,
+                duration = 16,
+                exerciseCount = 2,
+                equipment = listOf("Dumbbells"),
+                exercises = listOf(
+                    storedExercise(32, "bent_over_row", "Bent-Over Rows"),
+                    storedExercise(33, "goblet_squat", "Goblet Squats")
+                )
+            )
+        )
+    )
+
+    private fun repositoryWith(plan: WeeklyWorkoutPlan): UserRepository =
+        mockk<UserRepository>(relaxed = true).also {
+            coEvery { it.getCurrentUser() } returns UserProfile(id = 1)
+            coEvery { it.getWeeklyWorkoutPlan(1, 1) } returns plan
+        }
+
+    @Test
+    fun loadsTheStoredDayWhenOneExists() = runTest {
+        val viewModel = viewModel(dayNumber = 3, repository = repositoryWith(storedPlan))
+        advanceUntilIdle()
+
+        with(viewModel.uiState.value) {
+            assertThat(routine.title).isEqualTo("Stored Pull")
+            assertThat(isLoaded).isTrue()
+            assertThat(dayNumber).isEqualTo(2)
+            assertThat(equipment).containsExactly("Dumbbells")
+        }
+    }
+
+    // The stored routine replaces the sample synchronously shown before it; the
+    // screen must be able to tell the swap from the user finishing the day.
+    @Test
+    fun theStateIsNotLoadedUntilTheRepositoryAnswers() = runTest {
+        val viewModel = viewModel(dayNumber = 3, repository = repositoryWith(storedPlan))
+
+        assertThat(viewModel.uiState.value.isLoaded).isFalse()
+        advanceUntilIdle()
+        assertThat(viewModel.uiState.value.isLoaded).isTrue()
+    }
+
+    @Test
+    fun togglingAnExercisePersistsItAndMarksTheDayInProgress() = runTest {
+        val repository = repositoryWith(storedPlan)
+        val viewModel = viewModel(dayNumber = 3, repository = repository)
+        advanceUntilIdle()
+
+        viewModel.toggleExercise(1)
+        advanceUntilIdle()
+
+        coVerify {
+            repository.updateWorkoutExercise(match { it.id == 32L && it.isCompleted }, 22L)
+            repository.updateWorkoutDay(
+                match { it.status == WorkoutStatus.IN_PROGRESS && it.completedAt == null },
+                7L
+            )
+        }
+    }
+
+    @Test
+    fun finishingTheRoutinePersistsTheDayAsCompleted() = runTest {
+        val repository = repositoryWith(storedPlan)
+        val viewModel = viewModel(dayNumber = 3, repository = repository)
+        advanceUntilIdle()
+
+        viewModel.completeRoutine()
+        advanceUntilIdle()
+
+        coVerify {
+            repository.updateWorkoutExercise(match { it.id == 32L && it.isCompleted }, 22L)
+            repository.updateWorkoutExercise(match { it.id == 33L && it.isCompleted }, 22L)
+            repository.updateWorkoutDay(
+                match { it.status == WorkoutStatus.COMPLETED && it.completedAt != null },
+                7L
+            )
+        }
+    }
+
+    @Test
+    fun editingASetPersistsIt() = runTest {
+        val repository = repositoryWith(storedPlan)
+        val viewModel = viewModel(dayNumber = 3, repository = repository)
+        advanceUntilIdle()
+
+        val logged = viewModel.exercise(1).sets.first().copy(actualReps = 9, isCompleted = true)
+        viewModel.updateSet(1, logged)
+        advanceUntilIdle()
+
+        coVerify {
+            repository.updateExerciseSet(match { it.id == 320L && it.actualReps == 9 }, 32L)
+        }
+    }
+
+    @Test
+    fun anAddedSetIsPersistedAndKeepsItsStorageId() = runTest {
+        val repository = repositoryWith(storedPlan)
+        coEvery { repository.addExerciseSet(any(), 32L) } returns 99L
+        val viewModel = viewModel(dayNumber = 3, repository = repository)
+        advanceUntilIdle()
+
+        viewModel.addSet(1)
+        advanceUntilIdle()
+
+        val added = viewModel.exercise(1).sets.last()
+        assertThat(added.setNumber).isEqualTo(3)
+        assertThat(added.id).isEqualTo(99L)
+        coVerify { repository.addExerciseSet(match { it.setNumber == 3 }, 32L) }
+    }
+
+    @Test
+    fun theSampleFallbackPersistsNothing() = runTest {
+        val repository = emptyRepository()
+        val viewModel = viewModel(repository = repository)
+        advanceUntilIdle()
+
+        viewModel.toggleExercise(3)
+        viewModel.updateSet(3, viewModel.exercise(3).sets.first().copy(actualReps = 20))
+        viewModel.addSet(3)
+        viewModel.completeRoutine()
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { repository.updateWorkoutExercise(any(), any()) }
+        coVerify(exactly = 0) { repository.updateWorkoutDay(any(), any()) }
+        coVerify(exactly = 0) { repository.updateExerciseSet(any(), any()) }
+        coVerify(exactly = 0) { repository.addExerciseSet(any(), any()) }
     }
 }
