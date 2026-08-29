@@ -35,7 +35,7 @@ object SampleWorkoutData {
                     status = WorkoutStatus.COMPLETED,
                     duration = 45,
                     exerciseCount = 6,
-                    equipment = listOf("Dumbells", "Yoga Mat"),
+                    equipment = listOf("Dumbbells", "Yoga Mat"),
                     completedAt = dateOf(1)
                 ),
                 WorkoutDay(
@@ -45,7 +45,7 @@ object SampleWorkoutData {
                     status = WorkoutStatus.IN_PROGRESS,
                     duration = 35,
                     exerciseCount = 5,
-                    equipment = listOf("Yoga Mat", "Treadmill")
+                    equipment = listOf("Dumbbells", "Yoga Mat")
                 ),
                 WorkoutDay(
                     id = 3,
@@ -54,7 +54,7 @@ object SampleWorkoutData {
                     status = WorkoutStatus.NOT_STARTED,
                     duration = 40,
                     exerciseCount = 4,
-                    equipment = listOf("Dumbells", "Yoga Mat")
+                    equipment = listOf("Dumbbells", "Yoga Mat")
                 )
             ),
             createdAt = weekStartMillis,

@@ -74,14 +74,21 @@ class SampleWorkoutDataTest {
     }
 
     @Test
-    fun everyDayListsTheEquipmentShownInTheDesign() {
+    fun everyDayListsEquipment() {
         val equipment = SampleWorkoutData.weekOne.workoutDays.map { it.equipment }
 
         assertThat(equipment).containsExactly(
-            listOf("Dumbells", "Yoga Mat"),
-            listOf("Yoga Mat", "Treadmill"),
-            listOf("Dumbells", "Yoga Mat")
+            listOf("Dumbbells", "Yoga Mat"),
+            listOf("Dumbbells", "Yoga Mat"),
+            listOf("Dumbbells", "Yoga Mat")
         ).inOrder()
+    }
+
+    @Test
+    fun equipmentIsSpelledCorrectly() {
+        val names = SampleWorkoutData.weekOne.workoutDays.flatMap { it.equipment }
+
+        assertThat(names).doesNotContain("Dumbells")
     }
 
     @Test

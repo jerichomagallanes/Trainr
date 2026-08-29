@@ -40,7 +40,7 @@ fun OnboardingRadioChip(
         onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
-            .height(ComponentHeight.Medium),
+            .height(ComponentHeight.Field),
         shape = MaterialTheme.shapes.medium,
         color = if (selected)
             MaterialTheme.colorScheme.onBackground
@@ -61,7 +61,7 @@ fun OnboardingRadioChip(
                 text = text,
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = FontWeight.SemiBold,
-                    fontSize = 14.sp
+                    fontSize = 16.sp
                 ),
                 color = if (selected)
                     MaterialTheme.colorScheme.background

@@ -75,12 +75,12 @@ private val LightColorScheme = lightColorScheme(
     surfaceContainerHighest = Gray100,
     outline = OutlineGray,
     outlineVariant = DividerGray,
-    onBackground = Gray900,
+    onBackground = Slate800,
 
     surface = Color.White,
-    onSurface = Gray900,
+    onSurface = Slate800,
     surfaceVariant = Gray100,
-    onSurfaceVariant = Gray700,
+    onSurfaceVariant = TextMuted,
 
     error = RedError,
     errorContainer = RedError.copy(alpha = 0.1f),
