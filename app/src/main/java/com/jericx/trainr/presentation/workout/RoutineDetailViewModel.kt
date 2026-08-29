@@ -21,7 +21,9 @@ data class RoutineDetailUiState(
     val routine: RoutineUi,
     val equipment: List<String>,
     val dateMillis: Long,
-    val timer: ExerciseTimerUi? = null
+    val timer: ExerciseTimerUi? = null,
+    val expandedVideos: Set<Int> = emptySet(),
+    val playingVideo: Int? = null
 )
 
 @HiltViewModel
@@ -80,6 +82,27 @@ class RoutineDetailViewModel @Inject constructor() : ViewModel() {
     fun stopTimer() {
         cancelTick()
         _uiState.update { it.copy(timer = null) }
+    }
+
+    fun toggleVideo(position: Int) {
+        _uiState.update { state ->
+            val collapsing = position in state.expandedVideos
+
+            state.copy(
+                expandedVideos = if (collapsing) state.expandedVideos - position
+                else state.expandedVideos + position,
+                playingVideo = if (collapsing && state.playingVideo == position) {
+                    null
+                } else {
+                    state.playingVideo
+                }
+            )
+        }
+    }
+
+    // One WebView at a time: playing a tutorial stops whichever was open.
+    fun playVideo(position: Int) {
+        _uiState.update { it.copy(playingVideo = position) }
     }
 
     private fun cancelTick() {
