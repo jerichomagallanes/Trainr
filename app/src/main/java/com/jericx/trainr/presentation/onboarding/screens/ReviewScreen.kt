@@ -28,15 +28,15 @@ import androidx.compose.ui.unit.sp
 import com.jericx.trainr.R
 import com.jericx.trainr.domain.model.Equipment
 import com.jericx.trainr.domain.model.UserProfile
+import com.jericx.trainr.presentation.common.components.TrainrTopBar
+import com.jericx.trainr.presentation.common.getLocalizedName
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.onboarding.components.core.OnboardingButton
 import com.jericx.trainr.presentation.onboarding.components.core.OnboardingProgress
 import com.jericx.trainr.presentation.onboarding.components.layout.OnboardingScaffold
 import com.jericx.trainr.presentation.onboarding.components.layout.OnboardingScreenContent
-import com.jericx.trainr.presentation.onboarding.components.layout.OnboardingTopBar
 import com.jericx.trainr.presentation.onboarding.components.typography.OnboardingScreenTitle
 import com.jericx.trainr.presentation.onboarding.components.typography.OnboardingSubtitle
-import com.jericx.trainr.presentation.common.getLocalizedName
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,7 +48,7 @@ fun ReviewScreen(
     OnboardingScaffold(
         onBackClick = onBackClick,
         topBar = {
-            OnboardingTopBar(onBackClick = onBackClick, showLogo = true)
+            TrainrTopBar(onBackClick = onBackClick, showLogo = true)
         },
         bottomButton = {
             OnboardingButton(

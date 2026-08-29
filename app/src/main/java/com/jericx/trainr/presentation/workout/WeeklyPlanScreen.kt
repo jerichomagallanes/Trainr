@@ -40,11 +40,11 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jericx.trainr.R
 import com.jericx.trainr.domain.model.WorkoutDay
+import com.jericx.trainr.presentation.common.components.TrainrTopBar
 import com.jericx.trainr.presentation.common.theme.AccentOrange
 import com.jericx.trainr.presentation.common.theme.Slate800
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
-import com.jericx.trainr.presentation.onboarding.components.layout.OnboardingTopBar
 import com.jericx.trainr.presentation.workout.components.WorkoutDayCard
 import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
 import com.jericx.trainr.presentation.workout.util.WorkoutDateFormatter
@@ -95,7 +95,7 @@ fun WeeklyPlanScreen(
     }
 
     Column(modifier = modifier.fillMaxSize()) {
-        OnboardingTopBar(onBackClick = { showLeaveDialog = true })
+        TrainrTopBar(onBackClick = { showLeaveDialog = true })
 
         Column(
             modifier = Modifier

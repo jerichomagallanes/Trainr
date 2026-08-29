@@ -28,6 +28,7 @@ import com.jericx.trainr.common.Constants
 import com.jericx.trainr.domain.model.Equipment
 import com.jericx.trainr.domain.model.WorkoutLocation
 import com.jericx.trainr.domain.model.WorkoutTime
+import com.jericx.trainr.presentation.common.components.TrainrTopBar
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.onboarding.components.cards.OnboardingLocationCard
 import com.jericx.trainr.presentation.onboarding.components.cards.OnboardingSelectionCard
@@ -43,7 +44,6 @@ import com.jericx.trainr.presentation.onboarding.components.layout.OnboardingFlo
 import com.jericx.trainr.presentation.onboarding.components.layout.OnboardingFormSection
 import com.jericx.trainr.presentation.onboarding.components.layout.OnboardingScaffold
 import com.jericx.trainr.presentation.onboarding.components.layout.OnboardingScreenContent
-import com.jericx.trainr.presentation.onboarding.components.layout.OnboardingTopBar
 import com.jericx.trainr.presentation.onboarding.components.typography.OnboardingScreenTitle
 import com.jericx.trainr.presentation.onboarding.components.typography.OnboardingSectionTitle
 
@@ -68,7 +68,7 @@ fun WorkoutSetupScreen(
     OnboardingScaffold(
         onBackClick = onBackClick,
         topBar = {
-            OnboardingTopBar(onBackClick = onBackClick, showLogo = true)
+            TrainrTopBar(onBackClick = onBackClick, showLogo = true)
         },
         bottomButton = {
             OnboardingButton(

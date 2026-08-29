@@ -1,4 +1,4 @@
-package com.jericx.trainr.presentation.onboarding.components.layout
+package com.jericx.trainr.presentation.common.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -29,7 +29,7 @@ import com.jericx.trainr.presentation.common.theme.TrainrTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OnboardingTopBar(
+fun TrainrTopBar(
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
     showLogo: Boolean = true
@@ -71,14 +71,14 @@ fun OnboardingTopBar(
 
 @Preview(showBackground = true)
 @Composable
-private fun OnboardingTopBarPreview() {
+private fun TrainrTopBarPreview() {
     TrainrTheme {
         Column(
             verticalArrangement = Arrangement.spacedBy(Spacing.medium),
             modifier = Modifier.padding(Spacing.medium)
         ) {
-            OnboardingTopBar(onBackClick = {})
-            OnboardingTopBar(onBackClick = {}, showLogo = false)
+            TrainrTopBar(onBackClick = {})
+            TrainrTopBar(onBackClick = {}, showLogo = false)
         }
     }
 }
