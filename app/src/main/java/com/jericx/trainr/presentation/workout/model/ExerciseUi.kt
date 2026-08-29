@@ -15,6 +15,9 @@ data class ExerciseUi(
     val detail: String,
     val measure: ExerciseMeasure = ExerciseMeasure.REPS,
     val sets: List<ExerciseSet> = emptyList(),
+    // The same movement's sets from the last completed day that had it, matched
+    // on exerciseKey; empty when there is no history yet.
+    val previousSets: List<ExerciseSet> = emptyList(),
     val videoUrl: String? = null,
     val isCompleted: Boolean = false
 )

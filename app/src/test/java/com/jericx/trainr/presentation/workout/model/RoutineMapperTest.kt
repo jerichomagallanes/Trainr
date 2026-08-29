@@ -1,6 +1,7 @@
 package com.jericx.trainr.presentation.workout.model
 
 import com.google.common.truth.Truth.assertThat
+import com.jericx.trainr.domain.model.ExerciseSet
 import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.model.WorkoutExercise
 import com.jericx.trainr.domain.model.WorkoutStatus
@@ -106,6 +107,23 @@ class RoutineMapperTest {
         val videoUrl = routine.exercises.single().videoUrl
         assertThat(videoUrl).isNotNull()
         assertThat(videoUrl).isEqualTo(ExerciseVideoCatalog.urlFor("plank"))
+    }
+
+    @Test
+    fun attachesPreviousSetsByExerciseKey() {
+        val history = listOf(ExerciseSet(setNumber = 1, actualReps = 12, actualWeightKg = 20f))
+
+        val routine = day(exercise("Plank", exerciseKey = "plank"))
+            .toRoutineUi(previousByKey = mapOf("plank" to history))
+
+        assertThat(routine.exercises.single().previousSets).isEqualTo(history)
+    }
+
+    @Test
+    fun anExerciseWithoutHistoryCarriesNone() {
+        val routine = day(exercise("Plank", exerciseKey = "plank")).toRoutineUi()
+
+        assertThat(routine.exercises.single().previousSets).isEmpty()
     }
 
     @Test

@@ -150,7 +150,8 @@ fun ExerciseCard(
                     measure = exercise.measure,
                     sets = exercise.sets,
                     onSetChanged = onSetChanged,
-                    onAddSet = onAddSet
+                    onAddSet = onAddSet,
+                    previousSets = exercise.previousSets
                 )
             }
 

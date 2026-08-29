@@ -47,8 +47,13 @@ fun ExerciseSetTable(
     sets: List<ExerciseSet>,
     onSetChanged: (ExerciseSet) -> Unit,
     onAddSet: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    previousSets: List<ExerciseSet> = emptyList()
 ) {
+    // No column at all without history: a week-one card looks exactly like the
+    // design, which has no PREVIOUS.
+    val showPrevious = previousSets.isNotEmpty()
+
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(Spacing.small)
@@ -56,6 +61,9 @@ fun ExerciseSetTable(
         Row(verticalAlignment = Alignment.CenterVertically) {
             ColumnLabel(stringResource(R.string.set_column), Modifier.width(SetColumnWidth))
 
+            if (showPrevious) {
+                ColumnLabel(stringResource(R.string.previous_column), Modifier.weight(1f))
+            }
             if (measure == ExerciseMeasure.WEIGHT_AND_REPS) {
                 ColumnLabel(stringResource(R.string.weight_column), Modifier.weight(1f))
             }
@@ -71,7 +79,19 @@ fun ExerciseSetTable(
         }
 
         sets.forEach { set ->
-            SetRow(measure = measure, set = set, onSetChanged = onSetChanged)
+            SetRow(
+                measure = measure,
+                set = set,
+                previousText = if (showPrevious) {
+                    previousCellText(
+                        measure,
+                        previousSets.firstOrNull { it.setNumber == set.setNumber }
+                    )
+                } else {
+                    null
+                },
+                onSetChanged = onSetChanged
+            )
         }
 
         Text(
@@ -93,6 +113,7 @@ fun ExerciseSetTable(
 private fun SetRow(
     measure: ExerciseMeasure,
     set: ExerciseSet,
+    previousText: String?,
     onSetChanged: (ExerciseSet) -> Unit
 ) {
     Row(
@@ -106,6 +127,16 @@ private fun SetRow(
             textAlign = TextAlign.Center,
             modifier = Modifier.width(SetColumnWidth)
         )
+
+        if (previousText != null) {
+            Text(
+                text = previousText,
+                style = MaterialTheme.typography.bodySmall,
+                color = TextMuted,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.weight(1f)
+            )
+        }
 
         if (measure == ExerciseMeasure.WEIGHT_AND_REPS) {
             NumberCell(
@@ -213,6 +244,25 @@ private fun NumberCell(
 
 private fun formatWeight(kg: Float): String =
     if (kg % 1f == 0f) kg.toInt().toString() else kg.toString()
+
+private const val NO_PREVIOUS = "—"
+
+// What was actually done last time, in the shape of this row's own columns; a
+// set that was prescribed but never logged shows a dash, not its target.
+internal fun previousCellText(measure: ExerciseMeasure, previous: ExerciseSet?): String {
+    if (previous == null) return NO_PREVIOUS
+
+    return when (measure) {
+        ExerciseMeasure.WEIGHT_AND_REPS -> {
+            val reps = previous.actualReps ?: return NO_PREVIOUS
+            val weight = previous.actualWeightKg
+            if (weight == null) "$reps" else "${formatWeight(weight)}kg × $reps"
+        }
+
+        ExerciseMeasure.REPS -> previous.actualReps?.toString() ?: NO_PREVIOUS
+        ExerciseMeasure.DURATION -> previous.actualSeconds?.toString() ?: NO_PREVIOUS
+    }
+}
 
 @Preview(showBackground = true)
 @Composable
