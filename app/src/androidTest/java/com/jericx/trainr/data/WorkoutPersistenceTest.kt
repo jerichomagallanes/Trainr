@@ -50,13 +50,16 @@ class WorkoutPersistenceTest {
         val stored = repository.getWeeklyWorkoutPlan(userId, weekNumber = 1)
 
         assertThat(stored).isNotNull()
-        assertThat(stored!!.workoutDays).hasSize(SampleWorkoutData.weekOne.workoutDays.size)
+        assertThat(stored!!.startDateMillis).isEqualTo(SampleWorkoutData.weekOne.startDateMillis)
+        assertThat(stored.workoutDays).hasSize(SampleWorkoutData.weekOne.workoutDays.size)
 
         SampleWorkoutData.weekOne.workoutDays.forEachIndexed { index, expected ->
             val actual = stored.workoutDays[index]
             assertThat(actual.title).isEqualTo(expected.title)
             assertThat(actual.exercises.map { it.name })
                 .isEqualTo(expected.exercises.map { it.name })
+            assertThat(actual.exercises.map { it.exerciseKey })
+                .isEqualTo(expected.exercises.map { it.exerciseKey })
             assertThat(actual.exercises.map { it.sets.size })
                 .isEqualTo(expected.exercises.map { it.sets.size })
         }

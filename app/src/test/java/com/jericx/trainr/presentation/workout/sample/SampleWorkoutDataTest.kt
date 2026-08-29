@@ -165,6 +165,24 @@ class SampleWorkoutDataTest {
         }
     }
 
+    // History is matched on the key, so every exercise needs a well-formed one
+    // and no day may carry the same key twice.
+    @Test
+    fun everyExerciseCarriesAUniqueWellFormedKey() {
+        SampleWorkoutData.weekOne.workoutDays.forEach { day ->
+            val keys = day.exercises.map { it.exerciseKey }
+
+            keys.forEach { assertThat(it).matches("[a-z][a-z0-9_]*") }
+            assertThat(keys.toSet()).hasSize(keys.size)
+        }
+    }
+
+    @Test
+    fun thePlanKnowsTheMondayItStartsOn() {
+        assertThat(SampleWorkoutData.weekOne.startDateMillis)
+            .isEqualTo(SampleWorkoutData.weekStartMillis)
+    }
+
     // A tutorial the parser cannot read is a card with a dead toggle on it.
     @Test
     fun everyExerciseLinksAVideoTheParserCanRead() {

@@ -45,6 +45,7 @@ data class WeeklyWorkoutPlanEntity(
     val userId: Long,
     val weekNumber: Int,
     val title: String,
+    val startDateMillis: Long?,
     val createdAt: Long,
     val updatedAt: Long
 )
@@ -90,6 +91,7 @@ data class WorkoutExerciseEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val workoutDayId: Long,
+    val exerciseKey: String,
     val name: String,
     val measure: String,
     // The column predates the set table and still holds the prescribed count.
