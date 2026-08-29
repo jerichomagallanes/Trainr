@@ -18,6 +18,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
@@ -50,7 +51,31 @@ fun BodyMetricsScreen(
     var weight by remember { mutableStateOf("") }
     var useMetric by remember { mutableStateOf(true) }
 
+    val focusManager = LocalFocusManager.current
+
     val isFormValid = height.isNotBlank() && weight.isNotBlank()
+
+    // Switching units rewrites both field values, swaps the height keyboard
+    // between decimal and text, and changes which input each field accepts.
+    // Focus is cleared first so the user is never left with a caret sitting in
+    // a value they did not type, in a field that now silently rejects most
+    // keystrokes. Re-selecting the unit already in use is a no-op, so it does
+    // not steal focus.
+    fun switchUnits(toMetric: Boolean) {
+        if (toMetric == useMetric) return
+
+        focusManager.clearFocus()
+
+        if (toMetric) {
+            height = BodyMetricsConverter.convertHeightToMetric(height)
+            weight = BodyMetricsConverter.convertWeightToMetric(weight)
+        } else {
+            height = BodyMetricsConverter.convertHeightToImperial(height)
+            weight = BodyMetricsConverter.convertWeightToImperial(weight)
+        }
+
+        useMetric = toMetric
+    }
 
     OnboardingScaffold(
         onBackClick = onBackClick,
@@ -96,25 +121,13 @@ fun BodyMetricsScreen(
                     OnboardingToggleChip(
                         text = stringResource(R.string.metric),
                         selected = useMetric,
-                        onClick = {
-                            if (!useMetric) {
-                                height = BodyMetricsConverter.convertHeightToMetric(height)
-                                weight = BodyMetricsConverter.convertWeightToMetric(weight)
-                                useMetric = true
-                            }
-                        },
+                        onClick = { switchUnits(toMetric = true) },
                         modifier = Modifier.weight(1f)
                     )
                     OnboardingToggleChip(
                         text = stringResource(R.string.imperial),
                         selected = !useMetric,
-                        onClick = {
-                            if (useMetric) {
-                                height = BodyMetricsConverter.convertHeightToImperial(height)
-                                weight = BodyMetricsConverter.convertWeightToImperial(weight)
-                                useMetric = false
-                            }
-                        },
+                        onClick = { switchUnits(toMetric = false) },
                         modifier = Modifier.weight(1f)
                     )
                 }
