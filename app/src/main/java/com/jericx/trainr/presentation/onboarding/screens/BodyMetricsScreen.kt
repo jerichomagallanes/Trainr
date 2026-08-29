@@ -26,11 +26,9 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.unit.sp
 import com.jericx.trainr.R
 import com.jericx.trainr.common.Constants
 import com.jericx.trainr.presentation.common.theme.Spacing
-import com.jericx.trainr.presentation.onboarding.util.BodyMetricsConverter
 import com.jericx.trainr.presentation.onboarding.components.core.OnboardingButton
 import com.jericx.trainr.presentation.onboarding.components.core.OnboardingProgress
 import com.jericx.trainr.presentation.onboarding.components.core.OnboardingTextField
@@ -40,6 +38,7 @@ import com.jericx.trainr.presentation.onboarding.components.layout.OnboardingSca
 import com.jericx.trainr.presentation.onboarding.components.layout.OnboardingScreenContent
 import com.jericx.trainr.presentation.onboarding.components.typography.OnboardingScreenTitle
 import com.jericx.trainr.presentation.onboarding.components.typography.OnboardingSubtitle
+import com.jericx.trainr.presentation.onboarding.util.BodyMetricsConverter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -203,7 +202,6 @@ private fun BMICard(bmi: Float) {
                     withStyle(
                         style = SpanStyle(
                             fontWeight = FontWeight.SemiBold,
-                            fontSize = 16.sp,
                             color = MaterialTheme.colorScheme.onBackground
                         )
                     ) {
@@ -212,7 +210,6 @@ private fun BMICard(bmi: Float) {
                     withStyle(
                         style = SpanStyle(
                             fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp,
                             color = MaterialTheme.colorScheme.primary
                         )
                     ) {
@@ -224,10 +221,7 @@ private fun BMICard(bmi: Float) {
 
             Text(
                 text = getBMICategory(bmi),
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
-                ),
+                style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary
             )
         }

@@ -67,13 +67,12 @@ fun WorkoutDayCard(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = weekday,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.titleSmall,
                     color = if (headerIsDark) Color.White else Slate800
                 )
                 Text(
                     text = day.title,
-                    fontSize = 14.sp,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = if (headerIsDark) Color.White else Slate800
                 )
             }
@@ -102,15 +101,14 @@ fun WorkoutDayCard(
                     Spacer(modifier = Modifier.size(Spacing.extraSmall))
                     Text(
                         text = stringResource(R.string.minutes, day.duration),
-                        fontSize = 14.sp,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = Color.Black
                     )
                 }
 
                 Text(
                     text = stringResource(R.string.exercises_count, day.exerciseCount),
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.labelLarge,
                     color = Slate800,
                     modifier = Modifier
                         .background(Gray100, MaterialTheme.shapes.small)
@@ -125,7 +123,7 @@ fun WorkoutDayCard(
                             }
                             append(day.equipment.joinToString(", "))
                         },
-                        fontSize = 14.sp,
+                        style = MaterialTheme.typography.labelMedium,
                         color = Slate800
                     )
                 }
