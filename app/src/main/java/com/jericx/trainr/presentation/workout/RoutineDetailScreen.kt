@@ -37,6 +37,8 @@ import com.jericx.trainr.presentation.common.theme.Slate800
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 import com.jericx.trainr.presentation.workout.components.ExerciseCard
+import com.jericx.trainr.presentation.workout.components.ExerciseTimer
+import com.jericx.trainr.presentation.workout.model.ExerciseUi
 import com.jericx.trainr.presentation.workout.util.WorkoutDateFormatter
 
 @Composable
@@ -50,7 +52,11 @@ fun RoutineDetailRoute(
         state = state,
         onBackClick = onBackClick,
         onToggleExercise = viewModel::toggleExercise,
-        onCompleteRoutine = viewModel::completeRoutine
+        onCompleteRoutine = viewModel::completeRoutine,
+        onStartTimer = viewModel::startTimer,
+        onPauseTimer = viewModel::pauseTimer,
+        onResumeTimer = viewModel::resumeTimer,
+        onStopTimer = viewModel::stopTimer
     )
 }
 
@@ -60,7 +66,11 @@ fun RoutineDetailScreen(
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit = {},
     onToggleExercise: (Int) -> Unit = {},
-    onCompleteRoutine: () -> Unit = {}
+    onCompleteRoutine: () -> Unit = {},
+    onStartTimer: (ExerciseUi) -> Unit = {},
+    onPauseTimer: () -> Unit = {},
+    onResumeTimer: () -> Unit = {},
+    onStopTimer: () -> Unit = {}
 ) {
     val locale = LocalLocale.current.platformLocale
     val routine = state.routine
@@ -145,7 +155,17 @@ fun RoutineDetailScreen(
                     ExerciseCard(
                         exercise = exercise,
                         onToggleCompleted = { onToggleExercise(exercise.position) }
-                    )
+                    ) {
+                        if (!exercise.isCompleted) {
+                            ExerciseTimer(
+                                timer = state.timer?.takeIf { it.position == exercise.position },
+                                onStart = { onStartTimer(exercise) },
+                                onPause = onPauseTimer,
+                                onResume = onResumeTimer,
+                                onStop = onStopTimer
+                            )
+                        }
+                    }
                 }
             }
 

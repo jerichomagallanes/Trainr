@@ -4,6 +4,7 @@ import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -93,6 +94,18 @@ class RoutineDetailScreenTest {
             .performClick()
 
         assertThat(toggled).isEqualTo(2)
+    }
+
+    // The design gives the finished card no timer row, and it has nothing left to time.
+    @Test
+    fun onlyTheUnfinishedExercisesOfferATimer() {
+        setScreen()
+
+        val starts = composeTestRule
+            .onAllNodesWithText(string(R.string.start_timer))
+            .fetchSemanticsNodes()
+
+        assertThat(starts).hasSize(state.routine.exercises.count { !it.isCompleted })
     }
 
     @Test

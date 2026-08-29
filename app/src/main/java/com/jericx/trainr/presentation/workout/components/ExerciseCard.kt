@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -38,7 +39,8 @@ import com.jericx.trainr.presentation.workout.sample.SampleRoutine
 fun ExerciseCard(
     exercise: ExerciseUi,
     onToggleCompleted: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit = {}
 ) {
     // A finished exercise turns green throughout: badge, name and rule.
     val accent = if (exercise.isCompleted) StatusCompleted else Slate800
@@ -98,8 +100,13 @@ fun ExerciseCard(
         )
 
         Column(
-            modifier = Modifier.padding(horizontal = Spacing.tight, vertical = Spacing.card),
-            verticalArrangement = Arrangement.spacedBy(Spacing.card)
+            modifier = Modifier.padding(
+                start = Spacing.tight,
+                end = Spacing.tight,
+                top = Spacing.card,
+                bottom = Spacing.screen
+            ),
+            verticalArrangement = Arrangement.spacedBy(Spacing.screen)
         ) {
             Text(
                 text = exercise.description,
@@ -133,6 +140,8 @@ fun ExerciseCard(
                         .padding(horizontal = Spacing.tight, vertical = 3.dp)
                 )
             }
+
+            content()
         }
     }
 }
