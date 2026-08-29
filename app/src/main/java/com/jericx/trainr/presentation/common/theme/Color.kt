@@ -34,6 +34,11 @@ val GreenSuccess = Color(0xFF4CAF50)  // #4CAF50 - Success Green
 val RedError = Color(0xFFE74C3C)      // #E74C3C - Error Red
 val YellowWarning = Color(0xFFF39C12) // #F39C12 - Warning Yellow
 
+// Workout Status Colors
+val StatusCompleted = Color(0xFF5F8C32)   // #5F8C32 - Completed Green
+val StatusInProgress = Color(0xFFD37200)  // #D37200 - In Progress Orange
+val StatusNotStarted = Color(0xFF626262)  // #626262 - Not Started Gray
+
 // Surface Colors
 val SurfaceLight = Color(0xFFFAFAFA)  // #FAFAFA - Light Background
 val SurfaceDark = Color(0xFF121212)   // #121212 - Dark Background
