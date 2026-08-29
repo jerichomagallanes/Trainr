@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
 import com.jericx.trainr.domain.model.WorkoutDay
+import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.domain.repository.UserRepository
 import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -24,7 +25,13 @@ data class WeeklyPlanUiState(
     val weekStartMillis: Long = SampleWorkoutData.weekStartMillis,
     val weekEndMillis: Long = SampleWorkoutData.weekEndMillis,
     val isSampleData: Boolean = true
-)
+) {
+    // "Today's workout" is the first one still outstanding; once the week is
+    // done the button falls back to the start of it rather than doing nothing.
+    val todaysDay: WorkoutDay?
+        get() = plan.workoutDays.firstOrNull { it.status != WorkoutStatus.COMPLETED }
+            ?: plan.workoutDays.firstOrNull()
+}
 
 @HiltViewModel
 class WeeklyPlanViewModel @Inject constructor(

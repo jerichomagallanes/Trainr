@@ -206,7 +206,12 @@ fun AppContent(versionName: String) {
                     )
                 }
 
-                composable(Screen.RoutineDetail.route) {
+                composable(
+                    route = Screen.RoutineDetail.route,
+                    arguments = listOf(
+                        navArgument(Screen.RoutineDetail.ARG_DAY_NUMBER) { type = NavType.IntType }
+                    )
+                ) {
                     RoutineDetailRoute(
                         onBackClick = { navController.popBackStack() },
                         onDayCompleted = { dayNumber ->
@@ -271,8 +276,17 @@ fun AppContent(versionName: String) {
                         onTrackProgressClick = {
                             navController.navigate(Screen.WeeklyProgress.route)
                         },
-                        onStartTodayClick = {
-                            navController.navigate(Screen.RoutineDetail.route)
+                        // Any day opens its routine — a finished one to look back
+                        // at, a future one to read ahead or start early.
+                        onDayClick = { day ->
+                            navController.navigate(
+                                Screen.RoutineDetail.createRoute(day.dayNumber)
+                            )
+                        },
+                        onStartTodayClick = { day ->
+                            navController.navigate(
+                                Screen.RoutineDetail.createRoute(day.dayNumber)
+                            )
                         },
                         onLeavePlanConfirmed = {
                             navController.navigate(Screen.Review.route) {

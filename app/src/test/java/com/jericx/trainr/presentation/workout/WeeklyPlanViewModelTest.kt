@@ -109,4 +109,22 @@ class WeeklyPlanViewModelTest {
 
         assertThat(viewModel.uiState.value.days).isNotEmpty()
     }
+
+    @Test
+    fun todaysWorkoutIsTheFirstDayStillOutstanding() {
+        val state = WeeklyPlanViewModel.stateFor(SampleWorkoutData.weekOne, isSample = true)
+
+        assertThat(state.todaysDay?.title).isEqualTo("Cardio & Core")
+    }
+
+    @Test
+    fun aFinishedWeekFallsBackToItsFirstDay() {
+        val finished = SampleWorkoutData.weekOne.let { plan ->
+            plan.copy(workoutDays = plan.workoutDays.map { it.copy(status = WorkoutStatus.COMPLETED) })
+        }
+
+        val state = WeeklyPlanViewModel.stateFor(finished, isSample = true)
+
+        assertThat(state.todaysDay?.title).isEqualTo("Full Body Strength")
+    }
 }

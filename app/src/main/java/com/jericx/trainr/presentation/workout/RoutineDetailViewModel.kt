@@ -1,8 +1,10 @@
 package com.jericx.trainr.presentation.workout
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jericx.trainr.domain.model.WorkoutDay
+import com.jericx.trainr.presentation.Screen
 import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.presentation.workout.model.ExerciseTimerUi
 import com.jericx.trainr.presentation.workout.model.ExerciseUi
@@ -32,9 +34,13 @@ data class RoutineDetailUiState(
 )
 
 @HiltViewModel
-class RoutineDetailViewModel @Inject constructor() : ViewModel() {
+class RoutineDetailViewModel @Inject constructor(
+    savedStateHandle: SavedStateHandle
+) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(sampleState())
+    private val _uiState = MutableStateFlow(
+        sampleState(savedStateHandle[Screen.RoutineDetail.ARG_DAY_NUMBER] ?: SampleRoutine.DAY_NUMBER)
+    )
     val uiState: StateFlow<RoutineDetailUiState> = _uiState.asStateFlow()
 
     private var tickJob: Job? = null
@@ -139,15 +145,13 @@ class RoutineDetailViewModel @Inject constructor() : ViewModel() {
         private const val TICK_MILLIS = 1000L
         private const val SECONDS_PER_MINUTE = 60
 
-        // Only the Cardio & Core day has exercises, so the screen shows that one
-        // until routines are generated.
-        fun sampleState(): RoutineDetailUiState {
+        fun sampleState(dayNumber: Int = SampleRoutine.DAY_NUMBER): RoutineDetailUiState {
             val days = SampleWorkoutData.weekOne.workoutDays
-            val index = days.indexOfFirst { it.dayNumber == SampleRoutine.DAY_NUMBER }
+            val index = days.indexOfFirst { it.dayNumber == dayNumber }.coerceAtLeast(0)
             val day = days[index]
 
             return RoutineDetailUiState(
-                routine = SampleRoutine.cardioAndCore,
+                routine = SampleRoutine.forDay(day.dayNumber),
                 equipment = day.equipment,
                 dateMillis = SampleWorkoutData.dateOf(day.dayNumber),
                 // "Day 2", not day 3: the design counts workout days, not weekdays.
