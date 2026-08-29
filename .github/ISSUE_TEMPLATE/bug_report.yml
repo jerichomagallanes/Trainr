@@ -1,0 +1,41 @@
+name: Bug report
+description: Something in the app behaves incorrectly
+labels: [bug]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you saw, and what you expected instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the onboarding flow
+        2. Tap ...
+        3. ...
+    validations:
+      required: true
+
+  - type: input
+    id: device
+    attributes:
+      label: Device and Android version
+      placeholder: Pixel 6, Android 14
+
+  - type: dropdown
+    id: flavor
+    attributes:
+      label: Build flavor
+      options: [dev, sit, prod]
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      description: Logcat output, a stack trace, or a screen recording.
+      render: shell
