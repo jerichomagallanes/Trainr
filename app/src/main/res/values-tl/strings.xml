@@ -143,6 +143,8 @@
     <string name="leave_plan_message">Kapag bumalik ka, kakailanganin mong buuin muli ang iyong workout plan. Okay lang ba?</string>
     <string name="leave_plan_confirm">Oo, bumalik</string>
     <string name="cancel">Kanselahin</string>
+    <string name="mark_exercise_complete">Markahan bilang tapos</string>
+    <string name="mark_exercise_incomplete">Markahan bilang hindi tapos</string>
     <string name="your_weekly_workout_plan">ANG INYONG LINGGUHANG WORKOUT PLAN</string>
     <string name="track_weekly_progress">I-track ang Lingguhang Progress</string>
     <string name="week_number_format">Linggo %d</string>

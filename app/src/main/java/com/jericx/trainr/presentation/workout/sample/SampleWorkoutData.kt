@@ -43,7 +43,7 @@ object SampleWorkoutData {
                     dayNumber = 3,
                     title = "Cardio & Core",
                     status = WorkoutStatus.IN_PROGRESS,
-                    duration = 35,
+                    duration = 28,
                     exerciseCount = 5,
                     equipment = listOf("Dumbbells", "Yoga Mat")
                 ),

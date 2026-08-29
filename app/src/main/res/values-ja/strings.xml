@@ -143,6 +143,8 @@
     <string name="leave_plan_message">戻るとワークアウトプランを作成し直す必要があります。よろしいですか？</string>
     <string name="leave_plan_confirm">はい、戻る</string>
     <string name="cancel">キャンセル</string>
+    <string name="mark_exercise_complete">エクササイズを完了にする</string>
+    <string name="mark_exercise_incomplete">エクササイズを未完了にする</string>
     <string name="your_weekly_workout_plan">あなたの週間ワークアウトプラン</string>
     <string name="track_weekly_progress">週間進歩を追跡</string>
     <string name="week_number_format">第%d週</string>
