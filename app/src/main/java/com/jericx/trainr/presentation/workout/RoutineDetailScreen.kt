@@ -99,20 +99,24 @@ fun RoutineDetailScreen(
 
     // However the last exercise gets ticked — the slider or its own checkbox —
     // finishing the routine is what ends the day. Opening an already-finished
-    // routine is not finishing it, so only the transition counts.
-    var wasComplete by remember { mutableStateOf(state.routine.isComplete) }
+    // routine is not finishing it, so only the transition counts: null means
+    // nothing loaded has been seen yet, and the first loaded state only primes.
+    var wasComplete by remember { mutableStateOf<Boolean?>(null) }
 
-    LaunchedEffect(state.routine.isComplete) {
+    LaunchedEffect(state.routine.isComplete, state.isLoaded) {
+        if (!state.isLoaded) return@LaunchedEffect
+
         val isComplete = state.routine.isComplete
+        val previous = wasComplete
+        wasComplete = isComplete
 
-        if (isComplete && !wasComplete) {
+        if (previous != null && isComplete && !previous) {
             if (state.completesTheWeek) {
                 onWeekCompleted(state.weekNumber)
             } else {
                 onDayCompleted(state.dayNumber)
             }
         }
-        wasComplete = isComplete
     }
     val routine = state.routine
 

@@ -18,6 +18,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,6 +53,10 @@ fun WeeklyPlanRoute(
     viewModel: WeeklyPlanViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // Coming back from a routine re-reads the plan, so a day completed there
+    // is reflected here.
+    LaunchedEffect(Unit) { viewModel.refresh() }
 
     WeeklyPlanScreen(
         state = state,

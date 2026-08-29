@@ -7,6 +7,7 @@ import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.domain.repository.UserRepository
 import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
+import com.jericx.trainr.presentation.workout.util.WorkoutWeek
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -87,6 +88,26 @@ class WeeklyPlanViewModelTest {
 
         assertThat(viewModel.uiState.value.plan).isEqualTo(storedPlan)
         assertThat(viewModel.uiState.value.isSampleData).isFalse()
+    }
+
+    // The known gap this closes: a stored plan used to render the sample
+    // week's hardcoded July dates whatever week it actually was.
+    @Test
+    fun aStoredPlanRendersItsOwnDates() = runTest {
+        val start = 1_755_000_000_000L
+        coEvery { userRepository.getCurrentUser() } returns UserProfile(id = 1)
+        coEvery { userRepository.getWeeklyWorkoutPlan(1, 1) } returns
+            storedPlan.copy(startDateMillis = start)
+
+        val viewModel = WeeklyPlanViewModel(userRepository)
+        advanceUntilIdle()
+
+        with(viewModel.uiState.value) {
+            assertThat(weekStartMillis).isEqualTo(start)
+            assertThat(days.single().dateMillis)
+                .isEqualTo(WorkoutWeek.dateOfDay(start, storedPlan.workoutDays.single().dayNumber))
+            assertThat(weekEndMillis).isEqualTo(WorkoutWeek.dateOfDay(start, 7))
+        }
     }
 
     @Test

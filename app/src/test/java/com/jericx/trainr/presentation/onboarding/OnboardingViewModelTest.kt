@@ -6,13 +6,16 @@ import com.jericx.trainr.domain.model.ExperienceLevel
 import com.jericx.trainr.domain.model.FitnessGoal
 import com.jericx.trainr.domain.model.Gender
 import com.jericx.trainr.domain.model.UserProfile
+import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
 import com.jericx.trainr.domain.model.WorkoutLocation
+import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.domain.model.WorkoutTime
 import com.jericx.trainr.domain.model.WorkoutType
 import com.jericx.trainr.domain.repository.UserRepository
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import io.mockk.slot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -155,6 +158,39 @@ class OnboardingViewModelTest {
         assertThat(state.error).isNull()
         assertThat(callbackInvoked).isTrue()
         coVerify { userRepository.saveUser(any()) }
+    }
+
+    @Test
+    fun `saveUserProfile seeds a fresh week-one plan for the saved user`() = runTest(testDispatcher) {
+        coEvery { userRepository.getCurrentUser() } returns null
+        coEvery { userRepository.saveUser(any()) } returns 42L
+        val plan = slot<WeeklyWorkoutPlan>()
+        coEvery { userRepository.saveWeeklyWorkoutPlan(capture(plan)) } returns 1L
+
+        viewModel.saveUserProfile(onSuccess = {})
+        advanceUntilIdle()
+
+        with(plan.captured) {
+            assertThat(userId).isEqualTo(42L)
+            assertThat(weekNumber).isEqualTo(1)
+            assertThat(startDateMillis).isNotNull()
+            assertThat(workoutDays.map { it.status }.toSet())
+                .containsExactly(WorkoutStatus.NOT_STARTED)
+            assertThat(workoutDays.flatMap { it.exercises }.any { it.isCompleted }).isFalse()
+            assertThat(workoutDays.flatMap { it.exercises }.flatMap { it.sets }
+                .mapNotNull { it.actualReps ?: it.actualWeightKg ?: it.actualSeconds }).isEmpty()
+        }
+    }
+
+    @Test
+    fun `saveUserProfile replaces the existing user rather than adding another`() = runTest(testDispatcher) {
+        coEvery { userRepository.getCurrentUser() } returns UserProfile(id = 7L, firstName = "Old")
+        coEvery { userRepository.saveUser(any()) } returns 7L
+
+        viewModel.saveUserProfile(onSuccess = {})
+        advanceUntilIdle()
+
+        coVerify { userRepository.saveUser(match { it.id == 7L }) }
     }
 
     @Test

@@ -70,6 +70,9 @@ interface UserDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertExerciseSets(sets: List<ExerciseSetEntity>)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertExerciseSet(set: ExerciseSetEntity): Long
+
     @Query("SELECT * FROM exercise_sets WHERE workoutExerciseId = :exerciseId ORDER BY setNumber")
     suspend fun getSetsForExercise(exerciseId: Long): List<ExerciseSetEntity>
 

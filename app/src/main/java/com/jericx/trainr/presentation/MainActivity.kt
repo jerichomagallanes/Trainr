@@ -96,8 +96,16 @@ fun AppContent(versionName: String) {
     LaunchedEffect(showSplashScreen) {
         if (showSplashScreen) {
             delay(splashScreenDuration)
+            // A returning user lands on their plan; onboarding is for the first
+            // run. Resolved before showSplashScreen flips: that flip restarts
+            // this effect, which would cancel a suspend call sitting after it.
+            val destination = if (onboardingViewModel.hasCompletedOnboarding()) {
+                Screen.Home.route
+            } else {
+                Screen.Welcome.route
+            }
             showSplashScreen = false
-            navController.navigate(Screen.Welcome.route) {
+            navController.navigate(destination) {
                 popUpTo(Screen.SplashScreen.route) { inclusive = true }
             }
         }

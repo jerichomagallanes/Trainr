@@ -133,6 +133,10 @@ class UserRepositoryImpl @Inject constructor(
         userDao.updateExerciseSet(mapper.mapToEntity(set, workoutExerciseId))
     }
 
+    override suspend fun addExerciseSet(set: ExerciseSet, workoutExerciseId: Long): Long {
+        return userDao.insertExerciseSet(mapper.mapToEntity(set, workoutExerciseId))
+    }
+
     // Room hands back the generated row id here; the domain objects still carry
     // id = 0 for new rows, so the sets have to be keyed off it.
     private suspend fun saveSetsFor(exercise: WorkoutExercise, exerciseId: Long) {
