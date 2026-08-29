@@ -28,6 +28,11 @@ data class WorkoutExercise(
     val sets: Int? = null,
     val reps: String? = null,
     val duration: String? = null,
+    // What the card shows: how long the exercise is allotted, and the
+    // prescription beside it. The two are independent — ten minutes of "5 sets
+    // of 1 minute" is not five minutes — so neither can be derived.
+    val durationMinutes: Int = 0,
+    val prescription: String = "",
     val restTime: Int? = null,
     val equipment: List<String> = emptyList(),
     val instructions: String = "",

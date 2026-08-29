@@ -11,7 +11,8 @@ import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.R
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 import com.jericx.trainr.presentation.workout.model.ExerciseUi
-import com.jericx.trainr.presentation.workout.sample.SampleRoutine
+import com.jericx.trainr.presentation.workout.model.toRoutineUi
+import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -24,6 +25,9 @@ class ExerciseCardTest {
 
     private fun string(id: Int) = composeTestRule.activity.getString(id)
 
+    private val sampleExercises = SampleWorkoutData
+        .dayFor(SampleWorkoutData.DEFAULT_DAY_NUMBER).toRoutineUi().exercises
+
     private fun setCard(exercise: ExerciseUi, onToggle: () -> Unit = {}) {
         composeTestRule.setContent {
             TrainrTheme { ExerciseCard(exercise = exercise, onToggleCompleted = onToggle) }
@@ -32,7 +36,7 @@ class ExerciseCardTest {
 
     @Test
     fun showsThePrescriptionAndDuration() {
-        setCard(SampleRoutine.cardioAndCore.exercises[1])
+        setCard(sampleExercises[1])
 
         composeTestRule.onNodeWithText("High-Intensity Intervals").assertIsDisplayed()
         composeTestRule.onNodeWithText("5 sets of 1 minute").assertIsDisplayed()
@@ -42,7 +46,7 @@ class ExerciseCardTest {
 
     @Test
     fun anUnfinishedExerciseOffersToBeCompleted() {
-        setCard(SampleRoutine.cardioAndCore.exercises[1])
+        setCard(sampleExercises[1])
 
         composeTestRule.onNodeWithContentDescription(string(R.string.mark_exercise_complete))
             .assertIsDisplayed()
@@ -50,7 +54,7 @@ class ExerciseCardTest {
 
     @Test
     fun aFinishedExerciseOffersToBeUndone() {
-        setCard(SampleRoutine.cardioAndCore.exercises[0])
+        setCard(sampleExercises[0])
 
         composeTestRule.onNodeWithContentDescription(string(R.string.mark_exercise_incomplete))
             .assertIsDisplayed()
@@ -59,7 +63,7 @@ class ExerciseCardTest {
     @Test
     fun tappingTheCheckboxReportsTheToggle() {
         var toggled = false
-        setCard(SampleRoutine.cardioAndCore.exercises[1], onToggle = { toggled = true })
+        setCard(sampleExercises[1], onToggle = { toggled = true })
 
         composeTestRule.onNodeWithContentDescription(string(R.string.mark_exercise_complete))
             .performClick()

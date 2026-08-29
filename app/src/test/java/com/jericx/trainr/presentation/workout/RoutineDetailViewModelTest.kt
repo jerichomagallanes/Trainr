@@ -3,7 +3,7 @@ package com.jericx.trainr.presentation.workout
 import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.presentation.Screen
-import com.jericx.trainr.presentation.workout.sample.SampleRoutine
+import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
 import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.presentation.workout.model.ExerciseUi
@@ -34,7 +34,7 @@ class RoutineDetailViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun viewModel(dayNumber: Int = SampleRoutine.DAY_NUMBER) = RoutineDetailViewModel(
+    private fun viewModel(dayNumber: Int = SampleWorkoutData.DEFAULT_DAY_NUMBER) = RoutineDetailViewModel(
         SavedStateHandle(mapOf(Screen.RoutineDetail.ARG_DAY_NUMBER to dayNumber))
     )
 

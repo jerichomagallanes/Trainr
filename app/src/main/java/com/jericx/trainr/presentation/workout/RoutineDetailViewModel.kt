@@ -9,7 +9,7 @@ import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.presentation.workout.model.ExerciseTimerUi
 import com.jericx.trainr.presentation.workout.model.ExerciseUi
 import com.jericx.trainr.presentation.workout.model.RoutineUi
-import com.jericx.trainr.presentation.workout.sample.SampleRoutine
+import com.jericx.trainr.presentation.workout.model.toRoutineUi
 import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -39,7 +39,8 @@ class RoutineDetailViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
-        sampleState(savedStateHandle[Screen.RoutineDetail.ARG_DAY_NUMBER] ?: SampleRoutine.DAY_NUMBER)
+        sampleState(savedStateHandle[Screen.RoutineDetail.ARG_DAY_NUMBER]
+            ?: SampleWorkoutData.DEFAULT_DAY_NUMBER)
     )
     val uiState: StateFlow<RoutineDetailUiState> = _uiState.asStateFlow()
 
@@ -145,13 +146,13 @@ class RoutineDetailViewModel @Inject constructor(
         private const val TICK_MILLIS = 1000L
         private const val SECONDS_PER_MINUTE = 60
 
-        fun sampleState(dayNumber: Int = SampleRoutine.DAY_NUMBER): RoutineDetailUiState {
+        fun sampleState(dayNumber: Int = SampleWorkoutData.DEFAULT_DAY_NUMBER): RoutineDetailUiState {
             val days = SampleWorkoutData.weekOne.workoutDays
             val index = days.indexOfFirst { it.dayNumber == dayNumber }.coerceAtLeast(0)
             val day = days[index]
 
             return RoutineDetailUiState(
-                routine = SampleRoutine.forDay(day.dayNumber),
+                routine = day.toRoutineUi(),
                 equipment = day.equipment,
                 dateMillis = SampleWorkoutData.dateOf(day.dayNumber),
                 // "Day 2", not day 3: the design counts workout days, not weekdays.
