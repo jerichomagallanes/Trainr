@@ -3,6 +3,7 @@ package com.jericx.trainr.presentation.workout
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -27,17 +28,23 @@ class WeeklyPlanScreenTest {
 
     private fun setScreen(
         onDayClick: (WorkoutDay) -> Unit = {},
-        onStartTodayClick: () -> Unit = {}
+        onStartTodayClick: () -> Unit = {},
+        onLeavePlanConfirmed: () -> Unit = {}
     ) {
         composeTestRule.setContent {
             TrainrTheme {
                 WeeklyPlanScreen(
                     state = state,
                     onDayClick = onDayClick,
-                    onStartTodayClick = onStartTodayClick
+                    onStartTodayClick = onStartTodayClick,
+                    onLeavePlanConfirmed = onLeavePlanConfirmed
                 )
             }
         }
+    }
+
+    private fun tapBack() {
+        composeTestRule.onNodeWithContentDescription(string(R.string.back)).performClick()
     }
 
     @Test
@@ -93,5 +100,41 @@ class WeeklyPlanScreenTest {
         composeTestRule.onNodeWithText(string(R.string.start_todays_workout)).performClick()
 
         assertThat(started).isTrue()
+    }
+
+    @Test
+    fun goingBackAsksBeforeLeavingThePlan() {
+        var left = false
+        setScreen(onLeavePlanConfirmed = { left = true })
+
+        tapBack()
+
+        composeTestRule.onNodeWithText(string(R.string.leave_plan_title)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.leave_plan_message)).assertIsDisplayed()
+        assertThat(left).isFalse()
+    }
+
+    @Test
+    fun cancellingKeepsYouOnThePlan() {
+        var left = false
+        setScreen(onLeavePlanConfirmed = { left = true })
+
+        tapBack()
+        composeTestRule.onNodeWithText(string(R.string.cancel)).performClick()
+
+        composeTestRule.onNodeWithText(string(R.string.leave_plan_title)).assertDoesNotExist()
+        assertThat(left).isFalse()
+        composeTestRule.onNodeWithText(string(R.string.your_weekly_workout_plan)).assertIsDisplayed()
+    }
+
+    @Test
+    fun confirmingLeavesSoThePlanCanBeRegenerated() {
+        var left = false
+        setScreen(onLeavePlanConfirmed = { left = true })
+
+        tapBack()
+        composeTestRule.onNodeWithText(string(R.string.leave_plan_confirm)).performClick()
+
+        assertThat(left).isTrue()
     }
 }

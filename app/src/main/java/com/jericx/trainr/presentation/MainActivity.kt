@@ -193,7 +193,13 @@ fun AppContent(versionName: String) {
                 }
 
                 composable(Screen.Home.route) {
-                    WeeklyPlanRoute()
+                    WeeklyPlanRoute(
+                        onLeavePlanConfirmed = {
+                            navController.navigate(Screen.Review.route) {
+                                popUpTo(Screen.Home.route) { inclusive = true }
+                            }
+                        }
+                    )
                 }
             }
         }
