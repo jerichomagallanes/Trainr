@@ -142,6 +142,7 @@
     <string name="generating_your_workout_routine">Ginagawa ang inyong workout routine</string>
     
     <!-- Workout Screens -->
+    <string name="week_range_format">Linggo %1$d: %2$s</string>
     <string name="your_weekly_workout_plan">ANG INYONG LINGGUHANG WORKOUT PLAN</string>
     <string name="track_weekly_progress">I-track ang Lingguhang Progress</string>
     <string name="weekly_progress">LINGGUHANG PROGRESS</string>

@@ -142,6 +142,7 @@
     <string name="generating_your_workout_routine">ワークアウトルーティンを生成中</string>
     
     <!-- Workout Screens -->
+    <string name="week_range_format">第%1$d週: %2$s</string>
     <string name="your_weekly_workout_plan">あなたの週間ワークアウトプラン</string>
     <string name="track_weekly_progress">週間進歩を追跡</string>
     <string name="weekly_progress">週間進歩</string>

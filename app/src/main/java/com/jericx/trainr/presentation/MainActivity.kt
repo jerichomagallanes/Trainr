@@ -22,7 +22,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.jericx.trainr.BuildConfig
-import com.jericx.trainr.presentation.home.HomeScreen
 import com.jericx.trainr.presentation.onboarding.OnboardingViewModel
 import com.jericx.trainr.presentation.onboarding.screens.BasicInfoScreen
 import com.jericx.trainr.presentation.onboarding.screens.BodyMetricsScreen
@@ -37,6 +36,7 @@ import com.jericx.trainr.data.preferences.LanguagePreferences
 import com.jericx.trainr.presentation.common.LocaleManager
 import com.jericx.trainr.data.preferences.NavigationStateManager
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
+import com.jericx.trainr.presentation.workout.WeeklyPlanRoute
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 
@@ -193,7 +193,7 @@ fun AppContent(versionName: String) {
                 }
 
                 composable(Screen.Home.route) {
-                    HomeScreen()
+                    WeeklyPlanRoute()
                 }
             }
         }

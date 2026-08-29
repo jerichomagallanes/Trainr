@@ -141,6 +141,7 @@
     <string name="generating_your_workout_routine">Generating your workout routine</string>
     
     <!-- Workout Screens -->
+    <string name="week_range_format">Week %1$d: %2$s</string>
     <string name="your_weekly_workout_plan">YOUR WEEKLY WORKOUT PLAN</string>
     <string name="track_weekly_progress">Track Weekly Progress</string>
     <string name="weekly_progress">WEEKLY PROGRESS</string>

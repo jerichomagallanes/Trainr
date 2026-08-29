@@ -1,0 +1,62 @@
+package com.jericx.trainr.presentation.workout
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
+import com.jericx.trainr.domain.model.WorkoutDay
+import com.jericx.trainr.domain.repository.UserRepository
+import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+data class WeeklyPlanDay(
+    val day: WorkoutDay,
+    val dateMillis: Long
+)
+
+data class WeeklyPlanUiState(
+    val plan: WeeklyWorkoutPlan = SampleWorkoutData.weekOne,
+    val days: List<WeeklyPlanDay> = emptyList(),
+    val weekStartMillis: Long = SampleWorkoutData.weekStartMillis,
+    val weekEndMillis: Long = SampleWorkoutData.weekEndMillis,
+    val isSampleData: Boolean = true
+)
+
+@HiltViewModel
+class WeeklyPlanViewModel @Inject constructor(
+    private val userRepository: UserRepository
+) : ViewModel() {
+
+    private val _uiState = MutableStateFlow(stateFor(SampleWorkoutData.weekOne, isSample = true))
+    val uiState: StateFlow<WeeklyPlanUiState> = _uiState.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            val stored = userRepository.getCurrentUser()
+                ?.let { userRepository.getWeeklyWorkoutPlan(it.id, FIRST_WEEK) }
+
+            _uiState.value = if (stored == null) {
+                stateFor(SampleWorkoutData.weekOne, isSample = true)
+            } else {
+                stateFor(stored, isSample = false)
+            }
+        }
+    }
+
+    companion object {
+        private const val FIRST_WEEK = 1
+
+        // Dates come from the sample week until generated plans carry their own.
+        fun stateFor(plan: WeeklyWorkoutPlan, isSample: Boolean) = WeeklyPlanUiState(
+            plan = plan,
+            days = plan.workoutDays.map {
+                WeeklyPlanDay(day = it, dateMillis = SampleWorkoutData.dateOf(it.dayNumber))
+            },
+            isSampleData = isSample
+        )
+    }
+}
