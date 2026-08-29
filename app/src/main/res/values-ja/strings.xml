@@ -93,7 +93,6 @@
     <string name="afternoon_time">午後 (12-17時)</string>
     <string name="evening_time">夜 (17-22時)</string>
     <string name="flexible_anytime">柔軟/いつでも</string>
-    <string name="duration_mins">%d分</string>
     <string name="workout_days_option" formatted="false">%d %s</string>
     <string name="day">日</string>
     <string name="days">日</string>
@@ -117,7 +116,6 @@
     <string name="your_fitness_profile">あなたのフィットネスプロフィール</string>
     <string name="review_description">プランを作成する前に情報を確認してください</string>
     <string name="personal_information">個人情報</string>
-    <string name="years_old">%d歳</string>
     <string name="height_cm_value">%d cm</string>
     <string name="weight_kg_value">%.1f kg</string>
     <string name="experience">経験</string>
@@ -129,8 +127,6 @@
     <string name="equipment">器具</string>
     <string name="schedule">スケジュール</string>
     <string name="flexible">柔軟</string>
-    <string name="days_per_week">週%d日</string>
-    <string name="duration_minutes">%d分</string>
     <string name="duration">時間</string>
     <string name="preferred_time">好みの時間</string>
     <string name="limitations">制限事項</string>
@@ -157,7 +153,6 @@
     <string name="not_completed">未完了</string>
     <string name="skipped">スキップ</string>
     <string name="weekly_progress">週間進歩</string>
-    <string name="week_progress">第%d週の進歩</string>
     <string name="completed_percentage" formatted="false">%d%% 完了 (%d%%)</string>
     <string name="start_todays_workout">今日のワークアウトを開始</string>
     <string name="day_number">第%d日</string>
@@ -165,8 +160,12 @@
     <string name="cardio_and_core">有酸素運動＆コア</string>
     <string name="lower_body_power">下半身パワー</string>
     <string name="upper_body_strength">上半身筋力</string>
-    <string name="minutes">%d分</string>
-    <string name="exercises_count">%d エクササイズ</string>
+    <plurals name="minutes">
+        <item quantity="other">%d分</item>
+    </plurals>
+    <plurals name="exercises_count">
+        <item quantity="other">%d エクササイズ</item>
+    </plurals>
     <string name="equipment_label">器具:</string>
     <string name="yoga_mat">ヨガマット</string>
     <string name="treadmill">トレッドミル</string>
@@ -210,9 +209,15 @@
     <string name="ai_routine_description" formatted="false">あなたのプロフィールに基づいて、%sに焦点を当てた%s筋力プログラムを作成します。</string>
     <string name="bodyweight_only_label">自重のみ</string>
     <string name="flexible_schedule">柔軟</string>
-    <string name="days_per_week_format">週%d日</string>
-    <string name="duration_minutes_format">%d分</string>
-    <string name="years_old_format">%d歳</string>
+    <plurals name="days_per_week_format">
+        <item quantity="other">週%d日</item>
+    </plurals>
+    <plurals name="duration_minutes_format">
+        <item quantity="other">%d分</item>
+    </plurals>
+    <plurals name="years_old_format">
+        <item quantity="other">%d歳</item>
+    </plurals>
     <string name="height_cm_format">%d cm</string>
     <string name="weight_kg_format">%.1f kg</string>
     

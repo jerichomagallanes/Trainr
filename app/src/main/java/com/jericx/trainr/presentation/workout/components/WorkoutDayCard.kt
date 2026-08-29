@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -100,14 +101,14 @@ fun WorkoutDayCard(
                     )
                     Spacer(modifier = Modifier.size(Spacing.extraSmall))
                     Text(
-                        text = stringResource(R.string.minutes, day.duration),
+                        text = pluralStringResource(R.plurals.minutes, day.duration, day.duration),
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.Black
                     )
                 }
 
                 Text(
-                    text = stringResource(R.string.exercises_count, day.exerciseCount),
+                    text = pluralStringResource(R.plurals.exercises_count, day.exerciseCount, day.exerciseCount),
                     style = MaterialTheme.typography.labelLarge,
                     color = Slate800,
                     modifier = Modifier

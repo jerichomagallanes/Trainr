@@ -22,14 +22,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.jericx.trainr.R
 import com.jericx.trainr.common.Constants
 import com.jericx.trainr.domain.model.Equipment
 import com.jericx.trainr.domain.model.WorkoutLocation
 import com.jericx.trainr.domain.model.WorkoutTime
-import com.jericx.trainr.presentation.common.components.layout.TrainrTopBar
-import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.components.cards.TrainrLocationCard
 import com.jericx.trainr.presentation.common.components.cards.TrainrSelectionCard
 import com.jericx.trainr.presentation.common.components.core.TrainrButton
@@ -44,8 +43,10 @@ import com.jericx.trainr.presentation.common.components.layout.TrainrFlowRow
 import com.jericx.trainr.presentation.common.components.layout.TrainrFormSection
 import com.jericx.trainr.presentation.common.components.layout.TrainrScaffold
 import com.jericx.trainr.presentation.common.components.layout.TrainrScreenContent
+import com.jericx.trainr.presentation.common.components.layout.TrainrTopBar
 import com.jericx.trainr.presentation.common.components.typography.TrainrScreenTitle
 import com.jericx.trainr.presentation.common.components.typography.TrainrSectionTitle
+import com.jericx.trainr.presentation.common.theme.Spacing
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -228,7 +229,7 @@ fun WorkoutSetupScreen(
                     ) {
                         Constants.Workout.DURATION_OPTIONS.forEach { duration ->
                             TrainrToggleChip(
-                                text = stringResource(R.string.duration_mins, duration),
+                                text = pluralStringResource(R.plurals.minutes, duration, duration),
                                 selected = selectedDuration == duration,
                                 onClick = { selectedDuration = duration }
                             )
