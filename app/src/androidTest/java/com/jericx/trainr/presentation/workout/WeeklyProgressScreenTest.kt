@@ -11,6 +11,7 @@ import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.R
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 import com.jericx.trainr.presentation.workout.model.WeekProgressUi
+import com.jericx.trainr.presentation.workout.model.WeekStatus
 import com.jericx.trainr.presentation.workout.sample.SampleWeeklyProgress
 import org.junit.Rule
 import org.junit.Test
@@ -24,6 +25,11 @@ class WeeklyProgressScreenTest {
 
     private fun string(id: Int, vararg args: Any) =
         composeTestRule.activity.getString(id, *args)
+
+    private fun daysCompleted(completed: Int, total: Int, percentage: Int) =
+        composeTestRule.activity.resources.getQuantityString(
+            R.plurals.days_completed_format, total, completed, total, percentage
+        )
 
     private fun setScreen(onWeekClick: (WeekProgressUi) -> Unit = {}) {
         composeTestRule.setContent {
@@ -52,11 +58,11 @@ class WeeklyProgressScreenTest {
 
         // Weeks 1, 5 and 7 are all fully completed, so this row repeats.
         val fullyCompleted = composeTestRule
-            .onAllNodesWithText(string(R.string.days_completed_format, 3, 3, 100))
+            .onAllNodesWithText(daysCompleted(3, 3, 100))
             .fetchSemanticsNodes()
         assertThat(fullyCompleted).hasSize(3)
 
-        composeTestRule.onNodeWithText(string(R.string.days_completed_format, 0, 3, 0))
+        composeTestRule.onNodeWithText(daysCompleted(0, 3, 0))
             .assertIsDisplayed()
     }
 
@@ -78,8 +84,26 @@ class WeeklyProgressScreenTest {
         var tapped: WeekProgressUi? = null
         setScreen(onWeekClick = { tapped = it })
 
-        composeTestRule.onNodeWithText(string(R.string.days_completed_format, 0, 3, 0)).performClick()
+        composeTestRule.onNodeWithText(daysCompleted(0, 3, 0)).performClick()
 
         assertThat(tapped?.weekNumber).isEqualTo(3)
+    }
+
+    // A one-day-per-week plan must not read "0/1 days completed".
+    @Test
+    fun aSingleScheduledDayUsesTheSingular() {
+        val oneDayWeek = WeekProgressUi(
+            weekNumber = 1,
+            completedDays = 1,
+            totalDays = 1,
+            status = WeekStatus.COMPLETED
+        )
+
+        composeTestRule.setContent {
+            TrainrTheme { WeeklyProgressScreen(weeks = listOf(oneDayWeek)) }
+        }
+
+        composeTestRule.onNodeWithText(daysCompleted(1, 1, 100)).assertIsDisplayed()
+        composeTestRule.onNodeWithText("1/1 day completed (100%)").assertIsDisplayed()
     }
 }

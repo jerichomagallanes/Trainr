@@ -150,7 +150,10 @@
     <string name="track_weekly_progress">Track Weekly Progress</string>
     <string name="week_number_format">Week %d</string>
     <string name="week_range_parens">(%s)</string>
-    <string name="days_completed_format">%1$d/%2$d days completed (%3$d%%)</string>
+    <plurals name="days_completed_format">
+        <item quantity="one">%1$d/%2$d day completed (%3$d%%)</item>
+        <item quantity="other">%1$d/%2$d days completed (%3$d%%)</item>
+    </plurals>
     <string name="not_completed">Not completed</string>
     <string name="skipped">Skipped</string>
     <string name="weekly_progress">WEEKLY PROGRESS</string>
