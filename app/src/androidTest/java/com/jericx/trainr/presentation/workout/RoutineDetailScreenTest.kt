@@ -71,7 +71,8 @@ class RoutineDetailScreenTest {
 
         val date = WorkoutDateFormatter.formatFullDate(state.dateMillis, Locale.getDefault())
         composeTestRule.onNodeWithText(date).assertIsDisplayed()
-        composeTestRule.onNodeWithText("Dumbbells, Yoga Mat", substring = true).assertIsDisplayed()
+        composeTestRule.onNodeWithText(state.equipment.joinToString(", "), substring = true)
+            .assertIsDisplayed()
     }
 
     @Test

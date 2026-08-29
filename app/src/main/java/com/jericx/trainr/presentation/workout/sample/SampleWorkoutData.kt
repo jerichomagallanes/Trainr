@@ -45,7 +45,8 @@ object SampleWorkoutData {
                     status = WorkoutStatus.IN_PROGRESS,
                     duration = 28,
                     exerciseCount = 5,
-                    equipment = listOf("Dumbbells", "Yoga Mat")
+                    // Jogging, intervals and three floor exercises: a mat, nothing else.
+                    equipment = listOf("Yoga Mat")
                 ),
                 WorkoutDay(
                     id = 3,

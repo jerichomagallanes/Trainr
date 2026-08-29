@@ -81,9 +81,21 @@ class SampleWorkoutDataTest {
 
         assertThat(equipment).containsExactly(
             listOf("Dumbbells", "Yoga Mat"),
-            listOf("Dumbbells", "Yoga Mat"),
+            listOf("Yoga Mat"),
             listOf("Dumbbells", "Yoga Mat")
         ).inOrder()
+        assertThat(equipment.flatten()).isNotEmpty()
+    }
+
+    // The design lists dumbbells and a treadmill for a routine that is five
+    // bodyweight exercises. A day should not ask for kit it never uses.
+    @Test
+    fun theCardioRoutineOnlyAsksForKitItsExercisesUse() {
+        val cardioAndCore = SampleWorkoutData.weekOne.workoutDays
+            .first { it.title == "Cardio & Core" }
+
+        assertThat(cardioAndCore.equipment).doesNotContain("Dumbbells")
+        assertThat(cardioAndCore.equipment).doesNotContain("Treadmill")
     }
 
     @Test
