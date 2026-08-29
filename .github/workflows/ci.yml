@@ -1,0 +1,113 @@
+name: CI
+
+# Every pull request into main must pass this workflow, and it runs again on
+# main after a merge so the default branch always has a known-good result.
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+# One run per pull request. Pushing a fixup cancels the run still in flight
+# instead of queueing a second one behind it.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+# Least privilege by default; jobs opt into more where they need it.
+permissions:
+  contents: read
+
+jobs:
+  unit-tests:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      checks: write         # publish the test-result check run
+      pull-requests: write  # keep a single summary comment up to date
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: ./.github/actions/setup-android
+
+      - name: Run unit tests
+        run: ./gradlew testDevDebugUnitTest
+
+      # Runs even when the step above failed, so a red build still explains
+      # itself with per-test annotations on the diff rather than a raw log.
+      - name: Publish test results
+        if: ${{ !cancelled() }}
+        uses: mikepenz/action-junit-report@a9170d5795813c01ab4901ffb045b52bab4ab09d # v6.5.0
+        with:
+          report_paths: app/build/test-results/**/TEST-*.xml
+          check_name: Unit test results
+          detailed_summary: true
+          include_passed: false
+          job_summary: true
+          comment: true
+          updateComment: true
+
+      - name: Upload test report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: unit-test-report
+          path: app/build/reports/tests/
+          retention-days: 14
+
+  lint:
+    name: Android Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      security-events: write  # upload lint findings to the Security tab
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: ./.github/actions/setup-android
+
+      - name: Run Android Lint
+        run: ./gradlew lintDevDebug
+
+      # Lint emits SARIF (configured in app/build.gradle.kts), so findings land
+      # in the repository's Security tab and are annotated inline on the PR
+      # diff. Code scanning is free on public repositories.
+      - name: Upload lint results to code scanning
+        if: ${{ !cancelled() }}
+        uses: github/codeql-action/upload-sarif@fddeee1a7ece751b577e409a89057319e3172939 # v4
+        with:
+          sarif_file: app/build/reports/lint-results-devDebug.sarif
+          category: android-lint
+
+      - name: Upload lint report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: lint-report
+          path: app/build/reports/lint-results-devDebug.html
+          retention-days: 14
+
+  build:
+    name: Build debug APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: ./.github/actions/setup-android
+
+      - name: Assemble dev debug
+        run: ./gradlew assembleDevDebug
+
+      # Attaching the APK to the run means any PR can be installed on a real
+      # device straight from the checks tab, without building it locally.
+      - name: Upload APK
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: trainr-dev-debug-${{ github.sha }}
+          path: app/build/outputs/apk/dev/debug/*.apk
+          if-no-files-found: error
+          retention-days: 14

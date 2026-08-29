@@ -1,0 +1,19 @@
+# Normalise line endings: LF in the repository, native in the working tree.
+* text=auto eol=lf
+
+*.bat        text eol=crlf
+gradlew      text eol=lf
+
+*.jar        binary
+*.apk        binary
+*.aab        binary
+*.keystore   binary
+*.jks        binary
+*.png        binary
+*.jpg        binary
+*.webp       binary
+*.ttf        binary
+*.otf        binary
+
+# Keep generated and vendored files out of the diff view and language stats.
+gradle/wrapper/gradle-wrapper.jar   binary linguist-vendored
