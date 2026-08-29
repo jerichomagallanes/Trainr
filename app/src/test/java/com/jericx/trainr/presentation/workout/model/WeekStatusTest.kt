@@ -6,9 +6,28 @@ import com.jericx.trainr.presentation.common.theme.StatusCompleted
 import com.jericx.trainr.presentation.common.theme.StatusInProgress
 import com.jericx.trainr.presentation.common.theme.StatusNotStarted
 import com.jericx.trainr.presentation.workout.sample.SampleWeeklyProgress
+import com.jericx.trainr.presentation.workout.util.WorkoutDateFormatter
+import java.util.Locale
+import java.util.TimeZone
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
 
 class WeekStatusTest {
+
+    private lateinit var originalTimeZone: TimeZone
+
+    // Pinned so weekday assertions don't depend on the machine's zone.
+    @Before
+    fun setUp() {
+        originalTimeZone = TimeZone.getDefault()
+        TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
+    }
+
+    @After
+    fun tearDown() {
+        TimeZone.setDefault(originalTimeZone)
+    }
 
     @Test
     fun eachStatusHasItsOwnLabel() {
@@ -59,6 +78,24 @@ class WeekStatusTest {
     @Test
     fun percentageIsZeroWhenNoDaysAreScheduled() {
         assertThat(WeekProgressUi(1, 0, 0, WeekStatus.SKIPPED).completionPercentage).isEqualTo(0)
+    }
+
+    // The mockups label week 1 "Jul 22 – 28", but 22 July 2025 is a Tuesday, and
+    // the plan lists Monday first. A Tuesday-aligned week would put Monday's
+    // workout at the end of the week, so the weeks are Monday-aligned here.
+    @Test
+    fun everyWeekRunsMondayToSunday() {
+        SampleWeeklyProgress.weeks.forEach { week ->
+            val start = WorkoutDateFormatter.formatWeekday(
+                SampleWeeklyProgress.weekStartMillis(week.weekNumber), Locale.US
+            )
+            val end = WorkoutDateFormatter.formatWeekday(
+                SampleWeeklyProgress.weekEndMillis(week.weekNumber), Locale.US
+            )
+
+            assertThat(start).isEqualTo("Monday")
+            assertThat(end).isEqualTo("Sunday")
+        }
     }
 
     @Test
