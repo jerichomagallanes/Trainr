@@ -2,6 +2,7 @@ package com.jericx.trainr.presentation.workout.sample
 
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.domain.model.WorkoutStatus
+import com.jericx.trainr.presentation.workout.sample.SampleRoutine
 import com.jericx.trainr.presentation.workout.util.WorkoutDateFormatter
 import java.util.Locale
 import java.util.TimeZone
@@ -101,5 +102,22 @@ class SampleWorkoutDataTest {
 
         assertThat(tokyoStart).isNotEqualTo(utcStart)
         assertThat(weekdayOf(utcStart)).isEqualTo("Monday")
+    }
+
+    // The routine screen lists each exercise's minutes while the plan card shows a
+    // total. If they disagree the app contradicts itself on screen, and a user
+    // adding up the parts gets a different answer.
+    @Test
+    fun theRoutineDurationIsTheSumOfItsExercises() {
+        val cardioAndCore = SampleWorkoutData.weekOne.workoutDays.first { it.title == "Cardio & Core" }
+
+        assertThat(cardioAndCore.duration).isEqualTo(SampleRoutine.cardioAndCore.sumOf { it.minutes })
+    }
+
+    @Test
+    fun theRoutineExerciseCountMatchesItsExercises() {
+        val cardioAndCore = SampleWorkoutData.weekOne.workoutDays.first { it.title == "Cardio & Core" }
+
+        assertThat(cardioAndCore.exerciseCount).isEqualTo(SampleRoutine.cardioAndCore.size)
     }
 }

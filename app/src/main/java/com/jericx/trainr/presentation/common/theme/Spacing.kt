@@ -10,6 +10,7 @@ object Spacing {
     val extraLarge = 32.dp
     val huge = 48.dp
 
+    val tight = 10.dp
     val card = 15.dp
     val screen = 20.dp
 }

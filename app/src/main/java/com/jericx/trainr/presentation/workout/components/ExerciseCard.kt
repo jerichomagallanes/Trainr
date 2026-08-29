@@ -25,8 +25,8 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.jericx.trainr.R
-import com.jericx.trainr.presentation.common.theme.OutlineGray
 import com.jericx.trainr.presentation.common.theme.Slate800
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.StatusCompleted
@@ -47,16 +47,12 @@ fun ExerciseCard(
         modifier = modifier
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.medium)
-            .border(1.dp, OutlineGray, MaterialTheme.shapes.medium)
+            .border(1.dp, accent, MaterialTheme.shapes.medium)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(
-                    start = Spacing.small + Spacing.extraSmall,
-                    end = Spacing.small + Spacing.extraSmall,
-                    top = Spacing.card
-                ),
+                .padding(start = Spacing.tight, end = Spacing.tight, top = Spacing.card),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
@@ -102,15 +98,12 @@ fun ExerciseCard(
         )
 
         Column(
-            modifier = Modifier.padding(
-                horizontal = Spacing.small + Spacing.extraSmall,
-                vertical = Spacing.card
-            ),
+            modifier = Modifier.padding(horizontal = Spacing.tight, vertical = Spacing.card),
             verticalArrangement = Arrangement.spacedBy(Spacing.card)
         ) {
             Text(
                 text = exercise.description,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 18.sp),
                 color = Slate800
             )
 
@@ -128,16 +121,16 @@ fun ExerciseCard(
                     ),
                     style = MaterialTheme.typography.bodyMedium,
                     color = Slate800,
-                    modifier = Modifier.padding(start = Spacing.small)
+                    modifier = Modifier.padding(start = Spacing.extraSmall)
                 )
                 Text(
                     text = exercise.detail,
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.White,
                     modifier = Modifier
-                        .padding(start = Spacing.screen)
+                        .padding(start = Spacing.small)
                         .background(Slate800, MaterialTheme.shapes.medium)
-                        .padding(horizontal = Spacing.small + 2.dp, vertical = 3.dp)
+                        .padding(horizontal = Spacing.tight, vertical = 3.dp)
                 )
             }
         }
