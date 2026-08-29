@@ -1,4 +1,4 @@
-package com.jericx.trainr.presentation.onboarding.components.typography
+package com.jericx.trainr.presentation.common.components.typography
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -12,13 +12,13 @@ import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 
 @Composable
-fun OnboardingScreenTitle(
+fun TrainrSectionTitle(
     text: String,
     modifier: Modifier = Modifier
 ) {
     Text(
         text = text,
-        style = MaterialTheme.typography.titleLarge,
+        style = MaterialTheme.typography.titleSmall,
         color = MaterialTheme.colorScheme.onBackground,
         modifier = modifier
     )
@@ -26,13 +26,13 @@ fun OnboardingScreenTitle(
 
 @Preview(showBackground = true)
 @Composable
-private fun OnboardingScreenTitlePreview() {
+private fun TrainrSectionTitlePreview() {
     TrainrTheme {
         Column(
             verticalArrangement = Arrangement.spacedBy(Spacing.small),
             modifier = Modifier.padding(Spacing.medium)
         ) {
-            OnboardingScreenTitle(text = "YOUR MEASUREMENTS")
+            TrainrSectionTitle(text = "Available equipment")
         }
     }
 }

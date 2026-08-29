@@ -1,4 +1,4 @@
-package com.jericx.trainr.presentation.onboarding.components.core
+package com.jericx.trainr.presentation.common.components.core
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
@@ -32,7 +32,7 @@ import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 
 @Composable
-fun OnboardingCheckboxChip(
+fun TrainrCheckboxChip(
     text: String,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
@@ -95,20 +95,20 @@ fun OnboardingCheckboxChip(
 
 @Preview(showBackground = true)
 @Composable
-private fun OnboardingCheckboxChipPreview() {
+private fun TrainrCheckboxChipPreview() {
     TrainrTheme {
         Column(
             verticalArrangement = Arrangement.spacedBy(Spacing.small),
             modifier = Modifier.padding(Spacing.medium)
         ) {
             val checked = remember { mutableStateOf(true) }
-            OnboardingCheckboxChip(
+            TrainrCheckboxChip(
                 text = "Dumbells",
                 checked = checked.value,
                 onCheckedChange = { checked.value = it }
             )
-            OnboardingCheckboxChip(text = "Treadmill", checked = false, onCheckedChange = {})
-            OnboardingCheckboxChip(
+            TrainrCheckboxChip(text = "Treadmill", checked = false, onCheckedChange = {})
+            TrainrCheckboxChip(
                 text = "Unavailable",
                 checked = false,
                 onCheckedChange = {},

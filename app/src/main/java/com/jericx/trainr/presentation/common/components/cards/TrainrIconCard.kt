@@ -1,4 +1,4 @@
-package com.jericx.trainr.presentation.onboarding.components.cards
+package com.jericx.trainr.presentation.common.components.cards
 
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.BorderStroke
@@ -31,7 +31,7 @@ import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 
 @Composable
-fun OnboardingIconCard(
+fun TrainrIconCard(
     @DrawableRes iconRes: Int,
     title: String,
     description: String,
@@ -116,20 +116,20 @@ fun OnboardingIconCard(
 
 @Preview(showBackground = true)
 @Composable
-private fun OnboardingIconCardPreview() {
+private fun TrainrIconCardPreview() {
     TrainrTheme {
         Column(
             verticalArrangement = Arrangement.spacedBy(Spacing.small),
             modifier = Modifier.padding(Spacing.medium)
         ) {
-            OnboardingIconCard(
+            TrainrIconCard(
                 iconRes = R.drawable.ic_fitness_center,
                 title = "Muscle Gain",
                 description = "Hypertrophy and mass-building programs",
                 isSelected = true,
                 onClick = {}
             )
-            OnboardingIconCard(
+            TrainrIconCard(
                 iconRes = R.drawable.ic_directions_run,
                 title = "Endurance",
                 description = "Cardiovascular and stamina improvement",

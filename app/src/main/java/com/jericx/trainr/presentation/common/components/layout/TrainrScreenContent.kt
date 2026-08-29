@@ -1,4 +1,4 @@
-package com.jericx.trainr.presentation.onboarding.components.layout
+package com.jericx.trainr.presentation.common.components.layout
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -11,11 +11,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
-import com.jericx.trainr.presentation.onboarding.components.typography.OnboardingScreenTitle
-import com.jericx.trainr.presentation.onboarding.components.typography.OnboardingSubtitle
+import com.jericx.trainr.presentation.common.components.typography.TrainrScreenTitle
+import com.jericx.trainr.presentation.common.components.typography.TrainrSubtitle
 
 @Composable
-fun OnboardingScreenContent(
+fun TrainrScreenContent(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit
 ) {
@@ -31,11 +31,11 @@ fun OnboardingScreenContent(
 
 @Preview(showBackground = true)
 @Composable
-private fun OnboardingScreenContentPreview() {
+private fun TrainrScreenContentPreview() {
     TrainrTheme {
-        OnboardingScreenContent {
-            OnboardingScreenTitle(text = "YOUR MEASUREMENTS")
-            OnboardingSubtitle(text = "This helps us calculate your fitness metrics.")
+        TrainrScreenContent {
+            TrainrScreenTitle(text = "YOUR MEASUREMENTS")
+            TrainrSubtitle(text = "This helps us calculate your fitness metrics.")
         }
     }
 }

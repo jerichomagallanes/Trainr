@@ -30,12 +30,12 @@ import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.presentation.common.components.TrainrTopBar
 import com.jericx.trainr.presentation.common.getLocalizedName
 import com.jericx.trainr.presentation.common.theme.Spacing
-import com.jericx.trainr.presentation.onboarding.components.core.OnboardingButton
-import com.jericx.trainr.presentation.onboarding.components.core.OnboardingProgress
-import com.jericx.trainr.presentation.onboarding.components.layout.OnboardingScaffold
-import com.jericx.trainr.presentation.onboarding.components.layout.OnboardingScreenContent
-import com.jericx.trainr.presentation.onboarding.components.typography.OnboardingScreenTitle
-import com.jericx.trainr.presentation.onboarding.components.typography.OnboardingSubtitle
+import com.jericx.trainr.presentation.common.components.core.TrainrButton
+import com.jericx.trainr.presentation.common.components.core.TrainrProgress
+import com.jericx.trainr.presentation.common.components.layout.TrainrScaffold
+import com.jericx.trainr.presentation.common.components.layout.TrainrScreenContent
+import com.jericx.trainr.presentation.common.components.typography.TrainrScreenTitle
+import com.jericx.trainr.presentation.common.components.typography.TrainrSubtitle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,13 +44,13 @@ fun ReviewScreen(
     onConfirmClick: () -> Unit,
     onBackClick: () -> Unit
 ) {
-    OnboardingScaffold(
+    TrainrScaffold(
         onBackClick = onBackClick,
         topBar = {
             TrainrTopBar(onBackClick = onBackClick, showLogo = true)
         },
         bottomButton = {
-            OnboardingButton(
+            TrainrButton(
                 text = stringResource(R.string.generate_my_workout_plan),
                 onClick = onConfirmClick
             )
@@ -61,20 +61,20 @@ fun ReviewScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            OnboardingProgress(
+            TrainrProgress(
                 currentStep = 6,
                 totalSteps = 7,
                 modifier = Modifier.padding(horizontal = Spacing.large)
             )
 
-            OnboardingScreenContent {
+            TrainrScreenContent {
                 Spacer(modifier = Modifier.height(Spacing.extraLarge))
 
-                OnboardingScreenTitle(text = stringResource(R.string.your_fitness_profile))
+                TrainrScreenTitle(text = stringResource(R.string.your_fitness_profile))
 
                 Spacer(modifier = Modifier.height(Spacing.small))
 
-                OnboardingSubtitle(
+                TrainrSubtitle(
                     text = stringResource(R.string.review_description)
                 )
 

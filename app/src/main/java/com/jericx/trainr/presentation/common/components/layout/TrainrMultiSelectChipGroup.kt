@@ -1,4 +1,4 @@
-package com.jericx.trainr.presentation.onboarding.components.layout
+package com.jericx.trainr.presentation.common.components.layout
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,7 +13,7 @@ import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 
 @Composable
-fun OnboardingMultiSelectChipGroup(
+fun TrainrMultiSelectChipGroup(
     items: List<String>,
     selectedItems: Set<String>,
     onItemToggle: (String) -> Unit,
@@ -21,7 +21,7 @@ fun OnboardingMultiSelectChipGroup(
     horizontalSpacing: Dp = Spacing.small,
     verticalSpacing: Dp = Spacing.small
 ) {
-    OnboardingChipGroup(
+    TrainrChipGroup(
         items = items,
         selectedItems = selectedItems,
         onItemClick = onItemToggle,
@@ -35,14 +35,14 @@ fun OnboardingMultiSelectChipGroup(
 
 @Preview(showBackground = true)
 @Composable
-private fun OnboardingMultiSelectChipGroupPreview() {
+private fun TrainrMultiSelectChipGroupPreview() {
     TrainrTheme {
         Column(
             verticalArrangement = Arrangement.spacedBy(Spacing.small),
             modifier = Modifier.padding(Spacing.medium)
         ) {
             val selected = remember { mutableStateOf(setOf("Yoga Mat")) }
-            OnboardingMultiSelectChipGroup(
+            TrainrMultiSelectChipGroup(
                 items = listOf("Dumbells", "Yoga Mat", "Treadmill"),
                 selectedItems = selected.value,
                 onItemToggle = { item ->

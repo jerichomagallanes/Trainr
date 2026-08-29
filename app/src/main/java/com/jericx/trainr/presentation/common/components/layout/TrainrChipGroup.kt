@@ -1,4 +1,4 @@
-package com.jericx.trainr.presentation.onboarding.components.layout
+package com.jericx.trainr.presentation.common.components.layout
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -11,10 +11,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
-import com.jericx.trainr.presentation.onboarding.components.core.OnboardingToggleChip
+import com.jericx.trainr.presentation.common.components.core.TrainrToggleChip
 
 @Composable
-fun <T> OnboardingChipGroup(
+fun <T> TrainrChipGroup(
     items: List<T>,
     onItemClick: (T) -> Unit,
     itemLabel: (T) -> String,
@@ -25,7 +25,7 @@ fun <T> OnboardingChipGroup(
     horizontalSpacing: Dp = Spacing.small,
     verticalSpacing: Dp = Spacing.small
 ) {
-    OnboardingFlowRow(
+    TrainrFlowRow(
         modifier = modifier,
         horizontalSpacing = horizontalSpacing,
         verticalSpacing = verticalSpacing
@@ -37,7 +37,7 @@ fun <T> OnboardingChipGroup(
                 selectedItem == item
             }
 
-            OnboardingToggleChip(
+            TrainrToggleChip(
                 text = itemLabel(item),
                 selected = isSelected,
                 onClick = { onItemClick(item) }
@@ -48,14 +48,14 @@ fun <T> OnboardingChipGroup(
 
 @Preview(showBackground = true)
 @Composable
-private fun OnboardingChipGroupPreview() {
+private fun TrainrChipGroupPreview() {
     TrainrTheme {
         Column(
             verticalArrangement = Arrangement.spacedBy(Spacing.small),
             modifier = Modifier.padding(Spacing.medium)
         ) {
             val selected = remember { mutableStateOf("Gym") }
-            OnboardingChipGroup(
+            TrainrChipGroup(
                 items = listOf("Home", "Gym", "Both"),
                 onItemClick = { selected.value = it },
                 itemLabel = { it },

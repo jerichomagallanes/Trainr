@@ -19,16 +19,16 @@ import com.jericx.trainr.R
 import com.jericx.trainr.common.Constants
 import com.jericx.trainr.domain.model.WorkoutType
 import com.jericx.trainr.presentation.common.theme.Spacing
-import com.jericx.trainr.presentation.onboarding.components.cards.OnboardingIconCard
-import com.jericx.trainr.presentation.onboarding.components.core.OnboardingButton
-import com.jericx.trainr.presentation.onboarding.components.core.OnboardingCheckboxChip
-import com.jericx.trainr.presentation.onboarding.components.core.OnboardingProgress
-import com.jericx.trainr.presentation.onboarding.components.layout.OnboardingFormSection
-import com.jericx.trainr.presentation.onboarding.components.layout.OnboardingScaffold
-import com.jericx.trainr.presentation.onboarding.components.layout.OnboardingScreenContent
-import com.jericx.trainr.presentation.onboarding.components.typography.OnboardingScreenTitle
-import com.jericx.trainr.presentation.onboarding.components.typography.OnboardingSectionTitle
-import com.jericx.trainr.presentation.onboarding.components.typography.OnboardingSubtitle
+import com.jericx.trainr.presentation.common.components.cards.TrainrIconCard
+import com.jericx.trainr.presentation.common.components.core.TrainrButton
+import com.jericx.trainr.presentation.common.components.core.TrainrCheckboxChip
+import com.jericx.trainr.presentation.common.components.core.TrainrProgress
+import com.jericx.trainr.presentation.common.components.layout.TrainrFormSection
+import com.jericx.trainr.presentation.common.components.layout.TrainrScaffold
+import com.jericx.trainr.presentation.common.components.layout.TrainrScreenContent
+import com.jericx.trainr.presentation.common.components.typography.TrainrScreenTitle
+import com.jericx.trainr.presentation.common.components.typography.TrainrSectionTitle
+import com.jericx.trainr.presentation.common.components.typography.TrainrSubtitle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,10 +52,10 @@ fun LimitationsScreen(
     val noneOption = stringResource(R.string.none_injury)
     val noneLabel = stringResource(R.string.none)
 
-    OnboardingScaffold(
+    TrainrScaffold(
         onBackClick = onBackClick,
         bottomButton = {
-            OnboardingButton(
+            TrainrButton(
                 text = stringResource(R.string.submit),
                 onClick = {
                     val injuries = selectedInjuries.filter { it != noneLabel }.toList()
@@ -70,26 +70,26 @@ fun LimitationsScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            OnboardingProgress(
+            TrainrProgress(
                 currentStep = 5,
                 totalSteps = 7,
                 modifier = Modifier.padding(horizontal = Spacing.large)
             )
 
-            OnboardingScreenContent {
+            TrainrScreenContent {
                 Spacer(modifier = Modifier.height(Spacing.extraLarge))
 
-                OnboardingScreenTitle(text = stringResource(R.string.lets_keep_you_safe))
+                TrainrScreenTitle(text = stringResource(R.string.lets_keep_you_safe))
 
                 Spacer(modifier = Modifier.height(Spacing.small))
 
-                OnboardingSubtitle(
+                TrainrSubtitle(
                     text = stringResource(R.string.limitations_description)
                 )
 
                 Spacer(modifier = Modifier.height(Spacing.extraLarge))
 
-                OnboardingSectionTitle(stringResource(R.string.any_injuries_or_areas))
+                TrainrSectionTitle(stringResource(R.string.any_injuries_or_areas))
 
                 Spacer(modifier = Modifier.height(Spacing.medium))
 
@@ -100,7 +100,7 @@ fun LimitationsScreen(
                     injuryOptions.forEach { injury ->
                         val isNone = injury == noneOption
 
-                        OnboardingCheckboxChip(
+                        TrainrCheckboxChip(
                             text = injury,
                             checked = selectedInjuries.contains(injury),
                             onCheckedChange = { isChecked ->
@@ -125,13 +125,13 @@ fun LimitationsScreen(
 
                 Spacer(modifier = Modifier.height(Spacing.extraLarge))
 
-                OnboardingFormSection(
+                TrainrFormSection(
                     title = stringResource(R.string.preferred_workout_style)
                 ) {
                     Column(
                         verticalArrangement = Arrangement.spacedBy(Spacing.small)
                     ) {
-                        OnboardingIconCard(
+                        TrainrIconCard(
                             iconRes = R.drawable.ic_exercise,
                             title = stringResource(R.string.strength_training),
                             description = stringResource(R.string.strength_training_description),
@@ -139,7 +139,7 @@ fun LimitationsScreen(
                             onClick = { selectedWorkoutType = WorkoutType.STRENGTH }
                         )
 
-                        OnboardingIconCard(
+                        TrainrIconCard(
                             iconRes = R.drawable.ic_directions_run,
                             title = stringResource(R.string.cardio),
                             description = stringResource(R.string.cardio_description),
@@ -147,7 +147,7 @@ fun LimitationsScreen(
                             onClick = { selectedWorkoutType = WorkoutType.CARDIO }
                         )
 
-                        OnboardingIconCard(
+                        TrainrIconCard(
                             iconRes = R.drawable.ic_electric_bolt,
                             title = stringResource(R.string.hiit),
                             description = stringResource(R.string.hiit_description),
@@ -155,7 +155,7 @@ fun LimitationsScreen(
                             onClick = { selectedWorkoutType = WorkoutType.HIIT }
                         )
 
-                        OnboardingIconCard(
+                        TrainrIconCard(
                             iconRes = R.drawable.ic_emoji_people,
                             title = stringResource(R.string.mixed_balanced),
                             description = stringResource(R.string.mixed_balanced_description),

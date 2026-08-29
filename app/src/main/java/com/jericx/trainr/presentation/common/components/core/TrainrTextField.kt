@@ -1,4 +1,4 @@
-package com.jericx.trainr.presentation.onboarding.components.core
+package com.jericx.trainr.presentation.common.components.core
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -20,7 +20,7 @@ import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 
 @Composable
-fun OnboardingTextField(
+fun TrainrTextField(
     value: String,
     onValueChange: (String) -> Unit,
     placeholder: String,
@@ -52,19 +52,19 @@ fun OnboardingTextField(
 
 @Preview(showBackground = true)
 @Composable
-private fun OnboardingTextFieldPreview() {
+private fun TrainrTextFieldPreview() {
     TrainrTheme {
         Column(
             verticalArrangement = Arrangement.spacedBy(Spacing.small),
             modifier = Modifier.padding(Spacing.medium)
         ) {
             val value = remember { mutableStateOf("") }
-            OnboardingTextField(
+            TrainrTextField(
                 value = value.value,
                 onValueChange = { value.value = it },
                 placeholder = "170"
             )
-            OnboardingTextField(value = "Jericho", onValueChange = {}, placeholder = "First name")
+            TrainrTextField(value = "Jericho", onValueChange = {}, placeholder = "First name")
         }
     }
 }

@@ -1,4 +1,4 @@
-package com.jericx.trainr.presentation.onboarding.components.core
+package com.jericx.trainr.presentation.common.components.core
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
@@ -20,7 +20,7 @@ import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 
 @Composable
-fun OnboardingToggleChip(
+fun TrainrToggleChip(
     text: String,
     selected: Boolean,
     onClick: () -> Unit,
@@ -58,14 +58,14 @@ fun OnboardingToggleChip(
 
 @Preview(showBackground = true)
 @Composable
-private fun OnboardingToggleChipPreview() {
+private fun TrainrToggleChipPreview() {
     TrainrTheme {
         Column(
             verticalArrangement = Arrangement.spacedBy(Spacing.small),
             modifier = Modifier.padding(Spacing.medium)
         ) {
-            OnboardingToggleChip(text = "Metric", selected = true, onClick = {})
-            OnboardingToggleChip(text = "Imperial", selected = false, onClick = {})
+            TrainrToggleChip(text = "Metric", selected = true, onClick = {})
+            TrainrToggleChip(text = "Imperial", selected = false, onClick = {})
         }
     }
 }

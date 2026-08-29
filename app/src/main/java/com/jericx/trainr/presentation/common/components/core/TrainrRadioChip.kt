@@ -1,4 +1,4 @@
-package com.jericx.trainr.presentation.onboarding.components.core
+package com.jericx.trainr.presentation.common.components.core
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -28,7 +28,7 @@ import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 
 @Composable
-fun OnboardingRadioChip(
+fun TrainrRadioChip(
     text: String,
     selected: Boolean,
     onClick: () -> Unit,
@@ -101,14 +101,14 @@ fun OnboardingRadioChip(
 
 @Preview(showBackground = true)
 @Composable
-private fun OnboardingRadioChipPreview() {
+private fun TrainrRadioChipPreview() {
     TrainrTheme {
         Column(
             verticalArrangement = Arrangement.spacedBy(Spacing.small),
             modifier = Modifier.padding(Spacing.medium)
         ) {
-            OnboardingRadioChip(text = "Male", selected = true, onClick = {})
-            OnboardingRadioChip(text = "Female", selected = false, onClick = {})
+            TrainrRadioChip(text = "Male", selected = true, onClick = {})
+            TrainrRadioChip(text = "Female", selected = false, onClick = {})
         }
     }
 }

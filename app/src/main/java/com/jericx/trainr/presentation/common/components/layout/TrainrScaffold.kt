@@ -1,4 +1,4 @@
-package com.jericx.trainr.presentation.onboarding.components.layout
+package com.jericx.trainr.presentation.common.components.layout
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -16,12 +16,12 @@ import androidx.compose.ui.unit.dp
 import com.jericx.trainr.presentation.common.components.TrainrTopBar
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
-import com.jericx.trainr.presentation.onboarding.components.core.OnboardingButton
-import com.jericx.trainr.presentation.onboarding.components.typography.OnboardingScreenTitle
+import com.jericx.trainr.presentation.common.components.core.TrainrButton
+import com.jericx.trainr.presentation.common.components.typography.TrainrScreenTitle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OnboardingScaffold(
+fun TrainrScaffold(
     onBackClick: (() -> Unit)? = null,
     topBar: @Composable () -> Unit = {
         if (onBackClick != null) {
@@ -53,14 +53,14 @@ fun OnboardingScaffold(
 
 @Preview(showBackground = true)
 @Composable
-private fun OnboardingScaffoldPreview() {
+private fun TrainrScaffoldPreview() {
     TrainrTheme {
-        OnboardingScaffold(
+        TrainrScaffold(
             onBackClick = {},
-            bottomButton = { OnboardingButton(text = "NEXT", onClick = {}) }
+            bottomButton = { TrainrButton(text = "NEXT", onClick = {}) }
         ) { padding ->
-            OnboardingScreenContent(modifier = Modifier.padding(padding)) {
-                OnboardingScreenTitle(text = "YOUR MEASUREMENTS")
+            TrainrScreenContent(modifier = Modifier.padding(padding)) {
+                TrainrScreenTitle(text = "YOUR MEASUREMENTS")
             }
         }
     }

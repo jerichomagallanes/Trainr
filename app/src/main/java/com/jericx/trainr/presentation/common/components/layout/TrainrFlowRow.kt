@@ -1,4 +1,4 @@
-package com.jericx.trainr.presentation.onboarding.components.layout
+package com.jericx.trainr.presentation.common.components.layout
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -11,10 +11,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
-import com.jericx.trainr.presentation.onboarding.components.core.OnboardingRadioChip
+import com.jericx.trainr.presentation.common.components.core.TrainrRadioChip
 
 @Composable
-fun OnboardingFlowRow(
+fun TrainrFlowRow(
     modifier: Modifier = Modifier,
     horizontalSpacing: Dp = Spacing.small,
     verticalSpacing: Dp = Spacing.small,
@@ -69,15 +69,15 @@ fun OnboardingFlowRow(
 
 @Preview(showBackground = true)
 @Composable
-private fun OnboardingFlowRowPreview() {
+private fun TrainrFlowRowPreview() {
     TrainrTheme {
         Column(
             verticalArrangement = Arrangement.spacedBy(Spacing.small),
             modifier = Modifier.padding(Spacing.medium)
         ) {
-            OnboardingFlowRow {
+            TrainrFlowRow {
                 listOf("Dumbells", "Yoga Mat", "Treadmill", "Barbell").forEach {
-                    OnboardingRadioChip(text = it, selected = it == "Yoga Mat", onClick = {})
+                    TrainrRadioChip(text = it, selected = it == "Yoga Mat", onClick = {})
                 }
             }
         }

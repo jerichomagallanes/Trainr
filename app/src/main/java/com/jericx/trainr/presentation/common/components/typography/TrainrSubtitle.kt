@@ -1,4 +1,4 @@
-package com.jericx.trainr.presentation.onboarding.components.typography
+package com.jericx.trainr.presentation.common.components.typography
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -12,7 +12,7 @@ import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 
 @Composable
-fun OnboardingSubtitle(
+fun TrainrSubtitle(
     text: String,
     modifier: Modifier = Modifier
 ) {
@@ -26,13 +26,13 @@ fun OnboardingSubtitle(
 
 @Preview(showBackground = true)
 @Composable
-private fun OnboardingSubtitlePreview() {
+private fun TrainrSubtitlePreview() {
     TrainrTheme {
         Column(
             verticalArrangement = Arrangement.spacedBy(Spacing.small),
             modifier = Modifier.padding(Spacing.medium)
         ) {
-            OnboardingSubtitle(text = "This helps us calculate your fitness metrics.")
+            TrainrSubtitle(text = "This helps us calculate your fitness metrics.")
         }
     }
 }
