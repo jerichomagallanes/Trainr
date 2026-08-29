@@ -24,7 +24,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.jericx.trainr.R
 import com.jericx.trainr.domain.model.Equipment
 import com.jericx.trainr.domain.model.UserProfile
@@ -168,10 +167,7 @@ private fun ProfileSection(
     ) {
         Text(
             text = title,
-            style = MaterialTheme.typography.bodyLarge.copy(
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp
-            ),
+            style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier.padding(bottom = Spacing.small)
         )
@@ -203,17 +199,12 @@ private fun ProfileItem(
     ) {
         Text(
             text = label,
-            style = MaterialTheme.typography.bodyMedium.copy(
-                fontSize = 14.sp
-            ),
+            style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
             text = value,
-            style = MaterialTheme.typography.bodyMedium.copy(
-                fontWeight = FontWeight.Medium,
-                fontSize = 14.sp
-            ),
+            style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onBackground
         )
     }
@@ -247,10 +238,7 @@ private fun AIPreviewCard(userProfile: UserProfile) {
                 ) {
                     Text(
                         text = stringResource(R.string.ai_routine_preview_label),
-                        style = MaterialTheme.typography.bodyLarge.copy(
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
-                        ),
+                        style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.background
                     )
                     Spacer(modifier = Modifier.height(Spacing.extraSmall))
@@ -261,10 +249,7 @@ private fun AIPreviewCard(userProfile: UserProfile) {
                             else "${userProfile.workoutDaysPerWeek}-day",
                             stringResource(R.string.general_fitness_goal).lowercase()
                         ),
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontSize = 14.sp,
-                            lineHeight = 20.sp
-                        ),
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.background.copy(alpha = 0.9f)
                     )
                 }

@@ -21,11 +21,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.jericx.trainr.presentation.common.theme.Animation
 import com.jericx.trainr.presentation.common.theme.ComponentHeight
 import com.jericx.trainr.presentation.common.theme.Spacing
@@ -111,13 +109,7 @@ fun OnboardingButton(
         ) {
             Text(
                 text = text.uppercase(),
-                style = MaterialTheme.typography.labelLarge.copy(
-                    fontFamily = FontFamily.Default,
-                    fontWeight = FontWeight.Black,
-                    fontSize = 16.sp,
-                    lineHeight = 16.sp,
-                    letterSpacing = 0.sp
-                ),
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Black),
                 color = textColor
             )
         }

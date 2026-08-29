@@ -106,8 +106,7 @@ fun WeeklyPlanScreen(
         ) {
             Text(
                 text = stringResource(R.string.your_weekly_workout_plan),
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleLarge,
                 color = Slate800
             )
 
@@ -130,7 +129,7 @@ fun WeeklyPlanScreen(
                             locale = locale
                         )
                     ),
-                    fontSize = 16.sp,
+                    style = MaterialTheme.typography.bodyLarge,
                     color = Slate800
                 )
             }
@@ -147,8 +146,7 @@ fun WeeklyPlanScreen(
                 Spacer(modifier = Modifier.size(Spacing.small))
                 Text(
                     text = stringResource(R.string.track_weekly_progress) + " →",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.labelLarge,
                     color = Orange500
                 )
             }
@@ -172,8 +170,7 @@ fun WeeklyPlanScreen(
         ) {
             Text(
                 text = stringResource(R.string.start_todays_workout),
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Black,
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Black),
                 color = Color.White,
                 modifier = Modifier.padding(vertical = Spacing.small)
             )

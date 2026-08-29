@@ -1,5 +1,6 @@
 package com.jericx.trainr.presentation.onboarding.screens
 
+import androidx.activity.ComponentActivity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -29,7 +30,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.activity.ComponentActivity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
@@ -40,11 +40,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.jericx.trainr.R
 import com.jericx.trainr.data.preferences.LanguagePreferences
-import com.jericx.trainr.presentation.common.LocaleManager
 import com.jericx.trainr.data.preferences.NavigationStateManager
+import com.jericx.trainr.presentation.common.LocaleManager
 import com.jericx.trainr.presentation.common.components.InfiniteHorizontalPager
 import com.jericx.trainr.presentation.common.components.LanguageSelector
 import com.jericx.trainr.presentation.common.theme.Orange500
@@ -180,12 +179,7 @@ private fun OnboardingPageContent(page: OnboardingPage) {
 
         Text(
             text = page.title,
-            style = MaterialTheme.typography.bodyLarge.copy(
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 16.sp,
-                lineHeight = 20.sp,
-                letterSpacing = 0.sp
-            ),
+            style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.onBackground,
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth(0.9f)
@@ -195,8 +189,6 @@ private fun OnboardingPageContent(page: OnboardingPage) {
 
 @Composable
 private fun WelcomeHeader() {
-    val fugazOne = FontFamily(Font(R.font.fugazone_regular))
-
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -210,13 +202,7 @@ private fun WelcomeHeader() {
         ) {
             Text(
                 text = stringResource(R.string.welcome_to) + " ",
-                style = MaterialTheme.typography.headlineLarge.copy(
-                    fontFamily = fugazOne,
-                    fontWeight = FontWeight.Normal,
-                    fontSize = 24.sp,
-                    lineHeight = 24.sp,
-                    letterSpacing = 0.sp
-                ),
+                style = MaterialTheme.typography.headlineLarge,
                 color = MaterialTheme.colorScheme.onBackground
             )
 
@@ -238,12 +224,7 @@ private fun WelcomeHeader() {
                 }
                 append(" " + stringResource(R.string.personal_trainer))
             },
-            style = MaterialTheme.typography.bodyLarge.copy(
-                fontWeight = FontWeight.Medium,
-                fontSize = 14.sp,
-                lineHeight = 16.sp,
-                letterSpacing = 0.sp
-            ),
+            style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )

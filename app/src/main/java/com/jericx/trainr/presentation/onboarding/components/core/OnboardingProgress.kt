@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.jericx.trainr.presentation.common.theme.OutlineGray
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 
@@ -26,9 +27,9 @@ fun OnboardingProgress(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(4.dp)
+            .height(8.dp)
             .clip(MaterialTheme.shapes.large)
-            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .background(OutlineGray)
     ) {
         Box(
             modifier = Modifier
