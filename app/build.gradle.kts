@@ -64,6 +64,19 @@ android {
                 "proguard-rules.pro"
             )
         }
+
+        // Release's R8 configuration, but debug-signed so it can be installed.
+        // Exists so CI can launch a minified build and catch a missing keep rule,
+        // which otherwise only shows up in production.
+        create("minified") {
+            initWith(getByName("debug"))
+            isMinifyEnabled = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+            matchingFallbacks += listOf("debug")
+        }
     }
 
     compileOptions {

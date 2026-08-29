@@ -71,6 +71,7 @@ Every PR runs three required checks and one advisory one:
 | **Android Lint**             | `lintDevDebug`, findings published to the Security tab    | Yes |
 | **Build debug APK**          | `assembleDevDebug`, APK attached to the run               | Yes |
 | **Instrumentation tests**    | Espresso/Compose tests on an emulator                     | No |
+| **Minified build smoke**     | Launches an R8-minified build and checks it doesn't crash | No |
 
 Instrumentation tests are advisory on purpose: emulators flake, and a flake
 should never be the reason a correct change can't merge. Read the result, re-run
@@ -107,6 +108,10 @@ deletes itself on merge.
 
 # Everything CI checks, in one go
 ./gradlew testDevDebugUnitTest lintDevDebug assembleDevDebug
+
+# Install a build minified with release's R8 rules, to check a keep rule
+# isn't missing. Nothing else runs against R8 output.
+./gradlew installDevMinified
 ```
 
 ## Build flavors
