@@ -41,6 +41,7 @@ import com.jericx.trainr.presentation.splash.SplashScreen
 import com.jericx.trainr.presentation.workout.DayCompletedScreen
 import com.jericx.trainr.presentation.workout.RoutineDetailRoute
 import com.jericx.trainr.presentation.workout.WeeklyPlanRoute
+import com.jericx.trainr.presentation.workout.WeekCompletedScreen
 import com.jericx.trainr.presentation.workout.WeeklyProgressScreen
 import com.jericx.trainr.presentation.workout.sample.SampleWeeklyProgress
 import dagger.hilt.android.AndroidEntryPoint
@@ -208,8 +209,13 @@ fun AppContent(versionName: String) {
                 composable(Screen.RoutineDetail.route) {
                     RoutineDetailRoute(
                         onBackClick = { navController.popBackStack() },
-                        onRoutineCompleted = { dayNumber ->
+                        onDayCompleted = { dayNumber ->
                             navController.navigate(Screen.DayCompleted.createRoute(dayNumber)) {
+                                popUpTo(Screen.RoutineDetail.route) { inclusive = true }
+                            }
+                        },
+                        onWeekCompleted = { weekNumber ->
+                            navController.navigate(Screen.WeekCompleted.createRoute(weekNumber)) {
                                 popUpTo(Screen.RoutineDetail.route) { inclusive = true }
                             }
                         }
@@ -230,6 +236,29 @@ fun AppContent(versionName: String) {
                             navController.navigate(Screen.WeeklyProgress.route)
                         },
                         onBackToRoutineClick = {
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(Screen.Home.route) { inclusive = true }
+                            }
+                        }
+                    )
+                }
+
+                composable(
+                    route = Screen.WeekCompleted.route,
+                    arguments = listOf(
+                        navArgument(Screen.WeekCompleted.ARG_WEEK_NUMBER) { type = NavType.IntType }
+                    )
+                ) { entry ->
+                    WeekCompletedScreen(
+                        weekNumber = entry.arguments
+                            ?.getInt(Screen.WeekCompleted.ARG_WEEK_NUMBER) ?: 1,
+                        onBackClick = { navController.popBackStack() },
+                        onViewProgressClick = {
+                            navController.navigate(Screen.WeeklyProgress.route)
+                        },
+                        // There is no week-two plan yet, so this returns to the
+                        // plan surface where next week will live.
+                        onPreviewNextWeekClick = {
                             navController.navigate(Screen.Home.route) {
                                 popUpTo(Screen.Home.route) { inclusive = true }
                             }

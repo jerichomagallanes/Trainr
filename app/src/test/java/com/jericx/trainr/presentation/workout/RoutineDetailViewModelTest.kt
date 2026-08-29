@@ -1,6 +1,8 @@
 package com.jericx.trainr.presentation.workout
 
 import com.google.common.truth.Truth.assertThat
+import com.jericx.trainr.domain.model.WorkoutDay
+import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.presentation.workout.model.ExerciseUi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -39,6 +41,61 @@ class RoutineDetailViewModelTest {
     @Test
     fun theRoutineKnowsWhichWorkoutDayOfTheWeekItIs() = runTest {
         assertThat(RoutineDetailViewModel().uiState.value.dayNumber).isEqualTo(2)
+    }
+
+    private fun day(number: Int, status: WorkoutStatus) = WorkoutDay(
+        dayNumber = number,
+        title = "Day $number",
+        status = status,
+        duration = 30,
+        exerciseCount = 4,
+        equipment = emptyList()
+    )
+
+    @Test
+    fun finishingTheLastOutstandingDayEndsTheWeek() {
+        val days = listOf(
+            day(1, WorkoutStatus.COMPLETED),
+            day(3, WorkoutStatus.IN_PROGRESS),
+            day(5, WorkoutStatus.COMPLETED)
+        )
+
+        assertThat(RoutineDetailViewModel.completesTheWeek(days, dayNumber = 2)).isTrue()
+    }
+
+    @Test
+    fun aDayStillToDoLeavesTheWeekOpen() {
+        val days = listOf(
+            day(1, WorkoutStatus.COMPLETED),
+            day(3, WorkoutStatus.IN_PROGRESS),
+            day(5, WorkoutStatus.NOT_STARTED)
+        )
+
+        assertThat(RoutineDetailViewModel.completesTheWeek(days, dayNumber = 2)).isFalse()
+    }
+
+    // A started-but-unfinished day is still outstanding.
+    @Test
+    fun aDayInProgressAlsoLeavesTheWeekOpen() {
+        val days = listOf(
+            day(1, WorkoutStatus.IN_PROGRESS),
+            day(3, WorkoutStatus.IN_PROGRESS)
+        )
+
+        assertThat(RoutineDetailViewModel.completesTheWeek(days, dayNumber = 2)).isFalse()
+    }
+
+    @Test
+    fun aOneDayWeekEndsWithItsOnlyDay() {
+        val days = listOf(day(1, WorkoutStatus.IN_PROGRESS))
+
+        assertThat(RoutineDetailViewModel.completesTheWeek(days, dayNumber = 1)).isTrue()
+    }
+
+    // Friday is still untouched in the sample plan, so Wednesday ends the day.
+    @Test
+    fun theSampleRoutineEndsTheDayRatherThanTheWeek() = runTest {
+        assertThat(RoutineDetailViewModel().uiState.value.completesTheWeek).isFalse()
     }
 
     @Test

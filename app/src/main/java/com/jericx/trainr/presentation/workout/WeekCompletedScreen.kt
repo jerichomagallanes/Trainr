@@ -9,31 +9,31 @@ import com.jericx.trainr.R
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 
 @Composable
-fun DayCompletedScreen(
-    dayNumber: Int,
+fun WeekCompletedScreen(
+    weekNumber: Int,
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit = {},
     onViewProgressClick: () -> Unit = {},
-    onBackToRoutineClick: () -> Unit = {}
+    onPreviewNextWeekClick: () -> Unit = {}
 ) {
     CompletionScreen(
-        iconRes = R.drawable.ic_award_star,
-        iconSize = 80.dp,
-        title = stringResource(R.string.day_completed_format, dayNumber),
-        message = stringResource(R.string.day_completed_message),
+        iconRes = R.drawable.ic_trophy,
+        iconSize = 100.dp,
+        title = stringResource(R.string.week_completed_format, weekNumber),
+        message = stringResource(R.string.week_completed_message),
         secondaryLabel = stringResource(R.string.view_weekly_progress),
-        primaryLabel = stringResource(R.string.back_to_weekly_routine),
+        primaryLabel = stringResource(R.string.preview_next_week),
         modifier = modifier,
         onBackClick = onBackClick,
         onSecondaryClick = onViewProgressClick,
-        onPrimaryClick = onBackToRoutineClick
+        onPrimaryClick = onPreviewNextWeekClick
     )
 }
 
 @Preview(showBackground = true, heightDp = 854)
 @Composable
-private fun DayCompletedScreenPreview() {
+private fun WeekCompletedScreenPreview() {
     TrainrTheme {
-        DayCompletedScreen(dayNumber = 2)
+        WeekCompletedScreen(weekNumber = 1)
     }
 }

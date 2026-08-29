@@ -2,6 +2,8 @@ package com.jericx.trainr.presentation.workout
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.jericx.trainr.domain.model.WorkoutDay
+import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.presentation.workout.model.ExerciseTimerUi
 import com.jericx.trainr.presentation.workout.model.ExerciseUi
 import com.jericx.trainr.presentation.workout.model.RoutineUi
@@ -24,7 +26,9 @@ data class RoutineDetailUiState(
     val timer: ExerciseTimerUi? = null,
     val expandedVideos: Set<Int> = emptySet(),
     val playingVideo: Int? = null,
-    val dayNumber: Int = 1
+    val dayNumber: Int = 1,
+    val weekNumber: Int = 1,
+    val completesTheWeek: Boolean = false
 )
 
 @HiltViewModel
@@ -147,8 +151,16 @@ class RoutineDetailViewModel @Inject constructor() : ViewModel() {
                 equipment = day.equipment,
                 dateMillis = SampleWorkoutData.dateOf(day.dayNumber),
                 // "Day 2", not day 3: the design counts workout days, not weekdays.
-                dayNumber = index + 1
+                dayNumber = index + 1,
+                weekNumber = SampleWorkoutData.weekOne.weekNumber,
+                completesTheWeek = completesTheWeek(days, index + 1)
             )
         }
+
+        // Finishing the last outstanding day of the week ends the week, not just
+        // the day — so the routine has to know which of the two it is.
+        fun completesTheWeek(days: List<WorkoutDay>, dayNumber: Int): Boolean =
+            days.filterIndexed { index, _ -> index != dayNumber - 1 }
+                .all { it.status == WorkoutStatus.COMPLETED }
     }
 }

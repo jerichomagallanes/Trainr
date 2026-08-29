@@ -47,7 +47,8 @@ import com.jericx.trainr.presentation.workout.util.WorkoutDateFormatter
 @Composable
 fun RoutineDetailRoute(
     onBackClick: () -> Unit = {},
-    onRoutineCompleted: (Int) -> Unit = {},
+    onDayCompleted: (Int) -> Unit = {},
+    onWeekCompleted: (Int) -> Unit = {},
     viewModel: RoutineDetailViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -55,7 +56,13 @@ fun RoutineDetailRoute(
     // However the last exercise gets ticked — the slider or its own checkbox —
     // finishing the routine is what ends the day.
     LaunchedEffect(state.routine.isComplete) {
-        if (state.routine.isComplete) onRoutineCompleted(state.dayNumber)
+        if (!state.routine.isComplete) return@LaunchedEffect
+
+        if (state.completesTheWeek) {
+            onWeekCompleted(state.weekNumber)
+        } else {
+            onDayCompleted(state.dayNumber)
+        }
     }
 
     RoutineDetailScreen(
