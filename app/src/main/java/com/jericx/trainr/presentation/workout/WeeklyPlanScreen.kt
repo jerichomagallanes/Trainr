@@ -71,11 +71,11 @@ fun WeeklyPlanRoute(
 @Composable
 fun WeeklyPlanScreen(
     state: WeeklyPlanUiState,
+    modifier: Modifier = Modifier,
     onDayClick: (WorkoutDay) -> Unit = {},
     onTrackProgressClick: () -> Unit = {},
     onStartTodayClick: () -> Unit = {},
-    onLeavePlanConfirmed: () -> Unit = {},
-    modifier: Modifier = Modifier
+    onLeavePlanConfirmed: () -> Unit = {}
 ) {
     val locale = LocalLocale.current.platformLocale
     var showLeaveDialog by remember { mutableStateOf(false) }
