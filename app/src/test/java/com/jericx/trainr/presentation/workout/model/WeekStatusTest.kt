@@ -48,6 +48,20 @@ class WeekStatusTest {
     }
 
     @Test
+    fun percentageIsTheShareOfDaysCompleted() {
+        assertThat(WeekProgressUi(1, 3, 3, WeekStatus.COMPLETED).completionPercentage).isEqualTo(100)
+        assertThat(WeekProgressUi(1, 2, 3, WeekStatus.NOT_COMPLETED).completionPercentage).isEqualTo(67)
+        assertThat(WeekProgressUi(1, 1, 3, WeekStatus.IN_PROGRESS).completionPercentage).isEqualTo(33)
+        assertThat(WeekProgressUi(1, 0, 3, WeekStatus.SKIPPED).completionPercentage).isEqualTo(0)
+    }
+
+    // A plan with no scheduled days must not divide by zero.
+    @Test
+    fun percentageIsZeroWhenNoDaysAreScheduled() {
+        assertThat(WeekProgressUi(1, 0, 0, WeekStatus.SKIPPED).completionPercentage).isEqualTo(0)
+    }
+
+    @Test
     fun weeksRunConsecutivelyAndAreSevenDaysApart() {
         val millisPerWeek = 7L * 24 * 60 * 60 * 1000
         val starts = SampleWeeklyProgress.weeks.map { SampleWeeklyProgress.weekStartMillis(it.weekNumber) }

@@ -9,13 +9,13 @@ object SampleWeeklyProgress {
     private const val DAYS_PER_WEEK = 7
 
     val weeks: List<WeekProgressUi> = listOf(
-        WeekProgressUi(1, completedDays = 3, totalDays = 3, completionPercentage = 100, status = WeekStatus.COMPLETED),
-        WeekProgressUi(2, completedDays = 2, totalDays = 3, completionPercentage = 70, status = WeekStatus.NOT_COMPLETED),
-        WeekProgressUi(3, completedDays = 0, totalDays = 3, completionPercentage = 0, status = WeekStatus.SKIPPED),
-        WeekProgressUi(4, completedDays = 1, totalDays = 3, completionPercentage = 30, status = WeekStatus.IN_PROGRESS),
-        WeekProgressUi(5, completedDays = 3, totalDays = 3, completionPercentage = 100, status = WeekStatus.COMPLETED),
-        WeekProgressUi(6, completedDays = 2, totalDays = 3, completionPercentage = 70, status = WeekStatus.NOT_COMPLETED),
-        WeekProgressUi(7, completedDays = 3, totalDays = 3, completionPercentage = 100, status = WeekStatus.COMPLETED)
+        WeekProgressUi(1, completedDays = 3, totalDays = 3, status = WeekStatus.COMPLETED),
+        WeekProgressUi(2, completedDays = 2, totalDays = 3, status = WeekStatus.NOT_COMPLETED),
+        WeekProgressUi(3, completedDays = 0, totalDays = 3, status = WeekStatus.SKIPPED),
+        WeekProgressUi(4, completedDays = 1, totalDays = 3, status = WeekStatus.IN_PROGRESS),
+        WeekProgressUi(5, completedDays = 3, totalDays = 3, status = WeekStatus.COMPLETED),
+        WeekProgressUi(6, completedDays = 2, totalDays = 3, status = WeekStatus.NOT_COMPLETED),
+        WeekProgressUi(7, completedDays = 3, totalDays = 3, status = WeekStatus.COMPLETED)
     )
 
     fun weekStartMillis(weekNumber: Int): Long = shift(SampleWorkoutData.weekStartMillis, weekNumber)
