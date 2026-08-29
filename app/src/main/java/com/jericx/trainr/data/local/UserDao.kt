@@ -82,6 +82,34 @@ interface UserDao {
     @Query("DELETE FROM exercise_sets WHERE id = :setId")
     suspend fun deleteExerciseSet(setId: Long)
 
+    // The most recent completed performance of the same movement, matched on
+    // exerciseKey — never on the display name, which is free to drift.
+    @Query(
+        """
+        SELECT es.* FROM exercise_sets es
+        WHERE es.workoutExerciseId = (
+            SELECT we.id FROM workout_exercises we
+            JOIN workout_days wd ON we.workoutDayId = wd.id
+            JOIN weekly_workout_plans p ON wd.weeklyPlanId = p.id
+            WHERE p.userId = :userId
+              AND we.exerciseKey = :exerciseKey
+              AND wd.id != :excludeDayId
+              AND wd.status = 'COMPLETED'
+              AND wd.completedAt IS NOT NULL
+              AND wd.completedAt < :beforeMillis
+            ORDER BY wd.completedAt DESC, wd.id DESC
+            LIMIT 1
+        )
+        ORDER BY es.setNumber
+        """
+    )
+    suspend fun getPreviousExerciseSets(
+        userId: Long,
+        exerciseKey: String,
+        excludeDayId: Long,
+        beforeMillis: Long
+    ): List<ExerciseSetEntity>
+
     @Query("SELECT COUNT(*) FROM workout_exercises WHERE workoutDayId = :workoutDayId")
     suspend fun getTotalExercisesForDay(workoutDayId: Long): Int
 

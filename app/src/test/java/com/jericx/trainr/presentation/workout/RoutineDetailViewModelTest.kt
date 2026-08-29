@@ -519,6 +519,35 @@ class RoutineDetailViewModelTest {
     }
 
     @Test
+    fun theRoutineCarriesEachExercisesPreviousPerformance() = runTest {
+        val repository = repositoryWith(storedPlan)
+        val history = listOf(
+            ExerciseSet(id = 900, setNumber = 1, actualReps = 11, actualWeightKg = 18f, isCompleted = true)
+        )
+        coEvery {
+            repository.getPreviousSets(1, "bent_over_row", 22, Long.MAX_VALUE)
+        } returns history
+
+        val viewModel = viewModel(dayNumber = 3, repository = repository)
+        advanceUntilIdle()
+
+        assertThat(viewModel.exercise(1).previousSets).isEqualTo(history)
+        assertThat(viewModel.exercise(2).previousSets).isEmpty()
+    }
+
+    // Reviewing a finished day must show the history it had back then, not
+    // performances logged since.
+    @Test
+    fun aFinishedDaysHistoryStopsAtItsOwnCompletion() = runTest {
+        val repository = repositoryWith(storedPlan)
+        val viewModel = viewModel(dayNumber = 1, repository = repository)
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.routine.title).isEqualTo("Stored Strength")
+        coVerify { repository.getPreviousSets(1, "plank", 21, 1L) }
+    }
+
+    @Test
     fun theSampleFallbackPersistsNothing() = runTest {
         val repository = emptyRepository()
         val viewModel = viewModel(repository = repository)

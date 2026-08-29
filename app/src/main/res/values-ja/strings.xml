@@ -192,6 +192,7 @@
     <string name="stop_timer">停止</string>
     <string name="reset_timer">リセット</string>
     <string name="set_column">セット</string>
+    <string name="previous_column">前回</string>
     <string name="weight_column">kg</string>
     <string name="reps_column">回数</string>
     <string name="time_column">時間</string>

@@ -10,6 +10,9 @@ import com.jericx.trainr.data.repository.UserRepositoryImpl
 import com.jericx.trainr.domain.model.ExerciseMeasure
 import com.jericx.trainr.domain.model.ExerciseSet
 import com.jericx.trainr.domain.model.UserProfile
+import com.jericx.trainr.domain.model.WorkoutDay
+import com.jericx.trainr.domain.model.WorkoutExercise
+import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -119,6 +122,96 @@ class WorkoutPersistenceTest {
         val reread = repository.getWorkoutExercise(exercise.id)!!
         assertThat(reread.sets.last().id).isEqualTo(id)
         assertThat(reread.sets.last().setNumber).isEqualTo(exercise.sets.size + 1)
+    }
+
+    @Test
+    fun previousSetsComeFromTheCompletedDayWithTheSameKey() = runTest {
+        val userId = seedSamplePlan()
+        val squats = repository.getWeeklyWorkoutPlan(userId, 1)!!
+            .workoutDays.first { it.title == "Full Body Strength" }
+            .exercises.first { it.exerciseKey == "goblet_squat" }
+
+        val previous = repository.getPreviousSets(
+            userId, "goblet_squat", excludeDayId = 0, beforeMillis = Long.MAX_VALUE
+        )
+
+        assertThat(previous.map { it.setNumber }).containsExactly(1, 2, 3).inOrder()
+        assertThat(previous.map { it.actualReps }).isEqualTo(squats.sets.map { it.actualReps })
+        assertThat(previous.map { it.actualWeightKg })
+            .isEqualTo(squats.sets.map { it.actualWeightKg })
+    }
+
+    @Test
+    fun aDayNeverSeesItselfAsPrevious() = runTest {
+        val userId = seedSamplePlan()
+        val monday = repository.getWeeklyWorkoutPlan(userId, 1)!!
+            .workoutDays.first { it.title == "Full Body Strength" }
+
+        assertThat(
+            repository.getPreviousSets(userId, "goblet_squat", monday.id, Long.MAX_VALUE)
+        ).isEmpty()
+    }
+
+    // jump_squat exists only on the NOT_STARTED day: prescribed is not history.
+    @Test
+    fun anUncompletedDayIsNotHistory() = runTest {
+        val userId = seedSamplePlan()
+
+        assertThat(
+            repository.getPreviousSets(userId, "jump_squat", 0, Long.MAX_VALUE)
+        ).isEmpty()
+    }
+
+    @Test
+    fun historyStopsStrictlyBeforeTheGivenMoment() = runTest {
+        val userId = seedSamplePlan()
+        val monday = repository.getWeeklyWorkoutPlan(userId, 1)!!
+            .workoutDays.first { it.title == "Full Body Strength" }
+
+        assertThat(
+            repository.getPreviousSets(userId, "goblet_squat", 0, monday.completedAt!!)
+        ).isEmpty()
+    }
+
+    @Test
+    fun theLatestOfTwoCompletedDaysWins() = runTest {
+        val userId = seedSamplePlan()
+        val planId = repository.getWeeklyWorkoutPlan(userId, 1)!!.id
+        val laterDay = WorkoutDay(
+            dayNumber = 6,
+            title = "Later Strength",
+            status = WorkoutStatus.COMPLETED,
+            duration = 8,
+            exerciseCount = 1,
+            equipment = listOf("Dumbbells"),
+            exercises = listOf(
+                WorkoutExercise(
+                    exerciseKey = "goblet_squat",
+                    name = "Goblet Squats",
+                    measure = ExerciseMeasure.WEIGHT_AND_REPS,
+                    sets = listOf(
+                        ExerciseSet(
+                            setNumber = 1,
+                            targetReps = 12,
+                            actualReps = 10,
+                            actualWeightKg = 22.5f,
+                            isCompleted = true
+                        )
+                    ),
+                    durationMinutes = 8,
+                    prescription = "1 set of 12 reps",
+                    instructions = "Squat again, heavier.",
+                    isCompleted = true
+                )
+            ),
+            completedAt = SampleWorkoutData.dateOf(6)
+        )
+        repository.saveWorkoutDay(laterDay, planId)
+
+        val previous = repository.getPreviousSets(userId, "goblet_squat", 0, Long.MAX_VALUE)
+
+        assertThat(previous.single().actualWeightKg).isEqualTo(22.5f)
+        assertThat(previous.single().actualReps).isEqualTo(10)
     }
 
     // Redoing onboarding REPLACEs the user row, which must cascade the old plan

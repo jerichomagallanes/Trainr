@@ -75,8 +75,19 @@ class RoutineDetailViewModel @Inject constructor(
                 val day = plan.workoutDays[index]
                 storedDay = day
                 weeklyPlanId = plan.id
+                // History stops at this day's own completion, so a finished day
+                // reviewed later still shows what "previous" meant at the time.
+                val before = day.completedAt ?: Long.MAX_VALUE
+                val previousByKey = day.exercises
+                    .filter { it.exerciseKey.isNotBlank() }
+                    .associate {
+                        it.exerciseKey to userRepository.getPreviousSets(
+                            plan.userId, it.exerciseKey, day.id, before
+                        )
+                    }
+                    .filterValues { sets -> sets.isNotEmpty() }
                 _uiState.value = RoutineDetailUiState(
-                    routine = day.toRoutineUi(),
+                    routine = day.toRoutineUi(previousByKey),
                     equipment = day.equipment,
                     dateMillis = plan.startDateMillis
                         ?.let { WorkoutWeek.dateOfDay(it, day.dayNumber) }

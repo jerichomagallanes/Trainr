@@ -34,6 +34,12 @@ interface UserRepository {
     suspend fun updateWorkoutExercise(exercise: WorkoutExercise, workoutDayId: Long)
     suspend fun updateExerciseSet(set: ExerciseSet, workoutExerciseId: Long)
     suspend fun addExerciseSet(set: ExerciseSet, workoutExerciseId: Long): Long
+    suspend fun getPreviousSets(
+        userId: Long,
+        exerciseKey: String,
+        excludeDayId: Long,
+        beforeMillis: Long
+    ): List<ExerciseSet>
 
     suspend fun getWeeklyProgress(userId: Long, weekNumber: Int): WeeklyProgress?
     suspend fun getWorkoutDayProgress(weeklyPlanId: Long): List<WorkoutDayProgress>
