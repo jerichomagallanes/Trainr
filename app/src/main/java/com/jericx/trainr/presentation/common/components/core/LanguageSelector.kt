@@ -1,4 +1,4 @@
-package com.jericx.trainr.presentation.common.components
+package com.jericx.trainr.presentation.common.components.core
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background

@@ -148,6 +148,11 @@
     <string name="cancel">Cancel</string>
     <string name="your_weekly_workout_plan">YOUR WEEKLY WORKOUT PLAN</string>
     <string name="track_weekly_progress">Track Weekly Progress</string>
+    <string name="week_number_format">Week %d</string>
+    <string name="week_range_parens">(%s)</string>
+    <string name="days_completed_format">%1$d/%2$d days completed (%3$d%%)</string>
+    <string name="not_completed">Not completed</string>
+    <string name="skipped">Skipped</string>
     <string name="weekly_progress">WEEKLY PROGRESS</string>
     <string name="week_progress">Week %d Progress</string>
     <string name="completed_percentage" formatted="false">%d%% Completed (%d%%)</string>

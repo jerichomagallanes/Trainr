@@ -149,6 +149,11 @@
     <string name="cancel">Kanselahin</string>
     <string name="your_weekly_workout_plan">ANG INYONG LINGGUHANG WORKOUT PLAN</string>
     <string name="track_weekly_progress">I-track ang Lingguhang Progress</string>
+    <string name="week_number_format">Linggo %d</string>
+    <string name="week_range_parens">(%s)</string>
+    <string name="days_completed_format">%1$d/%2$d araw na tapos (%3$d%%)</string>
+    <string name="not_completed">Hindi tapos</string>
+    <string name="skipped">Nilaktawan</string>
     <string name="weekly_progress">LINGGUHANG PROGRESS</string>
     <string name="week_progress">Linggo %d Progress</string>
     <string name="completed_percentage" formatted="false">%d%% Tapos na (%d%%)</string>

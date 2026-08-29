@@ -22,6 +22,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.jericx.trainr.BuildConfig
+import com.jericx.trainr.data.preferences.LanguagePreferences
+import com.jericx.trainr.data.preferences.NavigationStateManager
+import com.jericx.trainr.presentation.common.LocaleManager
+import com.jericx.trainr.presentation.common.theme.TrainrTheme
 import com.jericx.trainr.presentation.onboarding.OnboardingViewModel
 import com.jericx.trainr.presentation.onboarding.screens.BasicInfoScreen
 import com.jericx.trainr.presentation.onboarding.screens.BodyMetricsScreen
@@ -32,11 +36,9 @@ import com.jericx.trainr.presentation.onboarding.screens.ReviewScreen
 import com.jericx.trainr.presentation.onboarding.screens.WelcomeScreen
 import com.jericx.trainr.presentation.onboarding.screens.WorkoutSetupScreen
 import com.jericx.trainr.presentation.splash.SplashScreen
-import com.jericx.trainr.data.preferences.LanguagePreferences
-import com.jericx.trainr.presentation.common.LocaleManager
-import com.jericx.trainr.data.preferences.NavigationStateManager
-import com.jericx.trainr.presentation.common.theme.TrainrTheme
 import com.jericx.trainr.presentation.workout.WeeklyPlanRoute
+import com.jericx.trainr.presentation.workout.WeeklyProgressScreen
+import com.jericx.trainr.presentation.workout.sample.SampleWeeklyProgress
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 
@@ -192,8 +194,18 @@ fun AppContent(versionName: String) {
                     )
                 }
 
+                composable(Screen.WeeklyProgress.route) {
+                    WeeklyProgressScreen(
+                        weeks = SampleWeeklyProgress.weeks,
+                        onBackClick = { navController.popBackStack() }
+                    )
+                }
+
                 composable(Screen.Home.route) {
                     WeeklyPlanRoute(
+                        onTrackProgressClick = {
+                            navController.navigate(Screen.WeeklyProgress.route)
+                        },
                         onLeavePlanConfirmed = {
                             navController.navigate(Screen.Review.route) {
                                 popUpTo(Screen.Home.route) { inclusive = true }

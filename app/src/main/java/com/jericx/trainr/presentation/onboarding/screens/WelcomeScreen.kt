@@ -44,8 +44,8 @@ import com.jericx.trainr.R
 import com.jericx.trainr.data.preferences.LanguagePreferences
 import com.jericx.trainr.data.preferences.NavigationStateManager
 import com.jericx.trainr.presentation.common.LocaleManager
-import com.jericx.trainr.presentation.common.components.InfiniteHorizontalPager
-import com.jericx.trainr.presentation.common.components.LanguageSelector
+import com.jericx.trainr.presentation.common.components.layout.InfiniteHorizontalPager
+import com.jericx.trainr.presentation.common.components.core.LanguageSelector
 import com.jericx.trainr.presentation.common.theme.Orange500
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.components.core.TrainrButton

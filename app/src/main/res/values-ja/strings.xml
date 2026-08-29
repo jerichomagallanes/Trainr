@@ -149,6 +149,11 @@
     <string name="cancel">キャンセル</string>
     <string name="your_weekly_workout_plan">あなたの週間ワークアウトプラン</string>
     <string name="track_weekly_progress">週間進歩を追跡</string>
+    <string name="week_number_format">第%d週</string>
+    <string name="week_range_parens">(%s)</string>
+    <string name="days_completed_format">%2$d日中%1$d日完了 (%3$d%%)</string>
+    <string name="not_completed">未完了</string>
+    <string name="skipped">スキップ</string>
     <string name="weekly_progress">週間進歩</string>
     <string name="week_progress">第%d週の進歩</string>
     <string name="completed_percentage" formatted="false">%d%% 完了 (%d%%)</string>

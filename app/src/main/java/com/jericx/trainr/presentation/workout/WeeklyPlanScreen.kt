@@ -33,7 +33,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jericx.trainr.R
 import com.jericx.trainr.domain.model.WorkoutDay
-import com.jericx.trainr.presentation.common.components.TrainrTopBar
+import com.jericx.trainr.presentation.common.components.layout.TrainrTopBar
 import com.jericx.trainr.presentation.common.components.core.TrainrButton
 import com.jericx.trainr.presentation.common.theme.Orange500
 import com.jericx.trainr.presentation.common.theme.Slate800
