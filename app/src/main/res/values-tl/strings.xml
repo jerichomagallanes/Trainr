@@ -158,6 +158,7 @@
     <string name="weekly_progress">LINGGUHANG PROGRESS</string>
     <string name="completed_percentage" formatted="false">%d%% Tapos na (%d%%)</string>
     <string name="start_todays_workout">SIMULAN ANG WORKOUT NGAYONG ARAW</string>
+    <string name="slide_to_complete_routine">I-SLIDE PARA TAPUSIN ANG BUONG RUTINA</string>
     <string name="day_number">ARAW %d</string>
     <string name="full_body_strength">Full Body Strength</string>
     <string name="cardio_and_core">Cardio &amp; Core</string>

@@ -33,8 +33,10 @@ class DesignTokensTest {
 
     @Test
     fun spacingCoversTheStepsTheDesignUses() {
+        assertThat(Spacing.tight).isEqualTo(10.dp)
         assertThat(Spacing.card).isEqualTo(15.dp)
         assertThat(Spacing.screen).isEqualTo(20.dp)
+        assertThat(Spacing.section).isEqualTo(30.dp)
     }
 
     // The in-progress chip and the primary action are the same orange in the

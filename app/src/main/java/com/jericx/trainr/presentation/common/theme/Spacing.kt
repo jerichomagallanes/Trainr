@@ -13,4 +13,5 @@ object Spacing {
     val tight = 10.dp
     val card = 15.dp
     val screen = 20.dp
+    val section = 30.dp
 }

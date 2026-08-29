@@ -32,7 +32,7 @@ class ExerciseCardTest {
 
     @Test
     fun showsThePrescriptionAndDuration() {
-        setCard(SampleRoutine.cardioAndCore[1])
+        setCard(SampleRoutine.cardioAndCore.exercises[1])
 
         composeTestRule.onNodeWithText("High-Intensity Intervals").assertIsDisplayed()
         composeTestRule.onNodeWithText("5 sets of 1 minute").assertIsDisplayed()
@@ -42,7 +42,7 @@ class ExerciseCardTest {
 
     @Test
     fun anUnfinishedExerciseOffersToBeCompleted() {
-        setCard(SampleRoutine.cardioAndCore[1])
+        setCard(SampleRoutine.cardioAndCore.exercises[1])
 
         composeTestRule.onNodeWithContentDescription(string(R.string.mark_exercise_complete))
             .assertIsDisplayed()
@@ -50,7 +50,7 @@ class ExerciseCardTest {
 
     @Test
     fun aFinishedExerciseOffersToBeUndone() {
-        setCard(SampleRoutine.cardioAndCore[0])
+        setCard(SampleRoutine.cardioAndCore.exercises[0])
 
         composeTestRule.onNodeWithContentDescription(string(R.string.mark_exercise_incomplete))
             .assertIsDisplayed()
@@ -59,7 +59,7 @@ class ExerciseCardTest {
     @Test
     fun tappingTheCheckboxReportsTheToggle() {
         var toggled = false
-        setCard(SampleRoutine.cardioAndCore[1], onToggle = { toggled = true })
+        setCard(SampleRoutine.cardioAndCore.exercises[1], onToggle = { toggled = true })
 
         composeTestRule.onNodeWithContentDescription(string(R.string.mark_exercise_complete))
             .performClick()
