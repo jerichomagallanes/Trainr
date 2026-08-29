@@ -33,7 +33,8 @@ import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.StatusCompleted
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 import com.jericx.trainr.presentation.workout.model.ExerciseUi
-import com.jericx.trainr.presentation.workout.sample.SampleRoutine
+import com.jericx.trainr.presentation.workout.model.toRoutineUi
+import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
 
 @Composable
 fun ExerciseCard(
@@ -154,7 +155,8 @@ private fun ExerciseCardPreview() {
             verticalArrangement = Arrangement.spacedBy(Spacing.section),
             modifier = Modifier.padding(Spacing.screen)
         ) {
-            SampleRoutine.cardioAndCore.exercises.take(3).forEach { exercise ->
+            SampleWorkoutData.dayFor(SampleWorkoutData.DEFAULT_DAY_NUMBER)
+                .toRoutineUi().exercises.take(3).forEach { exercise ->
                 ExerciseCard(exercise = exercise, onToggleCompleted = {})
             }
         }

@@ -3,7 +3,7 @@ package com.jericx.trainr.presentation.workout.sample
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.presentation.workout.model.YouTubeVideo
-import com.jericx.trainr.presentation.workout.sample.SampleRoutine
+import com.jericx.trainr.presentation.workout.model.toRoutineUi
 import com.jericx.trainr.presentation.workout.util.WorkoutDateFormatter
 import java.util.Locale
 import java.util.TimeZone
@@ -123,14 +123,14 @@ class SampleWorkoutDataTest {
     @Test
     fun everyDaysDurationIsTheSumOfItsExercises() {
         SampleWorkoutData.weekOne.workoutDays.forEach { day ->
-            assertThat(SampleRoutine.forDay(day.dayNumber).totalMinutes).isEqualTo(day.duration)
+            assertThat(day.toRoutineUi().totalMinutes).isEqualTo(day.duration)
         }
     }
 
     @Test
     fun everyDaysExerciseCountMatchesItsRoutine() {
         SampleWorkoutData.weekOne.workoutDays.forEach { day ->
-            assertThat(SampleRoutine.forDay(day.dayNumber).exercises).hasSize(day.exerciseCount)
+            assertThat(day.toRoutineUi().exercises).hasSize(day.exerciseCount)
         }
     }
 
@@ -139,7 +139,7 @@ class SampleWorkoutDataTest {
     @Test
     fun everyDaysStatusAgreesWithItsRoutine() {
         SampleWorkoutData.weekOne.workoutDays.forEach { day ->
-            val routine = SampleRoutine.forDay(day.dayNumber)
+            val routine = day.toRoutineUi()
 
             assertThat(routine.isComplete).isEqualTo(day.status == WorkoutStatus.COMPLETED)
         }
@@ -150,13 +150,26 @@ class SampleWorkoutDataTest {
         val notStarted = SampleWorkoutData.weekOne.workoutDays
             .first { it.status == WorkoutStatus.NOT_STARTED }
 
-        assertThat(SampleRoutine.forDay(notStarted.dayNumber).completedCount).isEqualTo(0)
+        assertThat(notStarted.toRoutineUi().completedCount).isEqualTo(0)
+    }
+
+    // Every field the routine card renders has to actually be there; a blank
+    // prescription or description is an empty chip on screen.
+    @Test
+    fun everyExerciseIsFullyDescribed() {
+        SampleWorkoutData.weekOne.workoutDays.flatMap { it.exercises }.forEach { exercise ->
+            assertThat(exercise.name).isNotEmpty()
+            assertThat(exercise.instructions).isNotEmpty()
+            assertThat(exercise.prescription).isNotEmpty()
+            assertThat(exercise.durationMinutes).isGreaterThan(0)
+        }
     }
 
     // A tutorial the parser cannot read is a card with a dead toggle on it.
     @Test
     fun everyExerciseLinksAVideoTheParserCanRead() {
-        val videos = SampleRoutine.cardioAndCore.exercises.map { YouTubeVideo.from(it.videoUrl) }
+        val videos = SampleWorkoutData.dayFor(SampleWorkoutData.DEFAULT_DAY_NUMBER)
+            .toRoutineUi().exercises.map { YouTubeVideo.from(it.videoUrl) }
 
         assertThat(videos).doesNotContain(null)
         assertThat(videos.map { it?.id }.toSet()).hasSize(videos.size)

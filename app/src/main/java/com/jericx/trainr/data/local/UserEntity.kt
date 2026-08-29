@@ -93,6 +93,8 @@ data class WorkoutExerciseEntity(
     val sets: Int?,
     val reps: String?,
     val duration: String?,
+    val durationMinutes: Int,
+    val prescription: String,
     val restTime: Int?,
     val equipment: List<String>,
     val instructions: String,
