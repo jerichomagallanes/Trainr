@@ -31,7 +31,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jericx.trainr.R
-import com.jericx.trainr.presentation.common.LanguagePreferences
+import com.jericx.trainr.data.preferences.LanguagePreferences
 import com.jericx.trainr.presentation.common.theme.Spacing
 
 /**

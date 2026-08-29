@@ -1,20 +1,13 @@
 package com.jericx.trainr.data.local
 
 import androidx.room.TypeConverter
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
+import kotlinx.serialization.json.Json
 
 class Converters {
-    private val gson = Gson()
 
     @TypeConverter
-    fun fromStringList(value: String): List<String> {
-        val listType = object : TypeToken<List<String>>() {}.type
-        return gson.fromJson(value, listType)
-    }
+    fun fromStringList(value: String): List<String> = Json.decodeFromString(value)
 
     @TypeConverter
-    fun fromListString(list: List<String>): String {
-        return gson.toJson(list)
-    }
+    fun fromListString(list: List<String>): String = Json.encodeToString(list)
 }

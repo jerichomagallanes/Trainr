@@ -1,4 +1,4 @@
-package com.jericx.trainr.presentation.common
+package com.jericx.trainr.data.preferences
 
 import android.content.Context
 import androidx.core.content.edit

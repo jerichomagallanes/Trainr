@@ -18,6 +18,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -173,6 +174,9 @@ fun BodyMetricsScreen(
 
 @Composable
 private fun BMICard(bmi: Float) {
+    // Read through the composition local so the value re-formats if the locale changes.
+    val locale = LocalLocale.current.platformLocale
+
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
@@ -199,7 +203,7 @@ private fun BMICard(bmi: Float) {
                             color = MaterialTheme.colorScheme.primary
                         )
                     ) {
-                        append(String.format("%.1f", bmi))
+                        append(String.format(locale, "%.1f", bmi))
                     }
                 },
                 style = MaterialTheme.typography.bodyLarge

@@ -102,13 +102,6 @@
     <string name="lets_keep_you_safe">PANATILIHIN NATIN KAYONG LIGTAS</string>
     <string name="limitations_description">Sabihin ninyo sa amin ang mga limitations para ma-adapt namin ang inyong mga workout</string>
     <string name="any_injuries_or_areas">May mga injury ba o mga part na dapat mag-ingat?</string>
-    <string name="lower_back_pain">Lower Back Pain</string>
-    <string name="knee_problems">Knee Problems</string>
-    <string name="shoulder_injury">Shoulder Injury</string>
-    <string name="wrist_pain">Wrist Pain</string>
-    <string name="ankle_issues">Ankle Issues</string>
-    <string name="hip_problems">Hip Problems</string>
-    <string name="neck_pain">Neck Pain</string>
     <string name="none">Wala</string>
     <string name="preferred_workout_style">Preferred na Workout Style</string>
     <string name="strength_training">Strength Training</string>
@@ -272,16 +265,6 @@
     <string name="language_japanese">日本語</string>
     
     <!-- String Arrays -->
-    <string-array name="common_injuries">
-        <item>@string/lower_back_pain_injury</item>
-        <item>@string/knee_problems_injury</item>
-        <item>@string/shoulder_injury_injury</item>
-        <item>@string/wrist_pain_injury</item>
-        <item>@string/ankle_issues_injury</item>
-        <item>@string/hip_problems_injury</item>
-        <item>@string/neck_pain_injury</item>
-        <item>@string/none_injury</item>
-    </string-array>
     
     <string-array name="language_codes">
         <item>en</item>

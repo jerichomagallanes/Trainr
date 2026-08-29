@@ -31,8 +31,8 @@ fun OnboardingCheckboxChip(
     text: String,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
-    enabled: Boolean = true,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     Card(
         modifier = modifier

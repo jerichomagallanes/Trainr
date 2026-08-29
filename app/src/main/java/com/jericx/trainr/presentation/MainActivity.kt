@@ -1,7 +1,5 @@
 package com.jericx.trainr.presentation
 
-import android.content.Context
-import android.content.SharedPreferences
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -11,9 +9,7 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -21,11 +17,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.jericx.trainr.BuildConfig
-import com.jericx.trainr.common.Constants
 import com.jericx.trainr.presentation.home.HomeScreen
 import com.jericx.trainr.presentation.onboarding.OnboardingViewModel
 import com.jericx.trainr.presentation.onboarding.screens.BasicInfoScreen
@@ -37,9 +33,9 @@ import com.jericx.trainr.presentation.onboarding.screens.ReviewScreen
 import com.jericx.trainr.presentation.onboarding.screens.WelcomeScreen
 import com.jericx.trainr.presentation.onboarding.screens.WorkoutSetupScreen
 import com.jericx.trainr.presentation.splash.SplashScreen
-import com.jericx.trainr.presentation.common.LanguagePreferences
+import com.jericx.trainr.data.preferences.LanguagePreferences
 import com.jericx.trainr.presentation.common.LocaleManager
-import com.jericx.trainr.presentation.common.NavigationStateManager
+import com.jericx.trainr.data.preferences.NavigationStateManager
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
@@ -70,28 +66,9 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AppContent(versionName: String) {
     val context = LocalContext.current
-    val sharedPreferences = context.getSharedPreferences(Constants.KEY_SHARED_PREF, Context.MODE_PRIVATE)
-    val isDarkModeOn = remember {
-        mutableStateOf(
-            sharedPreferences.getBoolean(Constants.DARK_MODE, false)
-        )
-    }
-
-    DisposableEffect(Unit) {
-        val preferenceChangeListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-            if (key == Constants.DARK_MODE) {
-                isDarkModeOn.value = sharedPreferences.getBoolean(Constants.DARK_MODE, false)
-            }
-        }
-        sharedPreferences.registerOnSharedPreferenceChangeListener(preferenceChangeListener)
-        onDispose {
-            sharedPreferences.unregisterOnSharedPreferenceChangeListener(preferenceChangeListener)
-        }
-    }
-
     val navController = rememberNavController()
     val onboardingViewModel: OnboardingViewModel = hiltViewModel()
-    val onboardingState by onboardingViewModel.onboardingState.collectAsState()
+    val onboardingState by onboardingViewModel.onboardingState.collectAsStateWithLifecycle()
 
     val splashScreenDuration = 2000L
     var showSplashScreen by remember { mutableStateOf(true) }
@@ -119,7 +96,7 @@ fun AppContent(versionName: String) {
         }
     }
 
-    TrainrTheme(darkTheme = isDarkModeOn.value) {
+    TrainrTheme {
         Surface(
             modifier = Modifier
                 .fillMaxSize()

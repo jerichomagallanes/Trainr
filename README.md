@@ -43,17 +43,17 @@ App Demo
 - **Dagger Hilt**: Dependency injection framework
 - **KSP**: Kotlin Symbol Processing for Hilt and Room code generation
 - **Room Database**: Local data persistence
-- **Gson**: JSON serialization for Room type converters
+- **kotlinx.serialization**: JSON serialization for Room type converters
 - **Kotlin Coroutines & Flow**: Asynchronous programming and reactive streams
 - **Material Design 3**: Modern UI components and theming
-- **Navigation Compose**: Type-safe navigation
+- **Navigation Compose**: Single-activity navigation between Compose screens
 
 ## 🏗️ Architecture
 
 The app follows Clean Architecture principles with three main layers:
 
 - **Presentation Layer**: UI components, ViewModels, and Compose screens
-- **Domain Layer**: Business logic, use cases, and domain models
+- **Domain Layer**: Repository contracts and framework-independent domain models
 - **Data Layer**: Repository implementations, local database, and data sources
 
 ## 🚀 Getting Started
@@ -80,7 +80,7 @@ Each variant supports both debug and release build types for comprehensive testi
 ## 📱 Minimum Requirements
 
 - Android API Level 24 (Android 7.0)
-- Target SDK 36
+- Compile SDK 37, Target SDK 36
 - Kotlin 2.3+
 
 ## 🏃‍♀️ Start Your Fitness Journey
