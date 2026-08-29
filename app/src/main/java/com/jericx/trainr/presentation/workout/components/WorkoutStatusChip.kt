@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -30,7 +30,7 @@ fun WorkoutStatusChip(
         fontSize = 12.sp,
         fontWeight = FontWeight.Medium,
         modifier = modifier
-            .background(status.chipColor, RoundedCornerShape(8.dp))
+            .background(status.chipColor, MaterialTheme.shapes.small)
             .padding(PaddingValues(horizontal = Spacing.small, vertical = 3.dp))
     )
 }

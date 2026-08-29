@@ -30,6 +30,13 @@ private val DarkColorScheme = darkColorScheme(
     onTertiary = Color.White,
 
     background = SurfaceDark,
+    surfaceContainerLowest = Color(0xFF0D0D0D),
+    surfaceContainerLow = Gray900,
+    surfaceContainer = Gray900,
+    surfaceContainerHigh = Gray800,
+    surfaceContainerHighest = Gray800,
+    outline = Gray700,
+    outlineVariant = Gray800,
     onBackground = Gray100,
 
     surface = Gray900,
@@ -40,8 +47,6 @@ private val DarkColorScheme = darkColorScheme(
     error = RedError,
     onError = Color.White,
 
-    outline = Gray700,
-    outlineVariant = Gray800,
 
     scrim = Color.Black.copy(alpha = 0.5f)
 )
@@ -63,6 +68,13 @@ private val LightColorScheme = lightColorScheme(
     onTertiaryContainer = Gray900,
 
     background = Color.White,
+    surfaceContainerLowest = Color.White,
+    surfaceContainerLow = Color.White,
+    surfaceContainer = Color.White,
+    surfaceContainerHigh = Color.White,
+    surfaceContainerHighest = Gray100,
+    outline = OutlineGray,
+    outlineVariant = DividerGray,
     onBackground = Gray900,
 
     surface = Color.White,
@@ -75,8 +87,6 @@ private val LightColorScheme = lightColorScheme(
     onError = Color.White,
     onErrorContainer = RedError,
 
-    outline = Gray300,
-    outlineVariant = Gray300.copy(alpha = 0.5f),
 
     scrim = Color.Black.copy(alpha = 0.3f)
 )
