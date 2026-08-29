@@ -30,6 +30,7 @@ fun ExerciseTimer(
     onStart: () -> Unit,
     onPause: () -> Unit,
     onResume: () -> Unit,
+    onReset: () -> Unit,
     onStop: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -89,6 +90,13 @@ fun ExerciseTimer(
             }
 
             TrainrPillButton(
+                text = stringResource(R.string.reset_timer),
+                iconRes = R.drawable.ic_restart,
+                onClick = onReset,
+                filled = false
+            )
+
+            TrainrPillButton(
                 text = stringResource(R.string.stop_timer),
                 iconRes = R.drawable.ic_stop,
                 onClick = onStop,
@@ -111,6 +119,7 @@ private fun ExerciseTimerPreview() {
                 onStart = {},
                 onPause = {},
                 onResume = {},
+                onReset = {},
                 onStop = {}
             )
             ExerciseTimer(
@@ -118,6 +127,7 @@ private fun ExerciseTimerPreview() {
                 onStart = {},
                 onPause = {},
                 onResume = {},
+                onReset = {},
                 onStop = {}
             )
             ExerciseTimer(
@@ -125,6 +135,7 @@ private fun ExerciseTimerPreview() {
                 onStart = {},
                 onPause = {},
                 onResume = {},
+                onReset = {},
                 onStop = {}
             )
         }

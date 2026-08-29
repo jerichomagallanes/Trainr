@@ -71,7 +71,8 @@ class RoutineDetailViewModel @Inject constructor(
                 timer = ExerciseTimerUi(
                     position = exercise.position,
                     remainingSeconds = exercise.minutes * SECONDS_PER_MINUTE,
-                    isRunning = true
+                    isRunning = true,
+                    totalSeconds = exercise.minutes * SECONDS_PER_MINUTE
                 )
             )
         }
@@ -94,6 +95,19 @@ class RoutineDetailViewModel @Inject constructor(
     fun stopTimer() {
         cancelTick()
         _uiState.update { it.copy(timer = null) }
+    }
+
+    // Back to the top of the interval, held there: resetting is preparing to go
+    // again, not going again.
+    fun resetTimer() {
+        cancelTick()
+        _uiState.update { state ->
+            state.copy(
+                timer = state.timer?.let {
+                    it.copy(remainingSeconds = it.totalSeconds, isRunning = false)
+                }
+            )
+        }
     }
 
     fun toggleVideo(position: Int) {

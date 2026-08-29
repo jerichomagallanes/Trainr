@@ -27,6 +27,7 @@ class ExerciseTimerTest {
         onStart: () -> Unit = {},
         onPause: () -> Unit = {},
         onResume: () -> Unit = {},
+        onReset: () -> Unit = {},
         onStop: () -> Unit = {}
     ) {
         composeTestRule.setContent {
@@ -36,6 +37,7 @@ class ExerciseTimerTest {
                     onStart = onStart,
                     onPause = onPause,
                     onResume = onResume,
+                    onReset = onReset,
                     onStop = onStop
                 )
             }
@@ -95,6 +97,32 @@ class ExerciseTimerTest {
 
         assertThat(paused).isTrue()
         assertThat(stopped).isTrue()
+    }
+
+    @Test
+    fun aRunningTimerCanBeResetWithoutBeingAbandoned() {
+        setTimer(timer = running())
+
+        composeTestRule.onNodeWithText(string(R.string.reset_timer)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.stop_timer)).assertIsDisplayed()
+    }
+
+    @Test
+    fun resetReportsItsAction() {
+        var wasReset = false
+        setTimer(timer = running(), onReset = { wasReset = true })
+
+        composeTestRule.onNodeWithText(string(R.string.reset_timer)).performClick()
+
+        assertThat(wasReset).isTrue()
+    }
+
+    // Nothing to reset before it has started.
+    @Test
+    fun anUnstartedExerciseOffersNoReset() {
+        setTimer(timer = null)
+
+        composeTestRule.onNodeWithText(string(R.string.reset_timer)).assertDoesNotExist()
     }
 
     @Test
