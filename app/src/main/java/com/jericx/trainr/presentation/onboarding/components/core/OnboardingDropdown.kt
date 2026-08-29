@@ -3,7 +3,9 @@ package com.jericx.trainr.presentation.onboarding.components.core
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -24,11 +26,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jericx.trainr.R
 import com.jericx.trainr.presentation.common.theme.ComponentHeight
 import com.jericx.trainr.presentation.common.theme.Spacing
+import com.jericx.trainr.presentation.common.theme.TrainrTheme
 
 @Composable
 fun OnboardingDropdown(
@@ -98,3 +102,21 @@ fun OnboardingDropdown(
         }
     }
 } 
+
+@Preview(showBackground = true)
+@Composable
+private fun OnboardingDropdownPreview() {
+    TrainrTheme {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(Spacing.small),
+            modifier = Modifier.padding(Spacing.medium)
+        ) {
+            val selected = remember { mutableStateOf("Beginner") }
+            OnboardingDropdown(
+                selectedValue = selected.value,
+                options = listOf("Beginner", "Intermediate", "Advanced"),
+                onSelectionChange = { selected.value = it }
+            )
+        }
+    }
+}

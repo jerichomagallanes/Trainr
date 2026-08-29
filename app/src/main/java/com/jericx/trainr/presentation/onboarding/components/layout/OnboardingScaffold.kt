@@ -11,8 +11,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.jericx.trainr.presentation.common.theme.Spacing
+import com.jericx.trainr.presentation.common.theme.TrainrTheme
+import com.jericx.trainr.presentation.onboarding.components.core.OnboardingButton
+import com.jericx.trainr.presentation.onboarding.components.typography.OnboardingScreenTitle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,5 +47,20 @@ fun OnboardingScaffold(
         modifier = Modifier.statusBarsPadding()
     ) { paddingValues ->
         content(paddingValues)
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun OnboardingScaffoldPreview() {
+    TrainrTheme {
+        OnboardingScaffold(
+            onBackClick = {},
+            bottomButton = { OnboardingButton(text = "NEXT", onClick = {}) }
+        ) { padding ->
+            OnboardingScreenContent(modifier = Modifier.padding(padding)) {
+                OnboardingScreenTitle(text = "YOUR MEASUREMENTS")
+            }
+        }
     }
 }

@@ -1,13 +1,16 @@
 package com.jericx.trainr.presentation.onboarding.components.core
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -20,10 +23,13 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jericx.trainr.presentation.common.theme.Animation
 import com.jericx.trainr.presentation.common.theme.ComponentHeight
+import com.jericx.trainr.presentation.common.theme.Spacing
+import com.jericx.trainr.presentation.common.theme.TrainrTheme
 
 @Composable
 fun OnboardingButton(
@@ -114,6 +120,21 @@ fun OnboardingButton(
                 ),
                 color = textColor
             )
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun OnboardingButtonPreview() {
+    TrainrTheme {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(Spacing.small),
+            modifier = Modifier.padding(Spacing.medium)
+        ) {
+            OnboardingButton(text = "CONTINUE", onClick = {})
+            OnboardingButton(text = "CONTINUE", onClick = {}, enabled = false)
+            OnboardingButton(text = "SKIP", onClick = {}, isPrimary = false)
         }
     }
 }
