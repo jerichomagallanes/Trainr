@@ -162,6 +162,9 @@
     <string name="day_completed_message">Magaling! Natapos mo na ang workout ngayong araw. Ituloy mo lang ang momentum.</string>
     <string name="view_weekly_progress">Tingnan ang Lingguhang Progreso</string>
     <string name="back_to_weekly_routine">Bumalik sa Lingguhang Rutina</string>
+    <string name="week_completed_format">TAPOS NA ANG LINGGO %d</string>
+    <string name="week_completed_message">Natapos mo na ang lahat ng workout mo ngayong linggo. Ang galing ng consistency mo. Ituloy mo lang!</string>
+    <string name="preview_next_week">Tingnan ang Susunod na Linggo</string>
     <string name="slide_to_complete_routine">I-SLIDE PARA TAPUSIN ANG BUONG RUTINA</string>
     <string name="day_number">ARAW %d</string>
     <string name="full_body_strength">Full Body Strength</string>
