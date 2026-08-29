@@ -1,0 +1,88 @@
+name: Minified smoke
+
+# Nothing else in the pipeline runs against R8 output: instrumentation tests use
+# the unminified debug build, so a missing keep rule would only surface in
+# production. This installs a build with release's R8 configuration and checks
+# it starts and survives basic navigation.
+#
+# Advisory rather than required, for the same reason as the UI tests: emulator
+# flakes should not block a correct change.
+on:
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - '.github/ISSUE_TEMPLATE/**'
+  schedule:
+    - cron: '30 18 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: minified-smoke-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Minified build smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: ./.github/actions/setup-android
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Free up disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /opt/hostedtoolcache/CodeQL
+          sudo docker image prune --all --force || true
+
+      - name: Build the minified APK
+        run: ./gradlew assembleDevMinified
+
+      # Raw adb is needed to read logcat and check the process, which Gradle
+      # managed devices do not expose — hence a different emulator action here
+      # than the one the UI test workflow uses.
+      - name: Install, launch and watch for a crash
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          api-level: 30
+          target: default
+          arch: x86_64
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: |
+            set -e
+            adb install -r app/build/outputs/apk/dev/minified/app-dev-minified.apk
+            adb logcat -c
+            adb shell am start -n com.jericx.trainr.dev/com.jericx.trainr.presentation.MainActivity
+            sleep 10
+
+            # Walk past the splash and into the first onboarding step, so the
+            # check covers more than Application.onCreate.
+            adb shell input tap 540 2008 || true
+            sleep 5
+
+            if ! adb shell pidof com.jericx.trainr.dev > /dev/null; then
+              echo "::error::The minified app is not running — it crashed after launch."
+              adb logcat -d | tail -n 100
+              exit 1
+            fi
+
+            if adb logcat -d | grep -q 'FATAL EXCEPTION'; then
+              echo "::error::FATAL EXCEPTION in the minified build — most likely a missing R8 keep rule."
+              adb logcat -d | grep -A 30 'FATAL EXCEPTION' | head -60
+              exit 1
+            fi
+
+            echo "Minified build launched and survived navigation."
