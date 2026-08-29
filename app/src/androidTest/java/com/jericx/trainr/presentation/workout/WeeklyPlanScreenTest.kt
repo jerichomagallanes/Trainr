@@ -28,7 +28,7 @@ class WeeklyPlanScreenTest {
 
     private fun setScreen(
         onDayClick: (WorkoutDay) -> Unit = {},
-        onStartTodayClick: () -> Unit = {},
+        onStartTodayClick: (WorkoutDay) -> Unit = {},
         onLeavePlanConfirmed: () -> Unit = {}
     ) {
         composeTestRule.setContent {
@@ -41,6 +41,17 @@ class WeeklyPlanScreenTest {
                 )
             }
         }
+    }
+
+    // The CTA has to name a day, and it should be the one still to do.
+    @Test
+    fun startingTodaysWorkoutOpensTheFirstOutstandingDay() {
+        var started: WorkoutDay? = null
+        setScreen(onStartTodayClick = { started = it })
+
+        composeTestRule.onNodeWithText(string(R.string.start_todays_workout)).performClick()
+
+        assertThat(started?.title).isEqualTo("Cardio & Core")
     }
 
     private fun tapBack() {

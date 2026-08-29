@@ -121,10 +121,36 @@ class SampleWorkoutDataTest {
     // total. If they disagree the app contradicts itself on screen, and a user
     // adding up the parts gets a different answer.
     @Test
-    fun theRoutineDurationIsTheSumOfItsExercises() {
-        val cardioAndCore = SampleWorkoutData.weekOne.workoutDays.first { it.title == "Cardio & Core" }
+    fun everyDaysDurationIsTheSumOfItsExercises() {
+        SampleWorkoutData.weekOne.workoutDays.forEach { day ->
+            assertThat(SampleRoutine.forDay(day.dayNumber).totalMinutes).isEqualTo(day.duration)
+        }
+    }
 
-        assertThat(cardioAndCore.duration).isEqualTo(SampleRoutine.cardioAndCore.totalMinutes)
+    @Test
+    fun everyDaysExerciseCountMatchesItsRoutine() {
+        SampleWorkoutData.weekOne.workoutDays.forEach { day ->
+            assertThat(SampleRoutine.forDay(day.dayNumber).exercises).hasSize(day.exerciseCount)
+        }
+    }
+
+    // A day the plan calls Completed must not open a routine with work left in
+    // it, and vice versa.
+    @Test
+    fun everyDaysStatusAgreesWithItsRoutine() {
+        SampleWorkoutData.weekOne.workoutDays.forEach { day ->
+            val routine = SampleRoutine.forDay(day.dayNumber)
+
+            assertThat(routine.isComplete).isEqualTo(day.status == WorkoutStatus.COMPLETED)
+        }
+    }
+
+    @Test
+    fun aNotStartedDayHasNothingTickedOff() {
+        val notStarted = SampleWorkoutData.weekOne.workoutDays
+            .first { it.status == WorkoutStatus.NOT_STARTED }
+
+        assertThat(SampleRoutine.forDay(notStarted.dayNumber).completedCount).isEqualTo(0)
     }
 
     // A tutorial the parser cannot read is a card with a dead toggle on it.
@@ -136,10 +162,4 @@ class SampleWorkoutDataTest {
         assertThat(videos.map { it?.id }.toSet()).hasSize(videos.size)
     }
 
-    @Test
-    fun theRoutineExerciseCountMatchesItsExercises() {
-        val cardioAndCore = SampleWorkoutData.weekOne.workoutDays.first { it.title == "Cardio & Core" }
-
-        assertThat(cardioAndCore.exerciseCount).isEqualTo(SampleRoutine.cardioAndCore.exercises.size)
-    }
 }

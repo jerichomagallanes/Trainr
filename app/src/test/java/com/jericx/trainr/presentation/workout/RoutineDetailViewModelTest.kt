@@ -1,6 +1,9 @@
 package com.jericx.trainr.presentation.workout
 
+import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
+import com.jericx.trainr.presentation.Screen
+import com.jericx.trainr.presentation.workout.sample.SampleRoutine
 import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.presentation.workout.model.ExerciseUi
@@ -31,6 +34,10 @@ class RoutineDetailViewModelTest {
         Dispatchers.resetMain()
     }
 
+    private fun viewModel(dayNumber: Int = SampleRoutine.DAY_NUMBER) = RoutineDetailViewModel(
+        SavedStateHandle(mapOf(Screen.RoutineDetail.ARG_DAY_NUMBER to dayNumber))
+    )
+
     private fun RoutineDetailViewModel.exercise(position: Int): ExerciseUi =
         uiState.value.routine.exercises.first { it.position == position }
 
@@ -40,7 +47,7 @@ class RoutineDetailViewModelTest {
     // workout day of the week, even though its dayNumber is 3 (Wednesday).
     @Test
     fun theRoutineKnowsWhichWorkoutDayOfTheWeekItIs() = runTest {
-        assertThat(RoutineDetailViewModel().uiState.value.dayNumber).isEqualTo(2)
+        assertThat(viewModel().uiState.value.dayNumber).isEqualTo(2)
     }
 
     private fun day(number: Int, status: WorkoutStatus) = WorkoutDay(
@@ -95,12 +102,12 @@ class RoutineDetailViewModelTest {
     // Friday is still untouched in the sample plan, so Wednesday ends the day.
     @Test
     fun theSampleRoutineEndsTheDayRatherThanTheWeek() = runTest {
-        assertThat(RoutineDetailViewModel().uiState.value.completesTheWeek).isFalse()
+        assertThat(viewModel().uiState.value.completesTheWeek).isFalse()
     }
 
     @Test
     fun aRoutineIsNotCompleteUntilEveryExerciseIs() = runTest {
-        val viewModel = RoutineDetailViewModel()
+        val viewModel = viewModel()
 
         assertThat(viewModel.uiState.value.routine.isComplete).isFalse()
 
@@ -111,7 +118,7 @@ class RoutineDetailViewModelTest {
 
     @Test
     fun startingATimerCountsDownFromTheExerciseDuration() = runTest {
-        val viewModel = RoutineDetailViewModel()
+        val viewModel = viewModel()
 
         viewModel.startTimer(viewModel.exercise(2))
         assertThat(viewModel.uiState.value.timer?.remainingSeconds).isEqualTo(600)
@@ -124,7 +131,7 @@ class RoutineDetailViewModelTest {
 
     @Test
     fun pausingHoldsTheCountdownWhereItIs() = runTest {
-        val viewModel = RoutineDetailViewModel()
+        val viewModel = viewModel()
 
         viewModel.startTimer(viewModel.exercise(2))
         advanceTimeBy(3_000)
@@ -139,7 +146,7 @@ class RoutineDetailViewModelTest {
 
     @Test
     fun resumingCarriesOnFromWhereItPaused() = runTest {
-        val viewModel = RoutineDetailViewModel()
+        val viewModel = viewModel()
 
         viewModel.startTimer(viewModel.exercise(2))
         advanceTimeBy(3_000)
@@ -155,7 +162,7 @@ class RoutineDetailViewModelTest {
 
     @Test
     fun stoppingClearsTheTimerWithoutCompletingTheExercise() = runTest {
-        val viewModel = RoutineDetailViewModel()
+        val viewModel = viewModel()
 
         viewModel.startTimer(viewModel.exercise(2))
         advanceTimeBy(3_000)
@@ -169,7 +176,7 @@ class RoutineDetailViewModelTest {
     // Running out of time is what finishes an exercise.
     @Test
     fun theCountdownReachingZeroCompletesTheExercise() = runTest {
-        val viewModel = RoutineDetailViewModel()
+        val viewModel = viewModel()
 
         viewModel.startTimer(viewModel.exercise(4))
         advanceTimeBy(4 * 60 * 1_000L)
@@ -181,7 +188,7 @@ class RoutineDetailViewModelTest {
 
     @Test
     fun theCountdownKeepsRunningRightUpToTheLastSecond() = runTest {
-        val viewModel = RoutineDetailViewModel()
+        val viewModel = viewModel()
 
         viewModel.startTimer(viewModel.exercise(4))
         advanceTimeBy(4 * 60 * 1_000L - 1_000L)
@@ -194,7 +201,7 @@ class RoutineDetailViewModelTest {
     // Two countdowns racing would be nonsense, so a new one replaces the old.
     @Test
     fun startingAnotherExerciseReplacesTheRunningTimer() = runTest {
-        val viewModel = RoutineDetailViewModel()
+        val viewModel = viewModel()
 
         viewModel.startTimer(viewModel.exercise(2))
         advanceTimeBy(3_000)
@@ -209,7 +216,7 @@ class RoutineDetailViewModelTest {
 
     @Test
     fun tickingTheExerciseOffClearsItsTimer() = runTest {
-        val viewModel = RoutineDetailViewModel()
+        val viewModel = viewModel()
 
         viewModel.startTimer(viewModel.exercise(2))
         advanceTimeBy(3_000)
@@ -224,7 +231,7 @@ class RoutineDetailViewModelTest {
 
     @Test
     fun untickingAnExerciseLeavesAnotherExercisesTimerAlone() = runTest {
-        val viewModel = RoutineDetailViewModel()
+        val viewModel = viewModel()
 
         viewModel.startTimer(viewModel.exercise(2))
         advanceTimeBy(3_000)
@@ -236,7 +243,7 @@ class RoutineDetailViewModelTest {
 
     @Test
     fun tutorialsStartCollapsedAndToggleIndependently() = runTest {
-        val viewModel = RoutineDetailViewModel()
+        val viewModel = viewModel()
 
         assertThat(viewModel.uiState.value.expandedVideos).isEmpty()
 
@@ -251,7 +258,7 @@ class RoutineDetailViewModelTest {
     // Only one WebView should ever be alive, so playing one stops the other.
     @Test
     fun playingATutorialStopsWhicheverWasPlaying() = runTest {
-        val viewModel = RoutineDetailViewModel()
+        val viewModel = viewModel()
 
         viewModel.toggleVideo(2)
         viewModel.playVideo(2)
@@ -264,7 +271,7 @@ class RoutineDetailViewModelTest {
 
     @Test
     fun collapsingAPlayingTutorialStopsIt() = runTest {
-        val viewModel = RoutineDetailViewModel()
+        val viewModel = viewModel()
 
         viewModel.toggleVideo(2)
         viewModel.playVideo(2)
@@ -276,7 +283,7 @@ class RoutineDetailViewModelTest {
 
     @Test
     fun collapsingADifferentTutorialLeavesThePlayingOneAlone() = runTest {
-        val viewModel = RoutineDetailViewModel()
+        val viewModel = viewModel()
 
         viewModel.toggleVideo(2)
         viewModel.playVideo(2)
@@ -288,7 +295,7 @@ class RoutineDetailViewModelTest {
 
     @Test
     fun completingTheWholeRoutineClearsTheTimer() = runTest {
-        val viewModel = RoutineDetailViewModel()
+        val viewModel = viewModel()
 
         viewModel.startTimer(viewModel.exercise(2))
         advanceTimeBy(3_000)
