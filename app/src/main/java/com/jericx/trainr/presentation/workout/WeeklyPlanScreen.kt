@@ -41,7 +41,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jericx.trainr.R
 import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.presentation.common.components.TrainrTopBar
-import com.jericx.trainr.presentation.common.theme.AccentOrange
+import com.jericx.trainr.presentation.common.theme.Orange500
 import com.jericx.trainr.presentation.common.theme.Slate800
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
@@ -101,7 +101,7 @@ fun WeeklyPlanScreen(
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = Spacing.large, vertical = Spacing.medium),
+                .padding(horizontal = Spacing.screen, vertical = Spacing.medium),
             verticalArrangement = Arrangement.spacedBy(Spacing.medium)
         ) {
             Text(
@@ -149,7 +149,7 @@ fun WeeklyPlanScreen(
                     text = stringResource(R.string.track_weekly_progress) + " →",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = AccentOrange
+                    color = Orange500
                 )
             }
 
@@ -164,11 +164,11 @@ fun WeeklyPlanScreen(
 
         Button(
             onClick = onStartTodayClick,
-            colors = ButtonDefaults.buttonColors(containerColor = AccentOrange),
-            shape = RoundedCornerShape(10.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Orange500),
+            shape = MaterialTheme.shapes.medium,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = Spacing.large, vertical = Spacing.medium)
+                .padding(horizontal = Spacing.screen, vertical = Spacing.medium)
         ) {
             Text(
                 text = stringResource(R.string.start_todays_workout),
@@ -188,14 +188,11 @@ private fun LeavePlanDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        // The theme leaves the surfaceContainer roles unset, so the M3 default
-        // would tint this dialog with the baseline purple.
-        containerColor = MaterialTheme.colorScheme.surface,
         title = { Text(text = stringResource(R.string.leave_plan_title)) },
         text = { Text(text = stringResource(R.string.leave_plan_message)) },
         confirmButton = {
             TextButton(onClick = onConfirm) {
-                Text(text = stringResource(R.string.leave_plan_confirm), color = AccentOrange)
+                Text(text = stringResource(R.string.leave_plan_confirm), color = Orange500)
             }
         },
         dismissButton = {

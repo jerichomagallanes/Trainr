@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -39,9 +40,6 @@ import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
 
-private val CardShape = RoundedCornerShape(10.dp)
-private val CardPadding = 15.dp
-
 @Composable
 fun WorkoutDayCard(
     weekday: String,
@@ -55,15 +53,15 @@ fun WorkoutDayCard(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .clip(CardShape)
-            .border(1.dp, OutlineGray, CardShape)
+            .clip(MaterialTheme.shapes.medium)
+            .border(1.dp, OutlineGray, MaterialTheme.shapes.medium)
             .clickable(onClick = onClick)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(if (headerIsDark) Slate800 else Color.White)
-                .padding(CardPadding),
+                .padding(Spacing.card),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column(modifier = Modifier.weight(1f)) {
@@ -88,7 +86,7 @@ fun WorkoutDayCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(Color.White)
-                .padding(CardPadding),
+                .padding(Spacing.card),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(
@@ -115,7 +113,7 @@ fun WorkoutDayCard(
                     fontWeight = FontWeight.SemiBold,
                     color = Slate800,
                     modifier = Modifier
-                        .background(Gray100, RoundedCornerShape(8.dp))
+                        .background(Gray100, MaterialTheme.shapes.small)
                         .padding(horizontal = Spacing.small, vertical = 3.dp)
                 )
 
