@@ -92,7 +92,6 @@
     <string name="afternoon_time">Afternoon (12-5 PM)</string>
     <string name="evening_time">Evening (5-10 PM)</string>
     <string name="flexible_anytime">Flexible/Anytime</string>
-    <string name="duration_mins">%d mins</string>
     <string name="workout_days_option" formatted="false">%d %s</string>
     <string name="day">day</string>
     <string name="days">days</string>
@@ -116,7 +115,6 @@
     <string name="your_fitness_profile">YOUR FITNESS PROFILE</string>
     <string name="review_description">Review your information before we create your plan</string>
     <string name="personal_information">Personal Information</string>
-    <string name="years_old">%d years old</string>
     <string name="height_cm_value">%d cm</string>
     <string name="weight_kg_value">%.1f kg</string>
     <string name="experience">Experience</string>
@@ -128,8 +126,6 @@
     <string name="equipment">Equipment</string>
     <string name="schedule">Schedule</string>
     <string name="flexible">Flexible</string>
-    <string name="days_per_week">%d days/week</string>
-    <string name="duration_minutes">%d minutes</string>
     <string name="duration">Duration</string>
     <string name="preferred_time">Preferred Time</string>
     <string name="limitations">Limitations</string>
@@ -157,7 +153,6 @@
     <string name="not_completed">Not completed</string>
     <string name="skipped">Skipped</string>
     <string name="weekly_progress">WEEKLY PROGRESS</string>
-    <string name="week_progress">Week %d Progress</string>
     <string name="completed_percentage" formatted="false">%d%% Completed (%d%%)</string>
     <string name="start_todays_workout">START TODAY\'S WORKOUT</string>
     <string name="day_number">DAY %d</string>
@@ -165,8 +160,14 @@
     <string name="cardio_and_core">Cardio &amp; Core</string>
     <string name="lower_body_power">Lower Body Power</string>
     <string name="upper_body_strength">Upper Body Strength</string>
-    <string name="minutes">%d mins</string>
-    <string name="exercises_count">%d Exercises</string>
+    <plurals name="minutes">
+        <item quantity="one">%d min</item>
+        <item quantity="other">%d mins</item>
+    </plurals>
+    <plurals name="exercises_count">
+        <item quantity="one">%d Exercise</item>
+        <item quantity="other">%d Exercises</item>
+    </plurals>
     <string name="equipment_label">Equipment:</string>
     <string name="yoga_mat">Yoga Mat</string>
     <string name="treadmill">Treadmill</string>
@@ -210,9 +211,18 @@
     <string name="ai_routine_description" formatted="false">Based on your profile, we\'ll create a %s strength program focused on %s.</string>
     <string name="bodyweight_only_label">Bodyweight only</string>
     <string name="flexible_schedule">Flexible</string>
-    <string name="days_per_week_format">%d days/week</string>
-    <string name="duration_minutes_format">%d minutes</string>
-    <string name="years_old_format">%d years old</string>
+    <plurals name="days_per_week_format">
+        <item quantity="one">%d day/week</item>
+        <item quantity="other">%d days/week</item>
+    </plurals>
+    <plurals name="duration_minutes_format">
+        <item quantity="one">%d minute</item>
+        <item quantity="other">%d minutes</item>
+    </plurals>
+    <plurals name="years_old_format">
+        <item quantity="one">%d year old</item>
+        <item quantity="other">%d years old</item>
+    </plurals>
     <string name="height_cm_format">%d cm</string>
     <string name="weight_kg_format">%.1f kg</string>
     

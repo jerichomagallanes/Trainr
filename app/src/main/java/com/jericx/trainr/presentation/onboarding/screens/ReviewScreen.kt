@@ -21,21 +21,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.jericx.trainr.R
 import com.jericx.trainr.domain.model.Equipment
 import com.jericx.trainr.domain.model.UserProfile
-import com.jericx.trainr.presentation.common.components.layout.TrainrTopBar
-import com.jericx.trainr.presentation.common.getLocalizedName
-import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.components.core.TrainrButton
 import com.jericx.trainr.presentation.common.components.core.TrainrProgress
 import com.jericx.trainr.presentation.common.components.layout.TrainrScaffold
 import com.jericx.trainr.presentation.common.components.layout.TrainrScreenContent
+import com.jericx.trainr.presentation.common.components.layout.TrainrTopBar
 import com.jericx.trainr.presentation.common.components.typography.TrainrScreenTitle
 import com.jericx.trainr.presentation.common.components.typography.TrainrSubtitle
+import com.jericx.trainr.presentation.common.getLocalizedName
+import com.jericx.trainr.presentation.common.theme.Spacing
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -87,7 +88,7 @@ fun ReviewScreen(
                     title = stringResource(R.string.personal_information),
                     items = listOf(
                         stringResource(R.string.name_label) to userProfile.firstName,
-                        stringResource(R.string.age_label) to stringResource(R.string.years_old_format, userProfile.age),
+                        stringResource(R.string.age_label) to pluralStringResource(R.plurals.years_old_format, userProfile.age, userProfile.age),
                         stringResource(R.string.gender_label) to genderText,
                         stringResource(R.string.height_label) to stringResource(R.string.height_cm_format, userProfile.height.toInt()),
                         stringResource(R.string.weight_label) to stringResource(R.string.weight_kg_format, userProfile.weight),
@@ -130,8 +131,16 @@ fun ReviewScreen(
                         stringResource(R.string.schedule_label) to if (userProfile.workoutDaysPerWeek == 0)
                             stringResource(R.string.flexible_schedule)
                         else
-                            stringResource(R.string.days_per_week_format, userProfile.workoutDaysPerWeek),
-                        stringResource(R.string.duration_label) to stringResource(R.string.duration_minutes_format, userProfile.workoutDuration),
+                            pluralStringResource(
+                                R.plurals.days_per_week_format,
+                                userProfile.workoutDaysPerWeek,
+                                userProfile.workoutDaysPerWeek
+                            ),
+                        stringResource(R.string.duration_label) to pluralStringResource(
+                            R.plurals.duration_minutes_format,
+                            userProfile.workoutDuration,
+                            userProfile.workoutDuration
+                        ),
                         stringResource(R.string.preferred_time_label) to preferredTimeText
                     )
                 )
