@@ -16,6 +16,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLocale
@@ -53,21 +56,11 @@ fun RoutineDetailRoute(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
-    // However the last exercise gets ticked — the slider or its own checkbox —
-    // finishing the routine is what ends the day.
-    LaunchedEffect(state.routine.isComplete) {
-        if (!state.routine.isComplete) return@LaunchedEffect
-
-        if (state.completesTheWeek) {
-            onWeekCompleted(state.weekNumber)
-        } else {
-            onDayCompleted(state.dayNumber)
-        }
-    }
-
     RoutineDetailScreen(
         state = state,
         onBackClick = onBackClick,
+        onDayCompleted = onDayCompleted,
+        onWeekCompleted = onWeekCompleted,
         onToggleExercise = viewModel::toggleExercise,
         onCompleteRoutine = viewModel::completeRoutine,
         onStartTimer = viewModel::startTimer,
@@ -91,9 +84,29 @@ fun RoutineDetailScreen(
     onResumeTimer: () -> Unit = {},
     onStopTimer: () -> Unit = {},
     onToggleVideo: (Int) -> Unit = {},
-    onPlayVideo: (Int) -> Unit = {}
+    onPlayVideo: (Int) -> Unit = {},
+    onDayCompleted: (Int) -> Unit = {},
+    onWeekCompleted: (Int) -> Unit = {}
 ) {
     val locale = LocalLocale.current.platformLocale
+
+    // However the last exercise gets ticked — the slider or its own checkbox —
+    // finishing the routine is what ends the day. Opening an already-finished
+    // routine is not finishing it, so only the transition counts.
+    var wasComplete by remember { mutableStateOf(state.routine.isComplete) }
+
+    LaunchedEffect(state.routine.isComplete) {
+        val isComplete = state.routine.isComplete
+
+        if (isComplete && !wasComplete) {
+            if (state.completesTheWeek) {
+                onWeekCompleted(state.weekNumber)
+            } else {
+                onDayCompleted(state.dayNumber)
+            }
+        }
+        wasComplete = isComplete
+    }
     val routine = state.routine
 
     Column(modifier = modifier.fillMaxSize()) {

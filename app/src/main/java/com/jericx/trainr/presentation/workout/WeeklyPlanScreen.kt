@@ -47,7 +47,7 @@ import com.jericx.trainr.presentation.workout.util.WorkoutDateFormatter
 fun WeeklyPlanRoute(
     onDayClick: (WorkoutDay) -> Unit = {},
     onTrackProgressClick: () -> Unit = {},
-    onStartTodayClick: () -> Unit = {},
+    onStartTodayClick: (WorkoutDay) -> Unit = {},
     onLeavePlanConfirmed: () -> Unit = {},
     viewModel: WeeklyPlanViewModel = hiltViewModel()
 ) {
@@ -68,7 +68,7 @@ fun WeeklyPlanScreen(
     modifier: Modifier = Modifier,
     onDayClick: (WorkoutDay) -> Unit = {},
     onTrackProgressClick: () -> Unit = {},
-    onStartTodayClick: () -> Unit = {},
+    onStartTodayClick: (WorkoutDay) -> Unit = {},
     onLeavePlanConfirmed: () -> Unit = {}
 ) {
     val locale = LocalLocale.current.platformLocale
@@ -156,7 +156,7 @@ fun WeeklyPlanScreen(
 
         TrainrButton(
             text = stringResource(R.string.start_todays_workout),
-            onClick = onStartTodayClick,
+            onClick = { state.todaysDay?.let(onStartTodayClick) },
             modifier = Modifier.padding(horizontal = Spacing.screen, vertical = Spacing.medium)
         )
     }

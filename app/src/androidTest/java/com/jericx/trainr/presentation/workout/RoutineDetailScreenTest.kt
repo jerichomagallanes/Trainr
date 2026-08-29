@@ -13,6 +13,10 @@ import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
@@ -106,6 +110,47 @@ class RoutineDetailScreenTest {
             .fetchSemanticsNodes()
 
         assertThat(starts).hasSize(state.routine.exercises.count { !it.isCompleted })
+    }
+
+    // Tapping a day you already finished should show you the routine, not bounce
+    // you straight to the celebration screen you saw when you finished it.
+    @Test
+    fun openingAnAlreadyFinishedRoutineReportsNothing() {
+        var reported: Int? = null
+        val finished = state.copy(routine = state.routine.completeAll())
+
+        composeTestRule.setContent {
+            TrainrTheme {
+                RoutineDetailScreen(state = finished, onDayCompleted = { reported = it })
+            }
+        }
+
+        composeTestRule.waitForIdle()
+        assertThat(reported).isNull()
+        composeTestRule.onNodeWithText("CARDIO & CORE").assertIsDisplayed()
+    }
+
+    @Test
+    fun finishingTheLastExerciseReportsTheDay() {
+        var reported: Int? = null
+
+        composeTestRule.setContent {
+            var current by remember { mutableStateOf(state) }
+            TrainrTheme {
+                RoutineDetailScreen(
+                    state = current,
+                    onToggleExercise = { current = current.copy(routine = current.routine.completeAll()) },
+                    onDayCompleted = { reported = it }
+                )
+            }
+        }
+
+        composeTestRule.onAllNodesWithContentDescription(string(R.string.mark_exercise_complete))
+            .onFirst()
+            .performClick()
+        composeTestRule.waitForIdle()
+
+        assertThat(reported).isEqualTo(state.dayNumber)
     }
 
     @Test
