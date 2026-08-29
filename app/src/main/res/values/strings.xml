@@ -142,6 +142,8 @@
     <string name="leave_plan_message">Going back means your workout plan will need to be generated again. Are you okay with that?</string>
     <string name="leave_plan_confirm">Yes, go back</string>
     <string name="cancel">Cancel</string>
+    <string name="mark_exercise_complete">Mark exercise as complete</string>
+    <string name="mark_exercise_incomplete">Mark exercise as not complete</string>
     <string name="your_weekly_workout_plan">YOUR WEEKLY WORKOUT PLAN</string>
     <string name="track_weekly_progress">Track Weekly Progress</string>
     <string name="week_number_format">Week %d</string>
