@@ -54,6 +54,7 @@ class UserMapper {
             userId = plan.userId,
             weekNumber = plan.weekNumber,
             title = plan.title,
+            startDateMillis = plan.startDateMillis,
             createdAt = plan.createdAt,
             updatedAt = plan.updatedAt
         )
@@ -65,6 +66,7 @@ class UserMapper {
             userId = entity.userId,
             weekNumber = entity.weekNumber,
             title = entity.title,
+            startDateMillis = entity.startDateMillis,
             workoutDays = days,
             createdAt = entity.createdAt,
             updatedAt = entity.updatedAt
@@ -103,6 +105,7 @@ class UserMapper {
         return WorkoutExerciseEntity(
             id = exercise.id,
             workoutDayId = workoutDayId,
+            exerciseKey = exercise.exerciseKey,
             name = exercise.name,
             measure = exercise.measure.name,
             setCount = exercise.setCount,
@@ -122,6 +125,7 @@ class UserMapper {
     fun mapToDomain(entity: WorkoutExerciseEntity): WorkoutExercise {
         return WorkoutExercise(
             id = entity.id,
+            exerciseKey = entity.exerciseKey,
             name = entity.name,
             measure = runCatching { ExerciseMeasure.valueOf(entity.measure) }
                 .getOrDefault(ExerciseMeasure.REPS),

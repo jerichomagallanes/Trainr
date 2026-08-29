@@ -38,6 +38,7 @@ object SampleWorkoutData {
             userId = 1,
             weekNumber = 1,
             title = "Week 1",
+            startDateMillis = weekStartMillis,
             workoutDays = listOf(
                 WorkoutDay(
                     id = 1,
@@ -49,6 +50,7 @@ object SampleWorkoutData {
                     equipment = listOf("Dumbbells", "Yoga Mat"),
                     exercises = listOf(
                         WorkoutExercise(
+                            exerciseKey = "goblet_squat",
                             name = "Goblet Squats",
                             measure = ExerciseMeasure.WEIGHT_AND_REPS,
                             sets = repSets(3, reps = 12, weightKg = 20f, done = true),
@@ -58,6 +60,7 @@ object SampleWorkoutData {
                             isCompleted = true
                         ),
                         WorkoutExercise(
+                            exerciseKey = "dumbbell_floor_press",
                             name = "Dumbbell Floor Press",
                             measure = ExerciseMeasure.WEIGHT_AND_REPS,
                             sets = repSets(3, reps = 10, weightKg = 16f, done = true),
@@ -67,6 +70,7 @@ object SampleWorkoutData {
                             isCompleted = true
                         ),
                         WorkoutExercise(
+                            exerciseKey = "bent_over_row",
                             name = "Bent-Over Rows",
                             measure = ExerciseMeasure.WEIGHT_AND_REPS,
                             sets = repSets(3, reps = 12, weightKg = 18f, done = true),
@@ -76,6 +80,7 @@ object SampleWorkoutData {
                             isCompleted = true
                         ),
                         WorkoutExercise(
+                            exerciseKey = "overhead_press",
                             name = "Overhead Press",
                             measure = ExerciseMeasure.WEIGHT_AND_REPS,
                             sets = repSets(3, reps = 10, weightKg = 12f, done = true),
@@ -85,6 +90,7 @@ object SampleWorkoutData {
                             isCompleted = true
                         ),
                         WorkoutExercise(
+                            exerciseKey = "romanian_deadlift",
                             name = "Romanian Deadlifts",
                             measure = ExerciseMeasure.WEIGHT_AND_REPS,
                             sets = repSets(3, reps = 12, weightKg = 24f, done = true),
@@ -94,6 +100,7 @@ object SampleWorkoutData {
                             isCompleted = true
                         ),
                         WorkoutExercise(
+                            exerciseKey = "plank",
                             name = "Plank",
                             measure = ExerciseMeasure.DURATION,
                             sets = timedSets(3, seconds = 45, done = true),
@@ -116,6 +123,7 @@ object SampleWorkoutData {
                     equipment = listOf("Yoga Mat"),
                     exercises = listOf(
                         WorkoutExercise(
+                            exerciseKey = "warm_up_jog",
                             name = "Warm-up jog",
                             measure = ExerciseMeasure.DURATION,
                             sets = timedSets(1, seconds = 300, done = true),
@@ -126,6 +134,7 @@ object SampleWorkoutData {
                             isCompleted = true
                         ),
                         WorkoutExercise(
+                            exerciseKey = "high_intensity_intervals",
                             name = "High-Intensity Intervals",
                             measure = ExerciseMeasure.DURATION,
                             sets = timedSets(5, seconds = 60),
@@ -136,6 +145,7 @@ object SampleWorkoutData {
                             videoTutorialUrl = "https://www.youtube.com/watch?v=WofWmk-4qU4"
                         ),
                         WorkoutExercise(
+                            exerciseKey = "bicycle_crunch",
                             name = "Bicycle Crunches",
                             measure = ExerciseMeasure.REPS,
                             sets = repSets(3, reps = 20),
@@ -145,6 +155,7 @@ object SampleWorkoutData {
                             videoTutorialUrl = "https://www.youtube.com/watch?v=kDPxFoCmb-w"
                         ),
                         WorkoutExercise(
+                            exerciseKey = "russian_twist",
                             name = "Russian Twists",
                             measure = ExerciseMeasure.REPS,
                             sets = repSets(3, reps = 15),
@@ -154,6 +165,7 @@ object SampleWorkoutData {
                             videoTutorialUrl = "https://www.youtube.com/watch?v=IJDOoVyVjhc"
                         ),
                         WorkoutExercise(
+                            exerciseKey = "leg_raise",
                             name = "Leg Raises",
                             measure = ExerciseMeasure.REPS,
                             sets = repSets(3, reps = 12),
@@ -174,6 +186,7 @@ object SampleWorkoutData {
                     equipment = listOf("Dumbbells", "Yoga Mat"),
                     exercises = listOf(
                         WorkoutExercise(
+                            exerciseKey = "jump_squat",
                             name = "Jump Squats",
                             measure = ExerciseMeasure.REPS,
                             sets = repSets(4, reps = 12),
@@ -182,6 +195,7 @@ object SampleWorkoutData {
                             instructions = "Explode upward out of a squat to build lower-body power."
                         ),
                         WorkoutExercise(
+                            exerciseKey = "walking_lunge",
                             name = "Walking Lunges",
                             measure = ExerciseMeasure.REPS,
                             sets = repSets(3, reps = 20),
@@ -190,6 +204,7 @@ object SampleWorkoutData {
                             instructions = "Step forward into deep lunges to work quads, glutes and balance."
                         ),
                         WorkoutExercise(
+                            exerciseKey = "dumbbell_step_up",
                             name = "Dumbbell Step-Ups",
                             measure = ExerciseMeasure.WEIGHT_AND_REPS,
                             sets = repSets(3, reps = 10, weightKg = 12f),
@@ -198,6 +213,7 @@ object SampleWorkoutData {
                             instructions = "Drive through the leading leg onto a step to build single-leg strength."
                         ),
                         WorkoutExercise(
+                            exerciseKey = "glute_bridge",
                             name = "Glute Bridges",
                             measure = ExerciseMeasure.REPS,
                             sets = repSets(3, reps = 15),

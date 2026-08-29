@@ -5,6 +5,9 @@ data class WeeklyWorkoutPlan(
     val userId: Long,
     val weekNumber: Int,
     val title: String,
+    // Local midnight of the Monday the week begins; a day's date is this plus
+    // dayNumber - 1 days. Null on plans stored before the column existed.
+    val startDateMillis: Long? = null,
     val workoutDays: List<WorkoutDay>,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
@@ -24,6 +27,9 @@ data class WorkoutDay(
 
 data class WorkoutExercise(
     val id: Long = 0,
+    // Canonical slug (goblet_squat) that history is matched on. The display
+    // name may vary between weeks and locales; this must not.
+    val exerciseKey: String = "",
     val name: String,
     // How this exercise is measured, and so which columns its sets show.
     val measure: ExerciseMeasure = ExerciseMeasure.REPS,

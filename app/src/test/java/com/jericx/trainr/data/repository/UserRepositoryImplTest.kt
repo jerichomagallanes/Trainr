@@ -57,6 +57,7 @@ class UserRepositoryImplTest {
         userId = 1L,
         weekNumber = 1,
         title = "Week 1",
+        startDateMillis = null,
         createdAt = 0L,
         updatedAt = 0L
     )

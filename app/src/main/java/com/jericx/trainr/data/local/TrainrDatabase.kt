@@ -14,7 +14,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         WorkoutExerciseEntity::class,
         ExerciseSetEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -66,6 +66,20 @@ abstract class TrainrDatabase : RoomDatabase() {
                 db.execSQL(
                     "CREATE INDEX IF NOT EXISTS index_exercise_sets_workoutExerciseId " +
                         "ON exercise_sets (workoutExerciseId)"
+                )
+            }
+        }
+
+        // The generation contract: a plan knows the Monday it starts, and an
+        // exercise carries the stable key its history is matched on.
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE weekly_workout_plans ADD COLUMN startDateMillis INTEGER"
+                )
+                db.execSQL(
+                    "ALTER TABLE workout_exercises " +
+                        "ADD COLUMN exerciseKey TEXT NOT NULL DEFAULT ''"
                 )
             }
         }
