@@ -16,7 +16,7 @@ knows better**, as parameters to `GeneratedPlanParser.parse()`:
 | ---------------- | ---------------------- |
 | `userId`, `weekNumber` | App state. |
 | `startDateMillis` (local midnight of the plan's Monday) | The model has no clock; dates it writes are guesses. |
-| Video tutorial URLs | Model-written URLs are routinely dead or wrong. Left null; lookup is a separate concern. |
+| Video tutorial URLs | Model-written URLs are routinely dead or wrong. Resolved at render time from the hand-verified `ExerciseVideoCatalog`, keyed on `exerciseKey`. |
 | Completion state, actuals, notes, ids | A new plan has no history, and only the user logs work. |
 
 Derived rather than accepted, so the app can never contradict itself on
