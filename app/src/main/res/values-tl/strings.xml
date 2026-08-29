@@ -194,6 +194,13 @@
     <string name="resume_timer">Ituloy</string>
     <string name="stop_timer">Itigil</string>
     <string name="reset_timer">I-reset</string>
+    <string name="set_column">Set</string>
+    <string name="weight_column">kg</string>
+    <string name="reps_column">Reps</string>
+    <string name="time_column">Oras</string>
+    <string name="add_set">Magdagdag ng set</string>
+    <string name="mark_set_complete">Markahan ang set bilang tapos</string>
+    <string name="mark_set_incomplete">Markahan ang set bilang hindi tapos</string>
     <string name="exercise_in_progress">Isinasagawa ang ehersisyo…</string>
     <string name="timer_paused">Naka-pause ang timer</string>
     <string name="edit">I-edit</string>

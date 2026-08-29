@@ -67,6 +67,18 @@ interface UserDao {
     @Update
     suspend fun updateWorkoutExercise(exercise: WorkoutExerciseEntity)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertExerciseSets(sets: List<ExerciseSetEntity>)
+
+    @Query("SELECT * FROM exercise_sets WHERE workoutExerciseId = :exerciseId ORDER BY setNumber")
+    suspend fun getSetsForExercise(exerciseId: Long): List<ExerciseSetEntity>
+
+    @Update
+    suspend fun updateExerciseSet(set: ExerciseSetEntity)
+
+    @Query("DELETE FROM exercise_sets WHERE id = :setId")
+    suspend fun deleteExerciseSet(setId: Long)
+
     @Query("SELECT COUNT(*) FROM workout_exercises WHERE workoutDayId = :workoutDayId")
     suspend fun getTotalExercisesForDay(workoutDayId: Long): Int
 

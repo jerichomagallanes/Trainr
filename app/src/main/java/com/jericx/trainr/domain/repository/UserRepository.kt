@@ -1,5 +1,6 @@
 package com.jericx.trainr.domain.repository
 
+import com.jericx.trainr.domain.model.ExerciseSet
 import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.model.WeeklyProgress
 import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
@@ -31,6 +32,7 @@ interface UserRepository {
     suspend fun getExercisesForWorkoutDay(workoutDayId: Long): List<WorkoutExercise>
     suspend fun getWorkoutExercise(exerciseId: Long): WorkoutExercise?
     suspend fun updateWorkoutExercise(exercise: WorkoutExercise, workoutDayId: Long)
+    suspend fun updateExerciseSet(set: ExerciseSet, workoutExerciseId: Long)
 
     suspend fun getWeeklyProgress(userId: Long, weekNumber: Int): WeeklyProgress?
     suspend fun getWorkoutDayProgress(weeklyPlanId: Long): List<WorkoutDayProgress>

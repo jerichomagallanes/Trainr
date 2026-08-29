@@ -193,6 +193,13 @@
     <string name="resume_timer">Resume</string>
     <string name="stop_timer">Stop</string>
     <string name="reset_timer">Reset</string>
+    <string name="set_column">Set</string>
+    <string name="weight_column">kg</string>
+    <string name="reps_column">Reps</string>
+    <string name="time_column">Time</string>
+    <string name="add_set">Add set</string>
+    <string name="mark_set_complete">Mark set as complete</string>
+    <string name="mark_set_incomplete">Mark set as not complete</string>
     <string name="exercise_in_progress">Exercise in progress…</string>
     <string name="timer_paused">Timer paused</string>
     <string name="edit">Edit</string>

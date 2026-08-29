@@ -7,6 +7,7 @@ import com.jericx.trainr.domain.model.WeeklyProgress
 import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
 import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.model.WorkoutDayProgress
+import com.jericx.trainr.domain.model.ExerciseSet
 import com.jericx.trainr.domain.model.WorkoutExercise
 import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.domain.repository.UserRepository
@@ -67,13 +68,8 @@ class UserRepositoryImpl @Inject constructor(
     override suspend fun saveWorkoutDay(day: WorkoutDay, weeklyPlanId: Long): Long {
         val dayId = userDao.insertWorkoutDay(mapper.mapToEntity(day, weeklyPlanId))
 
-        val exerciseEntities = day.exercises.map { exercise ->
-            mapper.mapToEntity(exercise, dayId)
-        }
-        if (exerciseEntities.isNotEmpty()) {
-            userDao.insertWorkoutExercises(exerciseEntities)
-        }
-        
+        saveWorkoutExercises(day.exercises, dayId)
+
         return dayId
     }
 
@@ -85,13 +81,10 @@ class UserRepositoryImpl @Inject constructor(
         // carry id = 0 for new rows, so the exercises must be keyed off these.
         val dayIds = userDao.insertWorkoutDays(dayEntities)
 
+        // One exercise at a time rather than a bulk insert: the sets need the
+        // generated exercise id, and a bulk insert does not hand it back.
         days.forEachIndexed { dayIndex, day ->
-            val exerciseEntities = day.exercises.map { exercise ->
-                mapper.mapToEntity(exercise, dayIds[dayIndex])
-            }
-            if (exerciseEntities.isNotEmpty()) {
-                userDao.insertWorkoutExercises(exerciseEntities)
-            }
+            saveWorkoutExercises(day.exercises, dayIds[dayIndex])
         }
     }
 
@@ -114,24 +107,42 @@ class UserRepositoryImpl @Inject constructor(
     }
 
     override suspend fun saveWorkoutExercise(exercise: WorkoutExercise, workoutDayId: Long): Long {
-        return userDao.insertWorkoutExercise(mapper.mapToEntity(exercise, workoutDayId))
+        val exerciseId = userDao.insertWorkoutExercise(mapper.mapToEntity(exercise, workoutDayId))
+        saveSetsFor(exercise, exerciseId)
+        return exerciseId
     }
 
     override suspend fun saveWorkoutExercises(exercises: List<WorkoutExercise>, workoutDayId: Long) {
-        val exerciseEntities = exercises.map { exercise ->
-            mapper.mapToEntity(exercise, workoutDayId)
-        }
-        userDao.insertWorkoutExercises(exerciseEntities)
+        exercises.forEach { saveWorkoutExercise(it, workoutDayId) }
     }
 
     override suspend fun getExercisesForWorkoutDay(workoutDayId: Long): List<WorkoutExercise> {
         val exerciseEntities = userDao.getExercisesForWorkoutDay(workoutDayId)
-        return exerciseEntities.map { mapper.mapToDomain(it) }
+        return exerciseEntities.map { entity ->
+            mapper.mapToDomain(entity).copy(sets = setsFor(entity.id))
+        }
     }
 
     override suspend fun getWorkoutExercise(exerciseId: Long): WorkoutExercise? {
-        return userDao.getWorkoutExerciseById(exerciseId)?.let { mapper.mapToDomain(it) }
+        return userDao.getWorkoutExerciseById(exerciseId)?.let {
+            mapper.mapToDomain(it).copy(sets = setsFor(it.id))
+        }
     }
+
+    override suspend fun updateExerciseSet(set: ExerciseSet, workoutExerciseId: Long) {
+        userDao.updateExerciseSet(mapper.mapToEntity(set, workoutExerciseId))
+    }
+
+    // Room hands back the generated row id here; the domain objects still carry
+    // id = 0 for new rows, so the sets have to be keyed off it.
+    private suspend fun saveSetsFor(exercise: WorkoutExercise, exerciseId: Long) {
+        if (exercise.sets.isEmpty()) return
+
+        userDao.insertExerciseSets(exercise.sets.map { mapper.mapToEntity(it, exerciseId) })
+    }
+
+    private suspend fun setsFor(exerciseId: Long): List<ExerciseSet> =
+        userDao.getSetsForExercise(exerciseId).map { mapper.mapToDomain(it) }
 
     override suspend fun updateWorkoutExercise(exercise: WorkoutExercise, workoutDayId: Long) {
         userDao.updateWorkoutExercise(mapper.mapToEntity(exercise, workoutDayId))

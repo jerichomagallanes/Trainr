@@ -1,6 +1,8 @@
 package com.jericx.trainr.presentation.workout.model
 
 import com.google.common.truth.Truth.assertThat
+import com.jericx.trainr.domain.model.ExerciseMeasure
+import com.jericx.trainr.domain.model.ExerciseSet
 import org.junit.Test
 
 class RoutineUiTest {
@@ -80,6 +82,63 @@ class RoutineUiTest {
         val routine = routineOf(true, false, false)
 
         assertThat(routine.toggleCompleted(99)).isEqualTo(routine)
+    }
+
+    private fun routineWithSets() = RoutineUi(
+        title = "Full Body Strength",
+        exercises = listOf(
+            exercise(1).copy(
+                measure = ExerciseMeasure.WEIGHT_AND_REPS,
+                sets = (1..3).map { ExerciseSet(setNumber = it, targetReps = 12, targetWeightKg = 20f) }
+            ),
+            exercise(2).copy(sets = listOf(ExerciseSet(setNumber = 1, targetReps = 20)))
+        )
+    )
+
+    @Test
+    fun loggingASetTouchesOnlyThatSetOfThatExercise() {
+        val logged = routineWithSets()
+            .updateSet(1, ExerciseSet(setNumber = 2, targetReps = 12, targetWeightKg = 20f, actualReps = 9, actualWeightKg = 22.5f, isCompleted = true))
+
+        val first = logged.exercises.first()
+        assertThat(first.sets[0].actualReps).isNull()
+        assertThat(first.sets[1].actualReps).isEqualTo(9)
+        assertThat(first.sets[1].actualWeightKg).isEqualTo(22.5f)
+        assertThat(first.sets[1].isCompleted).isTrue()
+        assertThat(first.sets[2].actualReps).isNull()
+        assertThat(logged.exercises[1].sets.single().actualReps).isNull()
+    }
+
+    // A new set repeats the last target: the likeliest next thing is what you just did.
+    @Test
+    fun addingASetContinuesTheLastTarget() {
+        val grown = routineWithSets().addSet(1).exercises.first()
+
+        assertThat(grown.sets).hasSize(4)
+        with(grown.sets.last()) {
+            assertThat(setNumber).isEqualTo(4)
+            assertThat(targetReps).isEqualTo(12)
+            assertThat(targetWeightKg).isEqualTo(20f)
+            assertThat(actualReps).isNull()
+            assertThat(isCompleted).isFalse()
+        }
+    }
+
+    @Test
+    fun addingASetToAnExerciseWithNoneStartsAtOne() {
+        val routine = RoutineUi(title = "New", exercises = listOf(exercise(1)))
+
+        val grown = routine.addSet(1).exercises.single()
+
+        assertThat(grown.sets.single().setNumber).isEqualTo(1)
+    }
+
+    @Test
+    fun editingAnUnknownExerciseChangesNothing() {
+        val routine = routineWithSets()
+
+        assertThat(routine.addSet(99)).isEqualTo(routine)
+        assertThat(routine.updateSet(99, ExerciseSet(setNumber = 1))).isEqualTo(routine)
     }
 
     @Test

@@ -191,6 +191,13 @@
     <string name="resume_timer">再開</string>
     <string name="stop_timer">停止</string>
     <string name="reset_timer">リセット</string>
+    <string name="set_column">セット</string>
+    <string name="weight_column">kg</string>
+    <string name="reps_column">回数</string>
+    <string name="time_column">時間</string>
+    <string name="add_set">セットを追加</string>
+    <string name="mark_set_complete">セットを完了にする</string>
+    <string name="mark_set_incomplete">セットを未完了にする</string>
     <string name="exercise_in_progress">エクササイズ実行中…</string>
     <string name="timer_paused">タイマー一時停止中</string>
     <string name="edit">編集</string>

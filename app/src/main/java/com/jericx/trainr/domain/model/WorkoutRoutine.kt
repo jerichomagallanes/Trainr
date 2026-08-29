@@ -25,7 +25,10 @@ data class WorkoutDay(
 data class WorkoutExercise(
     val id: Long = 0,
     val name: String,
-    val sets: Int? = null,
+    // How this exercise is measured, and so which columns its sets show.
+    val measure: ExerciseMeasure = ExerciseMeasure.REPS,
+    val sets: List<ExerciseSet> = emptyList(),
+    val setCount: Int? = null,
     val reps: String? = null,
     val duration: String? = null,
     // What the card shows: how long the exercise is allotted, and the
@@ -40,6 +43,26 @@ data class WorkoutExercise(
     val isCompleted: Boolean = false,
     val notes: String = ""
 )
+
+// A prescription is what the plan asks for; a log is what you did. Both live on
+// the same row so the card can show the target and record the result beside it.
+data class ExerciseSet(
+    val id: Long = 0,
+    val setNumber: Int,
+    val targetReps: Int? = null,
+    val targetWeightKg: Float? = null,
+    val targetSeconds: Int? = null,
+    val actualReps: Int? = null,
+    val actualWeightKg: Float? = null,
+    val actualSeconds: Int? = null,
+    val isCompleted: Boolean = false
+)
+
+enum class ExerciseMeasure {
+    WEIGHT_AND_REPS,
+    REPS,
+    DURATION
+}
 
 data class WeeklyProgress(
     val weekNumber: Int,

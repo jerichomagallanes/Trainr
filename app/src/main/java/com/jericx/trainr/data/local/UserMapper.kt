@@ -104,7 +104,8 @@ class UserMapper {
             id = exercise.id,
             workoutDayId = workoutDayId,
             name = exercise.name,
-            sets = exercise.sets,
+            measure = exercise.measure.name,
+            setCount = exercise.setCount,
             reps = exercise.reps,
             duration = exercise.duration,
             durationMinutes = exercise.durationMinutes,
@@ -122,7 +123,9 @@ class UserMapper {
         return WorkoutExercise(
             id = entity.id,
             name = entity.name,
-            sets = entity.sets,
+            measure = runCatching { ExerciseMeasure.valueOf(entity.measure) }
+                .getOrDefault(ExerciseMeasure.REPS),
+            setCount = entity.setCount,
             reps = entity.reps,
             duration = entity.duration,
             durationMinutes = entity.durationMinutes,
@@ -133,6 +136,35 @@ class UserMapper {
             videoTutorialUrl = entity.videoTutorialUrl,
             isCompleted = entity.isCompleted,
             notes = entity.notes
+        )
+    }
+
+    fun mapToEntity(set: ExerciseSet, workoutExerciseId: Long): ExerciseSetEntity {
+        return ExerciseSetEntity(
+            id = set.id,
+            workoutExerciseId = workoutExerciseId,
+            setNumber = set.setNumber,
+            targetReps = set.targetReps,
+            targetWeightKg = set.targetWeightKg,
+            targetSeconds = set.targetSeconds,
+            actualReps = set.actualReps,
+            actualWeightKg = set.actualWeightKg,
+            actualSeconds = set.actualSeconds,
+            isCompleted = set.isCompleted
+        )
+    }
+
+    fun mapToDomain(entity: ExerciseSetEntity): ExerciseSet {
+        return ExerciseSet(
+            id = entity.id,
+            setNumber = entity.setNumber,
+            targetReps = entity.targetReps,
+            targetWeightKg = entity.targetWeightKg,
+            targetSeconds = entity.targetSeconds,
+            actualReps = entity.actualReps,
+            actualWeightKg = entity.actualWeightKg,
+            actualSeconds = entity.actualSeconds,
+            isCompleted = entity.isCompleted
         )
     }
 }

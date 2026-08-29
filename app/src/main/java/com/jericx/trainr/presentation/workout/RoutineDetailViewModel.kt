@@ -3,6 +3,7 @@ package com.jericx.trainr.presentation.workout
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.jericx.trainr.domain.model.ExerciseSet
 import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.presentation.Screen
 import com.jericx.trainr.domain.model.WorkoutStatus
@@ -56,6 +57,14 @@ class RoutineDetailViewModel @Inject constructor(
         _uiState.update {
             it.copy(routine = routine, timer = if (clearsTimer) null else it.timer)
         }
+    }
+
+    fun updateSet(position: Int, set: ExerciseSet) {
+        _uiState.update { it.copy(routine = it.routine.updateSet(position, set)) }
+    }
+
+    fun addSet(position: Int) {
+        _uiState.update { it.copy(routine = it.routine.addSet(position)) }
     }
 
     fun completeRoutine() {

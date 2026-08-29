@@ -4,6 +4,7 @@ import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -41,7 +42,11 @@ class ExerciseCardTest {
         composeTestRule.onNodeWithText("High-Intensity Intervals").assertIsDisplayed()
         composeTestRule.onNodeWithText("5 sets of 1 minute").assertIsDisplayed()
         composeTestRule.onNodeWithText("10 mins").assertIsDisplayed()
-        composeTestRule.onNodeWithText("2").assertIsDisplayed()
+        // The set rows are numbered too, so the position badge is no longer the
+        // only "2" on the card.
+        assertThat(
+            composeTestRule.onAllNodesWithText("2").fetchSemanticsNodes()
+        ).isNotEmpty()
     }
 
     @Test
