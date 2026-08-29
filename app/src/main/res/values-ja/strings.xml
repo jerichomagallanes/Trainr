@@ -223,7 +223,7 @@
     <string name="limitations_label">制限事項</string>
     <string name="injuries_concerns_label">怪我/懸念事項</string>
     <string name="ai_routine_preview_label">AIルーティンプレビュー</string>
-    <string name="ai_routine_description" formatted="false">あなたのプロフィールに基づいて、%sに焦点を当てた%s筋力プログラムを作成します。</string>
+    <string name="ai_routine_description">あなたのプロフィールに基づいて、%3$sを重視した%1$sの%2$sプログラムを作成します。</string>
     <string name="bodyweight_only_label">自重のみ</string>
     <string name="flexible_schedule">柔軟</string>
     <plurals name="days_per_week_format">
@@ -261,6 +261,18 @@
     <string name="improve_endurance_goal">持久力向上</string>
     <string name="general_fitness_goal">一般的なフィットネス</string>
     <string name="flexibility_mobility_goal">柔軟性・可動性</string>
+    <string name="program_length_format">週%d日</string>
+    <string name="goal_focus_lose_weight">減量</string>
+    <string name="goal_focus_build_muscle">筋肉づくり</string>
+    <string name="goal_focus_get_stronger">筋力アップ</string>
+    <string name="goal_focus_improve_endurance">持久力の向上</string>
+    <string name="goal_focus_general_fitness">全身の健康</string>
+    <string name="goal_focus_flexibility">柔軟性と可動域</string>
+    <string name="program_strength">筋力</string>
+    <string name="program_cardio">有酸素</string>
+    <string name="program_hiit">HIIT</string>
+    <string name="program_flexibility">モビリティ</string>
+    <string name="program_mixed">バランス</string>
     
     <!-- Workout Locations -->
     <string name="home_location">自宅</string>

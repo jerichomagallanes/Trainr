@@ -226,7 +226,7 @@
     <string name="limitations_label">Limitations</string>
     <string name="injuries_concerns_label">Mga Injury/Concern</string>
     <string name="ai_routine_preview_label">AI Routine Preview</string>
-    <string name="ai_routine_description" formatted="false">Base sa inyong profile, gagawa kami ng %s strength program na focused sa %s.</string>
+    <string name="ai_routine_description">Base sa inyong profile, gagawa kami ng %1$s na %2$s program na nakatuon sa %3$s.</string>
     <string name="bodyweight_only_label">Bodyweight lang</string>
     <string name="flexible_schedule">Flexible</string>
     <plurals name="days_per_week_format">
@@ -267,6 +267,18 @@
     <string name="improve_endurance_goal">Pagbutihin ang Endurance</string>
     <string name="general_fitness_goal">General Fitness</string>
     <string name="flexibility_mobility_goal">Flexibility &amp; Mobility</string>
+    <string name="program_length_format">%d-araw</string>
+    <string name="goal_focus_lose_weight">pagbaba ng timbang</string>
+    <string name="goal_focus_build_muscle">pagpapalaki ng muscle</string>
+    <string name="goal_focus_get_stronger">pagpapalakas</string>
+    <string name="goal_focus_improve_endurance">pagpapataas ng endurance</string>
+    <string name="goal_focus_general_fitness">general fitness</string>
+    <string name="goal_focus_flexibility">flexibility at mobility</string>
+    <string name="program_strength">strength</string>
+    <string name="program_cardio">cardio</string>
+    <string name="program_hiit">HIIT</string>
+    <string name="program_flexibility">mobility</string>
+    <string name="program_mixed">balanced</string>
     
     <!-- Workout Locations -->
     <string name="home_location">Bahay</string>
