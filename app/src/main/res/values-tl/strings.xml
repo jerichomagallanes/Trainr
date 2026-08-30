@@ -219,7 +219,10 @@
     <string name="delete_week_title">Burahin ang linggo %1$d?</string>
     <string name="delete_week_message">Buburahin ang mga workout nito. Pwede mo itong buoin muli anumang oras.</string>
     <string name="delete_week_confirm">Burahin</string>
-    <string name="delete_week_message_trained">%1$d sa %2$d workout ang naitala sa linggong ito. Permanenteng mawawala ang mga ito.</string>
+    <plurals name="delete_week_message_trained">
+        <item quantity="one">%1$d sa %2$d workout ang naitala sa linggong ito. Permanenteng mawawala ito.</item>
+        <item quantity="other">%1$d sa %2$d workout ang naitala sa linggong ito. Permanenteng mawawala ang mga ito.</item>
+    </plurals>
     <string name="review_profile_description">Ilalapat ang mga pagbabago sa susunod na linggong bubuoin</string>
     <string name="save_profile">I-SAVE ANG PROFILE</string>
     <string name="generate_next_week">Bumuo ng susunod na linggo</string>

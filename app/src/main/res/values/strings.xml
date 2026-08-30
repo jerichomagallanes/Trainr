@@ -218,7 +218,10 @@
     <string name="delete_week_title">Delete week %1$d?</string>
     <string name="delete_week_message">Its workouts will be removed. You can generate the week again whenever you like.</string>
     <string name="delete_week_confirm">Delete</string>
-    <string name="delete_week_message_trained">%1$d of %2$d workouts are logged in this week. Deleting removes them for good.</string>
+    <plurals name="delete_week_message_trained">
+        <item quantity="one">%1$d of %2$d workouts is logged in this week. Deleting removes it for good.</item>
+        <item quantity="other">%1$d of %2$d workouts are logged in this week. Deleting removes them for good.</item>
+    </plurals>
     <string name="review_profile_description">Changes apply to the next week you generate</string>
     <string name="save_profile">SAVE PROFILE</string>
     <string name="generate_next_week">Generate next week</string>

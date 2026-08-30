@@ -29,6 +29,9 @@ class WeeklyProgressScreenTest {
     private fun string(id: Int, vararg args: Any) =
         composeTestRule.activity.getString(id, *args)
 
+    private fun quantityString(id: Int, quantity: Int, vararg args: Any) =
+        composeTestRule.activity.resources.getQuantityString(id, quantity, *args)
+
     private fun daysCompleted(completed: Int, total: Int, percentage: Int) =
         composeTestRule.activity.resources.getQuantityString(
             R.plurals.days_completed_format, total, completed, total, percentage
@@ -164,8 +167,9 @@ class WeeklyProgressScreenTest {
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText(
-            string(
-                R.string.delete_week_message_trained,
+            quantityString(
+                R.plurals.delete_week_message_trained,
+                trained.completedDays,
                 trained.completedDays,
                 trained.totalDays
             )

@@ -26,6 +26,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLocale
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.jericx.trainr.R
@@ -160,8 +161,9 @@ private fun DeleteWeekDialog(
             // choice is made knowing what it costs.
             Text(
                 text = if (week.hasTraining) {
-                    stringResource(
-                        R.string.delete_week_message_trained,
+                    pluralStringResource(
+                        R.plurals.delete_week_message_trained,
+                        week.completedDays,
                         week.completedDays,
                         week.totalDays
                     )

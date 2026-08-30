@@ -216,7 +216,9 @@
     <string name="delete_week_title">第%1$d週を削除しますか？</string>
     <string name="delete_week_message">この週のワークアウトは削除されます。いつでも作り直せます。</string>
     <string name="delete_week_confirm">削除</string>
-    <string name="delete_week_message_trained">この週には%2$d件中%1$d件の記録があります。削除すると元に戻せません。</string>
+    <plurals name="delete_week_message_trained">
+        <item quantity="other">この週には%2$d件中%1$d件の記録があります。削除すると元に戻せません。</item>
+    </plurals>
     <string name="review_profile_description">変更は次に生成する週から反映されます</string>
     <string name="save_profile">プロフィールを保存</string>
     <string name="generate_next_week">次の週を生成</string>
