@@ -323,55 +323,28 @@ class RoutineDetailViewModelTest {
     }
 
     @Test
-    fun tutorialsStartCollapsedAndToggleIndependently() = runTest {
+    fun tutorialsStartClosedAndToggleOpenAndShut() = runTest {
         val viewModel = loadedViewModel()
 
-        assertThat(viewModel.uiState.value.expandedVideos).isEmpty()
+        assertThat(viewModel.uiState.value.expandedVideo).isNull()
 
         viewModel.toggleVideo(2)
-        viewModel.toggleVideo(3)
-        assertThat(viewModel.uiState.value.expandedVideos).containsExactly(2, 3)
+        assertThat(viewModel.uiState.value.expandedVideo).isEqualTo(2)
 
         viewModel.toggleVideo(2)
-        assertThat(viewModel.uiState.value.expandedVideos).containsExactly(3)
+        assertThat(viewModel.uiState.value.expandedVideo).isNull()
     }
 
-    // Only one WebView should ever be alive, so playing one stops the other.
+    // The player is a WebView and it now lives for as long as the section is
+    // open, so two open at once would be two of them on one screen.
     @Test
-    fun playingATutorialStopsWhicheverWasPlaying() = runTest {
+    fun openingATutorialClosesWhicheverWasOpen() = runTest {
         val viewModel = loadedViewModel()
 
         viewModel.toggleVideo(2)
-        viewModel.playVideo(2)
-        assertThat(viewModel.uiState.value.playingVideo).isEqualTo(2)
-
-        viewModel.toggleVideo(3)
-        viewModel.playVideo(3)
-        assertThat(viewModel.uiState.value.playingVideo).isEqualTo(3)
-    }
-
-    @Test
-    fun collapsingAPlayingTutorialStopsIt() = runTest {
-        val viewModel = loadedViewModel()
-
-        viewModel.toggleVideo(2)
-        viewModel.playVideo(2)
-        viewModel.toggleVideo(2)
-
-        assertThat(viewModel.uiState.value.playingVideo).isNull()
-        assertThat(viewModel.uiState.value.expandedVideos).isEmpty()
-    }
-
-    @Test
-    fun collapsingADifferentTutorialLeavesThePlayingOneAlone() = runTest {
-        val viewModel = loadedViewModel()
-
-        viewModel.toggleVideo(2)
-        viewModel.playVideo(2)
-        viewModel.toggleVideo(3)
         viewModel.toggleVideo(3)
 
-        assertThat(viewModel.uiState.value.playingVideo).isEqualTo(2)
+        assertThat(viewModel.uiState.value.expandedVideo).isEqualTo(3)
     }
 
     @Test

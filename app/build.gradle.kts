@@ -189,7 +189,6 @@ dependencies {
 
     // Video tutorials
     implementation(libs.youtube.player)
-    implementation(libs.bundles.coil)
     implementation(libs.okhttp)
 
     // Unit tests

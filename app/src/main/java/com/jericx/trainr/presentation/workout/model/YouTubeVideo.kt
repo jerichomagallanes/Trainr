@@ -3,8 +3,6 @@ package com.jericx.trainr.presentation.workout.model
 @JvmInline
 value class YouTubeVideo(val id: String) {
 
-    val thumbnailUrl: String get() = "https://img.youtube.com/vi/$id/hqdefault.jpg"
-
     companion object {
         // Whatever shape the model hands back: watch links, short links, embeds,
         // Shorts, with or without trailing timestamps and tracking parameters.

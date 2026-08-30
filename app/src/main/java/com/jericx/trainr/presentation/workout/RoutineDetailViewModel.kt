@@ -31,8 +31,10 @@ data class RoutineDetailUiState(
     val equipment: List<String>,
     val dateMillis: Long,
     val timer: ExerciseTimerUi? = null,
-    val expandedVideos: Set<Int> = emptySet(),
-    val playingVideo: Int? = null,
+    // One tutorial open at a time. The player is a WebView and it now exists
+    // for as long as the section is open rather than only while playing, so
+    // opening one closes the last rather than stacking them up the screen.
+    val expandedVideo: Int? = null,
     val dayNumber: Int = 1,
     val weekNumber: Int = 1,
     val completesTheWeek: Boolean = false,
@@ -251,24 +253,9 @@ class RoutineDetailViewModel @Inject constructor(
     }
 
     fun toggleVideo(position: Int) {
-        _uiState.update { state ->
-            val collapsing = position in state.expandedVideos
-
-            state.copy(
-                expandedVideos = if (collapsing) state.expandedVideos - position
-                else state.expandedVideos + position,
-                playingVideo = if (collapsing && state.playingVideo == position) {
-                    null
-                } else {
-                    state.playingVideo
-                }
-            )
+        _uiState.update {
+            it.copy(expandedVideo = if (it.expandedVideo == position) null else position)
         }
-    }
-
-    // One WebView at a time: playing a tutorial stops whichever was open.
-    fun playVideo(position: Int) {
-        _uiState.update { it.copy(playingVideo = position) }
     }
 
     private fun cancelTick() {

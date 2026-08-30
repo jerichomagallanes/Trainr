@@ -3,7 +3,6 @@ package com.jericx.trainr.presentation.workout.components
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.runtime.CompositionLocalProvider
@@ -33,39 +32,31 @@ class VideoTutorialTest {
 
     private fun setTutorial(
         isExpanded: Boolean,
-        isPlaying: Boolean = false,
-        onToggle: () -> Unit = {},
-        onPlay: () -> Unit = {}
+        onToggle: () -> Unit = {}
     ) {
         composeTestRule.setContent {
             TrainrTheme {
                 VideoTutorial(
                     video = YouTubeVideo("kDPxFoCmb-w"),
                     isExpanded = isExpanded,
-                    isPlaying = isPlaying,
-                    onToggle = onToggle,
-                    onPlay = onPlay
+                    onToggle = onToggle
                 )
             }
         }
     }
 
     @Test
-    fun aCollapsedTutorialOffersToShowItselfAndNothingElse() {
+    fun aCollapsedTutorialSaysOnlyThatItCanBeShown() {
         setTutorial(isExpanded = false)
 
         composeTestRule.onNodeWithText(string(R.string.show_video_tutorial)).assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription(string(R.string.play_video_tutorial))
-            .assertDoesNotExist()
     }
 
     @Test
-    fun anExpandedTutorialOffersToHideItselfAndToPlay() {
+    fun anExpandedTutorialOffersToHideItself() {
         setTutorial(isExpanded = true)
 
         composeTestRule.onNodeWithText(string(R.string.hide_video_tutorial)).assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription(string(R.string.play_video_tutorial))
-            .assertIsDisplayed()
     }
 
     @Test
@@ -78,25 +69,6 @@ class VideoTutorialTest {
         assertThat(toggled).isTrue()
     }
 
-    @Test
-    fun tappingTheThumbnailAsksToPlay() {
-        var played = false
-        setTutorial(isExpanded = true, onPlay = { played = true })
-
-        composeTestRule.onNodeWithContentDescription(string(R.string.play_video_tutorial))
-            .performClick()
-
-        assertThat(played).isTrue()
-    }
-
-    // Once it is playing the poster is gone, so there is nothing left to tap.
-    @Test
-    fun aPlayingTutorialShowsNoThumbnail() {
-        setTutorial(isExpanded = true, isPlaying = true)
-
-        composeTestRule.onNodeWithContentDescription(string(R.string.play_video_tutorial))
-            .assertDoesNotExist()
-    }
 
     private class FakeLifecycleOwner : LifecycleOwner {
         // createUnsafe: the test drives the state from its own thread.
@@ -113,17 +85,15 @@ class VideoTutorialTest {
     @Test
     fun thePlayerIsBoundToTheScreenAndLetGoWithIt() {
         val owner = FakeLifecycleOwner()
-        var playing by mutableStateOf(false)
+        var expanded by mutableStateOf(false)
 
         composeTestRule.setContent {
             CompositionLocalProvider(LocalLifecycleOwner provides owner) {
                 TrainrTheme {
                     VideoTutorial(
                         video = YouTubeVideo("kDPxFoCmb-w"),
-                        isExpanded = true,
-                        isPlaying = playing,
-                        onToggle = {},
-                        onPlay = {}
+                        isExpanded = expanded,
+                        onToggle = {}
                     )
                 }
             }
@@ -131,11 +101,11 @@ class VideoTutorialTest {
         composeTestRule.waitForIdle()
         val withoutPlayer = owner.lifecycle.observerCount
 
-        playing = true
+        expanded = true
         composeTestRule.waitForIdle()
         assertThat(owner.lifecycle.observerCount).isGreaterThan(withoutPlayer)
 
-        playing = false
+        expanded = false
         composeTestRule.waitForIdle()
         assertThat(owner.lifecycle.observerCount).isEqualTo(withoutPlayer)
     }

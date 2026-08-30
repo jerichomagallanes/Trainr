@@ -72,8 +72,7 @@ fun RoutineDetailRoute(
         onResumeTimer = viewModel::resumeTimer,
         onResetTimer = viewModel::resetTimer,
         onStopTimer = viewModel::stopTimer,
-        onToggleVideo = viewModel::toggleVideo,
-        onPlayVideo = viewModel::playVideo
+        onToggleVideo = viewModel::toggleVideo
     )
 }
 
@@ -93,7 +92,6 @@ fun RoutineDetailScreen(
     onResetTimer: () -> Unit = {},
     onStopTimer: () -> Unit = {},
     onToggleVideo: (Int) -> Unit = {},
-    onPlayVideo: (Int) -> Unit = {},
     onDayCompleted: (Int) -> Unit = {},
     onWeekCompleted: (Int) -> Unit = {}
 ) {
@@ -226,10 +224,8 @@ fun RoutineDetailScreen(
                             YouTubeVideo.from(exercise.videoUrl)?.let { video ->
                                 VideoTutorial(
                                     video = video,
-                                    isExpanded = exercise.position in state.expandedVideos,
-                                    isPlaying = state.playingVideo == exercise.position,
-                                    onToggle = { onToggleVideo(exercise.position) },
-                                    onPlay = { onPlayVideo(exercise.position) }
+                                    isExpanded = state.expandedVideo == exercise.position,
+                                    onToggle = { onToggleVideo(exercise.position) }
                                 )
                             }
                         }

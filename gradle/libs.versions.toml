@@ -28,7 +28,6 @@ room = "2.8.4"
 
 # Media
 youtube-player = "13.0.0"
-coil = "3.6.0"
 
 # Networking
 okhttp = "5.5.0"
@@ -92,8 +91,6 @@ okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhtt
 mockwebserver = { group = "com.squareup.okhttp3", name = "mockwebserver", version.ref = "okhttp" }
 
 youtube-player = { group = "com.pierfrancescosoffritti.androidyoutubeplayer", name = "core", version.ref = "youtube-player" }
-coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
-coil-network-okhttp = { group = "io.coil-kt.coil3", name = "coil-network-okhttp", version.ref = "coil" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -128,7 +125,3 @@ room = [
     "room-ktx"
 ]
 
-coil = [
-    "coil-compose",
-    "coil-network-okhttp"
-]
