@@ -1,5 +1,7 @@
 package com.jericx.trainr.presentation.workout
 
+import androidx.lifecycle.SavedStateHandle
+import com.jericx.trainr.presentation.Screen
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
@@ -40,6 +42,14 @@ class WeeklyPlanViewModelTest {
         Dispatchers.resetMain()
     }
 
+    // Home passes no week; Weekly Progress passes the one that was tapped.
+    private fun viewModel(weekNumber: Int? = null) = WeeklyPlanViewModel(
+        SavedStateHandle(
+            weekNumber?.let { mapOf(Screen.WeekPlan.ARG_WEEK_NUMBER to it) } ?: emptyMap()
+        ),
+        userRepository
+    )
+
     private val storedPlan = WeeklyWorkoutPlan(
         id = 9,
         userId = 1,
@@ -62,7 +72,7 @@ class WeeklyPlanViewModelTest {
     fun fallsBackToSampleDataWhenThereIsNoUser() = runTest {
         coEvery { userRepository.getCurrentUser() } returns null
 
-        val viewModel = WeeklyPlanViewModel(userRepository)
+        val viewModel = viewModel()
         advanceUntilIdle()
 
         assertThat(viewModel.uiState.value.plan).isEqualTo(SampleWorkoutData.weekOne)
@@ -74,7 +84,7 @@ class WeeklyPlanViewModelTest {
         coEvery { userRepository.getCurrentUser() } returns UserProfile(id = 1)
         every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(emptyList())
 
-        val viewModel = WeeklyPlanViewModel(userRepository)
+        val viewModel = viewModel()
         advanceUntilIdle()
 
         assertThat(viewModel.uiState.value.isSampleData).isTrue()
@@ -85,11 +95,25 @@ class WeeklyPlanViewModelTest {
         coEvery { userRepository.getCurrentUser() } returns UserProfile(id = 1)
         every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(storedPlan))
 
-        val viewModel = WeeklyPlanViewModel(userRepository)
+        val viewModel = viewModel()
         advanceUntilIdle()
 
         assertThat(viewModel.uiState.value.plan).isEqualTo(storedPlan)
         assertThat(viewModel.uiState.value.isSampleData).isFalse()
+    }
+
+    // A week opened from Weekly Progress shows that week, not the newest.
+    @Test
+    fun showsTheWeekThatWasAskedFor() = runTest {
+        val weekTwo = storedPlan.copy(id = 10, weekNumber = 2, title = "Second week")
+        coEvery { userRepository.getCurrentUser() } returns UserProfile(id = 1)
+        every { userRepository.getWeeklyWorkoutPlans(1) } returns
+            flowOf(listOf(storedPlan, weekTwo))
+
+        val viewModel = viewModel(weekNumber = 1)
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.plan).isEqualTo(storedPlan)
     }
 
     // After a regeneration there are several stored weeks; home shows the
@@ -101,7 +125,7 @@ class WeeklyPlanViewModelTest {
         every { userRepository.getWeeklyWorkoutPlans(1) } returns
             flowOf(listOf(weekTwo, storedPlan))
 
-        val viewModel = WeeklyPlanViewModel(userRepository)
+        val viewModel = viewModel()
         advanceUntilIdle()
 
         assertThat(viewModel.uiState.value.plan).isEqualTo(weekTwo)
@@ -116,7 +140,7 @@ class WeeklyPlanViewModelTest {
         every { userRepository.getWeeklyWorkoutPlans(1) } returns
             flowOf(listOf(storedPlan.copy(startDateMillis = start)))
 
-        val viewModel = WeeklyPlanViewModel(userRepository)
+        val viewModel = viewModel()
         advanceUntilIdle()
 
         with(viewModel.uiState.value) {
@@ -131,7 +155,7 @@ class WeeklyPlanViewModelTest {
     fun givesEveryWorkoutDayADate() = runTest {
         coEvery { userRepository.getCurrentUser() } returns null
 
-        val viewModel = WeeklyPlanViewModel(userRepository)
+        val viewModel = viewModel()
         advanceUntilIdle()
 
         val days = viewModel.uiState.value.days
@@ -143,7 +167,7 @@ class WeeklyPlanViewModelTest {
     fun exposesSampleDataBeforeTheRepositoryAnswers() {
         coEvery { userRepository.getCurrentUser() } returns null
 
-        val viewModel = WeeklyPlanViewModel(userRepository)
+        val viewModel = viewModel()
 
         assertThat(viewModel.uiState.value.days).isNotEmpty()
     }

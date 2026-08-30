@@ -27,11 +27,24 @@ sealed class Screen(val route: String) {
         }
     }
     data object Home : Screen("home_screen")
-    data object WeeklyProgress : Screen("weekly_progress_screen")
-    data object RoutineDetail : Screen("routine_detail_screen/{dayNumber}") {
-        const val ARG_DAY_NUMBER = "dayNumber"
 
-        fun createRoute(dayNumber: Int) = "routine_detail_screen/$dayNumber"
+    // One stored week, opened from Weekly Progress. Home always shows the
+    // newest week, so this is the only way back into an earlier one.
+    data object WeekPlan : Screen("week_plan_screen/{weekNumber}") {
+        const val ARG_WEEK_NUMBER = "weekNumber"
+
+        fun createRoute(weekNumber: Int) = "week_plan_screen/$weekNumber"
+    }
+    data object WeeklyProgress : Screen("weekly_progress_screen")
+    data object RoutineDetail : Screen("routine_detail_screen/{dayNumber}?weekNumber={weekNumber}") {
+        const val ARG_DAY_NUMBER = "dayNumber"
+        const val ARG_WEEK_NUMBER = "weekNumber"
+
+        // Days opened from home carry no week: they belong to the newest one.
+        const val LATEST_WEEK = -1
+
+        fun createRoute(dayNumber: Int, weekNumber: Int = LATEST_WEEK) =
+            "routine_detail_screen/$dayNumber?weekNumber=$weekNumber"
     }
     data object DayCompleted : Screen("day_completed_screen/{dayNumber}") {
         const val ARG_DAY_NUMBER = "dayNumber"

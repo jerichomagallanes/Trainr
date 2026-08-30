@@ -52,6 +52,7 @@ fun WeeklyPlanRoute(
     onTrackProgressClick: () -> Unit = {},
     onStartTodayClick: (WorkoutDay) -> Unit = {},
     onLeavePlanConfirmed: () -> Unit = {},
+    onBackClick: (() -> Unit)? = null,
     viewModel: WeeklyPlanViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -65,7 +66,8 @@ fun WeeklyPlanRoute(
         onDayClick = onDayClick,
         onTrackProgressClick = onTrackProgressClick,
         onStartTodayClick = onStartTodayClick,
-        onLeavePlanConfirmed = onLeavePlanConfirmed
+        onLeavePlanConfirmed = onLeavePlanConfirmed,
+        onBackClick = onBackClick
     )
 }
 
@@ -76,8 +78,15 @@ fun WeeklyPlanScreen(
     onDayClick: (WorkoutDay) -> Unit = {},
     onTrackProgressClick: () -> Unit = {},
     onStartTodayClick: (WorkoutDay) -> Unit = {},
-    onLeavePlanConfirmed: () -> Unit = {}
+    onLeavePlanConfirmed: () -> Unit = {},
+    // Set only when a week was opened from Weekly Progress.
+    onBackClick: (() -> Unit)? = null
 ) {
+    // Such a week is a look at the record rather than the plan being trained,
+    // so it gets a way back and drops the actions that belong to the plan
+    // standing in as home: regenerating, starting today, and the progress link
+    // that leads back where the reader just came from.
+    val isBrowsedWeek = onBackClick != null
     val locale = LocalLocale.current.platformLocale
     var showLeaveDialog by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
@@ -93,9 +102,9 @@ fun WeeklyPlanScreen(
     }
 
     Column(modifier = modifier.fillMaxSize()) {
-        // The plan is home: there is nowhere to go back to. Plan-level actions
-        // live behind the heading's overflow, where the design puts them.
-        TrainrTopBar(onBackClick = null)
+        // Home has nowhere to go back to. Plan-level actions live behind the
+        // heading's overflow, where the design puts them.
+        TrainrTopBar(onBackClick = onBackClick)
 
         Column(
             modifier = Modifier
@@ -111,25 +120,27 @@ fun WeeklyPlanScreen(
                     color = Slate800,
                     modifier = Modifier.weight(1f)
                 )
-                Box {
-                    Image(
-                        painter = painterResource(R.drawable.ic_more_horiz),
-                        contentDescription = stringResource(R.string.plan_options),
-                        modifier = Modifier
-                            .size(24.dp)
-                            .clickable { showMenu = true }
-                    )
-                    DropdownMenu(
-                        expanded = showMenu,
-                        onDismissRequest = { showMenu = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.regenerate_plan)) },
-                            onClick = {
-                                showMenu = false
-                                showLeaveDialog = true
-                            }
+                if (!isBrowsedWeek) {
+                    Box {
+                        Image(
+                            painter = painterResource(R.drawable.ic_more_horiz),
+                            contentDescription = stringResource(R.string.plan_options),
+                            modifier = Modifier
+                                .size(24.dp)
+                                .clickable { showMenu = true }
                         )
+                        DropdownMenu(
+                            expanded = showMenu,
+                            onDismissRequest = { showMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.regenerate_plan)) },
+                                onClick = {
+                                    showMenu = false
+                                    showLeaveDialog = true
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -158,21 +169,23 @@ fun WeeklyPlanScreen(
                 )
             }
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.clickable(onClick = onTrackProgressClick)
-            ) {
-                Image(
-                    painter = painterResource(R.drawable.ic_moving),
-                    contentDescription = null,
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(modifier = Modifier.size(Spacing.small))
-                Text(
-                    text = stringResource(R.string.track_weekly_progress) + " →",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = Orange500
-                )
+            if (!isBrowsedWeek) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.clickable(onClick = onTrackProgressClick)
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.ic_moving),
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.size(Spacing.small))
+                    Text(
+                        text = stringResource(R.string.track_weekly_progress) + " →",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = Orange500
+                    )
+                }
             }
 
             state.days.forEach { planDay ->
@@ -184,11 +197,13 @@ fun WeeklyPlanScreen(
             }
         }
 
-        TrainrButton(
-            text = stringResource(R.string.start_todays_workout),
-            onClick = { state.todaysDay?.let(onStartTodayClick) },
-            modifier = Modifier.padding(horizontal = Spacing.screen, vertical = Spacing.medium)
-        )
+        if (!isBrowsedWeek) {
+            TrainrButton(
+                text = stringResource(R.string.start_todays_workout),
+                onClick = { state.todaysDay?.let(onStartTodayClick) },
+                modifier = Modifier.padding(horizontal = Spacing.screen, vertical = Spacing.medium)
+            )
+        }
     }
 }
 
