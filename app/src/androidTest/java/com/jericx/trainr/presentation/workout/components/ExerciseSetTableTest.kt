@@ -10,6 +10,12 @@ import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.down
+import androidx.compose.ui.test.moveTo
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.swipe
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
@@ -120,6 +126,21 @@ class ExerciseSetTableTest {
         assertThat(logged?.actualSeconds).isEqualTo(300)
     }
 
+    // A finger crosses the row, not the little number at its left edge, and the
+    // delete is decided by how far the row travelled.
+    private fun swipeRow(label: String, across: Float) {
+        val bounds = composeTestRule.onNodeWithText(label).fetchSemanticsNode().boundsInRoot
+        composeTestRule.onRoot().performTouchInput {
+            val y = bounds.center.y
+            swipe(
+                start = Offset(right - 1f, y),
+                end = Offset(right - (right - left) * across, y),
+                durationMillis = 300
+            )
+        }
+        composeTestRule.waitForIdle()
+    }
+
     @Test
     fun swipingARowAwayDeletesItsSet() {
         var deleted: ExerciseSet? = null
@@ -129,8 +150,7 @@ class ExerciseSetTableTest {
             onDeleteSet = { deleted = it }
         )
 
-        composeTestRule.onNodeWithText("2").performTouchInput { swipeLeft() }
-        composeTestRule.waitForIdle()
+        swipeRow("2", across = 0.95f)
 
         assertThat(deleted?.setNumber).isEqualTo(2)
     }
@@ -146,8 +166,7 @@ class ExerciseSetTableTest {
             onDeleteSet = { deleted = it }
         )
 
-        composeTestRule.onAllNodes(hasSetTextAction())[1].performTouchInput { swipeLeft() }
-        composeTestRule.waitForIdle()
+        swipeRow("2", across = 0.95f)
 
         assertThat(deleted?.setNumber).isEqualTo(2)
     }
@@ -177,8 +196,7 @@ class ExerciseSetTableTest {
         val replaced = (1..3).map { ExerciseSet(setNumber = it, targetReps = 12) }
         composeTestRule.runOnIdle { replaceSets(replaced) }
 
-        composeTestRule.onNodeWithText("2").performTouchInput { swipeLeft() }
-        composeTestRule.waitForIdle()
+        swipeRow("2", across = 0.95f)
 
         assertThat(deleted?.setNumber).isEqualTo(2)
     }
@@ -208,10 +226,57 @@ class ExerciseSetTableTest {
             }
         }
 
-        composeTestRule.onNodeWithText("2").performTouchInput { swipeLeft() }
-        composeTestRule.waitForIdle()
+        swipeRow("2", across = 0.95f)
 
         assertThat(deletions).containsExactly(2)
+    }
+
+    // Half a swipe used to be enough to delete, which made a stray graze
+    // destructive. It reveals the delete and lets go again.
+    @Test
+    fun halfASwipeRevealsTheDeleteWithoutDoingIt() {
+        var deleted: ExerciseSet? = null
+        setTable(
+            ExerciseMeasure.REPS,
+            sets = (1..3).map { ExerciseSet(setNumber = it, targetReps = 12) },
+            onDeleteSet = { deleted = it }
+        )
+
+        swipeRow("2", across = 0.5f)
+
+        assertThat(deleted).isNull()
+    }
+
+    // The delete has to be visible while the row is held aside — that is the
+    // whole point of the reveal. Gating it on swipe progress as well as
+    // direction hid it again as the swipe neared its anchor.
+    @Test
+    fun holdingARowAsideShowsTheDeleteBehindIt() {
+        setTable(
+            ExerciseMeasure.REPS,
+            sets = (1..3).map { ExerciseSet(setNumber = it, targetReps = 12) }
+        )
+
+        composeTestRule.onNodeWithText("2").performTouchInput {
+            down(centerRight)
+            moveTo(center)
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithContentDescription(string(R.string.delete_set))
+            .assertIsDisplayed()
+    }
+
+    // At rest there is nothing behind the row, or the red shows through it.
+    @Test
+    fun aRowAtRestHidesTheDelete() {
+        setTable(
+            ExerciseMeasure.REPS,
+            sets = (1..3).map { ExerciseSet(setNumber = it, targetReps = 12) }
+        )
+
+        composeTestRule.onNodeWithContentDescription(string(R.string.delete_set))
+            .assertDoesNotExist()
     }
 
     // With a single set there is nothing sensible left after a delete, so the
@@ -225,8 +290,7 @@ class ExerciseSetTableTest {
             onDeleteSet = { deleted = it }
         )
 
-        composeTestRule.onNodeWithText("1").performTouchInput { swipeLeft() }
-        composeTestRule.waitForIdle()
+        swipeRow("1", across = 0.95f)
 
         assertThat(deleted).isNull()
     }

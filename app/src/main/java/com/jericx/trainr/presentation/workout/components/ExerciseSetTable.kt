@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -16,22 +15,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.key
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,8 +40,8 @@ import com.jericx.trainr.R
 import com.jericx.trainr.domain.model.ExerciseMeasure
 import com.jericx.trainr.domain.model.ExerciseSet
 import androidx.compose.ui.graphics.Color
+import com.jericx.trainr.presentation.common.components.core.TrainrSwipeToDelete
 import com.jericx.trainr.presentation.common.theme.OutlineGray
-import com.jericx.trainr.presentation.common.theme.RedError
 import com.jericx.trainr.presentation.common.theme.Slate800
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TextMuted
@@ -282,50 +272,11 @@ private fun DeletableRow(
     onDelete: () -> Unit,
     content: @Composable () -> Unit
 ) {
-    // Read through rememberUpdatedState: the effect outlives the composition
-    // that captured it, and Compose keeps the memoized callback of a row whose
-    // set a reload replaced with an equal instance.
-    val currentOnDelete by rememberUpdatedState(onDelete)
-    val dismissState = rememberSwipeToDismissBoxState()
-    LaunchedEffect(dismissState) {
-        snapshotFlow { dismissState.currentValue }.collect { value ->
-            if (value == SwipeToDismissBoxValue.EndToStart) {
-                currentOnDelete()
-                dismissState.snapTo(SwipeToDismissBoxValue.Settled)
-            }
-        }
-    }
-
-    SwipeToDismissBox(
-        state = dismissState,
-        enableDismissFromStartToEnd = false,
-        backgroundContent = {
-            // Drawn only mid-swipe: the row's own content is transparent, so a
-            // permanent background would bleed red through every idle row.
-            if (dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart &&
-                dismissState.progress > 0f && dismissState.progress < 1f
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = Spacing.extraSmall)
-                        .clip(MaterialTheme.shapes.small)
-                        .background(RedError),
-                    contentAlignment = Alignment.CenterEnd
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = stringResource(R.string.delete_set),
-                        tint = Color.White,
-                        modifier = Modifier.padding(end = Spacing.tight)
-                    )
-                }
-            }
-        }
+    TrainrSwipeToDelete(
+        onDelete = onDelete,
+        contentDescription = stringResource(R.string.delete_set)
     ) {
-        Box(modifier = Modifier.background(MaterialTheme.colorScheme.surface)) {
-            content()
-        }
+        content()
     }
 }
 
