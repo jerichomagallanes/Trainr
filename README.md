@@ -86,3 +86,8 @@ Each variant supports both debug and release build types for comprehensive testi
 ## 🏃‍♀️ Start Your Fitness Journey
 
 Download Trainr today and let AI create the perfect workout plan tailored just for you!
+
+## 📄 Licence
+
+Released under the [MIT Licence](LICENSE) — use it, learn from it, build on it.
+Please keep the copyright notice, and note there is no warranty of any kind.
