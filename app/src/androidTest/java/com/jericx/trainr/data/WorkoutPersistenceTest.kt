@@ -214,6 +214,43 @@ class WorkoutPersistenceTest {
         assertThat(previous.single().actualReps).isEqualTo(10)
     }
 
+    // Sliding a routine complete logs nothing; that day must not shadow the
+    // older day whose numbers the PREVIOUS column exists to show.
+    @Test
+    fun aCompletedDayWithNothingLoggedDoesNotHideOlderLogs() = runTest {
+        val userId = seedSamplePlan()
+        val planId = repository.getWeeklyWorkoutPlan(userId, 1)!!.id
+        val squats = repository.getWeeklyWorkoutPlan(userId, 1)!!
+            .workoutDays.first { it.title == "Full Body Strength" }
+            .exercises.first { it.exerciseKey == "goblet_squat" }
+        val unlogged = WorkoutDay(
+            dayNumber = 6,
+            title = "Slid Complete",
+            status = WorkoutStatus.COMPLETED,
+            duration = 8,
+            exerciseCount = 1,
+            equipment = listOf("Dumbbells"),
+            exercises = listOf(
+                WorkoutExercise(
+                    exerciseKey = "goblet_squat",
+                    name = "Goblet Squats",
+                    measure = ExerciseMeasure.WEIGHT_AND_REPS,
+                    sets = listOf(ExerciseSet(setNumber = 1, targetReps = 12)),
+                    durationMinutes = 8,
+                    prescription = "1 set of 12 reps",
+                    instructions = "Squat.",
+                    isCompleted = true
+                )
+            ),
+            completedAt = SampleWorkoutData.dateOf(6)
+        )
+        repository.saveWorkoutDay(unlogged, planId)
+
+        val previous = repository.getPreviousSets(userId, "goblet_squat", 0, Long.MAX_VALUE)
+
+        assertThat(previous.map { it.actualReps }).isEqualTo(squats.sets.map { it.actualReps })
+    }
+
     @Test
     fun aDeletedSetStaysDeleted() = runTest {
         val userId = seedSamplePlan()
