@@ -137,6 +137,10 @@ class UserRepositoryImpl @Inject constructor(
         return userDao.insertExerciseSet(mapper.mapToEntity(set, workoutExerciseId))
     }
 
+    override suspend fun deleteExerciseSet(setId: Long) {
+        userDao.deleteExerciseSet(setId)
+    }
+
     override suspend fun getPreviousSets(
         userId: Long,
         exerciseKey: String,

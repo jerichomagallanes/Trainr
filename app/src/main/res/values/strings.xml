@@ -195,6 +195,7 @@
     <string name="reset_timer">Reset</string>
     <string name="set_column">Set</string>
     <string name="previous_column">Previous</string>
+    <string name="delete_set">Delete set</string>
     <string name="weight_column">kg</string>
     <string name="reps_column">Reps</string>
     <string name="time_column">Time</string>

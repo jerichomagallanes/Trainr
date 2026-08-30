@@ -138,6 +138,24 @@ class RoutineDetailViewModel @Inject constructor(
         }
     }
 
+    fun deleteSet(position: Int, set: ExerciseSet) {
+        val sets = _uiState.value.routine.exercises
+            .firstOrNull { it.position == position }?.sets ?: return
+        if (sets.size <= 1 || sets.none { it === set }) return
+
+        _uiState.update { it.copy(routine = it.routine.removeSet(position, set)) }
+
+        val exercise = storedExerciseAt(position) ?: return
+        if (set.id == 0L) return
+        viewModelScope.launch {
+            userRepository.deleteExerciseSet(set.id)
+            // The renumbered rows are written back, so order survives a reload.
+            _uiState.value.routine.exercises.first { it.position == position }
+                .sets.filter { it.id != 0L }
+                .forEach { userRepository.updateExerciseSet(it, exercise.id) }
+        }
+    }
+
     fun completeRoutine() {
         cancelTick()
         _uiState.update { it.copy(routine = it.routine.completeAll(), timer = null) }
