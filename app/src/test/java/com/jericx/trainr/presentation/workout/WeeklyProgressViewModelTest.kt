@@ -164,32 +164,51 @@ class WeeklyProgressViewModelTest {
         assertThat(viewModel.uiState.value.weeks).isEqualTo(SampleWeeklyProgress.weeks)
         assertThat(viewModel.uiState.value.isSampleData).isTrue()
     }
-    // A week generated ahead of its start can be thrown away and made again.
+    // A week that was trained is still the client's to drop; the app asks
+    // first and names what goes, rather than refusing on their behalf.
     @Test
-    fun anUpcomingWeekCanBeDeleted() = runTest {
-        // deleteWeek reads the clock, so this week has to be genuinely ahead of it.
-        val upcoming = plan(
-            weekNumber = 2,
-            start = System.currentTimeMillis() + TimeUnit.DAYS.toMillis(30),
-            statuses = arrayOf(WorkoutStatus.NOT_STARTED)
-        )
+    fun aTrainedWeekCanBeDeleted() = runTest {
+        val trained = plan(weekNumber = 1, statuses = arrayOf(WorkoutStatus.COMPLETED))
+        val second = plan(weekNumber = 2, statuses = arrayOf(WorkoutStatus.NOT_STARTED))
         coEvery { userRepository.getCurrentUser() } returns UserProfile(id = 1)
-        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(upcoming))
+        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(trained, second))
+
+        val viewModel = WeeklyProgressViewModel(userRepository)
+        advanceUntilIdle()
+        viewModel.deleteWeek(1)
+        advanceUntilIdle()
+
+        coVerify { userRepository.deleteWeeklyWorkoutPlan(trained.id) }
+    }
+
+    // Deleting from the middle would leave week two missing between one and
+    // three. The numbers are a running order, not a record — the dates say when
+    // each week was, and those do not move.
+    @Test
+    fun theWeeksAfterADeletedOneCloseTheGap() = runTest {
+        val one = plan(weekNumber = 1, statuses = arrayOf(WorkoutStatus.COMPLETED))
+        val two = plan(weekNumber = 2, statuses = arrayOf(WorkoutStatus.COMPLETED))
+        val three = plan(weekNumber = 3, statuses = arrayOf(WorkoutStatus.NOT_STARTED))
+        coEvery { userRepository.getCurrentUser() } returns UserProfile(id = 1)
+        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(one, two, three))
 
         val viewModel = WeeklyProgressViewModel(userRepository)
         advanceUntilIdle()
         viewModel.deleteWeek(2)
         advanceUntilIdle()
 
-        coVerify { userRepository.deleteWeeklyWorkoutPlan(upcoming.id) }
+        coVerify { userRepository.deleteWeeklyWorkoutPlan(two.id) }
+        coVerify { userRepository.updateWeeklyWorkoutPlan(match { it.id == three.id && it.weekNumber == 2 }) }
+        coVerify(exactly = 0) { userRepository.updateWeeklyWorkoutPlan(match { it.id == one.id }) }
     }
 
-    // Anything already trained is a record, not a draft.
+    // A plan of nothing is not a state to strand anyone in — the same reason an
+    // exercise keeps its final set. Starting over is what regenerating is for.
     @Test
-    fun aWeekThatHasStartedIsNotDeletable() = runTest {
-        val past = plan(weekNumber = 1, statuses = arrayOf(WorkoutStatus.COMPLETED))
+    fun theOnlyRemainingWeekIsKept() = runTest {
+        val only = plan(weekNumber = 1, statuses = arrayOf(WorkoutStatus.NOT_STARTED))
         coEvery { userRepository.getCurrentUser() } returns UserProfile(id = 1)
-        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(past))
+        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(only))
 
         val viewModel = WeeklyProgressViewModel(userRepository)
         advanceUntilIdle()
@@ -209,17 +228,17 @@ class WeeklyProgressViewModelTest {
         )
 
         assertThat(progress.status).isEqualTo(WeekStatus.IN_PROGRESS)
-        assertThat(progress.canDelete).isFalse()
+        assertThat(progress.hasTraining).isTrue()
     }
 
     @Test
-    fun anUntouchedFutureWeekCanStillBeDeleted() {
+    fun anUntouchedWeekHasNoTrainingToLose() {
         val progress = WeeklyProgressViewModel.weekProgressOf(
             plan(statuses = arrayOf(WorkoutStatus.NOT_STARTED, WorkoutStatus.NOT_STARTED)),
             nowMillis = beforeTheWeek()
         )
 
-        assertThat(progress.canDelete).isTrue()
+        assertThat(progress.hasTraining).isFalse()
     }
 
 }

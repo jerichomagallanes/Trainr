@@ -52,18 +52,37 @@ class WeeklyProgressViewModel @Inject constructor(
         }
     }
 
-    // Deleting an upcoming week clears the way to generate it again; the guard
-    // is repeated here so nothing but an unstarted week can be dropped.
+    // Any week can go, trained or not: it is the client's record to keep or
+    // drop. The last one stays, the same way an exercise keeps its final set —
+    // a plan of nothing is not a state worth landing anyone in, and starting
+    // over is what Regenerate plan is for.
     fun deleteWeek(weekNumber: Int) {
         viewModelScope.launch {
             val user = userRepository.getCurrentUser() ?: return@launch
-            val plan = userRepository.getWeeklyWorkoutPlans(user.id).first()
-                .firstOrNull { it.weekNumber == weekNumber } ?: return@launch
-            if (!weekProgressOf(plan).canDelete) return@launch
+            val plans = userRepository.getWeeklyWorkoutPlans(user.id).first()
+            if (plans.size <= 1) return@launch
+            val plan = plans.firstOrNull { it.weekNumber == weekNumber } ?: return@launch
 
             userRepository.deleteWeeklyWorkoutPlan(plan.id)
+            renumber(plans - plan)
             refresh()
         }
+    }
+
+    // Deleting from the middle would otherwise leave week two missing between
+    // one and three. The numbers are the plan's running order, not a record of
+    // anything — each week's dates say when it was, and those never move — so
+    // closing the gap tells the truth and reads as it should. Renumbered in
+    // ascending order, since two of the same number cannot exist at once.
+    private suspend fun renumber(remaining: List<WeeklyWorkoutPlan>) {
+        remaining
+            .sortedBy { it.weekNumber }
+            .forEachIndexed { index, plan ->
+                val number = index + 1
+                if (plan.weekNumber != number) {
+                    userRepository.updateWeeklyWorkoutPlan(plan.copy(weekNumber = number))
+                }
+            }
     }
 
     companion object {

@@ -207,9 +207,10 @@
     <string name="start_next_workout">次のワークアウトを開始</string>
     <string name="move_earlier">前の日に移動</string>
     <string name="move_later">後の日に移動</string>
-    <string name="delete_week_title">この週を削除しますか？</string>
-    <string name="delete_week_message">この週はまだ始まっていません。ワークアウトは削除され、いつでも再生成できます。</string>
+    <string name="delete_week_title">第%1$d週を削除しますか？</string>
+    <string name="delete_week_message">この週のワークアウトは削除されます。いつでも作り直せます。</string>
     <string name="delete_week_confirm">削除</string>
+    <string name="delete_week_message_trained">この週には%2$d件中%1$d件の記録があります。削除すると元に戻せません。</string>
     <string name="review_profile_description">変更は次に生成する週から反映されます</string>
     <string name="save_profile">プロフィールを保存</string>
     <string name="start_next_week">次の週を始める</string>
