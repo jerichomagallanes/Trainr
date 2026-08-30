@@ -139,8 +139,8 @@
     
     <!-- Workout Screens -->
     <string name="week_range_format">Linggo %1$d: %2$s</string>
-    <string name="leave_plan_title">Muling buuin ang plano?</string>
-    <string name="leave_plan_message">Buburahin ng bagong plano ang lahat ng linggong sinanay mo at ang lahat ng naitala. Sigurado ka ba?</string>
+    <string name="leave_plan_title">Gawing muli ang workout plan mo?</string>
+    <string name="leave_plan_message">Buburahin ng bagong workout plan ang lahat ng linggong sinanay mo at ang lahat ng naitala. Sigurado ka ba?</string>
     <string name="leave_plan_confirm">Muling buuin</string>
     <string name="cancel">Kanselahin</string>
     <string name="mark_exercise_complete">Markahan bilang tapos</string>
@@ -200,13 +200,13 @@
     <string name="delete_set">Burahin ang set</string>
     <string name="plan_options">Mga opsyon ng plano</string>
     <string name="regenerate_plan">Muling buuin ang plano</string>
-    <string name="no_plan_title">Wala pang plano</string>
-    <string name="no_plan_message">Nabura ang lahat ng linggo. Bumuo ng bagong plano kapag handa ka na.</string>
-    <string name="create_my_plan">GUMAWA NG PLANO</string>
+    <string name="no_plan_title">Walang workout plan</string>
+    <string name="no_plan_message">Nakasave ang fitness profile mo. Pwede kang gumawa ng bagong workout plan anumang oras.</string>
+    <string name="create_my_plan">GUMAWA NG WORKOUT PLAN</string>
     <string name="repeat_this_week">Ulitin ang linggong ito</string>
-    <string name="generation_failed_title">Hindi nagawa ang plano mo</string>
+    <string name="generation_failed_title">Hindi nagawa ang workout plan mo</string>
     <string name="generation_failed_offline">Hindi maabot ang internet. Tingnan ang koneksyon at subukan ulit.</string>
-    <string name="generation_failed_message">May nangyaring mali habang ginagawa ang plano mo. Subukan ulit.</string>
+    <string name="generation_failed_message">May nangyaring mali habang ginagawa ang workout plan mo. Subukan ulit.</string>
     <string name="try_again">Subukan ulit</string>
     <string name="back_to_profile">Bumalik sa profile</string>
     <string name="missed">Hindi nagawa</string>

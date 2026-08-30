@@ -139,8 +139,8 @@
     
     <!-- Workout Screens -->
     <string name="week_range_format">第%1$d週: %2$s</string>
-    <string name="leave_plan_title">プランを再生成しますか？</string>
-    <string name="leave_plan_message">新しいプランを作ると、これまでの全ての週と記録が削除されます。よろしいですか？</string>
+    <string name="leave_plan_title">ワークアウトプランを作り直しますか？</string>
+    <string name="leave_plan_message">新しいワークアウトプランを作ると、これまでの全ての週と記録が削除されます。よろしいですか？</string>
     <string name="leave_plan_confirm">再生成</string>
     <string name="cancel">キャンセル</string>
     <string name="mark_exercise_complete">エクササイズを完了にする</string>
@@ -197,13 +197,13 @@
     <string name="delete_set">セットを削除</string>
     <string name="plan_options">プランのオプション</string>
     <string name="regenerate_plan">プランを再生成</string>
-    <string name="no_plan_title">現在プランはありません</string>
-    <string name="no_plan_message">すべての週が削除されました。準備ができたら新しいプランを作成できます。</string>
-    <string name="create_my_plan">プランを作成</string>
+    <string name="no_plan_title">ワークアウトプランがありません</string>
+    <string name="no_plan_message">フィットネスプロフィールは保存されています。いつでも新しいワークアウトプランを作成できます。</string>
+    <string name="create_my_plan">ワークアウトプランを作成</string>
     <string name="repeat_this_week">この週をもう一度</string>
-    <string name="generation_failed_title">プランを作成できませんでした</string>
+    <string name="generation_failed_title">ワークアウトプランを作成できませんでした</string>
     <string name="generation_failed_offline">インターネットに接続できません。接続を確認してもう一度お試しください。</string>
-    <string name="generation_failed_message">プランの作成中に問題が発生しました。もう一度お試しください。</string>
+    <string name="generation_failed_message">ワークアウトプランの作成中に問題が発生しました。もう一度お試しください。</string>
     <string name="try_again">再試行</string>
     <string name="back_to_profile">プロフィールに戻る</string>
     <string name="missed">未実施</string>

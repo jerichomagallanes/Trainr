@@ -138,8 +138,8 @@
     
     <!-- Workout Screens -->
     <string name="week_range_format">Week %1$d: %2$s</string>
-    <string name="leave_plan_title">Regenerate your plan?</string>
-    <string name="leave_plan_message">A new plan erases every week you have trained and everything you have logged. Are you sure?</string>
+    <string name="leave_plan_title">Regenerate your workout plan?</string>
+    <string name="leave_plan_message">A new workout plan erases every week you have trained and everything you have logged. Are you sure?</string>
     <string name="leave_plan_confirm">Regenerate</string>
     <string name="cancel">Cancel</string>
     <string name="mark_exercise_complete">Mark exercise as complete</string>
@@ -199,13 +199,13 @@
     <string name="delete_set">Delete set</string>
     <string name="plan_options">Plan options</string>
     <string name="regenerate_plan">Regenerate plan</string>
-    <string name="no_plan_title">No plan right now</string>
-    <string name="no_plan_message">Every week has been deleted. Build a new plan whenever you are ready.</string>
-    <string name="create_my_plan">CREATE MY PLAN</string>
+    <string name="no_plan_title">No workout plan</string>
+    <string name="no_plan_message">Your fitness profile is saved. You can create a new workout plan whenever you are ready.</string>
+    <string name="create_my_plan">CREATE MY WORKOUT PLAN</string>
     <string name="repeat_this_week">Repeat this week</string>
-    <string name="generation_failed_title">Could not create your plan</string>
+    <string name="generation_failed_title">Could not create your workout plan</string>
     <string name="generation_failed_offline">Trainr could not reach the internet. Check your connection and try again.</string>
-    <string name="generation_failed_message">Something went wrong while writing your plan. Please try again.</string>
+    <string name="generation_failed_message">Something went wrong while writing your workout plan. Please try again.</string>
     <string name="try_again">Try again</string>
     <string name="back_to_profile">Back to profile</string>
     <string name="missed">Missed</string>
