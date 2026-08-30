@@ -44,6 +44,7 @@ import com.jericx.trainr.presentation.workout.util.WorkoutDateFormatter
 fun WeeklyProgressRoute(
     onBackClick: () -> Unit = {},
     onWeekClick: (WeekProgressUi) -> Unit = {},
+    onLastWeekDeleted: () -> Unit = {},
     viewModel: WeeklyProgressViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -52,10 +53,18 @@ fun WeeklyProgressRoute(
     // is reflected here.
     LaunchedEffect(Unit) { viewModel.refresh() }
 
+    // Delete the last week and this screen is a list of nothing. Progress
+    // against no plan is not a place to stand, so it hands back to the one
+    // screen that has something to say about having no plan — and something to
+    // do about it. Only once the reading is done: an empty list before that
+    // just means the plans have not been read yet.
+    LaunchedEffect(state.hasLoaded, state.weeks.isEmpty()) {
+        if (state.hasLoaded && state.weeks.isEmpty()) onLastWeekDeleted()
+    }
+
     WeeklyProgressScreen(
         weeks = state.weeks,
         onBackClick = onBackClick,
-        // Sample weeks stand for nothing stored, so they lead nowhere.
         onWeekClick = onWeekClick,
         onDeleteWeek = { viewModel.deleteWeek(it.weekNumber) }
     )

@@ -36,8 +36,11 @@ data class RoutineDetailUiState(
     val dayNumber: Int = 1,
     val weekNumber: Int = 1,
     val completesTheWeek: Boolean = false,
-    // False only while the stored routine may still replace the sample one;
-    // the completion guard must not treat that swap as finishing the day.
+    // False until the stored routine has been read. Nothing is drawn before
+    // then: the screen used to open on the built-in sample week and swap it for
+    // the real one a moment later, which read as a flicker of someone else's
+    // workout. The completion guard needs it too — that swap must not count as
+    // finishing the day.
     val isLoaded: Boolean = true
 )
 
@@ -56,8 +59,17 @@ class RoutineDetailViewModel @Inject constructor(
     private val requestedWeekNumber: Int? =
         savedStateHandle.get<Int>(Screen.RoutineDetail.ARG_WEEK_NUMBER)?.takeIf { it > 0 }
 
+    // Empty rather than the sample week: a placeholder that is never drawn has
+    // no business being real-looking, and one that is drawn has no business
+    // being a placeholder.
     private val _uiState = MutableStateFlow(
-        sampleState(requestedDayNumber).copy(isLoaded = false)
+        RoutineDetailUiState(
+            routine = RoutineUi(title = "", exercises = emptyList()),
+            equipment = emptyList(),
+            dateMillis = 0L,
+            dayNumber = requestedDayNumber,
+            isLoaded = false
+        )
     )
     val uiState: StateFlow<RoutineDetailUiState> = _uiState.asStateFlow()
 

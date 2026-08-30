@@ -339,6 +339,11 @@ fun AppContent(versionName: String) {
                         onBackClick = { navController.popBackStack() },
                         onWeekClick = { week ->
                             navController.navigate(Screen.WeekPlan.createRoute(week.weekNumber))
+                        },
+                        onLastWeekDeleted = {
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(Screen.Home.route) { inclusive = true }
+                            }
                         }
                     )
                 }
