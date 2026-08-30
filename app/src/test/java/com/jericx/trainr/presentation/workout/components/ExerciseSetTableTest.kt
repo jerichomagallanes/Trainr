@@ -31,8 +31,33 @@ class ExerciseSetTableTest {
     }
 
     @Test
-    fun aTimedSetReadsAsItsSeconds() {
-        assertThat(previousCellText(ExerciseMeasure.DURATION, set(seconds = 45))).isEqualTo("45")
+    fun aTimedSetReadsInTheTimersClockLanguage() {
+        assertThat(previousCellText(ExerciseMeasure.DURATION, set(seconds = 45))).isEqualTo("0:45")
+        assertThat(previousCellText(ExerciseMeasure.DURATION, set(seconds = 300))).isEqualTo("5:00")
+    }
+
+    @Test
+    fun secondsFormatAsMinutesAndSeconds() {
+        assertThat(formatSeconds(45)).isEqualTo("0:45")
+        assertThat(formatSeconds(300)).isEqualTo("5:00")
+        assertThat(formatSeconds(605)).isEqualTo("10:05")
+    }
+
+    // Digits fill in from the seconds end, the way a microwave timer is typed.
+    @Test
+    fun typedDigitsReadAsMinutesThenSeconds() {
+        assertThat(secondsFromDigits("5")).isEqualTo(5)
+        assertThat(secondsFromDigits("45")).isEqualTo(45)
+        assertThat(secondsFromDigits("500")).isEqualTo(300)
+        assertThat(secondsFromDigits("1230")).isEqualTo(750)
+        assertThat(secondsFromDigits("")).isNull()
+    }
+
+    @Test
+    fun storedSecondsRoundTripThroughTheirDigits() {
+        for (seconds in listOf(5, 45, 90, 300, 750)) {
+            assertThat(secondsFromDigits(durationDigits(seconds))).isEqualTo(seconds)
+        }
     }
 
     // A set that was prescribed but never logged must show a dash, not its

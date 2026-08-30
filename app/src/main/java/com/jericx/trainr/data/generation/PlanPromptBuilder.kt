@@ -68,9 +68,13 @@ class PlanPromptBuilder(
         - name, titles, equipment, prescription and instructions are display copy
           in the requested language. Capitalize each equipment item ("Dumbbells",
           "Yoga Mat").
-        - prescription describes the sets in words ("3 sets of 12 reps",
-          "5 minutes"); instructions are 1-2 sentences of how and why with one
-          form cue.
+        - Day titles are short and name the session's focus ("Full Body
+          Strength", "Lower Body Power") — never letter or index labels like
+          "Full Body A" or "Day 1".
+        - prescription is a short chip under about 25 characters, shaped like
+          "3 sets of 12 reps", "3 sets of 45 seconds" or "5 minutes". Per-side,
+          tempo or pacing detail belongs in instructions, never the prescription.
+        - instructions are 1-2 sentences of how and why with one form cue.
         - durationMinutes is the time allotted to the exercise in the session; it
           is independent of the prescription.
         - Respond with JSON only, exactly matching the provided schema.

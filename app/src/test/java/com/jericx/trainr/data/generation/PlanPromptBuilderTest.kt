@@ -140,5 +140,7 @@ class PlanPromptBuilderTest {
         assertThat(brief).contains("never by distance")
         assertThat(brief).contains("injuries strictly")
         assertThat(brief).contains("JSON only")
+        assertThat(brief).contains("never letter or index labels")
+        assertThat(brief).contains("under about 25 characters")
     }
 }
