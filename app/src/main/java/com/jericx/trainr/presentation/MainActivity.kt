@@ -1,5 +1,6 @@
 package com.jericx.trainr.presentation
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -63,12 +64,20 @@ private const val FORCED_LANGUAGE = "en"
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    // English-only for now, whatever the device says. The context this returns
+    // is the whole point of the call: it carries the English configuration, and
+    // it has to become the activity's base before any resources are read, which
+    // is why it happens here rather than in onCreate. Dropping it left the
+    // activity on the phone's locale, so the words came from the build (which
+    // ships English alone) while every date and weekday came from the device —
+    // 月曜日 under an English heading on a Japanese phone.
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(LocaleManager.updateAppLocale(newBase, FORCED_LANGUAGE))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // English-only for now, whatever the device or an old preference says:
-        // strings AND locale-driven formatting (dates) stay consistent.
-        LocaleManager.updateAppLocale(this, FORCED_LANGUAGE)
 
         enableEdgeToEdge()
 
