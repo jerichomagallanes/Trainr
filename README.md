@@ -24,8 +24,8 @@ App Demo
 
 ### Not yet
 
-- **Dark mode** — the app is pinned to light
-- **Japanese and Tagalog** — translated, but not yet enabled
+- **Dark mode**: the app is pinned to light
+- **Japanese and Tagalog**: translated, but not yet enabled
 
 ## 🎯 Fitness Goals Supported
 
@@ -68,7 +68,7 @@ The app follows Clean Architecture principles with three main layers:
 - **Data Layer**: Repository implementations, local database, and data sources
 
 Plan generation sits behind a single `PlanGenerator` interface that answers
-`Generated`, `Offline` or `Failed` — never a plan the model did not write. Every
+`Generated`, `Offline` or `Failed`, never a plan the model did not write. Every
 answer is validated before it is stored, and re-asked with the specific errors when
 it does not hold.
 
@@ -81,17 +81,24 @@ it does not hold.
 
 2. Open the project in Android Studio
 
-3. **Add your own Firebase project** — the build fails without it.
+3. **Set up Firebase.** Generation runs through Firebase AI Logic, so the build
+   needs a `google-services.json`. This repository does not ship one, so create
+   your own free project:
 
    - Create a project at [console.firebase.google.com](https://console.firebase.google.com)
-   - Register Android apps for `com.jericx.trainr` and `com.jericx.trainr.dev`
+   - Add two Android apps, using the package names this project already builds:
+     `com.jericx.trainr` and `com.jericx.trainr.dev`
    - Enable **AI Services → AI Logic**, choosing the **Gemini Developer API**
-   - Save `google-services.json` to `app/google-services.json`
+   - Save the generated `google-services.json` to `app/google-services.json`
+
+   It is your own project and your own free quota. If you would rather use your
+   own package name, change `applicationId` in `app/build.gradle.kts` first.
 
 4. Build and run on a device or emulator.
 
-   To generate a plan on a debug build, run it once and register the App Check
-   debug token it prints to logcat under **App Check → Manage debug tokens**.
+   Generation is guarded by App Check, which a debug build cannot satisfy on its
+   own. Run the app once, then register the debug token it prints to logcat under
+   **App Check → Manage debug tokens**.
 
 ## 🛠️ Build Variants
 
@@ -115,5 +122,5 @@ Download Trainr today and let AI create the perfect workout plan tailored just f
 
 ## 📄 Licence
 
-Released under the [MIT Licence](LICENSE) — use it, learn from it, build on it.
+Released under the [MIT Licence](LICENSE): use it, learn from it, build on it.
 Please keep the copyright notice, and note there is no warranty of any kind.
