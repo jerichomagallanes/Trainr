@@ -258,7 +258,9 @@ fun WorkoutSetupScreen(
                                 selected = selectedDuration == duration,
                                 onClick = { selectedDuration = duration },
                                 height = ComponentHeight.ChipTall,
-                                horizontalPadding = Spacing.tight,
+                                // The width is fixed and the label nearly fills
+                                // it, so any padding turns "90 mins" into "90...".
+                                horizontalPadding = 0.dp,
                                 modifier = Modifier.width(DurationChipWidth)
                             )
                         }

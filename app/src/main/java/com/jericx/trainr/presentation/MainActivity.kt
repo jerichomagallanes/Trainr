@@ -25,7 +25,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import androidx.navigation.compose.rememberNavController
 import com.jericx.trainr.BuildConfig
-import com.jericx.trainr.data.preferences.LanguagePreferences
 import com.jericx.trainr.data.preferences.NavigationStateManager
 import com.jericx.trainr.presentation.common.LocaleManager
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
@@ -58,18 +57,16 @@ private val editArguments = listOf(
 private val NavBackStackEntry.isEditing: Boolean
     get() = arguments?.getBoolean(Screen.EditableStep.ARG_EDIT) ?: false
 
+private const val FORCED_LANGUAGE = "en"
+
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val languagePreferences = LanguagePreferences(this)
-        val savedLanguageCode = languagePreferences.currentLanguage
-        val availableLanguageCodes = LocaleManager.getAvailableLanguageCodes(this)
-        val defaultLanguage = availableLanguageCodes.firstOrNull() ?: "en"
-        if (savedLanguageCode != defaultLanguage) {
-            LocaleManager.updateAppLocale(this, savedLanguageCode)
-        }
+        // English-only for now, whatever the device or an old preference says:
+        // strings AND locale-driven formatting (dates) stay consistent.
+        LocaleManager.updateAppLocale(this, FORCED_LANGUAGE)
 
         enableEdgeToEdge()
 

@@ -1,6 +1,5 @@
 package com.jericx.trainr.presentation.onboarding.screens
 
-import androidx.activity.ComponentActivity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -29,7 +28,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
@@ -40,12 +38,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.shape.CircleShape
 import com.jericx.trainr.R
-import com.jericx.trainr.data.preferences.LanguagePreferences
-import com.jericx.trainr.data.preferences.NavigationStateManager
-import com.jericx.trainr.presentation.common.LocaleManager
 import com.jericx.trainr.presentation.common.components.layout.InfiniteHorizontalPager
-import com.jericx.trainr.presentation.common.components.core.LanguageSelector
 import com.jericx.trainr.presentation.common.theme.Orange500
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.components.core.TrainrButton
@@ -59,9 +55,6 @@ data class OnboardingPage(
 fun WelcomeScreen(
     onGetStartedClick: () -> Unit
 ) {
-    val context = LocalContext.current
-    val languagePreferences = remember { LanguagePreferences(context) }
-    var currentLanguage by remember { mutableStateOf(languagePreferences.getCurrentLanguageObject(context)) }
     val pages = listOf(
         OnboardingPage(R.drawable.img_skipping, stringResource(R.string.personalized_workout_plans)),
         OnboardingPage(R.drawable.img_exercising, stringResource(R.string.ai_generated_routines)),
@@ -70,30 +63,18 @@ fun WelcomeScreen(
 
     var currentPage by remember { mutableIntStateOf(0) }
 
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .statusBarsPadding()
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            WelcomeHeader()
-
-        Spacer(modifier = Modifier.height(Spacing.large))
+        WelcomeHeader()
 
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.img_rectangle),
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.FillBounds
-            )
-
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -126,32 +107,11 @@ fun WelcomeScreen(
                     text = stringResource(R.string.get_started),
                     onClick = onGetStartedClick,
                     modifier = Modifier
-                        .fillMaxWidth(0.9f)
+                        .fillMaxWidth()
+                        .padding(horizontal = Spacing.screen)
                 )
             }
         }
-        }
-
-        LanguageSelector(
-            currentLanguage = currentLanguage,
-            onLanguageSelected = { language ->
-                languagePreferences.setLanguage(context, language.code)
-                currentLanguage = language
-
-                NavigationStateManager.setLanguageChangePending(context, true)
-                val activity = context as? ComponentActivity
-                activity?.let {
-                    LocaleManager.setAppLocale(it, language.code)
-                }
-            },
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(
-                    top = Spacing.medium,
-                    end = Spacing.medium
-                ),
-            compact = true
-        )
     }
 }
 
@@ -193,7 +153,7 @@ private fun WelcomeHeader() {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = Spacing.large)
-            .padding(top = Spacing.large),
+            .padding(top = Spacing.huge),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Row(
@@ -202,14 +162,14 @@ private fun WelcomeHeader() {
         ) {
             Text(
                 text = stringResource(R.string.welcome_to) + " ",
-                style = MaterialTheme.typography.headlineLarge,
+                style = MaterialTheme.typography.headlineLarge.copy(fontSize = 30.sp),
                 color = MaterialTheme.colorScheme.onBackground
             )
 
             Image(
                 painter = painterResource(id = R.drawable.img_trainr),
                 contentDescription = stringResource(R.string.trainr),
-                modifier = Modifier.height(42.dp),
+                modifier = Modifier.height(52.dp),
                 contentScale = ContentScale.FillHeight
             )
         }
@@ -219,13 +179,13 @@ private fun WelcomeHeader() {
         Text(
             text = buildAnnotatedString {
                 append(stringResource(R.string.your) + " ")
-                withStyle(style = SpanStyle(color = Orange500)) {
+                withStyle(style = SpanStyle(color = Orange500, fontWeight = FontWeight.Bold)) {
                     append(stringResource(R.string.ai_powered))
                 }
                 append(" " + stringResource(R.string.personal_trainer))
             },
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+            color = MaterialTheme.colorScheme.onBackground,
             textAlign = TextAlign.Center
         )
     }
@@ -244,17 +204,17 @@ private fun PageIndicator(
         repeat(pageCount) { index ->
             Box(
                 modifier = Modifier
-                    .size(8.dp)
+                    .size(10.dp)
                     .background(
                         if (index == currentPage)
                             MaterialTheme.colorScheme.onBackground
                         else
                             MaterialTheme.colorScheme.onBackground.copy(alpha = 0.3f),
-                        shape = MaterialTheme.shapes.small
+                        shape = CircleShape
                     )
             )
             if (index < pageCount - 1) {
-                Spacer(modifier = Modifier.width(Spacing.small))
+                Spacer(modifier = Modifier.width(Spacing.tight))
             }
         }
     }
