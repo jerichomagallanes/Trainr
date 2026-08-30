@@ -12,6 +12,7 @@ import com.jericx.trainr.domain.model.withoutWeekNumber
 import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.domain.repository.UserRepository
 import com.jericx.trainr.presentation.workout.util.WorkoutWeek
+import com.jericx.trainr.presentation.workout.util.isReadyForTheNextWeek
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -59,6 +60,7 @@ class NextWeekViewModel @Inject constructor(
                 val user = userRepository.getCurrentUser() ?: return@launch
                 val plans = userRepository.getWeeklyWorkoutPlans(user.id).first()
                 val latest = plans.maxByOrNull { it.weekNumber } ?: return@launch
+                if (!latest.isReadyForTheNextWeek()) return@launch
                 if (userRepository.getWeeklyWorkoutPlan(user.id, latest.weekNumber + 1) != null) {
                     return@launch
                 }
@@ -130,6 +132,9 @@ class NextWeekViewModel @Inject constructor(
         val user = userRepository.getCurrentUser() ?: return null
         val latest = userRepository.getWeeklyWorkoutPlans(user.id).first()
             .maxByOrNull { it.weekNumber } ?: return null
+        // The plan takes one week at a time, and the rule is enforced here as
+        // well as shown: a screen may forget to ask, the write must not.
+        if (!latest.isReadyForTheNextWeek()) return null
         if (userRepository.getWeeklyWorkoutPlan(user.id, latest.weekNumber + 1) != null) return null
         return user to latest
     }
