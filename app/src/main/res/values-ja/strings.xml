@@ -3,12 +3,9 @@
     <string name="app_name">Trainr</string>
     
     <!-- Home Screen -->
-    <string name="welcome_to_home">Trainrへようこそ！</string>
-    <string name="home_coming_soon">あなた専用のワークアウトダッシュボードは近日公開予定です。</string>
     
     <!-- Welcome Screen -->
     <string name="welcome_to">ようこそ</string>
-    <string name="trainr_description">AI搭載のパーソナルトレーナー。</string>
     <string name="get_started">始める</string>
     <string name="personalized_workout_plans">パーソナライズされたワークアウトプラン</string>
     <string name="ai_generated_routines">AI生成ルーティン</string>
@@ -57,7 +54,7 @@
     <string name="lose_weight">減量</string>
     <string name="lose_weight_description">脂肪を燃やしてスリムになる。</string>
     <string name="build_muscle">筋肉増量</string>
-    <string name="build_muscle_description">筋肉量とサイズを増やす</string>
+    <string name="build_muscle_description">筋肉量とサイズを増やす。</string>
     <string name="get_stronger">筋力向上</string>
     <string name="get_stronger_description">筋力とパワーを向上させる。</string>
     <string name="improve_endurance">持久力向上</string>
@@ -93,9 +90,9 @@
     <string name="afternoon_time">午後 (12-17時)</string>
     <string name="evening_time">夜 (17-22時)</string>
     <string name="flexible_anytime">柔軟/いつでも</string>
-    <string name="workout_days_option" formatted="false">%d %s</string>
-    <string name="day">日</string>
-    <string name="days">日</string>
+    <plurals name="workout_days_option">
+        <item quantity="other">%d日</item>
+    </plurals>
     
     <!-- Limitations Screen -->
     <string name="lets_keep_you_safe">安全を保ちましょう</string>
@@ -114,34 +111,18 @@
     
     <!-- Review Screen -->
     <string name="your_fitness_profile">あなたのフィットネスプロフィール</string>
-    <string name="review_description">プランを作成する前に情報を確認してください</string>
+    <string name="review_description">ワークアウトプランを作成する前に情報を確認してください</string>
     <string name="personal_information">個人情報</string>
-    <string name="height_cm_value">%d cm</string>
-    <string name="weight_kg_value">%.1f kg</string>
-    <string name="experience">経験</string>
-    <string name="fitness_goals">フィットネスゴール</string>
-    <string name="main_goal">メインゴール</string>
-    <string name="workout_style">ワークアウトスタイル</string>
-    <string name="workout_setup">ワークアウトセットアップ</string>
-    <string name="location">場所</string>
-    <string name="equipment">器具</string>
-    <string name="schedule">スケジュール</string>
-    <string name="flexible">柔軟</string>
-    <string name="duration">時間</string>
-    <string name="preferred_time">好みの時間</string>
-    <string name="limitations">制限事項</string>
-    <string name="injuries_concerns">怪我/懸念事項</string>
-    <string name="ai_routine_preview">AIルーティンプレビュー</string>
     <string name="generate_my_workout_plan">ワークアウトプランを生成</string>
     
     <!-- Generating Screen -->
-    <string name="generating_your_workout_routine">ワークアウトルーティンを生成中</string>
+    <string name="generating_your_workout_routine">ワークアウトプランを作成中</string>
     
     <!-- Workout Screens -->
     <string name="week_range_format">第%1$d週: %2$s</string>
-    <string name="leave_plan_title">ワークアウトプランを作り直しますか？</string>
+    <string name="leave_plan_title">新しいワークアウトプランを作成しますか？</string>
     <string name="leave_plan_message">新しいワークアウトプランを作ると、これまでの全ての週と記録が削除されます。よろしいですか？</string>
-    <string name="leave_plan_confirm">再生成</string>
+    <string name="leave_plan_confirm">新しく作成</string>
     <string name="cancel">キャンセル</string>
     <string name="mark_exercise_complete">エクササイズを完了にする</string>
     <string name="mark_exercise_incomplete">エクササイズを未完了にする</string>
@@ -156,20 +137,14 @@
     <string name="skipped">スキップ</string>
     <string name="upcoming">予定</string>
     <string name="weekly_progress">週間進歩</string>
-    <string name="completed_percentage" formatted="false">%d%% 完了 (%d%%)</string>
     <string name="start_todays_workout">今日のワークアウトを開始</string>
     <string name="day_completed_format">%d日目 完了</string>
-    <string name="day_completed_message">お疲れさまでした！今日のワークアウトが完了しました。この調子で続けましょう。</string>
+    <string name="day_completed_message">お疲れさまでした！このワークアウトが完了しました。この調子で続けましょう。</string>
     <string name="view_weekly_progress">週間の進捗を見る</string>
     <string name="back_to_workout_plan">ワークアウトプランに戻る</string>
     <string name="week_completed_format">第%d週 完了</string>
     <string name="week_completed_message">今週のワークアウトをすべて終えました。素晴らしい継続力です。この調子で続けましょう！</string>
     <string name="slide_to_complete_routine">スライドしてこのワークアウトを完了</string>
-    <string name="day_number">第%d日</string>
-    <string name="full_body_strength">全身筋力</string>
-    <string name="cardio_and_core">有酸素運動＆コア</string>
-    <string name="lower_body_power">下半身パワー</string>
-    <string name="upper_body_strength">上半身筋力</string>
     <plurals name="minutes">
         <item quantity="other">%d分</item>
     </plurals>
@@ -177,12 +152,9 @@
         <item quantity="other">%d エクササイズ</item>
     </plurals>
     <string name="equipment_label">器具:</string>
-    <string name="yoga_mat">ヨガマット</string>
-    <string name="treadmill">トレッドミル</string>
     <string name="completed">完了</string>
     <string name="in_progress">進行中</string>
     <string name="not_started">未開始</string>
-    <string name="warm_up_jog">ウォームアップジョギング</string>
     <string name="hide_video_tutorial">ビデオチュートリアルを非表示</string>
     <string name="show_video_tutorial">ビデオチュートリアルを表示</string>
     <string name="play_video_tutorial">ビデオチュートリアルを再生</string>
@@ -194,7 +166,7 @@
     <string name="set_column">セット</string>
     <string name="previous_column">前回</string>
     <string name="delete_set">セットを削除</string>
-    <string name="plan_options">プランのオプション</string>
+    <string name="plan_options">ワークアウトプランのオプション</string>
     <string name="app_about_message">ワークアウトプランは、設定したフィットネスプロフィールをもとにAIが作成します。</string>
     <string name="app_version_format">バージョン %1$s</string>
     <string name="about_the_app">Trainrについて</string>
@@ -205,7 +177,7 @@
     <string name="create_my_plan">ワークアウトプランを作成</string>
     <string name="repeat_this_week">この週をもう一度</string>
     <string name="generation_failed_title">ワークアウトプランを作成できませんでした</string>
-    <string name="generation_failed_offline">インターネットに接続できません。接続を確認してもう一度お試しください。</string>
+    <string name="generation_failed_offline">Trainrはオフラインです。接続を確認してもう一度お試しください。</string>
     <string name="generation_failed_message">ワークアウトプランの作成中に問題が発生しました。もう一度お試しください。</string>
     <string name="try_again">再試行</string>
     <string name="back_to_profile">プロフィールに戻る</string>
@@ -219,7 +191,7 @@
     <plurals name="delete_week_message_trained">
         <item quantity="other">この週には%2$d件中%1$d件の記録があります。削除すると元に戻せません。</item>
     </plurals>
-    <string name="review_profile_description">変更は次に生成する週から反映されます</string>
+    <string name="review_profile_description">次に生成する週からこの内容が使われます。</string>
     <string name="save_profile">プロフィールを保存</string>
     <string name="generate_next_week">次の週を生成</string>
     <string name="update_profile">プロフィールを更新</string>
@@ -247,7 +219,6 @@
     <string name="version_format">v%s</string>
     
     <!-- Review Screen Labels -->
-    <string name="name_label">名前</string>
     <string name="age_label">年齢</string>
     <string name="gender_label">性別</string>
     <string name="height_label">身長</string>
@@ -264,8 +235,8 @@
     <string name="preferred_time_label">好みの時間</string>
     <string name="limitations_label">制限事項</string>
     <string name="injuries_concerns_label">怪我/懸念事項</string>
-    <string name="ai_routine_preview_label">AIルーティンプレビュー</string>
-    <string name="ai_routine_description">あなたのプロフィールに基づいて、%3$sを重視した%1$sの%2$sプログラムを作成します。</string>
+    <string name="ai_routine_preview_label">AIワークアウトプラン</string>
+    <string name="ai_routine_description">あなたのプロフィールに基づいて、%3$sを重視した%1$sの%2$sプランを作成します。</string>
     <string name="bodyweight_only_label">自重のみ</string>
     <string name="flexible_schedule">柔軟</string>
     <plurals name="days_per_week_format">
@@ -284,7 +255,6 @@
     <string name="dropdown_content_description">ドロップダウンメニュー</string>
     
     <!-- Weekly Plan -->
-    <string name="weekly_plan_title">あなたの週間ワークアウトプラン</string>
     
     <!-- Gender Options -->
     <string name="male_gender">男性</string>
@@ -347,7 +317,6 @@
     
     <!-- Language Selection -->
     <string name="language_selection">言語選択</string>
-    <string name="select_language">言語を選択</string>
     <string name="language_english">English</string>
     <string name="language_tagalog">Tagalog</string>
     <string name="language_japanese">日本語</string>

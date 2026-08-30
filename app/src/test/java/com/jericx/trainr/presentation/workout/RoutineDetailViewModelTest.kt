@@ -21,6 +21,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -63,6 +64,16 @@ class RoutineDetailViewModelTest {
         repository
     )
 
+    // The routine screen holds nothing until the stored week has been read, so
+    // a test that acts on exercises has to let the read happen first. It used
+    // to open on the built-in sample week, which made every one of these tests
+    // an assertion about a placeholder.
+    private fun TestScope.loadedViewModel(
+        dayNumber: Int = SampleWorkoutData.DEFAULT_DAY_NUMBER,
+        repository: UserRepository = repositoryWith(SampleWorkoutData.weekOne),
+        weekNumber: Int = Screen.RoutineDetail.LATEST_WEEK
+    ) = viewModel(dayNumber, repository, weekNumber).also { advanceUntilIdle() }
+
     private fun RoutineDetailViewModel.exercise(position: Int): ExerciseUi =
         uiState.value.routine.exercises.first { it.position == position }
 
@@ -72,7 +83,7 @@ class RoutineDetailViewModelTest {
     // workout day of the week, even though its dayNumber is 3 (Wednesday).
     @Test
     fun theRoutineKnowsWhichWorkoutDayOfTheWeekItIs() = runTest {
-        assertThat(viewModel().uiState.value.dayNumber).isEqualTo(2)
+        assertThat(loadedViewModel().uiState.value.dayNumber).isEqualTo(2)
     }
 
     private fun day(number: Int, status: WorkoutStatus) = WorkoutDay(
@@ -124,15 +135,15 @@ class RoutineDetailViewModelTest {
         assertThat(RoutineDetailViewModel.completesTheWeek(days, dayNumber = 1)).isTrue()
     }
 
-    // Friday is still untouched in the sample plan, so Wednesday ends the day.
+    // Friday is still untouched in the stored week, so Wednesday ends the day.
     @Test
     fun theSampleRoutineEndsTheDayRatherThanTheWeek() = runTest {
-        assertThat(viewModel().uiState.value.completesTheWeek).isFalse()
+        assertThat(loadedViewModel().uiState.value.completesTheWeek).isFalse()
     }
 
     @Test
     fun aRoutineIsNotCompleteUntilEveryExerciseIs() = runTest {
-        val viewModel = viewModel()
+        val viewModel = loadedViewModel()
 
         assertThat(viewModel.uiState.value.routine.isComplete).isFalse()
 
@@ -143,7 +154,7 @@ class RoutineDetailViewModelTest {
 
     @Test
     fun startingATimerCountsDownFromTheExerciseDuration() = runTest {
-        val viewModel = viewModel()
+        val viewModel = loadedViewModel()
 
         viewModel.startTimer(viewModel.exercise(2))
         assertThat(viewModel.uiState.value.timer?.remainingSeconds).isEqualTo(600)
@@ -156,7 +167,7 @@ class RoutineDetailViewModelTest {
 
     @Test
     fun pausingHoldsTheCountdownWhereItIs() = runTest {
-        val viewModel = viewModel()
+        val viewModel = loadedViewModel()
 
         viewModel.startTimer(viewModel.exercise(2))
         advanceTimeBy(3_000)
@@ -171,7 +182,7 @@ class RoutineDetailViewModelTest {
 
     @Test
     fun resumingCarriesOnFromWhereItPaused() = runTest {
-        val viewModel = viewModel()
+        val viewModel = loadedViewModel()
 
         viewModel.startTimer(viewModel.exercise(2))
         advanceTimeBy(3_000)
@@ -187,7 +198,7 @@ class RoutineDetailViewModelTest {
 
     @Test
     fun resettingReturnsToTheFullIntervalAndHoldsItThere() = runTest {
-        val viewModel = viewModel()
+        val viewModel = loadedViewModel()
 
         viewModel.startTimer(viewModel.exercise(2))
         advanceTimeBy(30_000)
@@ -203,7 +214,7 @@ class RoutineDetailViewModelTest {
     // Reset prepares another go; it does not start one.
     @Test
     fun aResetTimerDoesNotTickUntilItIsResumed() = runTest {
-        val viewModel = viewModel()
+        val viewModel = loadedViewModel()
 
         viewModel.startTimer(viewModel.exercise(2))
         advanceTimeBy(30_000)
@@ -223,7 +234,7 @@ class RoutineDetailViewModelTest {
 
     @Test
     fun resettingWithNoTimerRunningChangesNothing() = runTest {
-        val viewModel = viewModel()
+        val viewModel = loadedViewModel()
 
         viewModel.resetTimer()
 
@@ -232,7 +243,7 @@ class RoutineDetailViewModelTest {
 
     @Test
     fun stoppingClearsTheTimerWithoutCompletingTheExercise() = runTest {
-        val viewModel = viewModel()
+        val viewModel = loadedViewModel()
 
         viewModel.startTimer(viewModel.exercise(2))
         advanceTimeBy(3_000)
@@ -246,7 +257,7 @@ class RoutineDetailViewModelTest {
     // Running out of time is what finishes an exercise.
     @Test
     fun theCountdownReachingZeroCompletesTheExercise() = runTest {
-        val viewModel = viewModel()
+        val viewModel = loadedViewModel()
 
         viewModel.startTimer(viewModel.exercise(4))
         advanceTimeBy(4 * 60 * 1_000L)
@@ -258,7 +269,7 @@ class RoutineDetailViewModelTest {
 
     @Test
     fun theCountdownKeepsRunningRightUpToTheLastSecond() = runTest {
-        val viewModel = viewModel()
+        val viewModel = loadedViewModel()
 
         viewModel.startTimer(viewModel.exercise(4))
         advanceTimeBy(4 * 60 * 1_000L - 1_000L)
@@ -271,7 +282,7 @@ class RoutineDetailViewModelTest {
     // Two countdowns racing would be nonsense, so a new one replaces the old.
     @Test
     fun startingAnotherExerciseReplacesTheRunningTimer() = runTest {
-        val viewModel = viewModel()
+        val viewModel = loadedViewModel()
 
         viewModel.startTimer(viewModel.exercise(2))
         advanceTimeBy(3_000)
@@ -286,7 +297,7 @@ class RoutineDetailViewModelTest {
 
     @Test
     fun tickingTheExerciseOffClearsItsTimer() = runTest {
-        val viewModel = viewModel()
+        val viewModel = loadedViewModel()
 
         viewModel.startTimer(viewModel.exercise(2))
         advanceTimeBy(3_000)
@@ -301,7 +312,7 @@ class RoutineDetailViewModelTest {
 
     @Test
     fun untickingAnExerciseLeavesAnotherExercisesTimerAlone() = runTest {
-        val viewModel = viewModel()
+        val viewModel = loadedViewModel()
 
         viewModel.startTimer(viewModel.exercise(2))
         advanceTimeBy(3_000)
@@ -313,7 +324,7 @@ class RoutineDetailViewModelTest {
 
     @Test
     fun tutorialsStartCollapsedAndToggleIndependently() = runTest {
-        val viewModel = viewModel()
+        val viewModel = loadedViewModel()
 
         assertThat(viewModel.uiState.value.expandedVideos).isEmpty()
 
@@ -328,7 +339,7 @@ class RoutineDetailViewModelTest {
     // Only one WebView should ever be alive, so playing one stops the other.
     @Test
     fun playingATutorialStopsWhicheverWasPlaying() = runTest {
-        val viewModel = viewModel()
+        val viewModel = loadedViewModel()
 
         viewModel.toggleVideo(2)
         viewModel.playVideo(2)
@@ -341,7 +352,7 @@ class RoutineDetailViewModelTest {
 
     @Test
     fun collapsingAPlayingTutorialStopsIt() = runTest {
-        val viewModel = viewModel()
+        val viewModel = loadedViewModel()
 
         viewModel.toggleVideo(2)
         viewModel.playVideo(2)
@@ -353,7 +364,7 @@ class RoutineDetailViewModelTest {
 
     @Test
     fun collapsingADifferentTutorialLeavesThePlayingOneAlone() = runTest {
-        val viewModel = viewModel()
+        val viewModel = loadedViewModel()
 
         viewModel.toggleVideo(2)
         viewModel.playVideo(2)
@@ -365,7 +376,7 @@ class RoutineDetailViewModelTest {
 
     @Test
     fun completingTheWholeRoutineClearsTheTimer() = runTest {
-        val viewModel = viewModel()
+        val viewModel = loadedViewModel()
 
         viewModel.startTimer(viewModel.exercise(2))
         advanceTimeBy(3_000)
@@ -498,8 +509,8 @@ class RoutineDetailViewModelTest {
         }
     }
 
-    // The stored routine replaces the sample synchronously shown before it; the
-    // screen must be able to tell the swap from the user finishing the day.
+    // Nothing is drawn until the stored routine arrives, and the completion
+    // guard must be able to tell its arrival from the user finishing the day.
     @Test
     fun theStateIsNotLoadedUntilTheRepositoryAnswers() = runTest {
         val viewModel = viewModel(dayNumber = 3, repository = repositoryWith(storedPlan))
@@ -642,15 +653,15 @@ class RoutineDetailViewModelTest {
     }
 
     @Test
-    fun theSampleFallbackPersistsNothing() = runTest {
+    fun nothingStoredMeansNothingWritten() = runTest {
         val repository = emptyRepository()
         val viewModel = viewModel(repository = repository)
         advanceUntilIdle()
 
         viewModel.toggleExercise(3)
-        viewModel.updateSet(3, viewModel.exercise(3).sets.first().copy(actualReps = 20))
+        viewModel.updateSet(3, ExerciseSet(setNumber = 1, targetReps = 12, actualReps = 20))
         viewModel.addSet(3)
-        viewModel.deleteSet(3, viewModel.exercise(3).sets.first().setNumber)
+        viewModel.deleteSet(3, 1)
         viewModel.completeRoutine()
         advanceUntilIdle()
 

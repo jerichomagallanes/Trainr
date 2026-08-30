@@ -230,17 +230,23 @@ fun WorkoutSetupScreen(
                     verticalPadding = 0.dp,
                     titleGap = Spacing.card
                 ) {
+                    // Matched by position rather than by reading the number back
+                    // out of the label: the label is prose, and prose in another
+                    // language need not put a space after the digit — or a digit
+                    // where English puts one.
+                    val dayOptions = Constants.Workout.DAYS_PER_WEEK_OPTIONS
+                    val dayLabels = dayOptions.map {
+                        pluralStringResource(R.plurals.workout_days_option, it, it)
+                    }
                     TrainrDropdown(
-                        selectedValue = selectedDays.toString(),
-                        options = Constants.Workout.DAYS_PER_WEEK_OPTIONS.map { days ->
-                            stringResource(
-                                R.string.workout_days_option,
-                                days,
-                                if (days == 1) stringResource(R.string.day) else stringResource(R.string.days)
-                            )
+                        selectedValue = dayLabels.getOrElse(dayOptions.indexOf(selectedDays)) {
+                            dayLabels.first()
                         },
+                        options = dayLabels,
                         onSelectionChange = { selectedOption ->
-                            selectedDays = selectedOption.split(" ").firstOrNull()?.toIntOrNull() ?: Constants.Workout.DEFAULT_WORKOUT_DAYS_PER_WEEK
+                            selectedDays = dayOptions.getOrElse(dayLabels.indexOf(selectedOption)) {
+                                Constants.Workout.DEFAULT_WORKOUT_DAYS_PER_WEEK
+                            }
                         }
                     )
                 }

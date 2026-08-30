@@ -2,12 +2,9 @@
     <string name="app_name">Trainr</string>
     
     <!-- Home Screen -->
-    <string name="welcome_to_home">Welcome to Trainr!</string>
-    <string name="home_coming_soon">Your personalized workout dashboard is coming soon.</string>
     
     <!-- Welcome Screen -->
     <string name="welcome_to">WELCOME TO</string>
-    <string name="trainr_description">Your AI-powered personal trainer.</string>
     <string name="get_started">Get Started</string>
     <string name="personalized_workout_plans">Personalized workout plans</string>
     <string name="ai_generated_routines">AI-generated routines</string>
@@ -56,7 +53,7 @@
     <string name="lose_weight">Lose Weight</string>
     <string name="lose_weight_description">Burn fat and slim down.</string>
     <string name="build_muscle">Build Muscle</string>
-    <string name="build_muscle_description">Gain muscle mass and size</string>
+    <string name="build_muscle_description">Gain muscle mass and size.</string>
     <string name="get_stronger">Get Stronger</string>
     <string name="get_stronger_description">Increase strength and power.</string>
     <string name="improve_endurance">Improve Endurance</string>
@@ -92,9 +89,10 @@
     <string name="afternoon_time">Afternoon (12-5 PM)</string>
     <string name="evening_time">Evening (5-10 PM)</string>
     <string name="flexible_anytime">Flexible/Anytime</string>
-    <string name="workout_days_option" formatted="false">%d %s</string>
-    <string name="day">day</string>
-    <string name="days">days</string>
+    <plurals name="workout_days_option">
+        <item quantity="one">%d day</item>
+        <item quantity="other">%d days</item>
+    </plurals>
     
     <!-- Limitations Screen -->
     <string name="lets_keep_you_safe">LET\'S KEEP YOU SAFE</string>
@@ -113,34 +111,18 @@
     
     <!-- Review Screen -->
     <string name="your_fitness_profile">YOUR FITNESS PROFILE</string>
-    <string name="review_description">Review your information before we create your plan</string>
+    <string name="review_description">Review your information before we create your workout plan</string>
     <string name="personal_information">Personal Information</string>
-    <string name="height_cm_value">%d cm</string>
-    <string name="weight_kg_value">%.1f kg</string>
-    <string name="experience">Experience</string>
-    <string name="fitness_goals">Fitness Goals</string>
-    <string name="main_goal">Main Goal</string>
-    <string name="workout_style">Workout Style</string>
-    <string name="workout_setup">Workout Setup</string>
-    <string name="location">Location</string>
-    <string name="equipment">Equipment</string>
-    <string name="schedule">Schedule</string>
-    <string name="flexible">Flexible</string>
-    <string name="duration">Duration</string>
-    <string name="preferred_time">Preferred Time</string>
-    <string name="limitations">Limitations</string>
-    <string name="injuries_concerns">Injuries/Concerns</string>
-    <string name="ai_routine_preview">AI Routine Preview</string>
     <string name="generate_my_workout_plan">GENERATE MY WORKOUT PLAN</string>
     
     <!-- Generating Screen -->
-    <string name="generating_your_workout_routine">Generating your workout routine</string>
+    <string name="generating_your_workout_routine">Generating your workout plan</string>
     
     <!-- Workout Screens -->
     <string name="week_range_format">Week %1$d: %2$s</string>
-    <string name="leave_plan_title">Regenerate your workout plan?</string>
+    <string name="leave_plan_title">Start a new workout plan?</string>
     <string name="leave_plan_message">A new workout plan erases every week you have trained and everything you have logged. Are you sure?</string>
-    <string name="leave_plan_confirm">Regenerate</string>
+    <string name="leave_plan_confirm">Start new plan</string>
     <string name="cancel">Cancel</string>
     <string name="mark_exercise_complete">Mark exercise as complete</string>
     <string name="mark_exercise_incomplete">Mark exercise as not complete</string>
@@ -156,20 +138,14 @@
     <string name="skipped">Skipped</string>
     <string name="upcoming">Upcoming</string>
     <string name="weekly_progress">WEEKLY PROGRESS</string>
-    <string name="completed_percentage" formatted="false">%d%% Completed (%d%%)</string>
     <string name="start_todays_workout">START TODAY\'S WORKOUT</string>
     <string name="day_completed_format">DAY %d COMPLETED</string>
-    <string name="day_completed_message">Nice job! You\'ve completed today\'s workout. Keep the momentum going.</string>
+    <string name="day_completed_message">Nice job! That workout is done. Keep the momentum going.</string>
     <string name="view_weekly_progress">View Weekly Progress</string>
     <string name="back_to_workout_plan">Back to My Workout Plan</string>
     <string name="week_completed_format">WEEK %d COMPLETED</string>
     <string name="week_completed_message">You\'ve finished all your workouts this week. Amazing consistency. Keep it up!</string>
     <string name="slide_to_complete_routine">SLIDE TO FINISH THIS WORKOUT</string>
-    <string name="day_number">DAY %d</string>
-    <string name="full_body_strength">Full Body Strength</string>
-    <string name="cardio_and_core">Cardio &amp; Core</string>
-    <string name="lower_body_power">Lower Body Power</string>
-    <string name="upper_body_strength">Upper Body Strength</string>
     <plurals name="minutes">
         <item quantity="one">%d min</item>
         <item quantity="other">%d mins</item>
@@ -179,12 +155,9 @@
         <item quantity="other">%d Exercises</item>
     </plurals>
     <string name="equipment_label">Equipment:</string>
-    <string name="yoga_mat">Yoga Mat</string>
-    <string name="treadmill">Treadmill</string>
     <string name="completed">Completed</string>
     <string name="in_progress">In Progress</string>
     <string name="not_started">Not started</string>
-    <string name="warm_up_jog">Warm-up Jog</string>
     <string name="hide_video_tutorial">Hide video tutorial</string>
     <string name="show_video_tutorial">Show video tutorial</string>
     <string name="play_video_tutorial">Play video tutorial</string>
@@ -196,7 +169,7 @@
     <string name="set_column">Set</string>
     <string name="previous_column">Previous</string>
     <string name="delete_set">Delete set</string>
-    <string name="plan_options">Plan options</string>
+    <string name="plan_options">Workout plan options</string>
     <string name="app_about_message">Your workout plans are written for you by AI from the fitness profile you set.</string>
     <string name="app_version_format">Version %1$s</string>
     <string name="about_the_app">About Trainr</string>
@@ -207,7 +180,7 @@
     <string name="create_my_plan">CREATE MY WORKOUT PLAN</string>
     <string name="repeat_this_week">Repeat this week</string>
     <string name="generation_failed_title">Could not create your workout plan</string>
-    <string name="generation_failed_offline">Trainr could not reach the internet. Check your connection and try again.</string>
+    <string name="generation_failed_offline">Trainr is offline. Check your connection and try again.</string>
     <string name="generation_failed_message">Something went wrong while writing your workout plan. Please try again.</string>
     <string name="try_again">Try again</string>
     <string name="back_to_profile">Back to profile</string>
@@ -222,7 +195,7 @@
         <item quantity="one">%1$d of %2$d workouts is logged in this week. Deleting removes it for good.</item>
         <item quantity="other">%1$d of %2$d workouts are logged in this week. Deleting removes them for good.</item>
     </plurals>
-    <string name="review_profile_description">Changes apply to the next week you generate</string>
+    <string name="review_profile_description">Your next generated week will use these details.</string>
     <string name="save_profile">SAVE PROFILE</string>
     <string name="generate_next_week">Generate next week</string>
     <string name="update_profile">Update profile</string>
@@ -250,7 +223,6 @@
     <string name="version_format">v%s</string>
     
     <!-- Review Screen Labels -->
-    <string name="name_label">Name</string>
     <string name="age_label">Age</string>
     <string name="gender_label">Gender</string>
     <string name="height_label">Height</string>
@@ -267,8 +239,8 @@
     <string name="preferred_time_label">Preferred Time</string>
     <string name="limitations_label">Limitations</string>
     <string name="injuries_concerns_label">Injuries/Concerns</string>
-    <string name="ai_routine_preview_label">AI Routine Preview</string>
-    <string name="ai_routine_description">Based on your profile, we\'ll create a %1$s %2$s program focused on %3$s.</string>
+    <string name="ai_routine_preview_label">AI Workout Plan</string>
+    <string name="ai_routine_description">Based on your profile, we\'ll create a %1$s %2$s plan focused on %3$s.</string>
     <string name="bodyweight_only_label">Bodyweight only</string>
     <string name="flexible_schedule">Flexible</string>
     <plurals name="days_per_week_format">
@@ -290,7 +262,6 @@
     <string name="dropdown_content_description">Dropdown menu</string>
     
     <!-- Weekly Plan -->
-    <string name="weekly_plan_title">YOUR WEEKLY WORKOUT PLAN</string>
     
     <!-- Gender Options -->
     <string name="male_gender">Male</string>
@@ -353,7 +324,6 @@
     
     <!-- Language Selection -->
     <string name="language_selection">Language Selection</string>
-    <string name="select_language">Select Language</string>
     <string name="language_english">English</string>
     <string name="language_tagalog">Tagalog</string>
     <string name="language_japanese">日本語</string>

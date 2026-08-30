@@ -125,6 +125,10 @@ fun RoutineDetailScreen(
     Column(modifier = modifier.fillMaxSize()) {
         TrainrTopBar(onBackClick = onBackClick)
 
+        // A blank moment is honest; the sample week that used to fill it was a
+        // workout nobody was doing.
+        if (!state.isLoaded) return@Column
+
         Column(
             modifier = Modifier
                 .verticalScroll(rememberScrollState())

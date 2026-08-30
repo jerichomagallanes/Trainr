@@ -3,12 +3,9 @@
     <string name="app_name">Trainr</string>
     
     <!-- Home Screen -->
-    <string name="welcome_to_home">Maligayang pagdating sa Trainr!</string>
-    <string name="home_coming_soon">Ang inyong personalized na workout dashboard ay malapit nang dumating.</string>
     
     <!-- Welcome Screen -->
     <string name="welcome_to">MALIGAYANG PAGDATING SA</string>
-    <string name="trainr_description">Ang inyong AI-powered na personal trainer.</string>
     <string name="get_started">Magsimula</string>
     <string name="personalized_workout_plans">Personalized na workout plans</string>
     <string name="ai_generated_routines">AI-generated na mga rutina</string>
@@ -57,7 +54,7 @@
     <string name="lose_weight">Magbawas ng Timbang</string>
     <string name="lose_weight_description">Magsunog ng taba at pumayat.</string>
     <string name="build_muscle">Magpatayo ng Muscle</string>
-    <string name="build_muscle_description">Magdagdag ng muscle mass at laki</string>
+    <string name="build_muscle_description">Magdagdag ng muscle mass at laki.</string>
     <string name="get_stronger">Lumakas</string>
     <string name="get_stronger_description">Dagdagan ang lakas at power.</string>
     <string name="improve_endurance">Pagbutihin ang Endurance</string>
@@ -93,9 +90,10 @@
     <string name="afternoon_time">Hapon (12-5 PM)</string>
     <string name="evening_time">Gabi (5-10 PM)</string>
     <string name="flexible_anytime">Flexible/Kahit Kailan</string>
-    <string name="workout_days_option" formatted="false">%d %s</string>
-    <string name="day">araw</string>
-    <string name="days">araw</string>
+    <plurals name="workout_days_option">
+        <item quantity="one">%d araw</item>
+        <item quantity="other">%d araw</item>
+    </plurals>
     
     <!-- Limitations Screen -->
     <string name="lets_keep_you_safe">PANATILIHIN NATIN KAYONG LIGTAS</string>
@@ -114,34 +112,18 @@
     
     <!-- Review Screen -->
     <string name="your_fitness_profile">ANG INYONG FITNESS PROFILE</string>
-    <string name="review_description">I-review ang inyong impormasyon bago namin gumawa ng plan</string>
+    <string name="review_description">I-review ang iyong impormasyon bago namin gawin ang workout plan mo</string>
     <string name="personal_information">Personal na Impormasyon</string>
-    <string name="height_cm_value">%d cm</string>
-    <string name="weight_kg_value">%.1f kg</string>
-    <string name="experience">Karanasan</string>
-    <string name="fitness_goals">Fitness Goals</string>
-    <string name="main_goal">Main Goal</string>
-    <string name="workout_style">Workout Style</string>
-    <string name="workout_setup">Workout Setup</string>
-    <string name="location">Lugar</string>
-    <string name="equipment">Equipment</string>
-    <string name="schedule">Schedule</string>
-    <string name="flexible">Flexible</string>
-    <string name="duration">Tagal</string>
-    <string name="preferred_time">Preferred na Oras</string>
-    <string name="limitations">Limitations</string>
-    <string name="injuries_concerns">Mga Injury/Concern</string>
-    <string name="ai_routine_preview">AI Routine Preview</string>
     <string name="generate_my_workout_plan">I-GENERATE ANG AKING WORKOUT PLAN</string>
     
     <!-- Generating Screen -->
-    <string name="generating_your_workout_routine">Ginagawa ang inyong workout routine</string>
+    <string name="generating_your_workout_routine">Binubuo ang iyong workout plan</string>
     
     <!-- Workout Screens -->
     <string name="week_range_format">Linggo %1$d: %2$s</string>
-    <string name="leave_plan_title">Gawing muli ang workout plan mo?</string>
+    <string name="leave_plan_title">Magsimula ng bagong workout plan?</string>
     <string name="leave_plan_message">Buburahin ng bagong workout plan ang lahat ng linggong sinanay mo at ang lahat ng naitala. Sigurado ka ba?</string>
-    <string name="leave_plan_confirm">Muling buuin</string>
+    <string name="leave_plan_confirm">Magsimula</string>
     <string name="cancel">Kanselahin</string>
     <string name="mark_exercise_complete">Markahan bilang tapos</string>
     <string name="mark_exercise_incomplete">Markahan bilang hindi tapos</string>
@@ -157,20 +139,14 @@
     <string name="skipped">Nilaktawan</string>
     <string name="upcoming">Paparating</string>
     <string name="weekly_progress">LINGGUHANG PROGRESS</string>
-    <string name="completed_percentage" formatted="false">%d%% Tapos na (%d%%)</string>
     <string name="start_todays_workout">SIMULAN ANG WORKOUT NGAYONG ARAW</string>
     <string name="day_completed_format">TAPOS NA ANG ARAW %d</string>
-    <string name="day_completed_message">Magaling! Natapos mo na ang workout ngayong araw. Ituloy mo lang ang momentum.</string>
+    <string name="day_completed_message">Magaling! Tapos na ang workout na ito. Ituloy mo lang ang momentum.</string>
     <string name="view_weekly_progress">Tingnan ang Lingguhang Progreso</string>
     <string name="back_to_workout_plan">Bumalik sa Workout Plan Ko</string>
     <string name="week_completed_format">TAPOS NA ANG LINGGO %d</string>
     <string name="week_completed_message">Natapos mo na ang lahat ng workout mo ngayong linggo. Ang galing ng consistency mo. Ituloy mo lang!</string>
     <string name="slide_to_complete_routine">I-SLIDE PARA TAPUSIN ANG WORKOUT NA ITO</string>
-    <string name="day_number">ARAW %d</string>
-    <string name="full_body_strength">Full Body Strength</string>
-    <string name="cardio_and_core">Cardio &amp; Core</string>
-    <string name="lower_body_power">Lower Body Power</string>
-    <string name="upper_body_strength">Upper Body Strength</string>
     <plurals name="minutes">
         <item quantity="one">%d min</item>
         <item quantity="other">%d mins</item>
@@ -180,12 +156,9 @@
         <item quantity="other">%d Exercises</item>
     </plurals>
     <string name="equipment_label">Equipment:</string>
-    <string name="yoga_mat">Yoga Mat</string>
-    <string name="treadmill">Treadmill</string>
     <string name="completed">Tapos na</string>
     <string name="in_progress">Ginagawa</string>
     <string name="not_started">Hindi pa nasimulan</string>
-    <string name="warm_up_jog">Warm-up Jog</string>
     <string name="hide_video_tutorial">Itago ang video tutorial</string>
     <string name="show_video_tutorial">Ipakita ang video tutorial</string>
     <string name="play_video_tutorial">I-play ang video tutorial</string>
@@ -197,7 +170,7 @@
     <string name="set_column">Set</string>
     <string name="previous_column">Nakaraan</string>
     <string name="delete_set">Burahin ang set</string>
-    <string name="plan_options">Mga opsyon ng plano</string>
+    <string name="plan_options">Mga opsyon ng workout plan</string>
     <string name="app_about_message">Ang workout plan mo ay ginagawa ng AI batay sa fitness profile na itinakda mo.</string>
     <string name="app_version_format">Bersyon %1$s</string>
     <string name="about_the_app">Tungkol sa Trainr</string>
@@ -208,7 +181,7 @@
     <string name="create_my_plan">GUMAWA NG WORKOUT PLAN</string>
     <string name="repeat_this_week">Ulitin ang linggong ito</string>
     <string name="generation_failed_title">Hindi nagawa ang workout plan mo</string>
-    <string name="generation_failed_offline">Hindi maabot ang internet. Tingnan ang koneksyon at subukan ulit.</string>
+    <string name="generation_failed_offline">Offline ang Trainr. Tingnan ang koneksyon at subukan ulit.</string>
     <string name="generation_failed_message">May nangyaring mali habang ginagawa ang workout plan mo. Subukan ulit.</string>
     <string name="try_again">Subukan ulit</string>
     <string name="back_to_profile">Bumalik sa profile</string>
@@ -223,7 +196,7 @@
         <item quantity="one">%1$d sa %2$d workout ang naitala sa linggong ito. Permanenteng mawawala ito.</item>
         <item quantity="other">%1$d sa %2$d workout ang naitala sa linggong ito. Permanenteng mawawala ang mga ito.</item>
     </plurals>
-    <string name="review_profile_description">Ilalapat ang mga pagbabago sa susunod na linggong bubuoin</string>
+    <string name="review_profile_description">Gagamitin ang mga detalyeng ito sa susunod na linggong bubuoin mo.</string>
     <string name="save_profile">I-SAVE ANG PROFILE</string>
     <string name="generate_next_week">Bumuo ng susunod na linggo</string>
     <string name="update_profile">I-update ang profile</string>
@@ -251,7 +224,6 @@
     <string name="version_format">v%s</string>
     
     <!-- Review Screen Labels -->
-    <string name="name_label">Pangalan</string>
     <string name="age_label">Edad</string>
     <string name="gender_label">Kasarian</string>
     <string name="height_label">Taas</string>
@@ -268,8 +240,8 @@
     <string name="preferred_time_label">Preferred na Oras</string>
     <string name="limitations_label">Limitations</string>
     <string name="injuries_concerns_label">Mga Injury/Concern</string>
-    <string name="ai_routine_preview_label">AI Routine Preview</string>
-    <string name="ai_routine_description">Base sa inyong profile, gagawa kami ng %1$s na %2$s program na nakatuon sa %3$s.</string>
+    <string name="ai_routine_preview_label">AI Workout Plan</string>
+    <string name="ai_routine_description">Base sa iyong profile, gagawa kami ng %1$s na %2$s na plan na nakatuon sa %3$s.</string>
     <string name="bodyweight_only_label">Bodyweight lang</string>
     <string name="flexible_schedule">Flexible</string>
     <plurals name="days_per_week_format">
@@ -291,7 +263,6 @@
     <string name="dropdown_content_description">Dropdown menu</string>
     
     <!-- Weekly Plan -->
-    <string name="weekly_plan_title">ANG INYONG LINGGUHANG WORKOUT PLAN</string>
     
     <!-- Gender Options -->
     <string name="male_gender">Lalaki</string>
@@ -354,7 +325,6 @@
     
     <!-- Language Selection -->
     <string name="language_selection">Pagpili ng Wika</string>
-    <string name="select_language">Pumili ng Wika</string>
     <string name="language_english">English</string>
     <string name="language_tagalog">Tagalog</string>
     <string name="language_japanese">日本語</string>

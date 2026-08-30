@@ -20,7 +20,11 @@ data class WeeklyProgressUiState(
     // No stand-in weeks: the screen lists what is stored, and nothing when
     // nothing is. Showing a built-in set here would read as a training history
     // that never happened.
-    val weeks: List<WeekProgressUi> = emptyList()
+    val weeks: List<WeekProgressUi> = emptyList(),
+    // An empty list means "none stored" only once the reading is done. Before
+    // that it means "not looked yet", and the two must not be confused: one of
+    // them sends the screen away.
+    val hasLoaded: Boolean = false
 )
 
 @HiltViewModel
@@ -42,7 +46,10 @@ class WeeklyProgressViewModel @Inject constructor(
                 .orEmpty()
                 .sortedBy { it.weekNumber }
 
-            _uiState.value = WeeklyProgressUiState(weeks = plans.map { weekProgressOf(it) })
+            _uiState.value = WeeklyProgressUiState(
+                weeks = plans.map { weekProgressOf(it) },
+                hasLoaded = true
+            )
         }
     }
 
