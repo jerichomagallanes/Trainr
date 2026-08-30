@@ -3,6 +3,7 @@ package com.jericx.trainr.data.generation
 import com.jericx.trainr.domain.model.ExerciseMeasure
 import com.jericx.trainr.domain.model.ExerciseSet
 import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
+import com.jericx.trainr.domain.model.withoutWeekNumber
 import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.model.WorkoutExercise
 import kotlinx.serialization.json.Json
@@ -39,7 +40,7 @@ class GeneratedPlanParser {
             WeeklyWorkoutPlan(
                 userId = userId,
                 weekNumber = weekNumber,
-                title = generated.title,
+                title = generated.title.withoutWeekNumber(),
                 startDateMillis = startDateMillis,
                 workoutDays = generated.days.sortedBy { it.dayNumber }.map { it.toDomain() }
             )

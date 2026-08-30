@@ -8,6 +8,7 @@ import com.jericx.trainr.domain.generation.PlanGenerator
 import com.jericx.trainr.domain.generation.PlanRequest
 import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
+import com.jericx.trainr.domain.model.withoutWeekNumber
 import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.domain.repository.UserRepository
 import com.jericx.trainr.presentation.workout.util.WorkoutWeek
@@ -111,6 +112,8 @@ class NextWeekViewModel @Inject constructor(
             return previous.copy(
                 id = 0,
                 weekNumber = weekNumber,
+                // Plans stored before titles were cleaned still carry a number.
+                title = previous.title.withoutWeekNumber(),
                 startDateMillis = startDateMillis,
                 createdAt = now,
                 updatedAt = now,

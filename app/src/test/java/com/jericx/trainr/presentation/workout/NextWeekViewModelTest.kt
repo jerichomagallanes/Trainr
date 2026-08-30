@@ -61,7 +61,7 @@ class NextWeekViewModelTest {
         id = 9,
         userId = 1,
         weekNumber = 1,
-        title = "Foundation",
+        title = "Foundation - Week 1",
         startDateMillis = weekOneStart,
         workoutDays = listOf(
             WorkoutDay(
@@ -226,6 +226,9 @@ class NextWeekViewModelTest {
         with(saved.captured) {
             assertThat(id).isEqualTo(0)
             assertThat(weekNumber).isEqualTo(2)
+            // A copy of week one must not sit at week two still calling itself
+            // the first.
+            assertThat(title).doesNotContain("Week 1")
             assertThat(startDateMillis).isEqualTo(WorkoutWeek.dateOfDay(weekOneStart, 8))
             val day = workoutDays.single()
             assertThat(day.status).isEqualTo(WorkoutStatus.NOT_STARTED)
