@@ -291,6 +291,49 @@ class WeeklyPlanScreenTest {
         assertThat(repeated).isTrue()
     }
 
+    // Still in this week, so it can be written again. The dialog only stands in
+    // the way when there is training to lose.
+    @Test
+    fun theWeekBeingTrainedCanBeGeneratedAgain() {
+        var regenerated = false
+        composeTestRule.setContent {
+            TrainrTheme {
+                WeeklyPlanScreen(
+                    state = freshWeek,
+                    onRegenerateWeekClick = { regenerated = true }
+                )
+            }
+        }
+
+        openMenu()
+        composeTestRule.onNodeWithText(string(R.string.regenerate_week)).performClick()
+
+        assertThat(regenerated).isTrue()
+    }
+
+    @Test
+    fun generatingAWeekWithTrainingInItNamesWhatItCosts() {
+        var regenerated = false
+        composeTestRule.setContent {
+            TrainrTheme {
+                WeeklyPlanScreen(
+                    state = state,
+                    onRegenerateWeekClick = { regenerated = true }
+                )
+            }
+        }
+
+        openMenu()
+        composeTestRule.onNodeWithText(string(R.string.regenerate_week)).performClick()
+
+        // Asked, not done.
+        assertThat(regenerated).isFalse()
+        composeTestRule.onNodeWithText(string(R.string.regenerate_week_title)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.regenerate_week_confirm)).performClick()
+
+        assertThat(regenerated).isTrue()
+    }
+
     @Test
     fun anUnfinishedWeekOffersNeitherWayOn() {
         setScreen()

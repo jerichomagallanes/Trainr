@@ -388,7 +388,10 @@ fun AppContent(versionName: String) {
                         onBackClick = { navController.popBackStack() },
                         onDayClick = openDay,
                         onStartTodayClick = openDay,
-                        onRepeatWeekClick = { nextWeekViewModel.repeatWeek(weekNumber) }
+                        onRepeatWeekClick = { nextWeekViewModel.repeatWeek(weekNumber) },
+                        onRegenerateWeekClick = {
+                            navController.navigate(Screen.RegeneratingWeek.route)
+                        }
                     )
                 }
 
@@ -459,6 +462,28 @@ fun AppContent(versionName: String) {
                     )
                 }
 
+                // The same wait, a different job: this one replaces the week
+                // being trained instead of adding the one after it.
+                composable(Screen.RegeneratingWeek.route) {
+                    val nextWeekViewModel: NextWeekViewModel = hiltViewModel()
+                    val failure by nextWeekViewModel.failure.collectAsStateWithLifecycle()
+                    val weekIsReady by nextWeekViewModel.isReady.collectAsStateWithLifecycle()
+                    GeneratingScreen(
+                        isReady = weekIsReady,
+                        onStart = { nextWeekViewModel.regenerateThisWeek() },
+                        onDone = {
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        },
+                        failure = failure,
+                        onRetry = { nextWeekViewModel.regenerateThisWeek() },
+                        // The week they already have is untouched, so there is
+                        // something to go back to.
+                        onGiveUp = { navController.popBackStack() }
+                    )
+                }
+
                 composable(Screen.GeneratingNextWeek.route) {
                     val nextWeekViewModel: NextWeekViewModel = hiltViewModel()
                     val nextWeekFailure by nextWeekViewModel.failure.collectAsStateWithLifecycle()
@@ -526,6 +551,9 @@ fun AppContent(versionName: String) {
                         // Copying a week needs nothing from the model, so there
                         // is no waiting to show: it lands and home reloads.
                         onRepeatWeekClick = { nextWeekViewModel.repeatWeek() },
+                        onRegenerateWeekClick = {
+                            navController.navigate(Screen.RegeneratingWeek.route)
+                        },
                         // With every week deleted there is a profile but no
                         // plan: the review is where a new one is built from.
                         onCreatePlanClick = {

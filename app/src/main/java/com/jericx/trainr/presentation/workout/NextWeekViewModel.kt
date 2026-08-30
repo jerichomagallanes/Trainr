@@ -78,6 +78,60 @@ class NextWeekViewModel @Inject constructor(
         }
     }
 
+    // Replacing the week you are in rather than adding one after it: the number
+    // and the dates stay, only the training inside them changes. The complement
+    // of the rule that adds a week — you may rewrite the week you are still in,
+    // and once it is behind you it is a record.
+    //
+    // Written the safe way round. The model is asked first and the old week goes
+    // only once a replacement exists, so a generation that fails leaves the week
+    // it could not improve exactly where it was.
+    fun regenerateThisWeek() {
+        if (isWorking) return
+        isWorking = true
+        _failure.value = null
+        viewModelScope.launch {
+            try {
+                val user = userRepository.getCurrentUser()
+                val plans = user
+                    ?.let { userRepository.getWeeklyWorkoutPlans(it.id).first() }
+                    .orEmpty()
+                val current = plans.maxByOrNull { it.weekNumber }
+                if (user == null || current == null || current.isReadyForTheNextWeek()) {
+                    _isReady.value = true
+                    return@launch
+                }
+
+                val result = planGenerator.generate(
+                    PlanRequest(
+                        user = user,
+                        weekNumber = current.weekNumber,
+                        startDateMillis = current.startDateMillis ?: WorkoutWeek.startOfDay(),
+                        languageCode = languageCode.current(),
+                        // The week before this one, so a replacement still
+                        // progresses from what was actually lifted.
+                        previousWeek = plans.firstOrNull {
+                            it.weekNumber == current.weekNumber - 1
+                        }
+                    )
+                )
+
+                if (result !is PlanGenerationResult.Generated) {
+                    _failure.value = result as PlanGenerationResult.Failure
+                    return@launch
+                }
+
+                // Only now. One week per number, so the old one goes to make
+                // room — and it goes with a replacement already in hand.
+                userRepository.deleteWeeklyWorkoutPlan(current.id)
+                userRepository.saveWeeklyWorkoutPlan(result.plan)
+                _isReady.value = true
+            } finally {
+                isWorking = false
+            }
+        }
+    }
+
     // The finished week seeds the request, so the model progresses from what
     // was actually lifted instead of restarting from the intake answers.
     fun generateNextWeek() {

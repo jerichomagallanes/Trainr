@@ -175,6 +175,12 @@
     <string name="no_plan_message">フィットネスプロフィールは保存されています。いつでも新しいワークアウトプランを作成できます。</string>
     <string name="create_my_plan">ワークアウトプランを作成</string>
     <string name="repeat_this_week">この週をもう一度</string>
+    <string name="regenerate_week">この週を作り直す</string>
+    <string name="regenerate_week_title">この週を作り直しますか？</string>
+    <string name="regenerate_week_confirm">作り直す</string>
+    <plurals name="regenerate_week_message_trained">
+        <item quantity="other">この週には%2$d件中%1$d件の記録があります。新しい週に置き換えると元に戻せません。</item>
+    </plurals>
     <string name="generation_failed_title">ワークアウトプランを作成できませんでした</string>
     <string name="generation_failed_offline">Trainrはオフラインです。接続を確認してもう一度お試しください。</string>
     <string name="generation_failed_message">ワークアウトプランの作成中に問題が発生しました。もう一度お試しください。</string>

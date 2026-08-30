@@ -178,6 +178,13 @@
     <string name="no_plan_message">Your fitness profile is saved. You can create a new workout plan whenever you are ready.</string>
     <string name="create_my_plan">CREATE MY WORKOUT PLAN</string>
     <string name="repeat_this_week">Repeat this week</string>
+    <string name="regenerate_week">Generate this week again</string>
+    <string name="regenerate_week_title">Generate this week again?</string>
+    <string name="regenerate_week_confirm">Generate again</string>
+    <plurals name="regenerate_week_message_trained">
+        <item quantity="one">%1$d of %2$d workouts is logged in this week. A new week replaces it for good.</item>
+        <item quantity="other">%1$d of %2$d workouts are logged in this week. A new week replaces them for good.</item>
+    </plurals>
     <string name="generation_failed_title">Could not create your workout plan</string>
     <string name="generation_failed_offline">Trainr is offline. Check your connection and try again.</string>
     <string name="generation_failed_message">Something went wrong while writing your workout plan. Please try again.</string>
