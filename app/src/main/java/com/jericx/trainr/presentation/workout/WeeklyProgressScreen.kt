@@ -10,11 +10,7 @@ import androidx.compose.ui.input.pointer.positionChangeIgnoreConsumed
 import kotlin.math.abs
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Icon
-import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberSwipeToDismissBoxState
@@ -23,8 +19,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import com.jericx.trainr.presentation.common.theme.RedError
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -45,6 +39,7 @@ import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.jericx.trainr.R
+import com.jericx.trainr.presentation.common.components.core.TrainrSwipeToDelete
 import com.jericx.trainr.presentation.common.components.layout.TrainrTopBar
 import com.jericx.trainr.presentation.common.theme.Slate800
 import com.jericx.trainr.presentation.common.theme.Spacing
@@ -168,33 +163,11 @@ private fun DeletableWeek(
         }
     )
 
-    SwipeToDismissBox(
+    TrainrSwipeToDelete(
         state = dismissState,
-        enableDismissFromStartToEnd = false,
-        backgroundContent = {
-            if (dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart &&
-                dismissState.progress > 0f && dismissState.progress < 1f
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clip(MaterialTheme.shapes.medium)
-                        .background(RedError),
-                    contentAlignment = Alignment.CenterEnd
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = stringResource(R.string.delete_week_confirm),
-                        tint = Color.White,
-                        modifier = Modifier.padding(end = Spacing.medium)
-                    )
-                }
-            }
-        }
+        contentDescription = stringResource(R.string.delete_week_confirm)
     ) {
-        Box(modifier = Modifier.background(MaterialTheme.colorScheme.background)) {
-            content()
-        }
+        content()
     }
 }
 

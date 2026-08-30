@@ -10,6 +10,9 @@ import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.down
+import androidx.compose.ui.test.moveTo
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
@@ -212,6 +215,38 @@ class ExerciseSetTableTest {
         composeTestRule.waitForIdle()
 
         assertThat(deletions).containsExactly(2)
+    }
+
+    // The delete has to be visible while the row is held aside — that is the
+    // whole point of the reveal. Gating it on swipe progress as well as
+    // direction hid it again as the swipe neared its anchor.
+    @Test
+    fun holdingARowAsideShowsTheDeleteBehindIt() {
+        setTable(
+            ExerciseMeasure.REPS,
+            sets = (1..3).map { ExerciseSet(setNumber = it, targetReps = 12) }
+        )
+
+        composeTestRule.onNodeWithText("2").performTouchInput {
+            down(centerRight)
+            moveTo(center)
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithContentDescription(string(R.string.delete_set))
+            .assertIsDisplayed()
+    }
+
+    // At rest there is nothing behind the row, or the red shows through it.
+    @Test
+    fun aRowAtRestHidesTheDelete() {
+        setTable(
+            ExerciseMeasure.REPS,
+            sets = (1..3).map { ExerciseSet(setNumber = it, targetReps = 12) }
+        )
+
+        composeTestRule.onNodeWithContentDescription(string(R.string.delete_set))
+            .assertDoesNotExist()
     }
 
     // With a single set there is nothing sensible left after a delete, so the

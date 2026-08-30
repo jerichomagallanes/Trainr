@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -16,11 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberSwipeToDismissBoxState
@@ -50,8 +45,8 @@ import com.jericx.trainr.R
 import com.jericx.trainr.domain.model.ExerciseMeasure
 import com.jericx.trainr.domain.model.ExerciseSet
 import androidx.compose.ui.graphics.Color
+import com.jericx.trainr.presentation.common.components.core.TrainrSwipeToDelete
 import com.jericx.trainr.presentation.common.theme.OutlineGray
-import com.jericx.trainr.presentation.common.theme.RedError
 import com.jericx.trainr.presentation.common.theme.Slate800
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TextMuted
@@ -296,36 +291,11 @@ private fun DeletableRow(
         }
     }
 
-    SwipeToDismissBox(
+    TrainrSwipeToDelete(
         state = dismissState,
-        enableDismissFromStartToEnd = false,
-        backgroundContent = {
-            // Drawn only mid-swipe: the row's own content is transparent, so a
-            // permanent background would bleed red through every idle row.
-            if (dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart &&
-                dismissState.progress > 0f && dismissState.progress < 1f
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = Spacing.extraSmall)
-                        .clip(MaterialTheme.shapes.small)
-                        .background(RedError),
-                    contentAlignment = Alignment.CenterEnd
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = stringResource(R.string.delete_set),
-                        tint = Color.White,
-                        modifier = Modifier.padding(end = Spacing.tight)
-                    )
-                }
-            }
-        }
+        contentDescription = stringResource(R.string.delete_set)
     ) {
-        Box(modifier = Modifier.background(MaterialTheme.colorScheme.surface)) {
-            content()
-        }
+        content()
     }
 }
 
