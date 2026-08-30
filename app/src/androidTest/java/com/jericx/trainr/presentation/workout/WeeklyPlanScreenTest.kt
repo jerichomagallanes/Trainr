@@ -147,7 +147,7 @@ class WeeklyPlanScreenTest {
         }
 
         openMenu()
-        composeTestRule.onNodeWithText(string(R.string.start_next_week)).performClick()
+        composeTestRule.onNodeWithText(string(R.string.generate_next_week)).performClick()
 
         assertThat(started).isTrue()
     }
@@ -193,7 +193,7 @@ class WeeklyPlanScreenTest {
 
         openMenu()
 
-        composeTestRule.onNodeWithText(string(R.string.start_next_week)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.generate_next_week)).assertDoesNotExist()
         composeTestRule.onNodeWithText(string(R.string.regenerate_plan)).assertIsDisplayed()
     }
 
@@ -523,7 +523,8 @@ class WeeklyPlanScreenTest {
         }
 
         composeTestRule.onNodeWithText(string(R.string.start_next_workout)).assertDoesNotExist()
-        composeTestRule.onNodeWithText(string(R.string.start_next_week_button)).performClick()
+        composeTestRule.onNodeWithText(string(R.string.generate_next_week).uppercase())
+            .performClick()
 
         assertThat(startedNextWeek).isTrue()
     }

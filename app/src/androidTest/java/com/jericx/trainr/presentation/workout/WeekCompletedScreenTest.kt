@@ -52,7 +52,7 @@ class WeekCompletedScreenTest {
 
         composeTestRule.onNodeWithText(string(R.string.view_weekly_progress).uppercase())
             .assertIsDisplayed()
-        composeTestRule.onNodeWithText(string(R.string.preview_next_week).uppercase())
+        composeTestRule.onNodeWithText(string(R.string.generate_next_week).uppercase())
             .assertIsDisplayed()
     }
 
@@ -67,7 +67,7 @@ class WeekCompletedScreenTest {
 
         composeTestRule.onNodeWithText(string(R.string.view_weekly_progress).uppercase())
             .performClick()
-        composeTestRule.onNodeWithText(string(R.string.preview_next_week).uppercase())
+        composeTestRule.onNodeWithText(string(R.string.generate_next_week).uppercase())
             .performClick()
 
         assertThat(viewedProgress).isTrue()

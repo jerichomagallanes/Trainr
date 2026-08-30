@@ -183,7 +183,7 @@ fun WeeklyPlanScreen(
                             // decision, so it is offered rather than assumed.
                             if (state.canStartNextWeek) {
                                 DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.start_next_week)) },
+                                    text = { Text(stringResource(R.string.generate_next_week)) },
                                     onClick = {
                                         showMenu = false
                                         onStartNextWeekClick()
@@ -281,7 +281,7 @@ fun WeeklyPlanScreen(
                 )
 
                 state.canStartNextWeek -> TrainrButton(
-                    text = stringResource(R.string.start_next_week_button),
+                    text = stringResource(R.string.generate_next_week),
                     onClick = onStartNextWeekClick,
                     modifier = Modifier
                         .padding(horizontal = Spacing.screen, vertical = Spacing.medium)

@@ -165,7 +165,6 @@
     <string name="back_to_weekly_routine">Bumalik sa Lingguhang Rutina</string>
     <string name="week_completed_format">TAPOS NA ANG LINGGO %d</string>
     <string name="week_completed_message">Natapos mo na ang lahat ng workout mo ngayong linggo. Ang galing ng consistency mo. Ituloy mo lang!</string>
-    <string name="preview_next_week">Tingnan ang Susunod na Linggo</string>
     <string name="slide_to_complete_routine">I-SLIDE PARA TAPUSIN ANG BUONG RUTINA</string>
     <string name="day_number">ARAW %d</string>
     <string name="full_body_strength">Full Body Strength</string>
@@ -219,8 +218,7 @@
     <string name="delete_week_message_trained">%1$d sa %2$d workout ang naitala sa linggong ito. Permanenteng mawawala ang mga ito.</string>
     <string name="review_profile_description">Ilalapat ang mga pagbabago sa susunod na linggong bubuoin</string>
     <string name="save_profile">I-SAVE ANG PROFILE</string>
-    <string name="start_next_week">Simulan ang susunod na linggo</string>
-    <string name="start_next_week_button">SIMULAN ANG SUSUNOD NA LINGGO</string>
+    <string name="generate_next_week">Bumuo ng susunod na linggo</string>
     <string name="update_profile">I-update ang profile</string>
     <string name="weight_column">kg</string>
     <string name="reps_column">Reps</string>

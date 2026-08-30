@@ -164,7 +164,6 @@
     <string name="back_to_weekly_routine">週間ルーティンに戻る</string>
     <string name="week_completed_format">第%d週 完了</string>
     <string name="week_completed_message">今週のワークアウトをすべて終えました。素晴らしい継続力です。この調子で続けましょう！</string>
-    <string name="preview_next_week">来週のプランを見る</string>
     <string name="slide_to_complete_routine">スライドしてルーティンをすべて完了</string>
     <string name="day_number">第%d日</string>
     <string name="full_body_strength">全身筋力</string>
@@ -216,8 +215,7 @@
     <string name="delete_week_message_trained">この週には%2$d件中%1$d件の記録があります。削除すると元に戻せません。</string>
     <string name="review_profile_description">変更は次に生成する週から反映されます</string>
     <string name="save_profile">プロフィールを保存</string>
-    <string name="start_next_week">次の週を始める</string>
-    <string name="start_next_week_button">次の週を始める</string>
+    <string name="generate_next_week">次の週を生成</string>
     <string name="update_profile">プロフィールを更新</string>
     <string name="weight_column">kg</string>
     <string name="reps_column">回数</string>
