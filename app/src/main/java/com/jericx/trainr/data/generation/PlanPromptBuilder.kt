@@ -25,9 +25,10 @@ class PlanPromptBuilder(
         client can actually complete and recover from.
 
         Program design rules:
-        - Plan exactly the number of training days requested, on sensible ISO
-          weekdays (1 = Monday .. 7 = Sunday), spacing hard sessions with at least
-          one rest day where possible.
+        - Plan exactly the number of training days requested, placed across the
+          seven days of the week (1 = the first day of the week .. 7 = the last),
+          spacing hard sessions with at least one rest day where possible. The
+          week begins on the day the client starts, which may be any weekday.
         - Split by days per week: 2-3 days full body; 4 days upper/lower; 5-6 days
           push/pull/legs style. Respect the client's preferred training style.
         - Each day starts with a short warm-up exercise (DURATION measure).

@@ -27,6 +27,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class NextWeekViewModelTest {
@@ -51,7 +52,9 @@ class NextWeekViewModelTest {
 
     private fun viewModel() = NextWeekViewModel(userRepository, planGenerator) { "en" }
 
-    private val weekOneStart = WorkoutWeek.mondayOf(1_755_000_000_000L)
+    // Recent enough that the week after it still lies ahead, which is the
+    // ordinary case: the next week follows the last one.
+    private val weekOneStart = WorkoutWeek.startOfDay() - TimeUnit.DAYS.toMillis(3)
 
     private val finishedWeek = WeeklyWorkoutPlan(
         id = 9,
@@ -185,4 +188,36 @@ class NextWeekViewModelTest {
         coVerify(exactly = 0) { userRepository.saveWeeklyWorkoutPlan(any()) }
         assertThat(done).isTrue()
     }
+    // Coming back long after the plan ran out, the next week starts today
+    // rather than on a date that has already gone: nothing is missed before it
+    // begins, and no two weeks ever cover the same days.
+    @Test
+    fun aWeekPickedUpLateStartsToday() = runTest {
+        val longAgo = finishedWeek.copy(
+            startDateMillis = WorkoutWeek.startOfDay() - TimeUnit.DAYS.toMillis(40)
+        )
+        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(longAgo))
+        val request = slot<PlanRequest>()
+        coEvery { planGenerator.generate(capture(request)) } returns longAgo.copy(weekNumber = 2)
+
+        viewModel().generateNextWeek {}
+        advanceUntilIdle()
+
+        assertThat(request.captured.startDateMillis).isEqualTo(WorkoutWeek.startOfDay())
+    }
+
+    @Test
+    fun aWeekThatStillLiesAheadFollowsTheOneBeforeIt() = runTest {
+        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(finishedWeek))
+        val request = slot<PlanRequest>()
+        coEvery { planGenerator.generate(capture(request)) } returns finishedWeek.copy(weekNumber = 2)
+
+        viewModel().generateNextWeek {}
+        advanceUntilIdle()
+
+        assertThat(request.captured.startDateMillis)
+            .isEqualTo(WorkoutWeek.dateOfDay(weekOneStart, 8))
+        assertThat(request.captured.startDateMillis).isGreaterThan(WorkoutWeek.startOfDay())
+    }
+
 }

@@ -73,7 +73,7 @@ class WeeklyProgressViewModel @Inject constructor(
             plan: WeeklyWorkoutPlan,
             nowMillis: Long = System.currentTimeMillis()
         ): WeekProgressUi {
-            val start = plan.startDateMillis ?: WorkoutWeek.mondayOf(plan.createdAt)
+            val start = plan.startDateMillis ?: WorkoutWeek.startOfDay(plan.createdAt)
             val completed = plan.workoutDays.count { it.status == WorkoutStatus.COMPLETED }
             val total = plan.workoutDays.size
             // The week is over once the Monday after it has arrived; until then

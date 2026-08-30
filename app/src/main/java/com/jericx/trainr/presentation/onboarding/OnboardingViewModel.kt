@@ -133,17 +133,19 @@ class OnboardingViewModel @Inject constructor(
                 val userId = userRepository.saveUser(
                     if (existing == null) profile else profile.copy(id = existing.id)
                 )
-                val monday = WorkoutWeek.mondayOf()
+                // The plan starts today. Anchoring it to the Monday just gone
+                // would hand a new user a week of sessions already missed.
+                val start = WorkoutWeek.startOfDay()
                 // The sample week stands in when generation is unavailable —
                 // no key, offline, or the model never produced a valid plan.
                 val plan = planGenerator.generate(
                     PlanRequest(
                         user = profile.copy(id = userId),
                         weekNumber = FIRST_WEEK,
-                        startDateMillis = monday,
+                        startDateMillis = start,
                         languageCode = languageCode.current()
                     )
-                ) ?: SampleWorkoutData.freshWeekOne(userId, monday)
+                ) ?: SampleWorkoutData.freshWeekOne(userId, start)
                 userRepository.saveWeeklyWorkoutPlan(plan)
                 _onboardingState.value = _onboardingState.value.copy(
                     isLoading = false,

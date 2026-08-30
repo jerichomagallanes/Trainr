@@ -35,9 +35,15 @@ class NextWeekViewModel @Inject constructor(
                 return@launch onDone()
             }
 
-            val start = latest.startDateMillis
-                ?.let { WorkoutWeek.dateOfDay(it, DAYS_PER_WEEK + 1) }
-                ?: WorkoutWeek.mondayOf()
+            // Never overlapping the week it follows, and never starting in the
+            // past: someone coming back a fortnight late begins today, not on a
+            // date that has already gone.
+            val start = maxOf(
+                latest.startDateMillis
+                    ?.let { WorkoutWeek.dateOfDay(it, DAYS_PER_WEEK + 1) }
+                    ?: WorkoutWeek.startOfDay(),
+                WorkoutWeek.startOfDay()
+            )
             val plan = planGenerator.generate(
                 PlanRequest(
                     user = user,
