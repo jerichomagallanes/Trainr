@@ -14,8 +14,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -63,11 +65,7 @@ fun WelcomeScreen(
 
     var currentPage by remember { mutableIntStateOf(0) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .statusBarsPadding()
-    ) {
+    Column(modifier = Modifier.fillMaxSize()) {
         WelcomeHeader()
 
         Box(
@@ -147,13 +145,19 @@ private fun OnboardingPageContent(page: OnboardingPage) {
     }
 }
 
+// Frame 325:2 measures the title 151dp from the physical screen top with the
+// status bar floating inside that margin, but the host already consumes the
+// status bar inset, so it is subtracted back out here.
+private val HeaderTopMargin = 151.dp
+
 @Composable
 private fun WelcomeHeader() {
+    val consumedInset = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = Spacing.large)
-            .padding(top = Spacing.huge),
+            .padding(top = (HeaderTopMargin - consumedInset).coerceAtLeast(0.dp)),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Row(
