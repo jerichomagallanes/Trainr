@@ -6,6 +6,14 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LifecycleRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.R
@@ -88,5 +96,47 @@ class VideoTutorialTest {
 
         composeTestRule.onNodeWithContentDescription(string(R.string.play_video_tutorial))
             .assertDoesNotExist()
+    }
+
+    private class FakeLifecycleOwner : LifecycleOwner {
+        // createUnsafe: the test drives the state from its own thread.
+        override val lifecycle = LifecycleRegistry.createUnsafe(this).apply {
+            currentState = Lifecycle.State.RESUMED
+        }
+    }
+
+    // Load-bearing for the Play Store, not just for tidiness: a player that
+    // outlives the screen keeps playing while the app is in the background,
+    // which is a Device and Network Abuse suspension. The player is bound to
+    // the screen's lifecycle so that leaving the app pauses it and leaving the
+    // screen releases it — this pins that binding to the player's presence.
+    @Test
+    fun thePlayerIsBoundToTheScreenAndLetGoWithIt() {
+        val owner = FakeLifecycleOwner()
+        var playing by mutableStateOf(false)
+
+        composeTestRule.setContent {
+            CompositionLocalProvider(LocalLifecycleOwner provides owner) {
+                TrainrTheme {
+                    VideoTutorial(
+                        video = YouTubeVideo("kDPxFoCmb-w"),
+                        isExpanded = true,
+                        isPlaying = playing,
+                        onToggle = {},
+                        onPlay = {}
+                    )
+                }
+            }
+        }
+        composeTestRule.waitForIdle()
+        val withoutPlayer = owner.lifecycle.observerCount
+
+        playing = true
+        composeTestRule.waitForIdle()
+        assertThat(owner.lifecycle.observerCount).isGreaterThan(withoutPlayer)
+
+        playing = false
+        composeTestRule.waitForIdle()
+        assertThat(owner.lifecycle.observerCount).isEqualTo(withoutPlayer)
     }
 }
