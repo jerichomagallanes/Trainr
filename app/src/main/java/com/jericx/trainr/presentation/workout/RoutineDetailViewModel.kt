@@ -138,12 +138,15 @@ class RoutineDetailViewModel @Inject constructor(
         }
     }
 
-    fun deleteSet(position: Int, set: ExerciseSet) {
+    // Deletion is keyed by set number, not instance: the row that reports the
+    // swipe may hold a set from before a reload replaced every instance.
+    fun deleteSet(position: Int, setNumber: Int) {
         val sets = _uiState.value.routine.exercises
             .firstOrNull { it.position == position }?.sets ?: return
-        if (sets.size <= 1 || sets.none { it === set }) return
+        val set = sets.firstOrNull { it.setNumber == setNumber } ?: return
+        if (sets.size <= 1) return
 
-        _uiState.update { it.copy(routine = it.routine.removeSet(position, set)) }
+        _uiState.update { it.copy(routine = it.routine.removeSet(position, setNumber)) }
 
         val exercise = storedExerciseAt(position) ?: return
         if (set.id == 0L) return

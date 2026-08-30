@@ -152,6 +152,7 @@ fun AppContent(versionName: String) {
                     val editing = entry.isEditing
                     BasicInfoScreen(
                         initial = if (editing) onboardingState.userProfile else null,
+                        isEditing = editing,
                         onNextClick = { firstName, age, gender, experience ->
                             onboardingViewModel.updateBasicInfo(firstName, age, gender, experience)
                             if (editing) {

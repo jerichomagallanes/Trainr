@@ -23,9 +23,10 @@ import com.jericx.trainr.presentation.common.components.typography.TrainrScreenT
 @Composable
 fun TrainrScaffold(
     onBackClick: (() -> Unit)? = null,
+    closeInsteadOfBack: Boolean = false,
     topBar: @Composable () -> Unit = {
         if (onBackClick != null) {
-            TrainrTopBar(onBackClick = onBackClick)
+            TrainrTopBar(onBackClick = onBackClick, closeInsteadOfBack = closeInsteadOfBack)
         }
     },
     bottomButton: @Composable () -> Unit,

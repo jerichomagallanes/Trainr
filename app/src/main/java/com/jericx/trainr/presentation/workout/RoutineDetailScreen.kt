@@ -85,7 +85,7 @@ fun RoutineDetailScreen(
     onToggleExercise: (Int) -> Unit = {},
     onSetChanged: (Int, ExerciseSet) -> Unit = { _, _ -> },
     onAddSet: (Int) -> Unit = {},
-    onDeleteSet: (Int, ExerciseSet) -> Unit = { _, _ -> },
+    onDeleteSet: (Int, Int) -> Unit = { _, _ -> },
     onCompleteRoutine: () -> Unit = {},
     onStartTimer: (ExerciseUi) -> Unit = {},
     onPauseTimer: () -> Unit = {},
@@ -207,7 +207,7 @@ fun RoutineDetailScreen(
                         onToggleCompleted = { onToggleExercise(exercise.position) },
                         onSetChanged = { onSetChanged(exercise.position, it) },
                         onAddSet = { onAddSet(exercise.position) },
-                        onDeleteSet = { onDeleteSet(exercise.position, it) }
+                        onDeleteSet = { onDeleteSet(exercise.position, it.setNumber) }
                     ) {
                         if (!exercise.isCompleted) {
                             ExerciseTimer(

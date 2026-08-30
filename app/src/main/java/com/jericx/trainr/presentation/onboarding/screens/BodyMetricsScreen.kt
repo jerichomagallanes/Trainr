@@ -96,6 +96,7 @@ fun BodyMetricsScreen(
 
     TrainrScaffold(
         onBackClick = onBackClick,
+        closeInsteadOfBack = isEditing,
         bottomButton = {
             TrainrButton(
                 text = stringResource(if (isEditing) R.string.save else R.string.next),

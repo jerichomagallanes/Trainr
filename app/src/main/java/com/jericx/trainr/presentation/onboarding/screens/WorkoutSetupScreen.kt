@@ -81,7 +81,11 @@ fun WorkoutSetupScreen(
     TrainrScaffold(
         onBackClick = onBackClick,
         topBar = {
-            TrainrTopBar(onBackClick = onBackClick, showLogo = true)
+            TrainrTopBar(
+                onBackClick = onBackClick,
+                showLogo = true,
+                closeInsteadOfBack = isEditing
+            )
         },
         bottomButton = {
             TrainrButton(
