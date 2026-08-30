@@ -1,6 +1,6 @@
 package com.jericx.trainr.presentation.common.components.core
 
-import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animate
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -18,8 +18,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,7 +40,6 @@ import com.jericx.trainr.presentation.common.theme.Orange500
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 import kotlin.math.roundToInt
-import kotlinx.coroutines.launch
 
 private val TrackHeight = 55.dp
 private val ThumbSize = 35.dp
@@ -51,8 +52,11 @@ fun TrainrSlideToConfirm(
     modifier: Modifier = Modifier
 ) {
     val density = LocalDensity.current
-    val scope = rememberCoroutineScope()
-    val offset = remember { Animatable(0f) }
+    // A plain value, moved straight from the drag. It used to be an Animatable
+    // fed by a coroutine launched per delta, and an Animatable takes one mutator
+    // at a time: a snap queued behind the finger could land after the release
+    // began animating and cancel it, stranding the thumb mid-track.
+    var offsetPx by remember { mutableFloatStateOf(0f) }
 
     BoxWithConstraints(
         modifier = modifier
@@ -84,18 +88,18 @@ fun TrainrSlideToConfirm(
             contentDescription = null,
             modifier = Modifier
                 .padding(horizontal = Spacing.tight)
-                .offset { IntOffset(offset.value.roundToInt(), 0) }
+                .offset { IntOffset(offsetPx.roundToInt(), 0) }
                 .size(ThumbSize)
                 .draggable(
                     orientation = Orientation.Horizontal,
                     state = rememberDraggableState { delta ->
-                        scope.launch {
-                            offset.snapTo((offset.value + delta).coerceIn(0f, travel))
-                        }
+                        offsetPx = (offsetPx + delta).coerceIn(0f, travel)
                     },
                     onDragStopped = {
-                        if (offset.value >= travel * ConfirmFraction) onConfirm()
-                        offset.animateTo(0f)
+                        if (offsetPx >= travel * ConfirmFraction) onConfirm()
+                        // Short of the end, the thumb returns: a slide that was
+                        // not finished did not ask for anything.
+                        animate(offsetPx, 0f) { value, _ -> offsetPx = value }
                     }
                 )
         )
