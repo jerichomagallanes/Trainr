@@ -83,7 +83,9 @@ interface UserDao {
     suspend fun deleteExerciseSet(setId: Long)
 
     // The most recent completed performance of the same movement, matched on
-    // exerciseKey — never on the display name, which is free to drift.
+    // exerciseKey — never on the display name, which is free to drift. A day
+    // finished without logging anything (slide-to-complete) is not a
+    // performance, so it must not shadow an older day that has real numbers.
     @Query(
         """
         SELECT es.* FROM exercise_sets es
@@ -97,6 +99,11 @@ interface UserDao {
               AND wd.status = 'COMPLETED'
               AND wd.completedAt IS NOT NULL
               AND wd.completedAt < :beforeMillis
+              AND EXISTS (
+                  SELECT 1 FROM exercise_sets logged
+                  WHERE logged.workoutExerciseId = we.id
+                    AND (logged.actualReps IS NOT NULL OR logged.actualSeconds IS NOT NULL)
+              )
             ORDER BY wd.completedAt DESC, wd.id DESC
             LIMIT 1
         )
