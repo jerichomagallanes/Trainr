@@ -15,9 +15,17 @@ App Demo
 - **Equipment Adaptation**: Workouts adapt to your available equipment (bodyweight, dumbbells, barbells, etc.)
 - **Goal-Oriented Training**: Specialized programs for weight loss, muscle gain, strength, endurance, and general fitness
 - **Injury Considerations**: Safe workout modifications based on reported limitations
-- **Progress Tracking**: Monitor your fitness journey over time
-- **Dark Mode Support**: Comfortable viewing in low-light conditions
-- **Multi-Language Support**: Available in English, Japanese, and Tagalog with runtime locale switching
+- **Session Logging**: Record weight, reps and time per set, with last week's numbers shown beside each one
+- **Built-in Timer**: Count down a timed exercise without leaving the session
+- **Video Tutorials**: A hand-checked YouTube demonstration for each exercise in the catalog
+- **Rescheduling**: Long-press a session to drag it onto another weekday
+- **Week by Week**: Generate the next week from what you actually lifted, run any past week again, or rebuild the week you are in
+- **Progress Tracking**: Every stored week with its dates, status and completion
+
+### Not yet
+
+- **Dark mode** — the app is pinned to light
+- **Japanese and Tagalog** — translated, but not yet enabled
 
 ## 🎯 Fitness Goals Supported
 
@@ -47,6 +55,9 @@ App Demo
 - **Kotlin Coroutines & Flow**: Asynchronous programming and reactive streams
 - **Material Design 3**: Modern UI components and theming
 - **Navigation Compose**: Single-activity navigation between Compose screens
+- **Firebase AI Logic**: Gemini generation without an API key in the app
+- **Firebase App Check**: Play Integrity attestation for every generation request
+- **android-youtube-player**: In-app exercise demonstrations via the official IFrame Player API
 
 ## 🏗️ Architecture
 
@@ -55,6 +66,11 @@ The app follows Clean Architecture principles with three main layers:
 - **Presentation Layer**: UI components, ViewModels, and Compose screens
 - **Domain Layer**: Repository contracts and framework-independent domain models
 - **Data Layer**: Repository implementations, local database, and data sources
+
+Plan generation sits behind a single `PlanGenerator` interface that answers
+`Generated`, `Offline` or `Failed` — never a plan the model did not write. Every
+answer is validated before it is stored, and re-asked with the specific errors when
+it does not hold.
 
 ## 🚀 Getting Started
 
@@ -65,23 +81,33 @@ The app follows Clean Architecture principles with three main layers:
 
 2. Open the project in Android Studio
 
-3. Build and run the application on an Android device or emulator
+3. **Add your own Firebase project** — the build fails without it.
+
+   - Create a project at [console.firebase.google.com](https://console.firebase.google.com)
+   - Register Android apps for `com.jericx.trainr` and `com.jericx.trainr.dev`
+   - Enable **AI Services → AI Logic**, choosing the **Gemini Developer API**
+   - Save `google-services.json` to `app/google-services.json`
+
+4. Build and run on a device or emulator.
+
+   To generate a plan on a debug build, run it once and register the App Check
+   debug token it prints to logcat under **App Check → Manage debug tokens**.
 
 ## 🛠️ Build Variants
 
 The project includes multiple build variants for different environments:
 
-- **Dev**: Development build with debug features and mock data
+- **Dev**: Development build
 - **SIT**: System Integration Testing environment
 - **Prod**: Production-ready build
 
-Each variant supports both debug and release build types for comprehensive testing and deployment flexibility.
+Each supports `debug` and `release` build types.
 
 ## 📱 Minimum Requirements
 
 - Android API Level 24 (Android 7.0)
 - Compile SDK 37, Target SDK 36
-- Kotlin 2.3+
+- Kotlin 2.4
 
 ## 🏃‍♀️ Start Your Fitness Journey
 
