@@ -134,12 +134,15 @@ fun WeeklyPlanScreen(
     Column(modifier = modifier.fillMaxSize()) {
         // Home has nowhere to go back to. Plan-level actions live behind the
         // heading's overflow, where the design puts them; who you are and what
-        // the app is belong to the app bar, and stay reachable even when there
-        // is no plan for the overflow to hang off.
+        // the app is belong to home's app bar, and stay reachable there even
+        // when there is no plan for the overflow to hang off.
         TrainrTopBar(
             onBackClick = onBackClick,
             actions = {
-                if (!isBrowsedWeek) {
+                // Who you are belongs to home, not to a week you opened from
+                // somewhere else: a screen with a way back is somewhere you
+                // went, and the account is not part of what you went to see.
+                if (onBackClick == null) {
                     ProfileMenu(
                         versionName = versionName,
                         onUpdateProfileClick = onUpdateProfileClick

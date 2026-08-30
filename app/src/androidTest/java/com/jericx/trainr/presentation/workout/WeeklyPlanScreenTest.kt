@@ -146,6 +146,18 @@ class WeeklyPlanScreenTest {
         composeTestRule.onNodeWithText(string(R.string.update_profile)).assertIsDisplayed()
     }
 
+    // A week reached from the list is somewhere you went, and the account is
+    // not part of what you went there to see.
+    @Test
+    fun aWeekOpenedFromTheListHasNoAccountMenu() {
+        composeTestRule.setContent {
+            TrainrTheme { WeeklyPlanScreen(state = state, onBackClick = {}) }
+        }
+
+        composeTestRule.onNodeWithContentDescription(string(R.string.profile_and_app))
+            .assertDoesNotExist()
+    }
+
     // A build number is the one thing worth saying about the app itself.
     @Test
     fun aboutShowsWhichBuildIsRunning() {
