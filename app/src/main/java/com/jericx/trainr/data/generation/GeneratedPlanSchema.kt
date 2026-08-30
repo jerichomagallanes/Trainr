@@ -30,7 +30,7 @@ private fun daySchema(): JsonObject = buildJsonObject {
     put("properties", buildJsonObject {
         put("dayNumber", buildJsonObject {
             put("type", "INTEGER")
-            put("description", "ISO day of week, 1 = Monday .. 7 = Sunday")
+            put("description", "Day within the week, 1 = the first day .. 7 = the last")
         })
         put("title", buildJsonObject { put("type", "STRING") })
         put("equipment", buildJsonObject {

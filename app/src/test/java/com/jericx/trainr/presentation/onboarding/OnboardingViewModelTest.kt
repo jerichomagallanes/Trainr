@@ -14,6 +14,7 @@ import com.jericx.trainr.domain.model.WorkoutType
 import com.jericx.trainr.domain.generation.PlanGenerator
 import com.jericx.trainr.domain.generation.PlanRequest
 import com.jericx.trainr.domain.repository.UserRepository
+import com.jericx.trainr.presentation.workout.util.WorkoutWeek
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -276,6 +277,20 @@ class OnboardingViewModelTest {
         coVerify(exactly = 0) { planGenerator.generate(any()) }
         assertThat(done).isTrue()
         assertThat(viewModel.onboardingState.value.isLoading).isFalse()
+    }
+
+    // Anchoring week one to the Monday just gone handed anyone who signed up
+    // later in the week a plan of sessions that had already been missed.
+    @Test
+    fun `the first week starts today`() = runTest {
+        val request = slot<PlanRequest>()
+        coEvery { planGenerator.generate(capture(request)) } returns null
+
+        viewModel.saveUserProfile {}
+        advanceUntilIdle()
+
+        assertThat(request.captured.startDateMillis)
+            .isEqualTo(WorkoutWeek.startOfDay())
     }
 
 }
