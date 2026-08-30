@@ -31,6 +31,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - uses: ./.github/actions/setup-android
+        with:
+          google-services-json: ${{ secrets.GOOGLE_SERVICES_JSON }}
 
       - name: Run unit tests
         run: ./gradlew testDevDebugUnitTest
@@ -68,6 +70,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - uses: ./.github/actions/setup-android
+        with:
+          google-services-json: ${{ secrets.GOOGLE_SERVICES_JSON }}
 
       - name: Run Android Lint
         run: ./gradlew lintDevDebug
@@ -98,6 +102,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - uses: ./.github/actions/setup-android
+        with:
+          google-services-json: ${{ secrets.GOOGLE_SERVICES_JSON }}
 
       - name: Assemble dev debug
         run: ./gradlew assembleDevDebug

@@ -2,9 +2,8 @@ package com.jericx.trainr.di
 
 import android.content.Context
 import androidx.room.Room
-import com.jericx.trainr.BuildConfig
 import com.jericx.trainr.common.Constants
-import com.jericx.trainr.data.generation.GeminiClient
+import com.jericx.trainr.data.generation.FirebaseAiClient
 import com.jericx.trainr.data.generation.GeminiPlanGenerator
 import com.jericx.trainr.data.generation.GeneratedPlanParser
 import com.jericx.trainr.data.generation.PlanPromptBuilder
@@ -68,7 +67,7 @@ object AppModule {
     @Singleton
     fun providePlanGenerator(): PlanGenerator {
         return GeminiPlanGenerator(
-            client = GeminiClient(apiKey = BuildConfig.GEMINI_API_KEY),
+            client = FirebaseAiClient(),
             parser = GeneratedPlanParser(),
             promptBuilder = PlanPromptBuilder(
                 canonicalKeys = ExerciseVideoCatalog.videoIds.keys
