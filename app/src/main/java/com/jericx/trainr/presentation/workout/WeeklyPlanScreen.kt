@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -39,6 +40,8 @@ import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.presentation.common.components.layout.TrainrTopBar
 import com.jericx.trainr.presentation.common.components.core.TrainrButton
 import com.jericx.trainr.presentation.common.theme.Orange500
+import androidx.compose.ui.text.style.TextAlign
+import com.jericx.trainr.presentation.common.theme.TextMuted
 import com.jericx.trainr.presentation.common.theme.Slate800
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
@@ -55,6 +58,7 @@ fun WeeklyPlanRoute(
     onUpdateProfileClick: () -> Unit = {},
     onStartNextWeekClick: () -> Unit = {},
     onRepeatWeekClick: () -> Unit = {},
+    onCreatePlanClick: () -> Unit = {},
     onBackClick: (() -> Unit)? = null,
     viewModel: WeeklyPlanViewModel = hiltViewModel()
 ) {
@@ -73,6 +77,7 @@ fun WeeklyPlanRoute(
         onUpdateProfileClick = onUpdateProfileClick,
         onStartNextWeekClick = onStartNextWeekClick,
         onRepeatWeekClick = onRepeatWeekClick,
+        onCreatePlanClick = onCreatePlanClick,
         onMoveDay = viewModel::moveDay,
         onBackClick = onBackClick
     )
@@ -89,6 +94,7 @@ fun WeeklyPlanScreen(
     onUpdateProfileClick: () -> Unit = {},
     onStartNextWeekClick: () -> Unit = {},
     onRepeatWeekClick: () -> Unit = {},
+    onCreatePlanClick: () -> Unit = {},
     onMoveDay: (Int, Int) -> Unit = { _, _ -> },
     // Set only when a week was opened from Weekly Progress.
     onBackClick: (() -> Unit)? = null
@@ -118,6 +124,18 @@ fun WeeklyPlanScreen(
         // Home has nowhere to go back to. Plan-level actions live behind the
         // heading's overflow, where the design puts them.
         TrainrTopBar(onBackClick = onBackClick)
+
+        // Nothing is drawn until the plan has been looked for: a blank moment
+        // is honest, where a stand-in week would be read as the real thing.
+        if (!state.hasLoaded) return@Column
+
+        if (!state.hasPlan) {
+            NoPlanYet(
+                onCreatePlanClick = onCreatePlanClick,
+                modifier = Modifier.weight(1f)
+            )
+            return@Column
+        }
 
         Column(
             modifier = Modifier
@@ -252,6 +270,46 @@ fun WeeklyPlanScreen(
                 modifier = Modifier.padding(horizontal = Spacing.screen, vertical = Spacing.medium)
             )
         }
+    }
+}
+
+// Deleting every week is allowed, so landing there has to be a place rather
+// than a gap: it says what happened and offers the way out of it.
+@Composable
+private fun NoPlanYet(
+    onCreatePlanClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = Spacing.screen),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = stringResource(R.string.no_plan_title),
+            style = MaterialTheme.typography.titleLarge,
+            color = Slate800,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.size(Spacing.small))
+
+        Text(
+            text = stringResource(R.string.no_plan_message),
+            style = MaterialTheme.typography.bodyLarge,
+            color = TextMuted,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.size(Spacing.sectionGap))
+
+        TrainrButton(
+            text = stringResource(R.string.create_my_plan),
+            onClick = onCreatePlanClick,
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 

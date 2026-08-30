@@ -200,6 +200,9 @@
     <string name="delete_set">Burahin ang set</string>
     <string name="plan_options">Mga opsyon ng plano</string>
     <string name="regenerate_plan">Muling buuin ang plano</string>
+    <string name="no_plan_title">Wala pang plano</string>
+    <string name="no_plan_message">Nabura ang lahat ng linggo. Bumuo ng bagong plano kapag handa ka na.</string>
+    <string name="create_my_plan">GUMAWA NG PLANO</string>
     <string name="repeat_this_week">Ulitin ang linggong ito</string>
     <string name="generation_failed_title">Hindi nagawa ang plano mo</string>
     <string name="generation_failed_offline">Hindi maabot ang internet. Tingnan ang koneksyon at subukan ulit.</string>

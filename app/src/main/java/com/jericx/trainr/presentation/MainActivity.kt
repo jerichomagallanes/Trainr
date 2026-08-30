@@ -485,7 +485,12 @@ fun AppContent(versionName: String) {
                         },
                         // Copying a week needs nothing from the model, so there
                         // is no waiting to show: it lands and home reloads.
-                        onRepeatWeekClick = { nextWeekViewModel.repeatLastWeek() }
+                        onRepeatWeekClick = { nextWeekViewModel.repeatLastWeek() },
+                        // With every week deleted there is a profile but no
+                        // plan: the review is where a new one is built from.
+                        onCreatePlanClick = {
+                            navController.navigate(Screen.Review.createRoute(fromPlan = true))
+                        }
                     )
                 }
             }

@@ -202,10 +202,10 @@ class WeeklyProgressViewModelTest {
         coVerify(exactly = 0) { userRepository.updateWeeklyWorkoutPlan(match { it.id == one.id }) }
     }
 
-    // A plan of nothing is not a state to strand anyone in — the same reason an
-    // exercise keeps its final set. Starting over is what regenerating is for.
+    // Deleting down to nothing is allowed: the plan screen says there is none
+    // and offers to build another, which beats keeping a week nobody wanted.
     @Test
-    fun theOnlyRemainingWeekIsKept() = runTest {
+    fun theLastWeekCanBeDeletedToo() = runTest {
         val only = plan(weekNumber = 1, statuses = arrayOf(WorkoutStatus.NOT_STARTED))
         coEvery { userRepository.getCurrentUser() } returns UserProfile(id = 1)
         every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(only))
@@ -215,7 +215,7 @@ class WeeklyProgressViewModelTest {
         viewModel.deleteWeek(1)
         advanceUntilIdle()
 
-        coVerify(exactly = 0) { userRepository.deleteWeeklyWorkoutPlan(any()) }
+        coVerify { userRepository.deleteWeeklyWorkoutPlan(only.id) }
     }
 
     // Found by hand: a week dated in the future but already trained in showed

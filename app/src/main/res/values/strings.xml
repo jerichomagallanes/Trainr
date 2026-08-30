@@ -199,6 +199,9 @@
     <string name="delete_set">Delete set</string>
     <string name="plan_options">Plan options</string>
     <string name="regenerate_plan">Regenerate plan</string>
+    <string name="no_plan_title">No plan right now</string>
+    <string name="no_plan_message">Every week has been deleted. Build a new plan whenever you are ready.</string>
+    <string name="create_my_plan">CREATE MY PLAN</string>
     <string name="repeat_this_week">Repeat this week</string>
     <string name="generation_failed_title">Could not create your plan</string>
     <string name="generation_failed_offline">Trainr could not reach the internet. Check your connection and try again.</string>

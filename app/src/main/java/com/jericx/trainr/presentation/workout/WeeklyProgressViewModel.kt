@@ -52,15 +52,13 @@ class WeeklyProgressViewModel @Inject constructor(
         }
     }
 
-    // Any week can go, trained or not: it is the client's record to keep or
-    // drop. The last one stays, the same way an exercise keeps its final set —
-    // a plan of nothing is not a state worth landing anyone in, and starting
-    // over is what Regenerate plan is for.
+    // Any week can go, trained or not, down to the last one: it is the client's
+    // record to keep or drop, and a plan emptied out says so and offers to
+    // build another rather than pretending one is still there.
     fun deleteWeek(weekNumber: Int) {
         viewModelScope.launch {
             val user = userRepository.getCurrentUser() ?: return@launch
             val plans = userRepository.getWeeklyWorkoutPlans(user.id).first()
-            if (plans.size <= 1) return@launch
             val plan = plans.firstOrNull { it.weekNumber == weekNumber } ?: return@launch
 
             userRepository.deleteWeeklyWorkoutPlan(plan.id)

@@ -35,7 +35,6 @@ class WeeklyPlanScreenTest {
     // it decides which sessions are missed, and so which of them can be moved.
     private val state = WeeklyPlanViewModel.stateFor(
         plan = SampleWorkoutData.weekOne,
-        isSample = true,
         nowMillis = SampleWorkoutData.dateOf(3)
     )
 
@@ -457,6 +456,38 @@ class WeeklyPlanScreenTest {
         composeTestRule.waitForIdle()
 
         assertThat(move).isNull()
+    }
+
+    // Deleting every week is allowed, so the plan screen has to be a place when
+    // there is nothing in it rather than a blank.
+    @Test
+    fun withNoPlanTheScreenSaysSoAndOffersToBuildOne() {
+        var asked = false
+        composeTestRule.setContent {
+            TrainrTheme {
+                WeeklyPlanScreen(
+                    state = WeeklyPlanUiState(hasLoaded = true, hasPlan = false),
+                    onCreatePlanClick = { asked = true }
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.no_plan_title)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.create_my_plan)).performClick()
+
+        assertThat(asked).isTrue()
+    }
+
+    // Before the plan has been read there is nothing to say yet, and saying
+    // "no plan" then would be wrong for the moment it takes to find one.
+    @Test
+    fun nothingIsSaidBeforeThePlanHasBeenRead() {
+        composeTestRule.setContent {
+            TrainrTheme { WeeklyPlanScreen(state = WeeklyPlanUiState()) }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.no_plan_title)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.start_todays_workout)).assertDoesNotExist()
     }
 
 }

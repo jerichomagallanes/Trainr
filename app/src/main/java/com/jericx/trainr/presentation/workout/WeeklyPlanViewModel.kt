@@ -38,7 +38,10 @@ data class WeeklyPlanUiState(
     val days: List<WeeklyPlanDay> = emptyList(),
     val weekStartMillis: Long = SampleWorkoutData.weekStartMillis,
     val weekEndMillis: Long = SampleWorkoutData.weekEndMillis,
-    val isSampleData: Boolean = true,
+    // Nothing is drawn until the stored plan has been looked for, so an empty
+    // plan and a plan not read yet are never mistaken for one another.
+    val hasLoaded: Boolean = false,
+    val hasPlan: Boolean = false,
     // Next week is offered once this one is finished or its dates have run
     // out; a missed day must not strand the plan on the same week forever.
     val canStartNextWeek: Boolean = false
@@ -68,16 +71,9 @@ class WeeklyPlanViewModel @Inject constructor(
     private val requestedWeekNumber: Int? =
         savedStateHandle.get<Int>(Screen.WeekPlan.ARG_WEEK_NUMBER)?.takeIf { it > 0 }
 
-    // Read against its own dates: the built-in week stands in for a fraction of
-    // a second while the stored plan loads, and a placeholder has no business
-    // telling anyone they missed a workout in 2025.
-    private val _uiState = MutableStateFlow(
-        stateFor(
-            plan = SampleWorkoutData.weekOne,
-            isSample = true,
-            nowMillis = SampleWorkoutData.weekStartMillis
-        )
-    )
+    // Nothing until the plan has been read: the screen shows a plan, or says
+    // there is none, and never a stand-in dressed as either.
+    private val _uiState = MutableStateFlow(WeeklyPlanUiState())
     val uiState: StateFlow<WeeklyPlanUiState> = _uiState.asStateFlow()
 
     init {
@@ -97,13 +93,9 @@ class WeeklyPlanViewModel @Inject constructor(
                 }
 
             _uiState.value = if (stored == null) {
-                stateFor(
-                    plan = SampleWorkoutData.weekOne,
-                    isSample = true,
-                    nowMillis = SampleWorkoutData.weekStartMillis
-                )
+                WeeklyPlanUiState(hasLoaded = true, hasPlan = false)
             } else {
-                stateFor(stored, isSample = false)
+                stateFor(stored)
             }
         }
     }
@@ -112,7 +104,7 @@ class WeeklyPlanViewModel @Inject constructor(
     // themselves never move, so the week keeps the shape it was generated with.
     fun moveDay(from: Int, to: Int) {
         val state = _uiState.value
-        if (state.isSampleData) return
+        if (!state.hasPlan) return
 
         val plan = state.plan
         val reordered = reorderedDays(plan.workoutDays, from, to)
@@ -149,7 +141,7 @@ class WeeklyPlanViewModel @Inject constructor(
         // Plans stored before startDateMillis existed fall back to the sample week.
         fun stateFor(
             plan: WeeklyWorkoutPlan,
-            isSample: Boolean,
+            isSample: Boolean = false,
             nowMillis: Long = System.currentTimeMillis()
         ): WeeklyPlanUiState {
             val start = plan.startDateMillis ?: SampleWorkoutData.weekStartMillis
@@ -172,8 +164,8 @@ class WeeklyPlanViewModel @Inject constructor(
                 },
                 weekStartMillis = start,
                 weekEndMillis = WorkoutWeek.dateOfDay(start, LAST_ISO_DAY),
-                isSampleData = isSample,
-                // Sample data stands for nothing stored, so it leads nowhere.
+                hasLoaded = true,
+                hasPlan = !isSample,
                 canStartNextWeek = !isSample && (allDone || weekIsOver)
             )
         }

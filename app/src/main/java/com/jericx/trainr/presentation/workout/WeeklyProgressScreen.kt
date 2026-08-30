@@ -101,9 +101,7 @@ fun WeeklyProgressScreen(
 
             weeks.forEach { week ->
                 DeletableWeek(
-                    // The last week stays: a plan of nothing is not a state to
-                    // strand anyone in.
-                    canDelete = weeks.size > 1,
+                    canDelete = true,
                     onDelete = { weekToDelete = week }
                 ) {
                 WeekProgressCard(
