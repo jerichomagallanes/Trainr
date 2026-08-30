@@ -7,7 +7,6 @@ import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.domain.repository.UserRepository
 import com.jericx.trainr.presentation.workout.model.WeekProgressUi
 import com.jericx.trainr.presentation.workout.model.WeekStatus
-import com.jericx.trainr.presentation.workout.sample.SampleWeeklyProgress
 import com.jericx.trainr.presentation.workout.util.WorkoutWeek
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,8 +17,10 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class WeeklyProgressUiState(
-    val weeks: List<WeekProgressUi> = SampleWeeklyProgress.weeks,
-    val isSampleData: Boolean = true
+    // No stand-in weeks: the screen lists what is stored, and nothing when
+    // nothing is. Showing a built-in set here would read as a training history
+    // that never happened.
+    val weeks: List<WeekProgressUi> = emptyList()
 )
 
 @HiltViewModel
@@ -41,14 +42,7 @@ class WeeklyProgressViewModel @Inject constructor(
                 .orEmpty()
                 .sortedBy { it.weekNumber }
 
-            _uiState.value = if (plans.isEmpty()) {
-                WeeklyProgressUiState()
-            } else {
-                WeeklyProgressUiState(
-                    weeks = plans.map { weekProgressOf(it) },
-                    isSampleData = false
-                )
-            }
+            _uiState.value = WeeklyProgressUiState(weeks = plans.map { weekProgressOf(it) })
         }
     }
 

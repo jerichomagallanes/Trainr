@@ -42,6 +42,10 @@ data class WeeklyPlanUiState(
     // plan and a plan not read yet are never mistaken for one another.
     val hasLoaded: Boolean = false,
     val hasPlan: Boolean = false,
+    // The newest week is the one being trained; the ones behind it are records.
+    // Which of the two a week is belongs to the week, not to the door it was
+    // opened through — the same week was live on home and frozen one tap away.
+    val isCurrentWeek: Boolean = false,
     // Next week is offered once this one is finished or its dates have run
     // out; a missed day must not strand the plan on the same week forever.
     val canStartNextWeek: Boolean = false
@@ -92,10 +96,14 @@ class WeeklyPlanViewModel @Inject constructor(
                     }
                 }
 
+            val newest = userRepository.getCurrentUser()
+                ?.let { userRepository.getWeeklyWorkoutPlans(it.id).first() }
+                ?.maxByOrNull { it.weekNumber }
+
             _uiState.value = if (stored == null) {
                 WeeklyPlanUiState(hasLoaded = true, hasPlan = false)
             } else {
-                stateFor(stored)
+                stateFor(stored, isCurrentWeek = stored.weekNumber == newest?.weekNumber)
             }
         }
     }
@@ -112,7 +120,7 @@ class WeeklyPlanViewModel @Inject constructor(
 
         _uiState.value = stateFor(
             plan.copy(workoutDays = reordered.sortedBy { it.dayNumber }),
-            isSample = false
+            isCurrentWeek = state.isCurrentWeek
         )
 
         viewModelScope.launch {
@@ -142,6 +150,7 @@ class WeeklyPlanViewModel @Inject constructor(
         fun stateFor(
             plan: WeeklyWorkoutPlan,
             isSample: Boolean = false,
+            isCurrentWeek: Boolean = true,
             nowMillis: Long = System.currentTimeMillis()
         ): WeeklyPlanUiState {
             val start = plan.startDateMillis ?: SampleWorkoutData.weekStartMillis
@@ -166,6 +175,7 @@ class WeeklyPlanViewModel @Inject constructor(
                 weekEndMillis = WorkoutWeek.dateOfDay(start, LAST_ISO_DAY),
                 hasLoaded = true,
                 hasPlan = !isSample,
+                isCurrentWeek = isCurrentWeek,
                 canStartNextWeek = !isSample && (allDone || weekIsOver)
             )
         }

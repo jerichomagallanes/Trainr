@@ -103,7 +103,11 @@ fun WeeklyPlanScreen(
     // so it gets a way back and drops the actions that belong to the plan
     // standing in as home: regenerating, starting today, and the progress link
     // that leads back where the reader just came from.
-    val isBrowsedWeek = onBackClick != null
+    // A week already behind you is a record: it keeps its dates and its order,
+    // and offers none of the actions that belong to the week being trained. The
+    // newest week is live wherever it was opened from, so home and the list
+    // show the same thing rather than two versions of it.
+    val isBrowsedWeek = state.hasPlan && !state.isCurrentWeek
     val locale = LocalLocale.current.platformLocale
     var showLeaveDialog by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }

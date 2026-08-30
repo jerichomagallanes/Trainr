@@ -7,7 +7,6 @@ import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.domain.repository.UserRepository
 import com.jericx.trainr.presentation.workout.model.WeekStatus
-import com.jericx.trainr.presentation.workout.sample.SampleWeeklyProgress
 import com.jericx.trainr.presentation.workout.util.WorkoutWeek
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -148,21 +147,20 @@ class WeeklyProgressViewModelTest {
         val viewModel = WeeklyProgressViewModel(userRepository)
         advanceUntilIdle()
 
-        with(viewModel.uiState.value) {
-            assertThat(isSampleData).isFalse()
-            assertThat(weeks.map { it.weekNumber }).containsExactly(1, 2).inOrder()
-        }
+        assertThat(viewModel.uiState.value.weeks.map { it.weekNumber })
+            .containsExactly(1, 2).inOrder()
     }
 
+    // A built-in set of weeks here would read as a training history that never
+    // happened, so with nothing stored the screen lists nothing.
     @Test
-    fun fallsBackToSampleDataWhenThereIsNoUser() = runTest {
+    fun withNothingStoredThereAreNoWeeksToShow() = runTest {
         coEvery { userRepository.getCurrentUser() } returns null
 
         val viewModel = WeeklyProgressViewModel(userRepository)
         advanceUntilIdle()
 
-        assertThat(viewModel.uiState.value.weeks).isEqualTo(SampleWeeklyProgress.weeks)
-        assertThat(viewModel.uiState.value.isSampleData).isTrue()
+        assertThat(viewModel.uiState.value.weeks).isEmpty()
     }
     // A week that was trained is still the client's to drop; the app asks
     // first and names what goes, rather than refusing on their behalf.

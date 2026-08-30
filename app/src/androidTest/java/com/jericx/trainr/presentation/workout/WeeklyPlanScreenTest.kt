@@ -58,12 +58,18 @@ class WeeklyPlanScreenTest {
     // A week opened from Weekly Progress is a record to read: it needs a way
     // back, and must not offer to regenerate, start today, or bounce the
     // reader back to the progress screen they arrived from.
+    private val pastWeek = WeeklyPlanViewModel.stateFor(
+        plan = SampleWorkoutData.weekOne,
+        isCurrentWeek = false,
+        nowMillis = SampleWorkoutData.dateOf(3)
+    )
+
     @Test
     fun aBrowsedWeekOffersAWayBackAndNoPlanActions() {
         var wentBack = false
         composeTestRule.setContent {
             TrainrTheme {
-                WeeklyPlanScreen(state = state, onBackClick = { wentBack = true })
+                WeeklyPlanScreen(state = pastWeek, onBackClick = { wentBack = true })
             }
         }
 
@@ -381,7 +387,11 @@ class WeeklyPlanScreenTest {
         composeTestRule.setContent {
             TrainrTheme {
                 WeeklyPlanScreen(
-                    state = freshWeek,
+                    state = WeeklyPlanViewModel.stateFor(
+                        plan = freshWeek.plan,
+                        isCurrentWeek = false,
+                        nowMillis = SampleWorkoutData.dateOf(1)
+                    ),
                     onBackClick = {},
                     onMoveDay = { from, to -> move = from to to }
                 )

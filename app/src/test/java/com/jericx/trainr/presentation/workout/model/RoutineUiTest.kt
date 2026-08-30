@@ -164,13 +164,16 @@ class RoutineUiTest {
         assertThat(once.exercises.first().sets).hasSize(2)
     }
 
-    // An empty table would have no target left to grow back from via Add set.
+    // The last set can go, the same way the last week can: Add set is the way
+    // back, so an exercise left with none is a state the client can undo.
     @Test
-    fun theLastSetCannotBeDeleted() {
+    fun theLastSetCanBeDeletedToo() {
         val routine = routineWithSets()
         val only = routine.exercises[1].sets.single()
 
-        assertThat(routine.removeSet(2, only.setNumber)).isEqualTo(routine)
+        val emptied = routine.removeSet(2, only.setNumber)
+
+        assertThat(emptied.exercises[1].sets).isEmpty()
     }
 
     @Test

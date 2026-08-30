@@ -157,7 +157,6 @@ class RoutineDetailViewModel @Inject constructor(
         val sets = _uiState.value.routine.exercises
             .firstOrNull { it.position == position }?.sets ?: return
         val set = sets.firstOrNull { it.setNumber == setNumber } ?: return
-        if (sets.size <= 1) return
 
         _uiState.update { it.copy(routine = it.routine.removeSet(position, setNumber)) }
 

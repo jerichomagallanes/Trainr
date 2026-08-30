@@ -55,8 +55,8 @@ fun WeeklyProgressRoute(
         weeks = state.weeks,
         onBackClick = onBackClick,
         // Sample weeks stand for nothing stored, so they lead nowhere.
-        onWeekClick = { if (!state.isSampleData) onWeekClick(it) },
-        onDeleteWeek = { if (!state.isSampleData) viewModel.deleteWeek(it.weekNumber) }
+        onWeekClick = onWeekClick,
+        onDeleteWeek = { viewModel.deleteWeek(it.weekNumber) }
     )
 }
 

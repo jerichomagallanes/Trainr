@@ -279,10 +279,9 @@ class ExerciseSetTableTest {
             .assertDoesNotExist()
     }
 
-    // With a single set there is nothing sensible left after a delete, so the
-    // row does not offer one.
+    // Every row can go, down to the last: Add set brings one back.
     @Test
-    fun theOnlyRowCannotBeSwipedAway() {
+    fun theOnlyRowCanBeSwipedAwayToo() {
         var deleted: ExerciseSet? = null
         setTable(
             ExerciseMeasure.REPS,
@@ -292,7 +291,7 @@ class ExerciseSetTableTest {
 
         swipeRow("1", across = 0.95f)
 
-        assertThat(deleted).isNull()
+        assertThat(deleted?.setNumber).isEqualTo(1)
     }
 
     @Test
