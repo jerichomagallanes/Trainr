@@ -16,6 +16,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.jericx.trainr.R
+import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.common.Constants
 import com.jericx.trainr.domain.model.WorkoutType
 import com.jericx.trainr.presentation.common.theme.Spacing
@@ -33,11 +34,16 @@ import com.jericx.trainr.presentation.common.components.typography.TrainrSubtitl
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LimitationsScreen(
+    initial: UserProfile? = null,
     onNextClick: (injuries: List<String>, workoutType: WorkoutType) -> Unit,
     onBackClick: () -> Unit
 ) {
-    var selectedInjuries by remember { mutableStateOf<Set<String>>(emptySet()) }
-    var selectedWorkoutType by remember { mutableStateOf(WorkoutType.MIXED) }
+    var selectedInjuries by remember {
+        mutableStateOf(initial?.injuries?.toSet() ?: emptySet())
+    }
+    var selectedWorkoutType by remember {
+        mutableStateOf(initial?.workoutType ?: WorkoutType.MIXED)
+    }
 
     val injuryOptions = listOf(
         stringResource(R.string.lower_back_pain_injury),

@@ -1,6 +1,7 @@
 package com.jericx.trainr.presentation.onboarding.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -45,12 +46,23 @@ import com.jericx.trainr.presentation.common.theme.Spacing
 fun ReviewScreen(
     userProfile: UserProfile,
     onConfirmClick: () -> Unit,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    isRegenerating: Boolean = false,
+    onEditPersonal: () -> Unit = {},
+    onEditGoals: () -> Unit = {},
+    onEditSetup: () -> Unit = {},
+    onEditLimitations: () -> Unit = {}
 ) {
     TrainrScaffold(
         onBackClick = onBackClick,
         topBar = {
-            TrainrTopBar(onBackClick = onBackClick, showLogo = true)
+            TrainrTopBar(
+                onBackClick = onBackClick,
+                showLogo = true,
+                // Entered from the plan this is a detour, not a flow: X leads
+                // back out; during onboarding the arrow steps back as usual.
+                closeInsteadOfBack = isRegenerating
+            )
         },
         bottomButton = {
             TrainrButton(
@@ -88,8 +100,8 @@ fun ReviewScreen(
                 
                 ProfileSection(
                     title = stringResource(R.string.personal_information),
+                    onEdit = onEditPersonal,
                     items = listOf(
-                        stringResource(R.string.name_label) to userProfile.firstName,
                         stringResource(R.string.age_label) to pluralStringResource(R.plurals.years_old_format, userProfile.age, userProfile.age),
                         stringResource(R.string.gender_label) to genderText,
                         stringResource(R.string.height_label) to stringResource(R.string.height_cm_format, userProfile.height.toInt()),
@@ -98,20 +110,21 @@ fun ReviewScreen(
                     )
                 )
 
-                Spacer(modifier = Modifier.height(Spacing.large))
+                Spacer(modifier = Modifier.height(Spacing.screen))
 
                 val fitnessGoalText = userProfile.fitnessGoal.getLocalizedName()
                 val workoutTypeText = userProfile.workoutType.getLocalizedName()
                 
                 ProfileSection(
                     title = stringResource(R.string.fitness_goals_label),
+                    onEdit = onEditGoals,
                     items = listOf(
                         stringResource(R.string.main_goal_label) to fitnessGoalText,
                         stringResource(R.string.workout_style_label) to workoutTypeText
                     )
                 )
 
-                Spacer(modifier = Modifier.height(Spacing.large))
+                Spacer(modifier = Modifier.height(Spacing.screen))
 
                 val locationText = userProfile.workoutLocation.getLocalizedName()
                 val equipmentText = if (userProfile.availableEquipment.isEmpty() ||
@@ -127,6 +140,7 @@ fun ReviewScreen(
                 
                 ProfileSection(
                     title = stringResource(R.string.workout_setup_label),
+                    onEdit = onEditSetup,
                     items = listOf(
                         stringResource(R.string.location_label) to locationText,
                         stringResource(R.string.equipment_label_full) to equipmentText,
@@ -147,16 +161,20 @@ fun ReviewScreen(
                     )
                 )
 
-                if (userProfile.injuries.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(Spacing.large))
+                Spacer(modifier = Modifier.height(Spacing.screen))
 
-                    ProfileSection(
-                        title = stringResource(R.string.limitations_label),
-                        items = listOf(
-                            stringResource(R.string.injuries_concerns_label) to userProfile.injuries.joinToString(", ")
-                        )
+                ProfileSection(
+                    title = stringResource(R.string.limitations_label),
+                    onEdit = onEditLimitations,
+                    items = listOf(
+                        stringResource(R.string.injuries_concerns_label) to
+                            if (userProfile.injuries.isEmpty()) {
+                                stringResource(R.string.none_label)
+                            } else {
+                                userProfile.injuries.joinToString(", ")
+                            }
                     )
-                }
+                )
 
                 Spacer(modifier = Modifier.height(Spacing.extraLarge))
 
@@ -171,29 +189,39 @@ fun ReviewScreen(
 @Composable
 private fun ProfileSection(
     title: String,
-    items: List<Pair<String, String>>
+    items: List<Pair<String, String>>,
+    onEdit: () -> Unit
 ) {
     Column(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.medium)
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+            .padding(Spacing.card),
+        verticalArrangement = Arrangement.spacedBy(Spacing.card)
     ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.padding(bottom = Spacing.small)
-        )
-        
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(MaterialTheme.shapes.medium)
-                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                .padding(Spacing.medium),
-            verticalArrangement = Arrangement.spacedBy(Spacing.small)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            items.forEach { (label, value) ->
-                ProfileItem(label = label, value = value)
-            }
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Text(
+                text = stringResource(R.string.edit),
+                style = MaterialTheme.typography.labelLarge.copy(
+                    fontWeight = FontWeight.SemiBold
+                ),
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.clickable(onClick = onEdit)
+            )
+        }
+
+        items.forEach { (label, value) ->
+            ProfileItem(label = label, value = value)
         }
     }
 }

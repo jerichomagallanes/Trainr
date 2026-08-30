@@ -41,6 +41,7 @@ class OnboardingViewModelTest {
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         userRepository = mockk(relaxed = true)
+        coEvery { userRepository.getCurrentUser() } returns null
         planGenerator = mockk()
         coEvery { planGenerator.generate(any()) } returns null
         viewModel = OnboardingViewModel(userRepository, planGenerator) { "en" }
@@ -210,6 +211,17 @@ class OnboardingViewModelTest {
             assertThat(languageCode).isEqualTo("en")
             assertThat(previousWeek).isNull()
         }
+    }
+
+    @Test
+    fun `a stored profile is loaded so editing starts from saved answers`() = runTest(testDispatcher) {
+        coEvery { userRepository.getCurrentUser() } returns UserProfile(id = 7L, firstName = "Jeco", age = 26)
+        val loaded = OnboardingViewModel(userRepository, planGenerator) { "en" }
+
+        advanceUntilIdle()
+
+        assertThat(loaded.onboardingState.value.userProfile.firstName).isEqualTo("Jeco")
+        assertThat(loaded.onboardingState.value.userProfile.age).isEqualTo(26)
     }
 
     @Test

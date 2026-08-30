@@ -139,9 +139,9 @@
     
     <!-- Workout Screens -->
     <string name="week_range_format">第%1$d週: %2$s</string>
-    <string name="leave_plan_title">プランを離れますか？</string>
-    <string name="leave_plan_message">戻るとワークアウトプランを作成し直す必要があります。よろしいですか？</string>
-    <string name="leave_plan_confirm">はい、戻る</string>
+    <string name="leave_plan_title">プランを再生成しますか？</string>
+    <string name="leave_plan_message">新しいプランを作成すると、今週のプランと記録した内容が置き換えられます。よろしいですか？</string>
+    <string name="leave_plan_confirm">再生成</string>
     <string name="cancel">キャンセル</string>
     <string name="mark_exercise_complete">エクササイズを完了にする</string>
     <string name="mark_exercise_incomplete">エクササイズを未完了にする</string>
@@ -205,6 +205,8 @@
     <string name="exercise_in_progress">エクササイズ実行中…</string>
     <string name="timer_paused">タイマー一時停止中</string>
     <string name="edit">編集</string>
+    <string name="close">閉じる</string>
+    <string name="none_label">なし</string>
     
     <!-- Common -->
     <string name="next">次へ</string>

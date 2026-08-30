@@ -1,8 +1,11 @@
 package com.jericx.trainr.presentation.onboarding.screens
 
 import androidx.activity.ComponentActivity
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -126,18 +129,46 @@ class ReviewScreenTest {
     }
 
     @Test
-    fun rendersProvidedFirstName() {
+    fun everySectionOffersAnEdit() {
+        var personal = false
+        var goals = false
         composeTestRule.setContent {
             TrainrTheme {
                 ReviewScreen(
                     userProfile = sampleProfile,
                     onConfirmClick = {},
-                    onBackClick = {}
+                    onBackClick = {},
+                    onEditPersonal = { personal = true },
+                    onEditGoals = { goals = true }
                 )
             }
         }
 
-        composeTestRule.onNodeWithText("Jericho").assertIsDisplayed()
+        composeTestRule.onAllNodesWithText(string(R.string.edit))
+            .assertCountEquals(4)
+        composeTestRule.onAllNodesWithText(string(R.string.edit))[0].performClick()
+        composeTestRule.onAllNodesWithText(string(R.string.edit))[1].performClick()
+        assertThat(personal).isTrue()
+        assertThat(goals).isTrue()
+    }
+
+    // Entered from the plan, the review is a detour: it closes, it does not
+    // promise a step back through a flow that is not there.
+    @Test
+    fun regeneratingShowsACloseInsteadOfABack() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                ReviewScreen(
+                    userProfile = sampleProfile,
+                    onConfirmClick = {},
+                    onBackClick = {},
+                    isRegenerating = true
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithContentDescription(string(R.string.close)).assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription(string(R.string.back)).assertDoesNotExist()
     }
 
     @Test

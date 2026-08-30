@@ -14,6 +14,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.jericx.trainr.R
+import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.model.FitnessGoal
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.components.cards.TrainrIconCard
@@ -26,10 +27,11 @@ import com.jericx.trainr.presentation.common.components.typography.TrainrSubtitl
 
 @Composable
 fun FitnessGoalScreen(
+    initial: UserProfile? = null,
     onNextClick: (FitnessGoal) -> Unit,
     onBackClick: () -> Unit
 ) {
-    var selectedGoal by remember { mutableStateOf<FitnessGoal?>(null) }
+    var selectedGoal by remember { mutableStateOf(initial?.fitnessGoal) }
 
     TrainrScaffold(
         onBackClick = onBackClick,

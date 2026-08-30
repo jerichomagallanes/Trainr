@@ -138,9 +138,9 @@
     
     <!-- Workout Screens -->
     <string name="week_range_format">Week %1$d: %2$s</string>
-    <string name="leave_plan_title">Leave your plan?</string>
-    <string name="leave_plan_message">Going back means your workout plan will need to be generated again. Are you okay with that?</string>
-    <string name="leave_plan_confirm">Yes, go back</string>
+    <string name="leave_plan_title">Regenerate your plan?</string>
+    <string name="leave_plan_message">A new plan replaces this week and everything you have logged in it. Are you sure?</string>
+    <string name="leave_plan_confirm">Regenerate</string>
     <string name="cancel">Cancel</string>
     <string name="mark_exercise_complete">Mark exercise as complete</string>
     <string name="mark_exercise_incomplete">Mark exercise as not complete</string>
@@ -207,6 +207,8 @@
     <string name="exercise_in_progress">Exercise in progress…</string>
     <string name="timer_paused">Timer paused</string>
     <string name="edit">Edit</string>
+    <string name="close">Close</string>
+    <string name="none_label">None</string>
     
     <!-- Common -->
     <string name="next">NEXT</string>

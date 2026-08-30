@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -32,15 +33,24 @@ import com.jericx.trainr.presentation.common.theme.TrainrTheme
 fun TrainrTopBar(
     onBackClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
-    showLogo: Boolean = true
+    showLogo: Boolean = true,
+    // A close is a way OUT of a detour, where a back arrow would promise a
+    // step backwards through a flow that is not there.
+    closeInsteadOfBack: Boolean = false
 ) {
     TopAppBar(
         navigationIcon = {
             if (onBackClick != null) {
                 IconButton(onClick = onBackClick) {
                     Icon(
-                        Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = stringResource(R.string.back),
+                        imageVector = if (closeInsteadOfBack) {
+                            Icons.Filled.Close
+                        } else {
+                            Icons.AutoMirrored.Filled.ArrowBack
+                        },
+                        contentDescription = stringResource(
+                            if (closeInsteadOfBack) R.string.close else R.string.back
+                        ),
                         tint = MaterialTheme.colorScheme.onBackground
                     )
                 }
