@@ -43,8 +43,7 @@ import com.jericx.trainr.presentation.workout.RoutineDetailRoute
 import com.jericx.trainr.presentation.workout.WeeklyPlanRoute
 import com.jericx.trainr.presentation.workout.NextWeekViewModel
 import com.jericx.trainr.presentation.workout.WeekCompletedScreen
-import com.jericx.trainr.presentation.workout.WeeklyProgressScreen
-import com.jericx.trainr.presentation.workout.sample.SampleWeeklyProgress
+import com.jericx.trainr.presentation.workout.WeeklyProgressRoute
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 
@@ -301,8 +300,7 @@ fun AppContent(versionName: String) {
                 }
 
                 composable(Screen.WeeklyProgress.route) {
-                    WeeklyProgressScreen(
-                        weeks = SampleWeeklyProgress.weeks,
+                    WeeklyProgressRoute(
                         onBackClick = { navController.popBackStack() }
                     )
                 }
