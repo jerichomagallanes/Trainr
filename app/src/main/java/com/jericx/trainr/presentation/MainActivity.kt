@@ -360,18 +360,35 @@ fun AppContent(versionName: String) {
                     val weekNumber = entry.arguments
                         ?.getInt(Screen.WeekPlan.ARG_WEEK_NUMBER) ?: 1
                     // A week opened from the list carries only what belongs to
-                    // the week: its days, and the session still to train when
-                    // this is the week being trained. Anything that rebuilds the
-                    // plan stays on home, where it has somewhere to go afterwards.
+                    // the week: its days, the session still to train when this
+                    // is the week being trained, and the offer to run this week
+                    // again. Anything that rebuilds the plan stays on home,
+                    // where it has somewhere to go afterwards.
                     val openDay = { day: WorkoutDay ->
                         navController.navigate(
                             Screen.RoutineDetail.createRoute(day.dayNumber, weekNumber)
                         )
                     }
+                    val nextWeekViewModel: NextWeekViewModel = hiltViewModel()
+                    val weekWasRepeated by nextWeekViewModel.isReady
+                        .collectAsStateWithLifecycle()
+
+                    // The copy joins the plan at the end, which makes it the
+                    // week being trained — so the way on from here is home,
+                    // where that week now lives.
+                    LaunchedEffect(weekWasRepeated) {
+                        if (weekWasRepeated) {
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        }
+                    }
+
                     WeeklyPlanRoute(
                         onBackClick = { navController.popBackStack() },
                         onDayClick = openDay,
-                        onStartTodayClick = openDay
+                        onStartTodayClick = openDay,
+                        onRepeatWeekClick = { nextWeekViewModel.repeatWeek(weekNumber) }
                     )
                 }
 
@@ -508,7 +525,7 @@ fun AppContent(versionName: String) {
                         },
                         // Copying a week needs nothing from the model, so there
                         // is no waiting to show: it lands and home reloads.
-                        onRepeatWeekClick = { nextWeekViewModel.repeatLastWeek() },
+                        onRepeatWeekClick = { nextWeekViewModel.repeatWeek() },
                         // With every week deleted there is a profile but no
                         // plan: the review is where a new one is built from.
                         onCreatePlanClick = {

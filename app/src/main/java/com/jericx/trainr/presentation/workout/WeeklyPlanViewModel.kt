@@ -48,7 +48,8 @@ data class WeeklyPlanUiState(
     val isCurrentWeek: Boolean = false,
     // Next week is offered once this one is finished or its dates have run
     // out; a missed day must not strand the plan on the same week forever.
-    val canStartNextWeek: Boolean = false
+    val canStartNextWeek: Boolean = false,
+    val canAddWeek: Boolean = false
 ) {
     // Today's session when there is one, otherwise the next one still to come.
     // A day that has already passed is never the target: opening it under a
@@ -88,24 +89,27 @@ class WeeklyPlanViewModel @Inject constructor(
 
     fun refresh() {
         viewModelScope.launch {
-            val stored = userRepository.getCurrentUser()
-                ?.let { user ->
-                    val plans = userRepository.getWeeklyWorkoutPlans(user.id).first()
-                    if (requestedWeekNumber == null) {
-                        plans.maxByOrNull { it.weekNumber }
-                    } else {
-                        plans.firstOrNull { it.weekNumber == requestedWeekNumber }
-                    }
-                }
-
-            val newest = userRepository.getCurrentUser()
+            val plans = userRepository.getCurrentUser()
                 ?.let { userRepository.getWeeklyWorkoutPlans(it.id).first() }
-                ?.maxByOrNull { it.weekNumber }
+                .orEmpty()
+            val newest = plans.maxByOrNull { it.weekNumber }
+            val stored = if (requestedWeekNumber == null) {
+                newest
+            } else {
+                plans.firstOrNull { it.weekNumber == requestedWeekNumber }
+            }
 
             _uiState.value = if (stored == null) {
                 WeeklyPlanUiState(hasLoaded = true, hasPlan = false)
             } else {
-                stateFor(stored, isCurrentWeek = stored.weekNumber == newest?.weekNumber)
+                stateFor(
+                    plan = stored,
+                    isCurrentWeek = stored.weekNumber == newest?.weekNumber,
+                    // Read off the newest week, not the one being looked at: an
+                    // old week is always finished, and that says nothing about
+                    // whether the plan is ready for another.
+                    canAddWeek = newest?.let { stateFor(it).canStartNextWeek } ?: false
+                )
             }
         }
     }
@@ -121,7 +125,8 @@ class WeeklyPlanViewModel @Inject constructor(
         if (reordered == plan.workoutDays) return
 
         _uiState.value = stateFor(
-            plan.copy(workoutDays = reordered.sortedBy { it.dayNumber }),
+            plan = plan.copy(workoutDays = reordered.sortedBy { it.dayNumber }),
+            canAddWeek = state.canAddWeek,
             isCurrentWeek = state.isCurrentWeek
         )
 
@@ -153,6 +158,12 @@ class WeeklyPlanViewModel @Inject constructor(
             plan: WeeklyWorkoutPlan,
             isSample: Boolean = false,
             isCurrentWeek: Boolean = true,
+            // Whether the plan can take another week, which is a fact about the
+            // newest week however old the one being read is. Repeating an old
+            // week appends to the end like any other week, so it has to wait for
+            // the same moment: adding one while a week is still being trained
+            // would move home onto the copy and strand the week in progress.
+            canAddWeek: Boolean? = null,
             nowMillis: Long = System.currentTimeMillis()
         ): WeeklyPlanUiState {
             val start = plan.startDateMillis ?: SampleWorkoutData.weekStartMillis
@@ -178,7 +189,8 @@ class WeeklyPlanViewModel @Inject constructor(
                 hasLoaded = true,
                 hasPlan = !isSample,
                 isCurrentWeek = isCurrentWeek,
-                canStartNextWeek = !isSample && (allDone || weekIsOver)
+                canStartNextWeek = !isSample && (allDone || weekIsOver),
+                canAddWeek = canAddWeek ?: (!isSample && (allDone || weekIsOver))
             )
         }
     }

@@ -186,7 +186,12 @@ fun WeeklyPlanScreen(
                     color = Slate800,
                     modifier = Modifier.weight(1f)
                 )
-                if (isHome) {
+                // Repeating is the one action a week can offer about itself:
+                // its subject is the week you are looking at, not the plan, so
+                // it belongs on whichever week that is. Building the next week
+                // and starting over are about the plan's future, and stay on
+                // home, which is where they have somewhere to go afterwards.
+                if (state.hasPlan && (isHome || state.canAddWeek)) {
                     Box {
                         Image(
                             painter = painterResource(R.drawable.ic_more_horiz),
@@ -203,7 +208,7 @@ fun WeeklyPlanScreen(
                             // ways on: progress from what you lifted, or run
                             // the same week again. The second is a coaching
                             // decision, so it is offered rather than assumed.
-                            if (state.canStartNextWeek) {
+                            if (isHome && state.canStartNextWeek) {
                                 DropdownMenuItem(
                                     text = { Text(stringResource(R.string.generate_next_week)) },
                                     onClick = {
@@ -211,6 +216,13 @@ fun WeeklyPlanScreen(
                                         onStartNextWeekClick()
                                     }
                                 )
+                            }
+                            // Any week can be run again, this one or one from
+                            // months ago; the copy joins the plan at the end,
+                            // which is why it waits for the same moment as a
+                            // generated week rather than landing on top of one
+                            // still being trained.
+                            if (state.canAddWeek) {
                                 DropdownMenuItem(
                                     text = { Text(stringResource(R.string.repeat_this_week)) },
                                     onClick = {
@@ -219,13 +231,15 @@ fun WeeklyPlanScreen(
                                     }
                                 )
                             }
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.regenerate_plan)) },
-                                onClick = {
-                                    showMenu = false
-                                    showLeaveDialog = true
-                                }
-                            )
+                            if (isHome) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.regenerate_plan)) },
+                                    onClick = {
+                                        showMenu = false
+                                        showLeaveDialog = true
+                                    }
+                                )
+                            }
                         }
                     }
                 }

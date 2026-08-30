@@ -46,15 +46,28 @@ class NextWeekViewModel @Inject constructor(
     // finished, or one where the prescribed weights never went up — and it asks
     // nothing of the network, so it is the way through when the model cannot be
     // reached. It is offered, never substituted.
-    fun repeatLastWeek() {
+    // Any week can be run again, not only the newest: a block that went well
+    // is worth another turn whether it was last week or months ago. The copy
+    // joins the plan at the end and takes its dates from there, so repeating an
+    // old week never reaches back into weeks already trained.
+    fun repeatWeek(sourceWeekNumber: Int? = null) {
         if (isWorking) return
         isWorking = true
         _failure.value = null
         viewModelScope.launch {
             try {
-                val (_, latest) = nextWeekFrom() ?: return@launch
+                val user = userRepository.getCurrentUser() ?: return@launch
+                val plans = userRepository.getWeeklyWorkoutPlans(user.id).first()
+                val latest = plans.maxByOrNull { it.weekNumber } ?: return@launch
+                if (userRepository.getWeeklyWorkoutPlan(user.id, latest.weekNumber + 1) != null) {
+                    return@launch
+                }
+                val source = sourceWeekNumber
+                    ?.let { number -> plans.firstOrNull { it.weekNumber == number } }
+                    ?: latest
+
                 userRepository.saveWeeklyWorkoutPlan(
-                    repeatedWeek(latest, latest.weekNumber + 1, startAfter(latest))
+                    repeatedWeek(source, latest.weekNumber + 1, startAfter(latest))
                 )
             } finally {
                 isWorking = false
