@@ -10,7 +10,7 @@ import kotlinx.coroutines.delay
 // report why it could not be done — never ship a plan that failed validation,
 // and never let the caller mistake a failure for a plan.
 class GeminiPlanGenerator(
-    private val client: GeminiClient,
+    private val client: PlanModelClient,
     private val parser: GeneratedPlanParser,
     private val promptBuilder: PlanPromptBuilder
 ) : PlanGenerator {
@@ -32,7 +32,7 @@ class GeminiPlanGenerator(
         var modelIndex = 0
         var attemptsSpent = 0
 
-        while (modelIndex < GeminiClient.MODELS.size && attemptsSpent < MAX_ATTEMPTS) {
+        while (modelIndex < PlanModelClient.MODELS.size && attemptsSpent < MAX_ATTEMPTS) {
             if (attemptsSpent > 0) delay(RETRY_DELAY_MILLIS * attemptsSpent)
 
             val prompt =
@@ -40,10 +40,9 @@ class GeminiPlanGenerator(
 
             val json = when (
                 val answer = client.generate(
-                    model = GeminiClient.MODELS[modelIndex],
+                    model = PlanModelClient.MODELS[modelIndex],
                     systemInstruction = promptBuilder.systemInstruction(),
-                    userPrompt = prompt,
-                    responseSchema = GENERATED_PLAN_SCHEMA
+                    userPrompt = prompt
                 )
             ) {
                 is GeminiResponse.Text -> answer.value

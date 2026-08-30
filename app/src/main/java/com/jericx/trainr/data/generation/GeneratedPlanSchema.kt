@@ -1,93 +1,53 @@
 package com.jericx.trainr.data.generation
 
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.add
-import kotlinx.serialization.json.buildJsonArray
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
+import com.google.firebase.ai.type.Schema
 
-// docs/generation-contract.md in the dialect Gemini's responseSchema speaks
-// (an OpenAPI subset — no additionalProperties, patterns or bounds; the
-// parser enforces those).
-val GENERATED_PLAN_SCHEMA: JsonObject = buildJsonObject {
-    put("type", "OBJECT")
-    put("required", buildJsonArray { add("title"); add("days") })
-    put("properties", buildJsonObject {
-        put("title", buildJsonObject { put("type", "STRING") })
-        put("days", buildJsonObject {
-            put("type", "ARRAY")
-            put("items", daySchema())
-        })
-    })
-    put("propertyOrdering", buildJsonArray { add("title"); add("days") })
-}
+// docs/generation-contract.md, in the shape the SDK asks for. Everything is
+// required unless named in optionalProperties; the parser still enforces the
+// rules a schema cannot express (bounds, key vocabulary, day counts).
+val GENERATED_PLAN_SCHEMA: Schema = Schema.obj(
+    properties = mapOf(
+        "title" to Schema.string(),
+        "days" to Schema.array(items = daySchema())
+    )
+)
 
-private fun daySchema(): JsonObject = buildJsonObject {
-    put("type", "OBJECT")
-    put("required", buildJsonArray {
-        add("dayNumber"); add("title"); add("equipment"); add("exercises")
-    })
-    put("properties", buildJsonObject {
-        put("dayNumber", buildJsonObject {
-            put("type", "INTEGER")
-            put("description", "Day within the week, 1 = the first day .. 7 = the last")
-        })
-        put("title", buildJsonObject { put("type", "STRING") })
-        put("equipment", buildJsonObject {
-            put("type", "ARRAY")
-            put("items", buildJsonObject { put("type", "STRING") })
-        })
-        put("exercises", buildJsonObject {
-            put("type", "ARRAY")
-            put("items", exerciseSchema())
-        })
-    })
-    put("propertyOrdering", buildJsonArray {
-        add("dayNumber"); add("title"); add("equipment"); add("exercises")
-    })
-}
+private fun daySchema(): Schema = Schema.obj(
+    properties = mapOf(
+        "dayNumber" to Schema.integer(
+            description = "Day within the week, 1 = the first day .. 7 = the last"
+        ),
+        "title" to Schema.string(),
+        "equipment" to Schema.array(items = Schema.string()),
+        "exercises" to Schema.array(items = exerciseSchema())
+    )
+)
 
-private fun exerciseSchema(): JsonObject = buildJsonObject {
-    put("type", "OBJECT")
-    put("required", buildJsonArray {
-        add("exerciseKey"); add("name"); add("measure"); add("durationMinutes")
-        add("prescription"); add("instructions"); add("sets")
-    })
-    put("properties", buildJsonObject {
-        put("exerciseKey", buildJsonObject {
-            put("type", "STRING")
-            put("description", "Canonical lower_snake_case slug, stable across weeks")
-        })
-        put("name", buildJsonObject { put("type", "STRING") })
-        put("measure", buildJsonObject {
-            put("type", "STRING")
-            put("enum", buildJsonArray {
-                add("WEIGHT_AND_REPS"); add("REPS"); add("DURATION")
-            })
-        })
-        put("durationMinutes", buildJsonObject { put("type", "INTEGER") })
-        put("prescription", buildJsonObject { put("type", "STRING") })
-        put("instructions", buildJsonObject { put("type", "STRING") })
-        put("restSeconds", buildJsonObject {
-            put("type", "INTEGER")
-            put("nullable", true)
-        })
-        put("sets", buildJsonObject {
-            put("type", "ARRAY")
-            put("items", setSchema())
-        })
-    })
-    put("propertyOrdering", buildJsonArray {
-        add("exerciseKey"); add("name"); add("measure"); add("durationMinutes")
-        add("prescription"); add("instructions"); add("restSeconds"); add("sets")
-    })
-}
+private fun exerciseSchema(): Schema = Schema.obj(
+    properties = mapOf(
+        "exerciseKey" to Schema.string(
+            description = "Canonical lower_snake_case slug, stable across weeks"
+        ),
+        "name" to Schema.string(),
+        "measure" to Schema.enumeration(
+            values = listOf("WEIGHT_AND_REPS", "REPS", "DURATION")
+        ),
+        "durationMinutes" to Schema.integer(),
+        "prescription" to Schema.string(),
+        "instructions" to Schema.string(),
+        "restSeconds" to Schema.integer(nullable = true),
+        "sets" to Schema.array(items = setSchema())
+    ),
+    optionalProperties = listOf("restSeconds")
+)
 
-private fun setSchema(): JsonObject = buildJsonObject {
-    put("type", "OBJECT")
-    put("properties", buildJsonObject {
-        put("reps", buildJsonObject { put("type", "INTEGER"); put("nullable", true) })
-        put("weightKg", buildJsonObject { put("type", "NUMBER"); put("nullable", true) })
-        put("seconds", buildJsonObject { put("type", "INTEGER"); put("nullable", true) })
-    })
-}
+// A set carries whichever of the three the exercise is measured in, so none of
+// them is required and the parser decides what the measure needs.
+private fun setSchema(): Schema = Schema.obj(
+    properties = mapOf(
+        "reps" to Schema.integer(nullable = true),
+        "weightKg" to Schema.double(nullable = true),
+        "seconds" to Schema.integer(nullable = true)
+    ),
+    optionalProperties = listOf("reps", "weightKg", "seconds")
+)

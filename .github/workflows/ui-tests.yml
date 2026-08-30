@@ -37,6 +37,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - uses: ./.github/actions/setup-android
+        with:
+          google-services-json: ${{ secrets.GOOGLE_SERVICES_JSON }}
 
       # Hardware acceleration. Without KVM the emulator falls back to software
       # and either times out or never finishes booting on a hosted runner.
