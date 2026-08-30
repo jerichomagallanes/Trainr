@@ -29,7 +29,7 @@ room = "2.8.4"
 # Media
 youtube-player = "13.0.0"
 firebase-bom = "34.18.0"
-google-services = "4.4.4"
+google-services = "4.5.0"
 
 # Networking
 okhttp = "5.5.0"
