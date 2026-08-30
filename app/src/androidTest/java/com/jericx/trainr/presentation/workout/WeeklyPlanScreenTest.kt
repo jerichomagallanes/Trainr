@@ -57,8 +57,8 @@ class WeeklyPlanScreenTest {
     }
 
     // A week opened from Weekly Progress is a record to read: it needs a way
-    // back, and must not offer to regenerate, start today, or bounce the
-    // reader back to the progress screen they arrived from.
+    // back, and must not offer to start today, to rebuild the plan, or to
+    // bounce the reader back to the progress screen they arrived from.
     private val pastWeek = WeeklyPlanViewModel.stateFor(
         plan = SampleWorkoutData.weekOne,
         isCurrentWeek = false,
@@ -76,9 +76,11 @@ class WeeklyPlanScreenTest {
 
         composeTestRule.onNodeWithText(string(R.string.start_todays_workout))
             .assertDoesNotExist()
-        composeTestRule.onNodeWithContentDescription(string(R.string.plan_options))
-            .assertDoesNotExist()
         composeTestRule.onNodeWithText(string(R.string.track_weekly_progress) + " →")
+            .assertDoesNotExist()
+        // Nothing to offer while the plan is not ready for another week, so the
+        // overflow is not there to be opened.
+        composeTestRule.onNodeWithContentDescription(string(R.string.plan_options))
             .assertDoesNotExist()
 
         composeTestRule.onNodeWithContentDescription(string(R.string.back)).performClick()
@@ -102,14 +104,34 @@ class WeeklyPlanScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithContentDescription(string(R.string.plan_options))
-            .assertDoesNotExist()
         composeTestRule.onNodeWithText(string(R.string.track_weekly_progress) + " →")
             .assertDoesNotExist()
 
         composeTestRule.onNodeWithText(string(R.string.start_todays_workout)).performClick()
 
         assertThat(started).isNotNull()
+    }
+
+    // The week's own action travels with the week. The plan's do not.
+    @Test
+    fun aWeekOpenedFromTheListOffersToRunItselfAgainAndNothingElse() {
+        var repeated = false
+        composeTestRule.setContent {
+            TrainrTheme {
+                WeeklyPlanScreen(
+                    state = pastWeek.copy(canAddWeek = true),
+                    onBackClick = {},
+                    onRepeatWeekClick = { repeated = true }
+                )
+            }
+        }
+
+        openMenu()
+        composeTestRule.onNodeWithText(string(R.string.generate_next_week)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.regenerate_plan)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.repeat_this_week)).performClick()
+
+        assertThat(repeated).isTrue()
     }
 
     // A control that cannot do anything is worse than one that is absent: the

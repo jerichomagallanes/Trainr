@@ -209,6 +209,36 @@ class NextWeekViewModelTest {
         assertThat(request.captured.startDateMillis).isGreaterThan(WorkoutWeek.startOfDay())
     }
 
+    // A block worth another turn need not be the newest one. The copy joins the
+    // plan at the end — its number and its dates come from there, its training
+    // from the week being copied.
+    @Test
+    fun repeatingAnOlderWeekAppendsItAtTheEnd() = runTest {
+        val weekTwo = finishedWeek.copy(
+            id = 10,
+            weekNumber = 2,
+            startDateMillis = WorkoutWeek.dateOfDay(weekOneStart, 8),
+            workoutDays = finishedWeek.workoutDays.map { it.copy(id = 11, title = "Upper body") }
+        )
+        every { userRepository.getWeeklyWorkoutPlans(1) } returns
+            flowOf(listOf(finishedWeek, weekTwo))
+        val saved = slot<WeeklyWorkoutPlan>()
+        coEvery { userRepository.saveWeeklyWorkoutPlan(capture(saved)) } returns 3L
+
+        viewModel().repeatWeek(sourceWeekNumber = 1)
+        advanceUntilIdle()
+
+        with(saved.captured) {
+            assertThat(weekNumber).isEqualTo(3)
+            // Week one's training, not week two's.
+            assertThat(workoutDays.single().title).isEqualTo("Full body")
+            // Following week two, never reaching back over it.
+            assertThat(startDateMillis)
+                .isEqualTo(WorkoutWeek.dateOfDay(weekOneStart, 15))
+            assertThat(workoutDays.single().status).isEqualTo(WorkoutStatus.NOT_STARTED)
+        }
+    }
+
     // Running the same week again is sound coaching after a week that was not
     // finished, and it asks nothing of the network. It is chosen, not
     // substituted, so it saves the week with every log cleared.
@@ -218,8 +248,8 @@ class NextWeekViewModelTest {
         val saved = slot<WeeklyWorkoutPlan>()
         coEvery { userRepository.saveWeeklyWorkoutPlan(capture(saved)) } returns 2L
 
-                val viewModel = viewModel()
-        viewModel.repeatLastWeek()
+        val viewModel = viewModel()
+        viewModel.repeatWeek()
         advanceUntilIdle()
 
         with(saved.captured) {
@@ -247,7 +277,7 @@ class NextWeekViewModelTest {
         coEvery { userRepository.getWeeklyWorkoutPlan(1, 2) } returns
             finishedWeek.copy(id = 10, weekNumber = 2)
 
-        viewModel().repeatLastWeek()
+        viewModel().repeatWeek()
         advanceUntilIdle()
 
         coVerify(exactly = 0) { userRepository.saveWeeklyWorkoutPlan(any()) }
@@ -277,8 +307,8 @@ class NextWeekViewModelTest {
         every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(finishedWeek))
 
         val viewModel = viewModel()
-        viewModel.repeatLastWeek()
-        viewModel.repeatLastWeek()
+        viewModel.repeatWeek()
+        viewModel.repeatWeek()
         advanceUntilIdle()
 
         coVerify(exactly = 1) { userRepository.saveWeeklyWorkoutPlan(any()) }
