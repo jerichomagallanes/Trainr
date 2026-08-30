@@ -20,6 +20,7 @@ interface UserRepository {
     fun getWeeklyWorkoutPlans(userId: Long): Flow<List<WeeklyWorkoutPlan>>
     suspend fun getWeeklyWorkoutPlan(userId: Long, weekNumber: Int): WeeklyWorkoutPlan?
     suspend fun updateWeeklyWorkoutPlan(plan: WeeklyWorkoutPlan)
+    suspend fun deleteWeeklyWorkoutPlan(planId: Long)
 
     suspend fun saveWorkoutDay(day: WorkoutDay, weeklyPlanId: Long): Long
     suspend fun saveWorkoutDays(days: List<WorkoutDay>, weeklyPlanId: Long)

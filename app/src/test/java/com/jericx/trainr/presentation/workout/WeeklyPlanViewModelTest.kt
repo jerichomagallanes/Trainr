@@ -11,6 +11,7 @@ import com.jericx.trainr.domain.repository.UserRepository
 import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
 import com.jericx.trainr.presentation.workout.util.WorkoutWeek
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -245,6 +246,86 @@ class WeeklyPlanViewModelTest {
         )
 
         assertThat(state.canStartNextWeek).isFalse()
+    }
+
+    private fun sessions(vararg statuses: WorkoutStatus) = listOf(1, 3, 5)
+        .mapIndexed { index, slot ->
+            storedPlan.workoutDays.first().copy(
+                id = index + 1L,
+                dayNumber = slot,
+                title = "Session $index",
+                status = statuses.getOrElse(index) { WorkoutStatus.NOT_STARTED }
+            )
+        }
+
+    // Sessions swap weekday slots; the slots themselves stay where they are.
+    @Test
+    fun movingASessionLaterHandsItTheLaterWeekdaySlot() {
+        val moved = WeeklyPlanViewModel.reorderedDays(sessions(), from = 0, to = 2)
+
+        assertThat(moved.map { it.title })
+            .containsExactly("Session 1", "Session 2", "Session 0").inOrder()
+        assertThat(moved.map { it.dayNumber }).containsExactly(1, 3, 5).inOrder()
+    }
+
+    @Test
+    fun movingASessionEarlierPushesTheOthersDown() {
+        val moved = WeeklyPlanViewModel.reorderedDays(sessions(), from = 2, to = 0)
+
+        assertThat(moved.map { it.title })
+            .containsExactly("Session 2", "Session 0", "Session 1").inOrder()
+        assertThat(moved.map { it.dayNumber }).containsExactly(1, 3, 5).inOrder()
+    }
+
+    // A finished session is the record of a date it was trained on.
+    @Test
+    fun aFinishedSessionCannotBeMoved() {
+        val days = sessions(WorkoutStatus.COMPLETED)
+
+        assertThat(WeeklyPlanViewModel.reorderedDays(days, from = 0, to = 2)).isEqualTo(days)
+    }
+
+    @Test
+    fun nothingCanBeDraggedAcrossAFinishedSession() {
+        val days = sessions(WorkoutStatus.NOT_STARTED, WorkoutStatus.COMPLETED)
+
+        assertThat(WeeklyPlanViewModel.reorderedDays(days, from = 2, to = 0)).isEqualTo(days)
+        assertThat(WeeklyPlanViewModel.reorderedDays(days, from = 0, to = 2)).isEqualTo(days)
+    }
+
+    @Test
+    fun aMoveThatGoesNowhereChangesNothing() {
+        val days = sessions()
+
+        assertThat(WeeklyPlanViewModel.reorderedDays(days, from = 1, to = 1)).isEqualTo(days)
+        assertThat(WeeklyPlanViewModel.reorderedDays(days, from = 0, to = 9)).isEqualTo(days)
+    }
+
+    @Test
+    fun aMovedSessionIsPersistedOnItsNewWeekday() = runTest {
+        val plan = storedPlan.copy(workoutDays = sessions())
+        coEvery { userRepository.getCurrentUser() } returns UserProfile(id = 1)
+        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(plan))
+        val viewModel = viewModel()
+        advanceUntilIdle()
+
+        viewModel.moveDay(from = 0, to = 1)
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.plan.workoutDays.map { it.title })
+            .containsExactly("Session 1", "Session 0", "Session 2").inOrder()
+        coVerify {
+            userRepository.updateWorkoutDay(
+                match { it.title == "Session 0" && it.dayNumber == 3 },
+                plan.id
+            )
+        }
+        coVerify {
+            userRepository.updateWorkoutDay(
+                match { it.title == "Session 1" && it.dayNumber == 1 },
+                plan.id
+            )
+        }
     }
 
 }

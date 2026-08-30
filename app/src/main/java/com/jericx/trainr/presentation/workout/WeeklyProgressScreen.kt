@@ -1,5 +1,24 @@
 package com.jericx.trainr.presentation.workout
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberSwipeToDismissBoxState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import com.jericx.trainr.presentation.common.theme.RedError
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -44,7 +63,8 @@ fun WeeklyProgressRoute(
         weeks = state.weeks,
         onBackClick = onBackClick,
         // Sample weeks stand for nothing stored, so they lead nowhere.
-        onWeekClick = { if (!state.isSampleData) onWeekClick(it) }
+        onWeekClick = { if (!state.isSampleData) onWeekClick(it) },
+        onDeleteWeek = { if (!state.isSampleData) viewModel.deleteWeek(it.weekNumber) }
     )
 }
 
@@ -53,9 +73,21 @@ fun WeeklyProgressScreen(
     weeks: List<WeekProgressUi>,
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit = {},
-    onWeekClick: (WeekProgressUi) -> Unit = {}
+    onWeekClick: (WeekProgressUi) -> Unit = {},
+    onDeleteWeek: (WeekProgressUi) -> Unit = {}
 ) {
     val locale = LocalLocale.current.platformLocale
+    var weekToDelete by remember { mutableStateOf<WeekProgressUi?>(null) }
+
+    weekToDelete?.let { week ->
+        DeleteWeekDialog(
+            onConfirm = {
+                weekToDelete = null
+                onDeleteWeek(week)
+            },
+            onDismiss = { weekToDelete = null }
+        )
+    }
 
     Column(modifier = modifier.fillMaxSize()) {
         TrainrTopBar(onBackClick = onBackClick)
@@ -75,6 +107,10 @@ fun WeeklyProgressScreen(
             HorizontalDivider()
 
             weeks.forEach { week ->
+                DeletableWeek(
+                    week = week,
+                    onDelete = { weekToDelete = week }
+                ) {
                 WeekProgressCard(
                     weekNumber = week.weekNumber,
                     dateRange = WorkoutDateFormatter.formatWeekRange(
@@ -89,9 +125,92 @@ fun WeeklyProgressScreen(
                     status = week.status,
                     onClick = { onWeekClick(week) }
                 )
+                }
             }
         }
     }
+}
+
+// Only an unstarted week can be swiped away, and the swipe asks before it
+// deletes: a week is a good deal more than a set. The delete fires once per
+// completed dismissal and the state snaps back, so a card that survives the
+// question is not left half open.
+@Composable
+private fun DeletableWeek(
+    week: WeekProgressUi,
+    onDelete: () -> Unit,
+    content: @Composable () -> Unit
+) {
+    if (!week.canDelete) {
+        content()
+        return
+    }
+
+    // Read through rememberUpdatedState: the state below keeps the confirm
+    // lambda from its first composition.
+    val currentOnDelete by rememberUpdatedState(onDelete)
+    val dismissState = rememberSwipeToDismissBoxState(
+        // The swipe asks rather than deletes, so the card must never settle as
+        // dismissed: refusing the change springs it back on its own, and the
+        // dialog decides what actually happens. Snapping it back by hand
+        // instead loses a race with the swipe's own settle animation and
+        // strands the card off-screen. Opening the dialog twice is harmless.
+        confirmValueChange = { value ->
+            if (value == SwipeToDismissBoxValue.EndToStart) currentOnDelete()
+            false
+        }
+    )
+
+    SwipeToDismissBox(
+        state = dismissState,
+        enableDismissFromStartToEnd = false,
+        backgroundContent = {
+            if (dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart &&
+                dismissState.progress > 0f && dismissState.progress < 1f
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(MaterialTheme.shapes.medium)
+                        .background(RedError),
+                    contentAlignment = Alignment.CenterEnd
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = stringResource(R.string.delete_week_confirm),
+                        tint = Color.White,
+                        modifier = Modifier.padding(end = Spacing.medium)
+                    )
+                }
+            }
+        }
+    ) {
+        Box(modifier = Modifier.background(MaterialTheme.colorScheme.background)) {
+            content()
+        }
+    }
+}
+
+@Composable
+private fun DeleteWeekDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = stringResource(R.string.delete_week_title)) },
+        text = { Text(text = stringResource(R.string.delete_week_message)) },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(text = stringResource(R.string.delete_week_confirm), color = RedError)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = stringResource(R.string.cancel), color = Slate800)
+            }
+        }
+    )
 }
 
 @Preview(showBackground = true, heightDp = 1100)

@@ -42,7 +42,7 @@ import com.jericx.trainr.presentation.common.theme.Orange500
 import com.jericx.trainr.presentation.common.theme.Slate800
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
-import com.jericx.trainr.presentation.workout.components.WorkoutDayCard
+import com.jericx.trainr.presentation.workout.components.ReorderableDayList
 import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
 import com.jericx.trainr.presentation.workout.util.WorkoutDateFormatter
 
@@ -71,6 +71,7 @@ fun WeeklyPlanRoute(
         onLeavePlanConfirmed = onLeavePlanConfirmed,
         onUpdateProfileClick = onUpdateProfileClick,
         onStartNextWeekClick = onStartNextWeekClick,
+        onMoveDay = viewModel::moveDay,
         onBackClick = onBackClick
     )
 }
@@ -85,6 +86,7 @@ fun WeeklyPlanScreen(
     onLeavePlanConfirmed: () -> Unit = {},
     onUpdateProfileClick: () -> Unit = {},
     onStartNextWeekClick: () -> Unit = {},
+    onMoveDay: (Int, Int) -> Unit = { _, _ -> },
     // Set only when a week was opened from Weekly Progress.
     onBackClick: (() -> Unit)? = null
 ) {
@@ -212,13 +214,14 @@ fun WeeklyPlanScreen(
                 }
             }
 
-            state.days.forEach { planDay ->
-                WorkoutDayCard(
-                    weekday = WorkoutDateFormatter.formatWeekday(planDay.dateMillis, locale),
-                    day = planDay.day,
-                    onClick = { onDayClick(planDay.day) }
-                )
-            }
+            ReorderableDayList(
+                days = state.days,
+                locale = locale,
+                onDayClick = onDayClick,
+                // A week being read back is a record; only the plan you are
+                // training can be rescheduled.
+                onMove = if (isBrowsedWeek) { _, _ -> } else onMoveDay
+            )
         }
 
         if (!isBrowsedWeek) {

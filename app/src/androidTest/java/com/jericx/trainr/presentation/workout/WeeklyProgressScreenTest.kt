@@ -1,6 +1,9 @@
 package com.jericx.trainr.presentation.workout
 
 import androidx.activity.ComponentActivity
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -117,4 +120,54 @@ class WeeklyProgressScreenTest {
         composeTestRule.onNodeWithText(daysCompleted(1, 1, 100)).assertIsDisplayed()
         composeTestRule.onNodeWithText("1/1 day completed (100%)").assertIsDisplayed()
     }
+    // A week is a good deal more than a set, so the swipe asks first.
+    @Test
+    fun swipingAnUpcomingWeekAsksBeforeDeleting() {
+        var deleted: WeekProgressUi? = null
+        val upcoming = SampleWeeklyProgress.weeks.first { it.canDelete }
+        composeTestRule.setContent {
+            TrainrTheme {
+                WeeklyProgressScreen(
+                    weeks = SampleWeeklyProgress.weeks,
+                    onDeleteWeek = { deleted = it }
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.week_number_format, upcoming.weekNumber), substring = true)
+            .performScrollTo()
+            .performTouchInput { swipeLeft() }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText(string(R.string.delete_week_title)).assertIsDisplayed()
+        assertThat(deleted).isNull()
+
+        composeTestRule.onNodeWithText(string(R.string.delete_week_confirm)).performClick()
+
+        assertThat(deleted?.weekNumber).isEqualTo(upcoming.weekNumber)
+    }
+
+    // Weeks that were trained are records; they do not swipe away.
+    @Test
+    fun aTrainedWeekCannotBeSwipedAway() {
+        var deleted: WeekProgressUi? = null
+        val trained = SampleWeeklyProgress.weeks.first { !it.canDelete }
+        composeTestRule.setContent {
+            TrainrTheme {
+                WeeklyProgressScreen(
+                    weeks = SampleWeeklyProgress.weeks,
+                    onDeleteWeek = { deleted = it }
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.week_number_format, trained.weekNumber), substring = true)
+            .performScrollTo()
+            .performTouchInput { swipeLeft() }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText(string(R.string.delete_week_title)).assertDoesNotExist()
+        assertThat(deleted).isNull()
+    }
+
 }
