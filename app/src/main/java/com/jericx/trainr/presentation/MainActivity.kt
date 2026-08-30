@@ -29,6 +29,7 @@ import androidx.navigation.navArgument
 import androidx.navigation.compose.rememberNavController
 import com.jericx.trainr.BuildConfig
 import com.jericx.trainr.data.preferences.NavigationStateManager
+import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.presentation.common.LocaleManager
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 import com.jericx.trainr.presentation.onboarding.OnboardingViewModel
@@ -358,13 +359,19 @@ fun AppContent(versionName: String) {
                 ) { entry ->
                     val weekNumber = entry.arguments
                         ?.getInt(Screen.WeekPlan.ARG_WEEK_NUMBER) ?: 1
+                    // A week opened from the list carries only what belongs to
+                    // the week: its days, and the session still to train when
+                    // this is the week being trained. Anything that rebuilds the
+                    // plan stays on home, where it has somewhere to go afterwards.
+                    val openDay = { day: WorkoutDay ->
+                        navController.navigate(
+                            Screen.RoutineDetail.createRoute(day.dayNumber, weekNumber)
+                        )
+                    }
                     WeeklyPlanRoute(
                         onBackClick = { navController.popBackStack() },
-                        onDayClick = { day ->
-                            navController.navigate(
-                                Screen.RoutineDetail.createRoute(day.dayNumber, weekNumber)
-                            )
-                        }
+                        onDayClick = openDay,
+                        onStartTodayClick = openDay
                     )
                 }
 

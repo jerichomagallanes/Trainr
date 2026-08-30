@@ -86,6 +86,52 @@ class WeeklyPlanScreenTest {
         assertThat(wentBack).isTrue()
     }
 
+    // The newest week opened from the list is still the week being trained, so
+    // its session is startable there. What rebuilds the plan is not, and neither
+    // is a link back to the list that opened it.
+    @Test
+    fun theLiveWeekOpenedFromTheListTrainsButDoesNotRebuild() {
+        var started: WorkoutDay? = null
+        composeTestRule.setContent {
+            TrainrTheme {
+                WeeklyPlanScreen(
+                    state = state,
+                    onBackClick = {},
+                    onStartTodayClick = { started = it }
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithContentDescription(string(R.string.plan_options))
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.track_weekly_progress) + " →")
+            .assertDoesNotExist()
+
+        composeTestRule.onNodeWithText(string(R.string.start_todays_workout)).performClick()
+
+        assertThat(started).isNotNull()
+    }
+
+    // A control that cannot do anything is worse than one that is absent: the
+    // week route has no plan-level callbacks to give it.
+    @Test
+    fun aFinishedWeekOpenedFromTheListOffersNoWayToBuildTheNextOne() {
+        val finished = WeeklyPlanViewModel.stateFor(
+            plan = SampleWorkoutData.weekOne.copy(
+                workoutDays = SampleWorkoutData.weekOne.workoutDays.map {
+                    it.copy(status = WorkoutStatus.COMPLETED)
+                }
+            ),
+            isSample = false
+        )
+        composeTestRule.setContent {
+            TrainrTheme { WeeklyPlanScreen(state = finished, onBackClick = {}) }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.generate_next_week).uppercase())
+            .assertDoesNotExist()
+    }
+
     // Home is the plan being trained: no back arrow, all actions present.
     @Test
     fun theHomePlanKeepsItsActionsAndHasNoWayBack() {

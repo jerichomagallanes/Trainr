@@ -115,6 +115,15 @@ fun WeeklyPlanScreen(
     // newest week is live wherever it was opened from, so home and the list
     // show the same thing rather than two versions of it.
     val isBrowsedWeek = state.hasPlan && !state.isCurrentWeek
+
+    // Two different questions, and they were being answered by one flag. Whether
+    // the week is live decides what may be done to its contents. Whether this is
+    // home decides what may be done to the plan as a whole: a week opened from
+    // the list is a week you went to see, so it does not carry the actions that
+    // rebuild the plan, nor a link back to the list you came from. Those read as
+    // offers here and did nothing, because the route that opens a week has no
+    // plan-level callbacks to give them.
+    val isHome = onBackClick == null
     val locale = LocalLocale.current.platformLocale
     var showLeaveDialog by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
@@ -177,7 +186,7 @@ fun WeeklyPlanScreen(
                     color = Slate800,
                     modifier = Modifier.weight(1f)
                 )
-                if (!isBrowsedWeek) {
+                if (isHome) {
                     Box {
                         Image(
                             painter = painterResource(R.drawable.ic_more_horiz),
@@ -246,7 +255,7 @@ fun WeeklyPlanScreen(
                 )
             }
 
-            if (!isBrowsedWeek) {
+            if (isHome) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.clickable(onClick = onTrackProgressClick)
@@ -277,29 +286,28 @@ fun WeeklyPlanScreen(
             )
         }
 
-        if (!isBrowsedWeek) {
-            // Whatever is actually left: a session to train, or — with the week
-            // behind you — the week that follows it. Never a finished session
-            // dressed as the next one.
-            val next = state.nextWorkout
-            when {
-                next != null -> TrainrButton(
-                    text = stringResource(
-                        if (state.nextWorkoutIsToday) R.string.start_todays_workout
-                        else R.string.start_next_workout
-                    ),
-                    onClick = { onStartTodayClick(next.day) },
-                    modifier = Modifier
-                        .padding(horizontal = Spacing.screen, vertical = Spacing.medium)
-                )
+        // Whatever is actually left: a session to train, or — with the week
+        // behind you — the week that follows it. Never a finished session
+        // dressed as the next one. Training is offered wherever the live week
+        // was opened from; building the next one is home's business.
+        val next = state.nextWorkout
+        when {
+            next != null && !isBrowsedWeek -> TrainrButton(
+                text = stringResource(
+                    if (state.nextWorkoutIsToday) R.string.start_todays_workout
+                    else R.string.start_next_workout
+                ),
+                onClick = { onStartTodayClick(next.day) },
+                modifier = Modifier
+                    .padding(horizontal = Spacing.screen, vertical = Spacing.medium)
+            )
 
-                state.canStartNextWeek -> TrainrButton(
-                    text = stringResource(R.string.generate_next_week),
-                    onClick = onStartNextWeekClick,
-                    modifier = Modifier
-                        .padding(horizontal = Spacing.screen, vertical = Spacing.medium)
-                )
-            }
+            isHome && state.canStartNextWeek -> TrainrButton(
+                text = stringResource(R.string.generate_next_week),
+                onClick = onStartNextWeekClick,
+                modifier = Modifier
+                    .padding(horizontal = Spacing.screen, vertical = Spacing.medium)
+            )
         }
     }
 }
