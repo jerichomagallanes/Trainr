@@ -20,6 +20,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -64,8 +65,13 @@ class RoutineDetailViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
+            // Days open out of the plan the home surface shows, which is
+            // always the newest stored week.
             val plan = userRepository.getCurrentUser()
-                ?.let { userRepository.getWeeklyWorkoutPlan(it.id, FIRST_WEEK) }
+                ?.let { user ->
+                    userRepository.getWeeklyWorkoutPlans(user.id).first()
+                        .maxByOrNull { it.weekNumber }
+                }
             val index = plan?.workoutDays
                 ?.indexOfFirst { it.dayNumber == requestedDayNumber } ?: -1
 

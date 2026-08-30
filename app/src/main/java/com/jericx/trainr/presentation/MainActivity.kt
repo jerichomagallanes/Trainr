@@ -41,6 +41,7 @@ import com.jericx.trainr.presentation.splash.SplashScreen
 import com.jericx.trainr.presentation.workout.DayCompletedScreen
 import com.jericx.trainr.presentation.workout.RoutineDetailRoute
 import com.jericx.trainr.presentation.workout.WeeklyPlanRoute
+import com.jericx.trainr.presentation.workout.NextWeekViewModel
 import com.jericx.trainr.presentation.workout.WeekCompletedScreen
 import com.jericx.trainr.presentation.workout.WeeklyProgressScreen
 import com.jericx.trainr.presentation.workout.sample.SampleWeeklyProgress
@@ -361,11 +362,20 @@ fun AppContent(versionName: String) {
                         onViewProgressClick = {
                             navController.navigate(Screen.WeeklyProgress.route)
                         },
-                        // There is no week-two plan yet, so this returns to the
-                        // plan surface where next week will live.
                         onPreviewNextWeekClick = {
-                            navController.navigate(Screen.Home.route) {
-                                popUpTo(Screen.Home.route) { inclusive = true }
+                            navController.navigate(Screen.GeneratingNextWeek.route)
+                        }
+                    )
+                }
+
+                composable(Screen.GeneratingNextWeek.route) {
+                    val nextWeekViewModel: NextWeekViewModel = hiltViewModel()
+                    GeneratingScreen(
+                        onGenerationComplete = {
+                            nextWeekViewModel.generateNextWeek {
+                                navController.navigate(Screen.Home.route) {
+                                    popUpTo(0) { inclusive = true }
+                                }
                             }
                         }
                     )
