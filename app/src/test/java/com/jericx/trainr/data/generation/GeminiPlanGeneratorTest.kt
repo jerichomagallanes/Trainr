@@ -152,10 +152,10 @@ class GeminiPlanGeneratorTest {
         assertThat(server.requestCount).isEqualTo(0)
     }
 
-    // Congestion is transient as often as it is fatal, so a failed transport
-    // spends one attempt, and a later success still produces a plan.
+    // An overloaded model is one of the three that will not answer, so the next
+    // one is asked and the plan still arrives.
     @Test
-    fun aServerErrorIsRetriedAndCanStillSucceed() = runTest {
+    fun anOverloadedModelIsPassedOverAndTheNextOneAnswers() = runTest {
         server.enqueue(MockResponse().setResponseCode(503))
         enqueue(validPlanJson)
 
@@ -164,10 +164,52 @@ class GeminiPlanGeneratorTest {
     }
 
     @Test
-    fun persistentServerErrorsFailSoftly() = runTest {
-        repeat(3) { server.enqueue(MockResponse().setResponseCode(503)) }
+    fun everyModelRefusingFailsSoftly() = runTest {
+        repeat(GeminiClient.MODELS.size) { server.enqueue(MockResponse().setResponseCode(503)) }
 
         assertThat(generator().generate(request())).isEqualTo(PlanGenerationResult.Failed)
-        assertThat(server.requestCount).isEqualTo(3)
+        assertThat(server.requestCount).isEqualTo(GeminiClient.MODELS.size)
+    }
+
+    // The free allowance is counted per model, so the day's last model can
+    // still write the plan after the others have run out.
+    @Test
+    fun aSpentModelHandsOverToTheNextOne() = runTest {
+        server.enqueue(MockResponse().setResponseCode(429))
+        enqueue(validPlanJson)
+
+        val result = generator().generate(request())
+
+        assertThat(result).isInstanceOf(PlanGenerationResult.Generated::class.java)
+        assertThat(server.requestCount).isEqualTo(2)
+    }
+
+    // Asking a model that has run out is the one thing guaranteed not to help,
+    // and every extra call is a request the client no longer has. So a refusal
+    // moves along the list rather than spending an attempt — three of them
+    // still leave the attempts intact for a model that will answer.
+    @Test
+    fun refusalsDoNotSpendTheAttemptsMeantForUnusableAnswers() = runTest {
+        repeat(2) { server.enqueue(MockResponse().setResponseCode(429)) }
+        enqueue("not json at all")
+        enqueue(validPlanJson)
+
+        val result = generator().generate(request())
+
+        // Two refusals, then a genuine answer that was unusable, then one that
+        // was not: four calls, of which only the last two were attempts.
+        assertThat(result).isInstanceOf(PlanGenerationResult.Generated::class.java)
+        assertThat(server.requestCount).isEqualTo(4)
+    }
+
+    // A retired model name is not a reason to give up either.
+    @Test
+    fun aRetiredModelHandsOverToTheNextOne() = runTest {
+        server.enqueue(MockResponse().setResponseCode(404))
+        enqueue(validPlanJson)
+
+        assertThat(generator().generate(request()))
+            .isInstanceOf(PlanGenerationResult.Generated::class.java)
+        assertThat(server.requestCount).isEqualTo(2)
     }
 }

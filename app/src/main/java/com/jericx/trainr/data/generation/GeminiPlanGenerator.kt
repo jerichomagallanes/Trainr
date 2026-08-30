@@ -23,33 +23,61 @@ class GeminiPlanGenerator(
         // loop rather than being flattened into "something went wrong".
         var failure: PlanGenerationResult.Failure = PlanGenerationResult.Failed
 
-        repeat(MAX_ATTEMPTS) { attempt ->
-            if (attempt > 0) delay(RETRY_DELAY_MILLIS * attempt)
+        // Two budgets, deliberately separate. Attempts are answers we were
+        // given and could not use, and there are few of them because each one
+        // costs a request from a small daily allowance. Walking the model list
+        // costs nothing from that budget: a model that will not answer has not
+        // answered, and the free allowance is counted per model, so the next
+        // one has its own.
+        var modelIndex = 0
+        var attemptsSpent = 0
 
-            val prompt = if (feedback.isEmpty()) basePrompt else withFeedback(basePrompt, feedback)
-            // An unusable answer is transient (congestion, a dropped connection)
-            // as often as it is fatal, so it spends an attempt, not all of them.
+        while (modelIndex < GeminiClient.MODELS.size && attemptsSpent < MAX_ATTEMPTS) {
+            if (attemptsSpent > 0) delay(RETRY_DELAY_MILLIS * attemptsSpent)
+
+            val prompt =
+                if (feedback.isEmpty()) basePrompt else withFeedback(basePrompt, feedback)
+
             val json = when (
                 val answer = client.generate(
+                    model = GeminiClient.MODELS[modelIndex],
                     systemInstruction = promptBuilder.systemInstruction(),
                     userPrompt = prompt,
                     responseSchema = GENERATED_PLAN_SCHEMA
                 )
             ) {
                 is GeminiResponse.Text -> answer.value
-                GeminiResponse.Unreachable -> {
-                    failure = PlanGenerationResult.Offline
-                    return@repeat
+
+                // Nothing is reachable, so no other model will be either.
+                GeminiResponse.Unreachable -> return PlanGenerationResult.Offline
+
+                // Spent, retired or overloaded. Ask the next model, and do not
+                // count it against the attempts: asking again is the one thing
+                // guaranteed not to help, and on a spent allowance every extra
+                // call is a request the client no longer has.
+                GeminiResponse.ModelUnavailable -> {
+                    failure = PlanGenerationResult.Failed
+                    modelIndex++
+                    continue
                 }
+
+                // An unusable answer is transient (congestion, a dropped
+                // connection) as often as it is fatal, so it spends an attempt,
+                // not all of them.
                 GeminiResponse.Failed -> {
                     failure = PlanGenerationResult.Failed
-                    return@repeat
+                    attemptsSpent++
+                    continue
                 }
             }
 
-            when (val result = parser.parse(
-                json, request.user.id, request.weekNumber, request.startDateMillis
-            )) {
+            attemptsSpent++
+
+            when (
+                val result = parser.parse(
+                    json, request.user.id, request.weekNumber, request.startDateMillis
+                )
+            ) {
                 is PlanParseResult.Parsed -> {
                     val plan = result.plan
                     if (plan.workoutDays.size == request.user.workoutDaysPerWeek) {

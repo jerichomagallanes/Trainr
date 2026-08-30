@@ -24,6 +24,13 @@ import okhttp3.RequestBody.Companion.toRequestBody
 sealed interface GeminiResponse {
     data class Text(val value: String) : GeminiResponse
     data object Unreachable : GeminiResponse
+
+    // This model will not serve us, but another might: its free allowance for
+    // the day is spent, it has been retired, or it is overloaded right now.
+    // Asking it again is the one thing guaranteed not to help — and on a spent
+    // allowance each attempt costs a request we no longer have.
+    data object ModelUnavailable : GeminiResponse
+
     data object Failed : GeminiResponse
 }
 
@@ -31,12 +38,12 @@ sealed interface GeminiResponse {
 // to JSON by a response schema.
 class GeminiClient(
     private val apiKey: String,
-    private val model: String = DEFAULT_MODEL,
     private val baseUrl: String = "https://generativelanguage.googleapis.com",
     private val http: OkHttpClient = defaultHttpClient()
 ) {
 
     suspend fun generate(
+        model: String,
         systemInstruction: String,
         userPrompt: String,
         responseSchema: JsonObject
@@ -73,7 +80,13 @@ class GeminiClient(
         return withContext(Dispatchers.IO) {
             try {
                 http.newCall(request).execute().use { response ->
-                    if (!response.isSuccessful) return@use GeminiResponse.Failed
+                    if (!response.isSuccessful) {
+                        return@use if (response.code in MODEL_IS_OUT) {
+                            GeminiResponse.ModelUnavailable
+                        } else {
+                            GeminiResponse.Failed
+                        }
+                    }
                     firstCandidateText(response.body?.string().orEmpty())
                         ?.let(GeminiResponse::Text)
                         ?: GeminiResponse.Failed
@@ -94,7 +107,20 @@ class GeminiClient(
     }.getOrNull()
 
     companion object {
-        const val DEFAULT_MODEL = "gemini-3.6-flash"
+        // Asked in order. The free allowance is counted per model, so a model
+        // that has run out for the day says nothing about the next one — these
+        // are separate daily buckets, and the plan is worth more than the
+        // marginal quality between them. Newest and strongest first; the lite
+        // models are the reserve that keeps the app working once it is spent.
+        val MODELS = listOf(
+            "gemini-3.6-flash",
+            "gemini-3.5-flash-lite",
+            "gemini-3.1-flash-lite"
+        )
+
+        // 429 spent, 404 retired, 503 overloaded: reasons to ask someone else.
+        private val MODEL_IS_OUT = setOf(429, 404, 503)
+
         // Low enough for disciplined programming, high enough for varied plans.
         private const val TEMPERATURE = 0.4
 
