@@ -79,7 +79,9 @@ fun TrainrLocationCard(
                     painter = painterResource(id = iconRes),
                     contentDescription = null,
                     modifier = Modifier.size(IconSize),
-                    tint = contentColor
+                    // Orange on both card states: the frames export every
+                    // location icon as #D37200, the selected dark one included.
+                    tint = MaterialTheme.colorScheme.primary
                 )
                 Spacer(modifier = Modifier.height(5.dp))
                 Text(

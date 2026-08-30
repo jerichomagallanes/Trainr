@@ -181,6 +181,7 @@ fun AppContent(versionName: String) {
                     val editing = entry.isEditing
                     BodyMetricsScreen(
                         initial = if (editing) onboardingState.userProfile else null,
+                        isEditing = editing,
                         onNextClick = { height, weight ->
                             onboardingViewModel.updateBodyMetrics(height, weight)
                             if (editing) {
@@ -200,6 +201,7 @@ fun AppContent(versionName: String) {
                     val editing = entry.isEditing
                     FitnessGoalScreen(
                         initial = if (editing) onboardingState.userProfile else null,
+                        isEditing = editing,
                         onNextClick = { goal ->
                             onboardingViewModel.updateFitnessGoal(goal)
                             if (editing) {
@@ -219,6 +221,7 @@ fun AppContent(versionName: String) {
                     val editing = entry.isEditing
                     WorkoutSetupScreen(
                         initial = if (editing) onboardingState.userProfile else null,
+                        isEditing = editing,
                         onNextClick = { location, equipment, days, duration, time ->
                             onboardingViewModel.updateWorkoutSetup(location, equipment, days, duration, time)
                             if (editing) {
@@ -238,6 +241,7 @@ fun AppContent(versionName: String) {
                     val editing = entry.isEditing
                     LimitationsScreen(
                         initial = if (editing) onboardingState.userProfile else null,
+                        isEditing = editing,
                         onNextClick = { injuries, workoutType ->
                             onboardingViewModel.updateLimitations(injuries, workoutType)
                             if (editing) {

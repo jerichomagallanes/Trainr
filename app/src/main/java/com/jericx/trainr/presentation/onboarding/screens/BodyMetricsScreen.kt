@@ -45,6 +45,7 @@ import com.jericx.trainr.presentation.onboarding.util.BodyMetricsConverter
 @Composable
 fun BodyMetricsScreen(
     initial: UserProfile? = null,
+    isEditing: Boolean = false,
     onNextClick: (height: Float, weight: Float) -> Unit,
     onBackClick: () -> Unit
 ) {
@@ -90,7 +91,7 @@ fun BodyMetricsScreen(
         onBackClick = onBackClick,
         bottomButton = {
             TrainrButton(
-                text = stringResource(R.string.next),
+                text = stringResource(if (isEditing) R.string.save else R.string.next),
                 onClick = {
                     val (h, w) = BodyMetricsConverter.parseMetrics(height, weight, useMetric)
                     onNextClick(h, w)

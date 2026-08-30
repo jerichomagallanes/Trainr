@@ -35,6 +35,7 @@ import com.jericx.trainr.presentation.common.components.typography.TrainrSubtitl
 @Composable
 fun LimitationsScreen(
     initial: UserProfile? = null,
+    isEditing: Boolean = false,
     onNextClick: (injuries: List<String>, workoutType: WorkoutType) -> Unit,
     onBackClick: () -> Unit
 ) {
@@ -62,7 +63,7 @@ fun LimitationsScreen(
         onBackClick = onBackClick,
         bottomButton = {
             TrainrButton(
-                text = stringResource(R.string.submit),
+                text = stringResource(if (isEditing) R.string.save else R.string.submit),
                 onClick = {
                     val injuries = selectedInjuries.filter { it != noneLabel }.toList()
                     onNextClick(injuries, selectedWorkoutType)

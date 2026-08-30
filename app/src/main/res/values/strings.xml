@@ -208,6 +208,7 @@
     <string name="timer_paused">Timer paused</string>
     <string name="edit">Edit</string>
     <string name="close">Close</string>
+    <string name="save">Save</string>
     <string name="none_label">None</string>
     
     <!-- Common -->

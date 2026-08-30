@@ -28,6 +28,7 @@ import com.jericx.trainr.presentation.common.components.typography.TrainrSubtitl
 @Composable
 fun FitnessGoalScreen(
     initial: UserProfile? = null,
+    isEditing: Boolean = false,
     onNextClick: (FitnessGoal) -> Unit,
     onBackClick: () -> Unit
 ) {
@@ -37,7 +38,7 @@ fun FitnessGoalScreen(
         onBackClick = onBackClick,
         bottomButton = {
             TrainrButton(
-                text = stringResource(R.string.next),
+                text = stringResource(if (isEditing) R.string.save else R.string.next),
                 onClick = {
                     selectedGoal?.let { onNextClick(it) }
                 },

@@ -206,6 +206,7 @@
     <string name="timer_paused">タイマー一時停止中</string>
     <string name="edit">編集</string>
     <string name="close">閉じる</string>
+    <string name="save">保存</string>
     <string name="none_label">なし</string>
     
     <!-- Common -->

@@ -58,6 +58,7 @@ private val DurationChipWidth = 80.dp
 @Composable
 fun WorkoutSetupScreen(
     initial: UserProfile? = null,
+    isEditing: Boolean = false,
     onNextClick: (
         location: WorkoutLocation,
         equipment: List<Equipment>,
@@ -86,7 +87,7 @@ fun WorkoutSetupScreen(
         },
         bottomButton = {
             TrainrButton(
-                text = stringResource(R.string.next),
+                text = stringResource(if (isEditing) R.string.save else R.string.next),
                 onClick = {
                     selectedLocation?.let { location ->
                         val equipment = if (selectedEquipment.isEmpty()) {

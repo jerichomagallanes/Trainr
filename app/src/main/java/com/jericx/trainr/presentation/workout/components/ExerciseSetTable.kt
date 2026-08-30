@@ -293,24 +293,32 @@ private fun DeletableRow(
         state = dismissState,
         enableDismissFromStartToEnd = false,
         backgroundContent = {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = Spacing.extraSmall)
-                    .clip(MaterialTheme.shapes.small)
-                    .background(RedError),
-                contentAlignment = Alignment.CenterEnd
+            // Drawn only mid-swipe: the row's own content is transparent, so a
+            // permanent background would bleed red through every idle row.
+            if (dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart &&
+                dismissState.progress > 0f && dismissState.progress < 1f
             ) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = stringResource(R.string.delete_set),
-                    tint = Color.White,
-                    modifier = Modifier.padding(end = Spacing.tight)
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = Spacing.extraSmall)
+                        .clip(MaterialTheme.shapes.small)
+                        .background(RedError),
+                    contentAlignment = Alignment.CenterEnd
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = stringResource(R.string.delete_set),
+                        tint = Color.White,
+                        modifier = Modifier.padding(end = Spacing.tight)
+                    )
+                }
             }
         }
     ) {
-        content()
+        Box(modifier = Modifier.background(MaterialTheme.colorScheme.surface)) {
+            content()
+        }
     }
 }
 
