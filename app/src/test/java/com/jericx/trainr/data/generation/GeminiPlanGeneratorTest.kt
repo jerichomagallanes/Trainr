@@ -100,7 +100,7 @@ class GeminiPlanGeneratorTest {
             .isEqualTo("goblet_squat")
 
         val sent = server.takeRequest()
-        assertThat(sent.path).isEqualTo("/v1beta/models/gemini-2.5-flash:generateContent")
+        assertThat(sent.path).isEqualTo("/v1beta/models/gemini-3.6-flash:generateContent")
         assertThat(sent.getHeader("x-goog-api-key")).isEqualTo("test-key")
         val body = sent.body.readUtf8()
         assertThat(body).contains("responseSchema")
@@ -151,10 +151,22 @@ class GeminiPlanGeneratorTest {
         assertThat(server.requestCount).isEqualTo(0)
     }
 
+    // Congestion is transient as often as it is fatal, so a failed transport
+    // spends one attempt, and a later success still produces a plan.
     @Test
-    fun aServerErrorFailsSoftly() = runTest {
-        server.enqueue(MockResponse().setResponseCode(500))
+    fun aServerErrorIsRetriedAndCanStillSucceed() = runTest {
+        server.enqueue(MockResponse().setResponseCode(503))
+        enqueue(validPlanJson)
+
+        assertThat(generator().generate(request())).isNotNull()
+        assertThat(server.requestCount).isEqualTo(2)
+    }
+
+    @Test
+    fun persistentServerErrorsFailSoftly() = runTest {
+        repeat(3) { server.enqueue(MockResponse().setResponseCode(503)) }
 
         assertThat(generator().generate(request())).isNull()
+        assertThat(server.requestCount).isEqualTo(3)
     }
 }

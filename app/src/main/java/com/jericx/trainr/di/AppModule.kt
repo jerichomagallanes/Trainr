@@ -16,6 +16,7 @@ import com.jericx.trainr.data.preferences.LanguagePreferences
 import com.jericx.trainr.data.repository.UserRepositoryImpl
 import com.jericx.trainr.domain.generation.PlanGenerator
 import com.jericx.trainr.domain.repository.UserRepository
+import com.jericx.trainr.presentation.workout.model.ExerciseVideoCatalog
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -68,7 +69,9 @@ object AppModule {
         return GeminiPlanGenerator(
             client = GeminiClient(apiKey = BuildConfig.GEMINI_API_KEY),
             parser = GeneratedPlanParser(),
-            promptBuilder = PlanPromptBuilder()
+            promptBuilder = PlanPromptBuilder(
+                canonicalKeys = ExerciseVideoCatalog.videoIds.keys
+            )
         )
     }
 

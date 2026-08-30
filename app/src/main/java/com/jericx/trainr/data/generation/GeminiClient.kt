@@ -79,7 +79,7 @@ class GeminiClient(
     }.getOrNull()
 
     companion object {
-        const val DEFAULT_MODEL = "gemini-2.5-flash"
+        const val DEFAULT_MODEL = "gemini-3.6-flash"
         // Low enough for disciplined programming, high enough for varied plans.
         private const val TEMPERATURE = 0.4
 

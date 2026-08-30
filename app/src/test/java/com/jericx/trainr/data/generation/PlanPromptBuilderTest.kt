@@ -115,6 +115,18 @@ class PlanPromptBuilderTest {
         assertThat(prompt).contains("Skipped Day (skipped)")
     }
 
+    // A near-duplicate key (dumbbell_goblet_squat next to goblet_squat) splits
+    // history and loses the tutorial, so the vocabulary must reach the brief.
+    @Test
+    fun theCanonicalVocabularyIsPinnedInTheBrief() {
+        val brief = PlanPromptBuilder(canonicalKeys = setOf("goblet_squat", "plank"))
+            .systemInstruction()
+
+        assertThat(brief).contains("goblet_squat, plank")
+        assertThat(brief).contains("near-duplicate")
+        assertThat(PlanPromptBuilder().systemInstruction()).doesNotContain("near-duplicate")
+    }
+
     // Anchors of the coaching brief the plans' quality hangs on; if one of
     // these leaves the system prompt it should be a deliberate decision.
     @Test

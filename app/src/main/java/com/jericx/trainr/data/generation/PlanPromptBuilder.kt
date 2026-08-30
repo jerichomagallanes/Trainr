@@ -11,7 +11,12 @@ import com.jericx.trainr.domain.model.WorkoutLocation
 import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.domain.model.WorkoutType
 
-class PlanPromptBuilder {
+class PlanPromptBuilder(
+    // The canonical exercise vocabulary (the video catalog's keys). The model
+    // may invent new keys for other movements, but these movements must use
+    // these exact keys or history and tutorials silently split.
+    private val canonicalKeys: Collection<String> = emptyList()
+) {
 
     fun systemInstruction(): String = """
         You are an experienced, certified strength and conditioning coach writing a
@@ -59,9 +64,10 @@ class PlanPromptBuilder {
         Output rules:
         - exerciseKey is a canonical English lower_snake_case slug (goblet_squat,
           bent_over_row), singular, identical for the same movement in every week
-          and language. It is an identifier, never translated.
+          and language. It is an identifier, never translated.${knownKeysRule()}
         - name, titles, equipment, prescription and instructions are display copy
-          in the requested language.
+          in the requested language. Capitalize each equipment item ("Dumbbells",
+          "Yoga Mat").
         - prescription describes the sets in words ("3 sets of 12 reps",
           "5 minutes"); instructions are 1-2 sentences of how and why with one
           form cue.
@@ -92,6 +98,15 @@ class PlanPromptBuilder {
             request.previousWeek?.let { appendHistory(it) }
         }
     }
+
+    private fun knownKeysRule(): String =
+        if (canonicalKeys.isEmpty()) {
+            ""
+        } else {
+            "\n        - When you prescribe one of these movements or a close variant of" +
+                "\n          it, use exactly this key rather than minting a near-duplicate:" +
+                "\n          ${canonicalKeys.sorted().joinToString(", ")}."
+        }
 
     private fun StringBuilder.appendHistory(week: WeeklyWorkoutPlan) {
         appendLine()

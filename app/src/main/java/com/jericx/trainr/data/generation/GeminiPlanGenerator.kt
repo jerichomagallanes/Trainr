@@ -3,6 +3,7 @@ package com.jericx.trainr.data.generation
 import com.jericx.trainr.domain.generation.PlanGenerator
 import com.jericx.trainr.domain.generation.PlanRequest
 import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
+import kotlinx.coroutines.delay
 
 // Generation is a conversation with a deadline: ask, validate, and when the
 // answer breaks the contract, ask again quoting every problem. After that,
@@ -18,13 +19,17 @@ class GeminiPlanGenerator(
         val basePrompt = promptBuilder.userPrompt(request)
         var feedback: List<String> = emptyList()
 
-        repeat(MAX_ATTEMPTS) {
+        repeat(MAX_ATTEMPTS) { attempt ->
+            if (attempt > 0) delay(RETRY_DELAY_MILLIS * attempt)
+
             val prompt = if (feedback.isEmpty()) basePrompt else withFeedback(basePrompt, feedback)
+            // A null answer is transient (congestion, a dropped connection) as
+            // often as it is fatal, so it spends an attempt rather than all of them.
             val json = client.generate(
                 systemInstruction = promptBuilder.systemInstruction(),
                 userPrompt = prompt,
                 responseSchema = GENERATED_PLAN_SCHEMA
-            ) ?: return null
+            ) ?: return@repeat
 
             when (val result = parser.parse(
                 json, request.user.id, request.weekNumber, request.startDateMillis
@@ -54,5 +59,6 @@ class GeminiPlanGenerator(
 
     companion object {
         private const val MAX_ATTEMPTS = 3
+        private const val RETRY_DELAY_MILLIS = 1_500L
     }
 }
