@@ -3,6 +3,7 @@ package com.jericx.trainr.presentation.splash
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.jericx.trainr.R
@@ -19,15 +20,18 @@ class SplashScreenTest {
 
     private fun string(id: Int) = composeTestRule.activity.getString(id)
 
+    // The name is the wordmark's accessible label now, not a line of text, so a
+    // screen reader still announces the app while the eye sees the logo.
     @Test
-    fun displaysAppName() {
+    fun displaysTheWordmarkUnderTheAppName() {
         composeTestRule.setContent {
             TrainrTheme {
                 SplashScreen(versionName = "1.0-test")
             }
         }
 
-        composeTestRule.onNodeWithText(string(R.string.app_name)).assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription(string(R.string.app_name))
+            .assertIsDisplayed()
     }
 
     @Test
