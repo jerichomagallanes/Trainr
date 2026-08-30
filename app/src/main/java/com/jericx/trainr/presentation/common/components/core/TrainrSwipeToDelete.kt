@@ -1,6 +1,6 @@
 package com.jericx.trainr.presentation.common.components.core
 
-import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animate
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -23,8 +23,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,7 +36,6 @@ import androidx.compose.ui.unit.IntOffset
 import com.jericx.trainr.presentation.common.theme.RedError
 import com.jericx.trainr.presentation.common.theme.Spacing
 import kotlin.math.roundToInt
-import kotlinx.coroutines.launch
 
 // Deleting asks for a deliberate swipe, decided when the finger lifts, the way
 // the slide-to-complete control decides. Three quarters rather than its nine
@@ -65,8 +65,11 @@ fun TrainrSwipeToDelete(
     content: @Composable () -> Unit
 ) {
     val density = LocalDensity.current
-    val scope = rememberCoroutineScope()
-    val offset = remember { Animatable(0f) }
+    // A plain value, moved straight from the drag. It used to be an Animatable
+    // fed by a coroutine launched per delta, and an Animatable takes one mutator
+    // at a time: a snap queued behind the finger could land after the release
+    // began animating and cancel it, leaving the row parked open.
+    var offsetPx by remember { mutableFloatStateOf(0f) }
     val currentOnDelete by rememberUpdatedState(onDelete)
 
     BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
@@ -74,7 +77,7 @@ fun TrainrSwipeToDelete(
 
         // Behind the row for exactly as long as the row is held aside, so an
         // idle row has nothing red underneath to show through it.
-        if (offset.value < 0f) {
+        if (offsetPx < 0f) {
             Box(
                 modifier = Modifier
                     .matchParentSize()
@@ -93,20 +96,20 @@ fun TrainrSwipeToDelete(
 
         Box(
             modifier = Modifier
-                .offset { IntOffset(offset.value.roundToInt(), 0) }
+                .offset { IntOffset(offsetPx.roundToInt(), 0) }
                 .background(MaterialTheme.colorScheme.background)
                 .then(
                     if (enabled) {
                         Modifier.draggable(
                             orientation = Orientation.Horizontal,
                             state = rememberDraggableState { delta ->
-                                scope.launch {
-                                    offset.snapTo((offset.value + delta).coerceIn(-travel, 0f))
-                                }
+                                offsetPx = (offsetPx + delta).coerceIn(-travel, 0f)
                             },
                             onDragStopped = {
-                                if (-offset.value >= travel * DELETE_FRACTION) currentOnDelete()
-                                offset.animateTo(0f)
+                                if (-offsetPx >= travel * DELETE_FRACTION) currentOnDelete()
+                                // One animation, in the drag's own scope, so a
+                                // new drag interrupts it and nothing else can.
+                                animate(offsetPx, 0f) { value, _ -> offsetPx = value }
                             }
                         )
                     } else {
