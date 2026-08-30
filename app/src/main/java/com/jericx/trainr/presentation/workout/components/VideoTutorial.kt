@@ -144,8 +144,14 @@ private fun YouTubePlayer(videoId: String, modifier: Modifier = Modifier) {
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT
                 )
+                // Load-bearing for the Play Store, not just for tidiness.
                 // Registering as an observer is what pauses playback when the
-                // screen stops; the library releases the WebView with it.
+                // screen stops and releases the WebView when it goes; a player
+                // that outlived the screen would keep playing with the app in
+                // the background, which Google treats as Device and Network
+                // Abuse — an attempt to substitute for a YouTube subscription —
+                // and suspends for. Verified on device: backgrounding, locking
+                // the screen and navigating away each stop the audio.
                 lifecycleOwner.lifecycle.addObserver(this)
                 addYouTubePlayerListener(object : AbstractYouTubePlayerListener() {
                     override fun onReady(youTubePlayer: YouTubePlayer) {
