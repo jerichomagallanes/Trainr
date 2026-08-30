@@ -19,13 +19,19 @@ data class RoutineUi(
 
     fun toggleCompleted(position: Int): RoutineUi = copy(
         exercises = exercises.map {
-            if (it.position == position) it.copy(isCompleted = !it.isCompleted) else it
+            when {
+                it.position != position -> it
+                // Un-ticking leaves the numbers on the rows: they are logs now,
+                // and clearing them would throw away hand-typed ones too.
+                it.isCompleted -> it.copy(isCompleted = false)
+                else -> it.loggedAsPrescribed()
+            }
         }
     )
 
     fun markCompleted(position: Int): RoutineUi = copy(
         exercises = exercises.map {
-            if (it.position == position) it.copy(isCompleted = true) else it
+            if (it.position == position) it.loggedAsPrescribed() else it
         }
     )
 
@@ -81,6 +87,22 @@ data class RoutineUi(
     )
 
     fun completeAll(): RoutineUi = copy(
-        exercises = exercises.map { it.copy(isCompleted = true) }
+        exercises = exercises.map { it.loggedAsPrescribed() }
     )
 }
+
+// Ticking an exercise off says its prescription was done, so a set left blank
+// records what was asked for. Without this a finished day is stored with
+// nothing on its sets: the PREVIOUS column has nothing to show, and next
+// week's prompt reads the whole session back as "did: skipped".
+private fun ExerciseUi.loggedAsPrescribed(): ExerciseUi = copy(
+    isCompleted = true,
+    sets = sets.map {
+        it.copy(
+            actualReps = it.actualReps ?: it.targetReps,
+            actualWeightKg = it.actualWeightKg ?: it.targetWeightKg,
+            actualSeconds = it.actualSeconds ?: it.targetSeconds,
+            isCompleted = true
+        )
+    }
+)

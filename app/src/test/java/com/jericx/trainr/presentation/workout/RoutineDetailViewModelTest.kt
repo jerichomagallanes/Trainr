@@ -655,4 +655,37 @@ class RoutineDetailViewModelTest {
         coVerify(exactly = 0) { repository.addExerciseSet(any(), any()) }
         coVerify(exactly = 0) { repository.deleteExerciseSet(any()) }
     }
+    // The day is stored the way it will be read back: by the PREVIOUS column
+    // and by the prompt that builds next week.
+    @Test
+    fun completingTheRoutineStoresThePrescribedNumbers() = runTest {
+        val repository = repositoryWith(storedPlan)
+        val viewModel = viewModel(dayNumber = 3, repository = repository)
+        advanceUntilIdle()
+
+        viewModel.completeRoutine()
+        advanceUntilIdle()
+
+        coVerify {
+            repository.updateExerciseSet(
+                match { it.id == 320L && it.actualReps == it.targetReps && it.isCompleted },
+                32L
+            )
+        }
+    }
+
+    @Test
+    fun tickingASingleExerciseStoresItsPrescribedNumbers() = runTest {
+        val repository = repositoryWith(storedPlan)
+        val viewModel = viewModel(dayNumber = 3, repository = repository)
+        advanceUntilIdle()
+
+        viewModel.toggleExercise(1)
+        advanceUntilIdle()
+
+        coVerify {
+            repository.updateExerciseSet(match { it.actualReps == it.targetReps }, 32L)
+        }
+    }
+
 }

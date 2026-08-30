@@ -81,10 +81,13 @@ class WeeklyProgressViewModel @Inject constructor(
             val over = nowMillis >= WorkoutWeek.dateOfDay(start, LAST_ISO_DAY + 1)
             val status = when {
                 total > 0 && completed == total -> WeekStatus.COMPLETED
+                over && completed == 0 -> WeekStatus.SKIPPED
+                over -> WeekStatus.NOT_COMPLETED
+                // Training ahead of schedule still counts as started: a week
+                // with work logged in it is not "upcoming" any more.
+                completed > 0 -> WeekStatus.IN_PROGRESS
                 nowMillis < start -> WeekStatus.UPCOMING
-                !over -> WeekStatus.IN_PROGRESS
-                completed == 0 -> WeekStatus.SKIPPED
-                else -> WeekStatus.NOT_COMPLETED
+                else -> WeekStatus.IN_PROGRESS
             }
             return WeekProgressUi(
                 planId = plan.id,

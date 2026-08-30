@@ -109,6 +109,8 @@ fun WeeklyPlanScreen(
         )
     }
 
+    val scrollState = rememberScrollState()
+
     Column(modifier = modifier.fillMaxSize()) {
         // Home has nowhere to go back to. Plan-level actions live behind the
         // heading's overflow, where the design puts them.
@@ -117,7 +119,7 @@ fun WeeklyPlanScreen(
         Column(
             modifier = Modifier
                 .weight(1f)
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
                 .padding(horizontal = Spacing.screen, vertical = Spacing.medium),
             verticalArrangement = Arrangement.spacedBy(Spacing.medium)
         ) {
@@ -220,7 +222,9 @@ fun WeeklyPlanScreen(
                 onDayClick = onDayClick,
                 // A week being read back is a record; only the plan you are
                 // training can be rescheduled.
-                onMove = if (isBrowsedWeek) { _, _ -> } else onMoveDay
+                canReorder = !isBrowsedWeek,
+                onMove = onMoveDay,
+                scrollState = scrollState
             )
         }
 

@@ -1,6 +1,13 @@
 package com.jericx.trainr.presentation.workout
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.changedToUpIgnoreConsumed
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChangeIgnoreConsumed
+import kotlin.math.abs
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
@@ -142,7 +149,7 @@ private fun DeletableWeek(
     content: @Composable () -> Unit
 ) {
     if (!week.canDelete) {
-        content()
+        Box(modifier = Modifier.swallowHorizontalDrags()) { content() }
         return
     }
 
@@ -187,6 +194,23 @@ private fun DeletableWeek(
     ) {
         Box(modifier = Modifier.background(MaterialTheme.colorScheme.background)) {
             content()
+        }
+    }
+}
+
+// Swiping a week that cannot be deleted would otherwise end as a tap and open
+// it, because nothing here consumes the drag. Swallowing it once it passes the
+// touch slop keeps a refused swipe from navigating.
+private fun Modifier.swallowHorizontalDrags(): Modifier = pointerInput(Unit) {
+    awaitEachGesture {
+        awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+        var travelled = 0f
+        while (true) {
+            val event = awaitPointerEvent(PointerEventPass.Initial)
+            val change = event.changes.firstOrNull() ?: break
+            if (change.changedToUpIgnoreConsumed()) break
+            travelled += change.positionChangeIgnoreConsumed().x
+            if (abs(travelled) > viewConfiguration.touchSlop) change.consume()
         }
     }
 }

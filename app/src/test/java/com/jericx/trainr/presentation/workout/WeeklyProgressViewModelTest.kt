@@ -199,4 +199,27 @@ class WeeklyProgressViewModelTest {
         coVerify(exactly = 0) { userRepository.deleteWeeklyWorkoutPlan(any()) }
     }
 
+    // Found by hand: a week dated in the future but already trained in showed
+    // as Upcoming, which also made it swipe-deletable along with its logs.
+    @Test
+    fun aFutureWeekAlreadyTrainedInHasStarted() {
+        val progress = WeeklyProgressViewModel.weekProgressOf(
+            plan(statuses = arrayOf(WorkoutStatus.COMPLETED, WorkoutStatus.NOT_STARTED)),
+            nowMillis = beforeTheWeek()
+        )
+
+        assertThat(progress.status).isEqualTo(WeekStatus.IN_PROGRESS)
+        assertThat(progress.canDelete).isFalse()
+    }
+
+    @Test
+    fun anUntouchedFutureWeekCanStillBeDeleted() {
+        val progress = WeeklyProgressViewModel.weekProgressOf(
+            plan(statuses = arrayOf(WorkoutStatus.NOT_STARTED, WorkoutStatus.NOT_STARTED)),
+            nowMillis = beforeTheWeek()
+        )
+
+        assertThat(progress.canDelete).isTrue()
+    }
+
 }

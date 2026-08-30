@@ -7,6 +7,7 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.down
 import androidx.compose.ui.test.moveBy
 import androidx.compose.ui.test.up
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -327,6 +328,41 @@ class WeeklyPlanScreenTest {
         composeTestRule.waitForIdle()
 
         assertThat(move).isNull()
+    }
+
+    // Found by hand: a week opened from Weekly Progress let its cards be
+    // dragged into a new order that was never saved, so the screen showed a
+    // move that had not happened.
+    @Test
+    fun aBrowsedWeekDoesNotLetItsSessionsBeDragged() {
+        var move: Pair<Int, Int>? = null
+        composeTestRule.setContent {
+            TrainrTheme {
+                WeeklyPlanScreen(
+                    state = freshWeek,
+                    onBackClick = {},
+                    onMoveDay = { from, to -> move = from to to }
+                )
+            }
+        }
+
+        val first = freshWeek.days[0].day.title
+        val secondCardHeight = composeTestRule.onNodeWithText(freshWeek.days[1].day.title)
+            .fetchSemanticsNode().size.height
+
+        composeTestRule.onNodeWithText(first).performTouchInput {
+            down(center)
+            advanceEventTime(viewConfiguration.longPressTimeoutMillis + 200)
+            moveBy(Offset(0f, secondCardHeight * 0.8f))
+            advanceEventTime(32)
+            up()
+        }
+        composeTestRule.waitForIdle()
+
+        assertThat(move).isNull()
+        // The order on screen is still the plan's own.
+        composeTestRule.onAllNodesWithText(freshWeek.days[0].day.title)
+            .fetchSemanticsNodes().let { assertThat(it).hasSize(1) }
     }
 
 }
