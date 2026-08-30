@@ -440,6 +440,7 @@ fun AppContent(versionName: String) {
                 }
 
                 composable(Screen.Home.route) {
+                    val nextWeekViewModel: NextWeekViewModel = hiltViewModel()
                     WeeklyPlanRoute(
                         onTrackProgressClick = {
                             navController.navigate(Screen.WeeklyProgress.route)
@@ -468,6 +469,15 @@ fun AppContent(versionName: String) {
                         },
                         onStartNextWeekClick = {
                             navController.navigate(Screen.GeneratingNextWeek.route)
+                        },
+                        // Copying a week needs nothing from the model, so there
+                        // is no waiting to show: it lands and home reloads.
+                        onRepeatWeekClick = {
+                            nextWeekViewModel.repeatLastWeek {
+                                navController.navigate(Screen.Home.route) {
+                                    popUpTo(0) { inclusive = true }
+                                }
+                            }
                         }
                     )
                 }

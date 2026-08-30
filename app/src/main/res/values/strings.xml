@@ -199,6 +199,7 @@
     <string name="delete_set">Delete set</string>
     <string name="plan_options">Plan options</string>
     <string name="regenerate_plan">Regenerate plan</string>
+    <string name="repeat_this_week">Repeat this week</string>
     <string name="generation_failed_title">Could not create your plan</string>
     <string name="generation_failed_offline">Trainr could not reach the internet. Check your connection and try again.</string>
     <string name="generation_failed_message">Something went wrong while writing your plan. Please try again.</string>

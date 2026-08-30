@@ -147,6 +147,41 @@ class WeeklyPlanScreenTest {
         assertThat(started).isTrue()
     }
 
+    // A week behind you can be progressed from or run again; the second is a
+    // coaching decision, so it sits beside the first rather than happening on
+    // its own when something fails.
+    @Test
+    fun aFinishedWeekCanAlsoBeRepeated() {
+        val finished = WeeklyPlanViewModel.stateFor(
+            plan = SampleWorkoutData.weekOne.copy(
+                workoutDays = SampleWorkoutData.weekOne.workoutDays.map {
+                    it.copy(status = WorkoutStatus.COMPLETED)
+                }
+            ),
+            isSample = false
+        )
+        var repeated = false
+        composeTestRule.setContent {
+            TrainrTheme {
+                WeeklyPlanScreen(state = finished, onRepeatWeekClick = { repeated = true })
+            }
+        }
+
+        openMenu()
+        composeTestRule.onNodeWithText(string(R.string.repeat_this_week)).performClick()
+
+        assertThat(repeated).isTrue()
+    }
+
+    @Test
+    fun anUnfinishedWeekOffersNeitherWayOn() {
+        setScreen()
+
+        openMenu()
+
+        composeTestRule.onNodeWithText(string(R.string.repeat_this_week)).assertDoesNotExist()
+    }
+
     @Test
     fun anUnfinishedWeekDoesNotOfferToStartTheNextOne() {
         setScreen()

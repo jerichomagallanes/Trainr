@@ -54,6 +54,7 @@ fun WeeklyPlanRoute(
     onLeavePlanConfirmed: () -> Unit = {},
     onUpdateProfileClick: () -> Unit = {},
     onStartNextWeekClick: () -> Unit = {},
+    onRepeatWeekClick: () -> Unit = {},
     onBackClick: (() -> Unit)? = null,
     viewModel: WeeklyPlanViewModel = hiltViewModel()
 ) {
@@ -71,6 +72,7 @@ fun WeeklyPlanRoute(
         onLeavePlanConfirmed = onLeavePlanConfirmed,
         onUpdateProfileClick = onUpdateProfileClick,
         onStartNextWeekClick = onStartNextWeekClick,
+        onRepeatWeekClick = onRepeatWeekClick,
         onMoveDay = viewModel::moveDay,
         onBackClick = onBackClick
     )
@@ -86,6 +88,7 @@ fun WeeklyPlanScreen(
     onLeavePlanConfirmed: () -> Unit = {},
     onUpdateProfileClick: () -> Unit = {},
     onStartNextWeekClick: () -> Unit = {},
+    onRepeatWeekClick: () -> Unit = {},
     onMoveDay: (Int, Int) -> Unit = { _, _ -> },
     // Set only when a week was opened from Weekly Progress.
     onBackClick: (() -> Unit)? = null
@@ -152,12 +155,23 @@ fun WeeklyPlanScreen(
                                     onUpdateProfileClick()
                                 }
                             )
+                            // With the week behind you there are two sound
+                            // ways on: progress from what you lifted, or run
+                            // the same week again. The second is a coaching
+                            // decision, so it is offered rather than assumed.
                             if (state.canStartNextWeek) {
                                 DropdownMenuItem(
                                     text = { Text(stringResource(R.string.start_next_week)) },
                                     onClick = {
                                         showMenu = false
                                         onStartNextWeekClick()
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.repeat_this_week)) },
+                                    onClick = {
+                                        showMenu = false
+                                        onRepeatWeekClick()
                                     }
                                 )
                             }
