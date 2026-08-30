@@ -54,6 +54,20 @@ class RoutineDetailScreenTest {
         }
     }
 
+    // Nothing left to finish, so the control has nothing to say — and it is
+    // reachable now that the finished session stays behind the congratulations.
+    @Test
+    fun aFinishedWorkoutOffersNothingToFinish() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                RoutineDetailScreen(state = state.copy(routine = state.routine.completeAll()))
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.slide_to_complete_routine))
+            .assertDoesNotExist()
+    }
+
     private fun slideToConfirm(endX: (Float) -> Float) {
         composeTestRule.onNodeWithText(string(R.string.slide_to_complete_routine))
             .performScrollTo()

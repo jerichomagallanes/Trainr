@@ -8,6 +8,9 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.hasProgressBarRangeInfo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.R
@@ -28,6 +31,38 @@ class BasicInfoScreenTest {
     val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 
     private fun string(id: Int) = composeTestRule.activity.getString(id)
+
+    private fun setupProgress() = composeTestRule.onAllNodes(
+        hasProgressBarRangeInfo(ProgressBarRangeInfo(current = 1f, range = 0f..7f))
+    )
+
+    // The bar counts the way through first-time setup.
+    @Test
+    fun firstTimeSetupShowsHowFarThroughItYouAre() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                BasicInfoScreen(onNextClick = { _, _, _, _ -> }, onBackClick = {})
+            }
+        }
+
+        setupProgress().assertCountEquals(1)
+    }
+
+    // Coming back to change one answer is not a seventh of anything.
+    @Test
+    fun changingOneAnswerLaterCountsNothing() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                BasicInfoScreen(
+                    isEditing = true,
+                    onNextClick = { _, _, _, _ -> },
+                    onBackClick = {}
+                )
+            }
+        }
+
+        setupProgress().assertCountEquals(0)
+    }
 
     // "Female" rendered as "Fema..." on narrower phones; the chip label must
     // shrink, never truncate.

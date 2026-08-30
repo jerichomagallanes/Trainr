@@ -161,10 +161,10 @@
     <string name="day_completed_format">DAY %d COMPLETED</string>
     <string name="day_completed_message">Nice job! You\'ve completed today\'s workout. Keep the momentum going.</string>
     <string name="view_weekly_progress">View Weekly Progress</string>
-    <string name="back_to_weekly_routine">Back to Weekly Routine</string>
+    <string name="back_to_workout_plan">Back to My Workout Plan</string>
     <string name="week_completed_format">WEEK %d COMPLETED</string>
     <string name="week_completed_message">You\'ve finished all your workouts this week. Amazing consistency. Keep it up!</string>
-    <string name="slide_to_complete_routine">SLIDE TO COMPLETE ALL ROUTINE</string>
+    <string name="slide_to_complete_routine">SLIDE TO FINISH THIS WORKOUT</string>
     <string name="day_number">DAY %d</string>
     <string name="full_body_strength">Full Body Strength</string>
     <string name="cardio_and_core">Cardio &amp; Core</string>

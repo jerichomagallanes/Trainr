@@ -233,11 +233,16 @@ fun RoutineDetailScreen(
                 }
             }
 
-            TrainrSlideToConfirm(
-                text = stringResource(R.string.slide_to_complete_routine),
-                onConfirm = onCompleteRoutine,
-                modifier = Modifier.padding(top = Spacing.section + Spacing.tight)
-            )
+            // Gone once there is nothing left to finish. Sliding a finished
+            // session again says nothing and does nothing; un-ticking any
+            // exercise brings it back with something to say.
+            if (!routine.isComplete) {
+                TrainrSlideToConfirm(
+                    text = stringResource(R.string.slide_to_complete_routine),
+                    onConfirm = onCompleteRoutine,
+                    modifier = Modifier.padding(top = Spacing.section + Spacing.tight)
+                )
+            }
         }
     }
 }

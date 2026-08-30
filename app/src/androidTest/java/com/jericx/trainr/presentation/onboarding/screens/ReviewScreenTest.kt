@@ -9,6 +9,8 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.test.hasProgressBarRangeInfo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.R
@@ -189,6 +191,38 @@ class ReviewScreenTest {
 
         assertThat(confirmed).isTrue()
     }
+    private fun setupProgress() = composeTestRule.onAllNodes(
+        hasProgressBarRangeInfo(ProgressBarRangeInfo(current = 6f, range = 0f..7f))
+    )
+
+    @Test
+    fun theLastStepOfSetupSaysHowFarThroughItIs() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                ReviewScreen(userProfile = sampleProfile, onConfirmClick = {}, onBackClick = {})
+            }
+        }
+
+        setupProgress().assertCountEquals(1)
+    }
+
+    // Reached from the plan there is no seven-step run to be six sevenths of.
+    @Test
+    fun reviewingFromThePlanCountsNothing() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                ReviewScreen(
+                    userProfile = sampleProfile,
+                    isProfileUpdate = true,
+                    onConfirmClick = {},
+                    onBackClick = {}
+                )
+            }
+        }
+
+        setupProgress().assertCountEquals(0)
+    }
+
     // Saving the profile writes no routine, so the screen must not promise one.
     @Test
     fun theProfileUpdateSavesInsteadOfGenerating() {

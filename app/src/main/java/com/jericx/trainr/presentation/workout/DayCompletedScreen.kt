@@ -22,7 +22,7 @@ fun DayCompletedScreen(
         title = stringResource(R.string.day_completed_format, dayNumber),
         message = stringResource(R.string.day_completed_message),
         secondaryLabel = stringResource(R.string.view_weekly_progress),
-        primaryLabel = stringResource(R.string.back_to_weekly_routine),
+        primaryLabel = stringResource(R.string.back_to_workout_plan),
         modifier = modifier,
         onBackClick = onBackClick,
         onSecondaryClick = onViewProgressClick,

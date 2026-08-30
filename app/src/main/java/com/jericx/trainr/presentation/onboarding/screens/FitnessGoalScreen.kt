@@ -52,11 +52,13 @@ fun FitnessGoalScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            TrainrProgress(
-                currentStep = 3,
-                totalSteps = 7,
-                modifier = Modifier.padding(horizontal = Spacing.large)
-            )
+            if (!isEditing) {
+                TrainrProgress(
+                    currentStep = 3,
+                    totalSteps = 7,
+                    modifier = Modifier.padding(horizontal = Spacing.large)
+                )
+            }
 
             TrainrScreenContent {
                 Spacer(modifier = Modifier.height(Spacing.extraLarge))

@@ -78,11 +78,13 @@ fun LimitationsScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            TrainrProgress(
-                currentStep = 5,
-                totalSteps = 7,
-                modifier = Modifier.padding(horizontal = Spacing.large)
-            )
+            if (!isEditing) {
+                TrainrProgress(
+                    currentStep = 5,
+                    totalSteps = 7,
+                    modifier = Modifier.padding(horizontal = Spacing.large)
+                )
+            }
 
             TrainrScreenContent {
                 Spacer(modifier = Modifier.height(Spacing.extraLarge))

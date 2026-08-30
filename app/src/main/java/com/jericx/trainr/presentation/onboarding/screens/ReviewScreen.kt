@@ -83,11 +83,15 @@ fun ReviewScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            TrainrProgress(
-                currentStep = 6,
-                totalSteps = 7,
-                modifier = Modifier.padding(horizontal = Spacing.large)
-            )
+            // Reached from the plan — to change a detail or to start over —
+            // there is no seven-step run to be six sevenths of.
+            if (!isRegenerating && !isProfileUpdate) {
+                TrainrProgress(
+                    currentStep = 6,
+                    totalSteps = 7,
+                    modifier = Modifier.padding(horizontal = Spacing.large)
+                )
+            }
 
             TrainrScreenContent {
                 Spacer(modifier = Modifier.height(Spacing.extraLarge))
