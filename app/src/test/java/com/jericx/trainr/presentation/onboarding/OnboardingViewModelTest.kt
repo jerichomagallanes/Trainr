@@ -339,4 +339,34 @@ class OnboardingViewModelTest {
             .isEqualTo(WorkoutWeek.startOfDay())
     }
 
+    // Two taps on Generate used to start two runs, and for a client with no
+    // stored user that meant two of everything.
+    @Test
+    fun `a second tap while generating is ignored`() = runTest(testDispatcher) {
+        coEvery { userRepository.saveUser(any()) } returns 42L
+
+        viewModel.saveUserProfile()
+        viewModel.saveUserProfile()
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { planGenerator.generate(any()) }
+        coVerify(exactly = 1) { userRepository.saveWeeklyWorkoutPlan(any()) }
+    }
+
+    // The view model outlives the screen, so a regeneration must not start out
+    // already complete from the run before it.
+    @Test
+    fun `regenerating starts from not complete`() = runTest(testDispatcher) {
+        coEvery { userRepository.saveUser(any()) } returns 42L
+        viewModel.saveUserProfile()
+        advanceUntilIdle()
+        assertThat(viewModel.onboardingState.value.isCompleted).isTrue()
+
+        coEvery { planGenerator.generate(any()) } returns PlanGenerationResult.Offline
+        viewModel.saveUserProfile()
+        advanceUntilIdle()
+
+        assertThat(viewModel.onboardingState.value.isCompleted).isFalse()
+    }
+
 }

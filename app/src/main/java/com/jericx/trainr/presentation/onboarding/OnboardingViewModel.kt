@@ -122,11 +122,19 @@ class OnboardingViewModel @Inject constructor(
         }
     }
 
-    fun saveUserProfile(onSuccess: () -> Unit) {
+    // One plan at a time, and completion starts false: this view model outlives
+    // the screen, so a regeneration would otherwise begin already "complete"
+    // from the run before it and walk straight past the wait.
+    private var isWorking = false
+
+    fun saveUserProfile(onSuccess: () -> Unit = {}) {
+        if (isWorking) return
+        isWorking = true
         viewModelScope.launch {
             try {
                 _onboardingState.value = _onboardingState.value.copy(
                     isLoading = true,
+                    isCompleted = false,
                     generationFailure = null
                 )
                 val existing = userRepository.getCurrentUser()
@@ -170,6 +178,8 @@ class OnboardingViewModel @Inject constructor(
                     error = e.message,
                     generationFailure = PlanGenerationResult.Failed
                 )
+            } finally {
+                isWorking = false
             }
         }
     }

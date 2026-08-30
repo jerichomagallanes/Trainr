@@ -14,7 +14,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         WorkoutExerciseEntity::class,
         ExerciseSetEntity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -80,6 +80,36 @@ abstract class TrainrDatabase : RoomDatabase() {
                 db.execSQL(
                     "ALTER TABLE workout_exercises " +
                         "ADD COLUMN exerciseKey TEXT NOT NULL DEFAULT ''"
+                )
+            }
+        }
+
+        // Duplicate weeks were reachable before the index below existed, so
+        // they are cleared out first: the index cannot be created while any
+        // remain. The earliest of each set is kept, being the one the client
+        // was shown, and its children go with the rows that lose.
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "DELETE FROM weekly_workout_plans WHERE id NOT IN (" +
+                        "SELECT MIN(id) FROM weekly_workout_plans GROUP BY userId, weekNumber)"
+                )
+                db.execSQL(
+                    "DELETE FROM workout_days WHERE weeklyPlanId NOT IN " +
+                        "(SELECT id FROM weekly_workout_plans)"
+                )
+                db.execSQL(
+                    "DELETE FROM workout_exercises WHERE workoutDayId NOT IN " +
+                        "(SELECT id FROM workout_days)"
+                )
+                db.execSQL(
+                    "DELETE FROM exercise_sets WHERE workoutExerciseId NOT IN " +
+                        "(SELECT id FROM workout_exercises)"
+                )
+                db.execSQL(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS " +
+                        "index_weekly_workout_plans_userId_weekNumber " +
+                        "ON weekly_workout_plans (userId, weekNumber)"
                 )
             }
         }

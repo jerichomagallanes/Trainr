@@ -14,6 +14,7 @@ import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.model.WorkoutExercise
 import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
@@ -274,4 +275,25 @@ class WorkoutPersistenceTest {
 
         assertThat(repository.getWeeklyWorkoutPlan(userId, 1)).isNull()
     }
+    // Generating runs for the better part of a minute, so two runs could both
+    // pass a "does this week exist yet" check before either saved. The database
+    // holds the line whatever the callers do.
+    @Test
+    fun aClientCannotEndUpWithTwoOfTheSameWeek() = runTest {
+        val userId = seedSamplePlan()
+        val weekTwo = SampleWorkoutData.weekOne.copy(
+            id = 0,
+            userId = userId,
+            weekNumber = 2,
+            title = "Second week"
+        )
+
+        repository.saveWeeklyWorkoutPlan(weekTwo)
+        repository.saveWeeklyWorkoutPlan(weekTwo.copy(title = "Second week again"))
+
+        val stored = repository.getWeeklyWorkoutPlans(userId).first()
+        assertThat(stored.count { it.weekNumber == 2 }).isEqualTo(1)
+        assertThat(stored.map { it.weekNumber }).containsExactly(1, 2)
+    }
+
 }
