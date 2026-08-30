@@ -77,8 +77,11 @@ class WeeklyPlanViewModelTest {
         val viewModel = viewModel()
         advanceUntilIdle()
 
-        assertThat(viewModel.uiState.value.plan).isEqualTo(SampleWorkoutData.weekOne)
-        assertThat(viewModel.uiState.value.isSampleData).isTrue()
+        with(viewModel.uiState.value) {
+            assertThat(hasLoaded).isTrue()
+            assertThat(hasPlan).isFalse()
+            assertThat(days).isEmpty()
+        }
     }
 
     @Test
@@ -89,7 +92,7 @@ class WeeklyPlanViewModelTest {
         val viewModel = viewModel()
         advanceUntilIdle()
 
-        assertThat(viewModel.uiState.value.isSampleData).isTrue()
+        assertThat(viewModel.uiState.value.hasPlan).isFalse()
     }
 
     @Test
@@ -101,7 +104,7 @@ class WeeklyPlanViewModelTest {
         advanceUntilIdle()
 
         assertThat(viewModel.uiState.value.plan).isEqualTo(storedPlan)
-        assertThat(viewModel.uiState.value.isSampleData).isFalse()
+        assertThat(viewModel.uiState.value.hasPlan).isTrue()
     }
 
     // A week opened from Weekly Progress shows that week, not the newest.
@@ -155,7 +158,9 @@ class WeeklyPlanViewModelTest {
 
     @Test
     fun givesEveryWorkoutDayADate() = runTest {
-        coEvery { userRepository.getCurrentUser() } returns null
+        coEvery { userRepository.getCurrentUser() } returns UserProfile(id = 1)
+        every { userRepository.getWeeklyWorkoutPlans(1) } returns
+            flowOf(listOf(SampleWorkoutData.weekOne))
 
         val viewModel = viewModel()
         advanceUntilIdle()
@@ -166,30 +171,10 @@ class WeeklyPlanViewModelTest {
     }
 
     @Test
-    fun exposesSampleDataBeforeTheRepositoryAnswers() {
-        coEvery { userRepository.getCurrentUser() } returns null
-
-        val viewModel = viewModel()
-
-        assertThat(viewModel.uiState.value.days).isNotEmpty()
-    }
-
-    @Test
     fun todaysWorkoutIsTheFirstDayStillOutstanding() {
-        val state = WeeklyPlanViewModel.stateFor(SampleWorkoutData.weekOne, isSample = true)
+        val state = WeeklyPlanViewModel.stateFor(SampleWorkoutData.weekOne)
 
         assertThat(state.todaysDay?.title).isEqualTo("Cardio & Core")
-    }
-
-    @Test
-    fun aFinishedWeekFallsBackToItsFirstDay() {
-        val finished = SampleWorkoutData.weekOne.let { plan ->
-            plan.copy(workoutDays = plan.workoutDays.map { it.copy(status = WorkoutStatus.COMPLETED) })
-        }
-
-        val state = WeeklyPlanViewModel.stateFor(finished, isSample = true)
-
-        assertThat(state.todaysDay?.title).isEqualTo("Full Body Strength")
     }
     private fun weekStarting(start: Long, vararg statuses: WorkoutStatus) = storedPlan.copy(
         startDateMillis = start,
@@ -236,17 +221,6 @@ class WeeklyPlanViewModelTest {
         assertThat(state.canStartNextWeek).isFalse()
     }
 
-    // Sample data stands for nothing stored, so it can generate nothing.
-    @Test
-    fun theSampleWeekNeverOffersToStartTheNextOne() {
-        val state = WeeklyPlanViewModel.stateFor(
-            plan = SampleWorkoutData.weekOne,
-            isSample = true,
-            nowMillis = Long.MAX_VALUE / 2
-        )
-
-        assertThat(state.canStartNextWeek).isFalse()
-    }
 
     private fun sessions(vararg statuses: WorkoutStatus) = listOf(1, 3, 5)
         .mapIndexed { index, slot ->
@@ -436,18 +410,46 @@ class WeeklyPlanViewModelTest {
         assertThat(state.nextWorkoutIsToday).isFalse()
     }
 
-    // The built-in week stands in for a moment while the stored plan loads. It
-    // is dated in the past, so read against the clock it would greet a new user
-    // with a screen of missed workouts.
+    // A plan not read yet and a plan that is empty are different things, and
+    // the screen has to be able to tell them apart.
     @Test
-    fun thePlaceholderWeekNeverLooksMissed() = runTest {
+    fun nothingIsClaimedBeforeThePlanHasBeenRead() = runTest {
         coEvery { userRepository.getCurrentUser() } returns null
 
         val viewModel = viewModel()
-        assertThat(viewModel.uiState.value.days.any { it.isMissed }).isFalse()
+        assertThat(viewModel.uiState.value.hasLoaded).isFalse()
 
         advanceUntilIdle()
-        assertThat(viewModel.uiState.value.days.any { it.isMissed }).isFalse()
+        with(viewModel.uiState.value) {
+            assertThat(hasLoaded).isTrue()
+            assertThat(hasPlan).isFalse()
+        }
+    }
+
+    // Found on screen: a week with every session done still offered to start
+    // one, because the target fell back to the first day — already finished.
+    @Test
+    fun aFinishedWeekHasNoNextWorkoutToStart() {
+        val start = WorkoutWeek.mondayOf(1_755_000_000_000L)
+        val state = WeeklyPlanViewModel.stateFor(
+            plan = weekOfSessions(start, WorkoutStatus.COMPLETED, WorkoutStatus.COMPLETED),
+            nowMillis = start + TimeUnit.DAYS.toMillis(2)
+        )
+
+        assertThat(state.nextWorkout).isNull()
+        // ...and the week behind you is what leads on.
+        assertThat(state.canStartNextWeek).isTrue()
+    }
+
+    @Test
+    fun aWeekWithWorkLeftStillOffersIt() {
+        val start = WorkoutWeek.mondayOf(1_755_000_000_000L)
+        val state = WeeklyPlanViewModel.stateFor(
+            plan = weekOfSessions(start, WorkoutStatus.COMPLETED, WorkoutStatus.NOT_STARTED),
+            nowMillis = start + TimeUnit.DAYS.toMillis(1)
+        )
+
+        assertThat(state.nextWorkout?.day?.title).isEqualTo("Session 1")
     }
 
 }

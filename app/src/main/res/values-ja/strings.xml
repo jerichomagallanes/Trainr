@@ -139,8 +139,8 @@
     
     <!-- Workout Screens -->
     <string name="week_range_format">第%1$d週: %2$s</string>
-    <string name="leave_plan_title">プランを再生成しますか？</string>
-    <string name="leave_plan_message">新しいプランを作ると、これまでの全ての週と記録が削除されます。よろしいですか？</string>
+    <string name="leave_plan_title">ワークアウトプランを作り直しますか？</string>
+    <string name="leave_plan_message">新しいワークアウトプランを作ると、これまでの全ての週と記録が削除されます。よろしいですか？</string>
     <string name="leave_plan_confirm">再生成</string>
     <string name="cancel">キャンセル</string>
     <string name="mark_exercise_complete">エクササイズを完了にする</string>
@@ -164,7 +164,6 @@
     <string name="back_to_weekly_routine">週間ルーティンに戻る</string>
     <string name="week_completed_format">第%d週 完了</string>
     <string name="week_completed_message">今週のワークアウトをすべて終えました。素晴らしい継続力です。この調子で続けましょう！</string>
-    <string name="preview_next_week">来週のプランを見る</string>
     <string name="slide_to_complete_routine">スライドしてルーティンをすべて完了</string>
     <string name="day_number">第%d日</string>
     <string name="full_body_strength">全身筋力</string>
@@ -196,23 +195,33 @@
     <string name="previous_column">前回</string>
     <string name="delete_set">セットを削除</string>
     <string name="plan_options">プランのオプション</string>
-    <string name="regenerate_plan">プランを再生成</string>
+    <string name="app_about_message">ワークアウトプランは、設定したフィットネスプロフィールをもとにAIが作成します。</string>
+    <string name="app_version_format">バージョン %1$s</string>
+    <string name="about_the_app">Trainrについて</string>
+    <string name="profile_and_app">プロフィールとアプリ</string>
+    <string name="regenerate_plan">新しいワークアウトプランを作成</string>
+    <string name="no_plan_title">ワークアウトプランがありません</string>
+    <string name="no_plan_message">フィットネスプロフィールは保存されています。いつでも新しいワークアウトプランを作成できます。</string>
+    <string name="create_my_plan">ワークアウトプランを作成</string>
     <string name="repeat_this_week">この週をもう一度</string>
-    <string name="generation_failed_title">プランを作成できませんでした</string>
+    <string name="generation_failed_title">ワークアウトプランを作成できませんでした</string>
     <string name="generation_failed_offline">インターネットに接続できません。接続を確認してもう一度お試しください。</string>
-    <string name="generation_failed_message">プランの作成中に問題が発生しました。もう一度お試しください。</string>
+    <string name="generation_failed_message">ワークアウトプランの作成中に問題が発生しました。もう一度お試しください。</string>
     <string name="try_again">再試行</string>
     <string name="back_to_profile">プロフィールに戻る</string>
     <string name="missed">未実施</string>
     <string name="start_next_workout">次のワークアウトを開始</string>
     <string name="move_earlier">前の日に移動</string>
     <string name="move_later">後の日に移動</string>
-    <string name="delete_week_title">この週を削除しますか？</string>
-    <string name="delete_week_message">この週はまだ始まっていません。ワークアウトは削除され、いつでも再生成できます。</string>
+    <string name="delete_week_title">第%1$d週を削除しますか？</string>
+    <string name="delete_week_message">この週のワークアウトは削除されます。いつでも作り直せます。</string>
     <string name="delete_week_confirm">削除</string>
+    <plurals name="delete_week_message_trained">
+        <item quantity="other">この週には%2$d件中%1$d件の記録があります。削除すると元に戻せません。</item>
+    </plurals>
     <string name="review_profile_description">変更は次に生成する週から反映されます</string>
     <string name="save_profile">プロフィールを保存</string>
-    <string name="start_next_week">次の週を始める</string>
+    <string name="generate_next_week">次の週を生成</string>
     <string name="update_profile">プロフィールを更新</string>
     <string name="weight_column">kg</string>
     <string name="reps_column">回数</string>

@@ -29,6 +29,9 @@ class WeeklyProgressScreenTest {
     private fun string(id: Int, vararg args: Any) =
         composeTestRule.activity.getString(id, *args)
 
+    private fun quantityString(id: Int, quantity: Int, vararg args: Any) =
+        composeTestRule.activity.resources.getQuantityString(id, quantity, *args)
+
     private fun daysCompleted(completed: Int, total: Int, percentage: Int) =
         composeTestRule.activity.resources.getQuantityString(
             R.plurals.days_completed_format, total, completed, total, percentage
@@ -124,7 +127,7 @@ class WeeklyProgressScreenTest {
     @Test
     fun swipingAnUpcomingWeekAsksBeforeDeleting() {
         var deleted: WeekProgressUi? = null
-        val upcoming = SampleWeeklyProgress.weeks.first { it.canDelete }
+        val upcoming = SampleWeeklyProgress.weeks.first { !it.hasTraining }
         composeTestRule.setContent {
             TrainrTheme {
                 WeeklyProgressScreen(
@@ -139,7 +142,8 @@ class WeeklyProgressScreenTest {
             .performTouchInput { swipeLeft() }
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText(string(R.string.delete_week_title)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.delete_week_title, upcoming.weekNumber))
+            .assertIsDisplayed()
         assertThat(deleted).isNull()
 
         composeTestRule.onNodeWithText(string(R.string.delete_week_confirm)).performClick()
@@ -147,45 +151,46 @@ class WeeklyProgressScreenTest {
         assertThat(deleted?.weekNumber).isEqualTo(upcoming.weekNumber)
     }
 
-    // Weeks that were trained are records; they do not swipe away.
+    // Training already done is still the client's to drop — but the dialog
+    // says what it costs before it goes.
     @Test
-    fun aTrainedWeekCannotBeSwipedAway() {
-        var deleted: WeekProgressUi? = null
-        val trained = SampleWeeklyProgress.weeks.first { !it.canDelete }
+    fun deletingATrainedWeekNamesWhatItCosts() {
+        val trained = SampleWeeklyProgress.weeks.first { it.hasTraining }
         composeTestRule.setContent {
-            TrainrTheme {
-                WeeklyProgressScreen(
-                    weeks = SampleWeeklyProgress.weeks,
-                    onDeleteWeek = { deleted = it }
-                )
-            }
+            TrainrTheme { WeeklyProgressScreen(weeks = SampleWeeklyProgress.weeks) }
         }
 
-        composeTestRule.onNodeWithText(string(R.string.week_number_format, trained.weekNumber), substring = true)
-            .performScrollTo()
-            .performTouchInput { swipeLeft() }
+        composeTestRule.onNodeWithText(
+            string(R.string.week_number_format, trained.weekNumber),
+            substring = true
+        ).performScrollTo().performTouchInput { swipeLeft() }
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText(string(R.string.delete_week_title)).assertDoesNotExist()
-        assertThat(deleted).isNull()
+        composeTestRule.onNodeWithText(
+            quantityString(
+                R.plurals.delete_week_message_trained,
+                trained.completedDays,
+                trained.completedDays,
+                trained.totalDays
+            )
+        ).assertIsDisplayed()
     }
 
     // A swipe that cannot delete must not fall through as a tap and navigate.
     @Test
     fun aRefusedSwipeDoesNotOpenTheWeek() {
         var opened: WeekProgressUi? = null
-        val trained = SampleWeeklyProgress.weeks.first { !it.canDelete }
+        // A lone week cannot be deleted, so its swipe has nothing to do — and
+        // must not quietly become a tap that opens it.
+        val only = SampleWeeklyProgress.weeks.first()
         composeTestRule.setContent {
             TrainrTheme {
-                WeeklyProgressScreen(
-                    weeks = SampleWeeklyProgress.weeks,
-                    onWeekClick = { opened = it }
-                )
+                WeeklyProgressScreen(weeks = listOf(only), onWeekClick = { opened = it })
             }
         }
 
         composeTestRule.onNodeWithText(
-            string(R.string.week_number_format, trained.weekNumber),
+            string(R.string.week_number_format, only.weekNumber),
             substring = true
         ).performScrollTo().performTouchInput { swipeLeft() }
         composeTestRule.waitForIdle()

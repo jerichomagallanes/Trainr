@@ -22,7 +22,7 @@ fun WeekCompletedScreen(
         title = stringResource(R.string.week_completed_format, weekNumber),
         message = stringResource(R.string.week_completed_message),
         secondaryLabel = stringResource(R.string.view_weekly_progress),
-        primaryLabel = stringResource(R.string.preview_next_week),
+        primaryLabel = stringResource(R.string.generate_next_week),
         modifier = modifier,
         onBackClick = onBackClick,
         onSecondaryClick = onViewProgressClick,

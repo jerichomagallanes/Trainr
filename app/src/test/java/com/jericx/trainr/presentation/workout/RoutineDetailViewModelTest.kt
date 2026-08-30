@@ -577,18 +577,23 @@ class RoutineDetailViewModelTest {
         }
     }
 
+    // Every set can be deleted, down to none: Add set brings one back, so no
+    // row has to be kept just to leave the client a way out.
     @Test
-    fun theOnlySetOfAnExerciseCannotBeDeleted() = runTest {
+    fun everySetOfAnExerciseCanBeDeleted() = runTest {
         val repository = repositoryWith(storedPlan)
         val viewModel = viewModel(dayNumber = 3, repository = repository)
         advanceUntilIdle()
 
-        viewModel.deleteSet(1, viewModel.exercise(1).sets.first().setNumber)
-        viewModel.deleteSet(1, viewModel.exercise(1).sets.single().setNumber)
+        repeat(2) {
+            viewModel.exercise(1).sets.firstOrNull()?.let { set ->
+                viewModel.deleteSet(1, set.setNumber)
+            }
+        }
         advanceUntilIdle()
 
-        assertThat(viewModel.exercise(1).sets).hasSize(1)
-        coVerify(exactly = 1) { repository.deleteExerciseSet(any()) }
+        assertThat(viewModel.exercise(1).sets).isEmpty()
+        coVerify(exactly = 2) { repository.deleteExerciseSet(any()) }
     }
 
     @Test

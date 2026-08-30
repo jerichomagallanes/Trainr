@@ -74,7 +74,7 @@ data class RoutineUi(
     // be deleted: an empty table has no target left to grow back from.
     fun removeSet(position: Int, setNumber: Int): RoutineUi = copy(
         exercises = exercises.map { exercise ->
-            if (exercise.position != position || exercise.sets.size <= 1) {
+            if (exercise.position != position) {
                 exercise
             } else {
                 exercise.copy(

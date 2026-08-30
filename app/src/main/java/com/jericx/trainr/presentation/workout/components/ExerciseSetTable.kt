@@ -107,11 +107,7 @@ fun ExerciseSetTable(
                     )
                 }
 
-                if (sets.size > 1) {
-                    DeletableRow(onDelete = { onDeleteSet(set) }) { row() }
-                } else {
-                    row()
-                }
+                DeletableRow(onDelete = { onDeleteSet(set) }) { row() }
             }
         }
 

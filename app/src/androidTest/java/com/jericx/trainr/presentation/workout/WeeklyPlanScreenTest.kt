@@ -29,13 +29,13 @@ class WeeklyPlanScreenTest {
     @get:Rule
     val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 
-    private fun string(id: Int) = composeTestRule.activity.getString(id)
+    private fun string(id: Int, vararg args: Any) =
+        composeTestRule.activity.getString(id, *args)
 
     // The sample week is dated in the past, so every test says when "today" is:
     // it decides which sessions are missed, and so which of them can be moved.
     private val state = WeeklyPlanViewModel.stateFor(
         plan = SampleWorkoutData.weekOne,
-        isSample = true,
         nowMillis = SampleWorkoutData.dateOf(3)
     )
 
@@ -59,12 +59,18 @@ class WeeklyPlanScreenTest {
     // A week opened from Weekly Progress is a record to read: it needs a way
     // back, and must not offer to regenerate, start today, or bounce the
     // reader back to the progress screen they arrived from.
+    private val pastWeek = WeeklyPlanViewModel.stateFor(
+        plan = SampleWorkoutData.weekOne,
+        isCurrentWeek = false,
+        nowMillis = SampleWorkoutData.dateOf(3)
+    )
+
     @Test
     fun aBrowsedWeekOffersAWayBackAndNoPlanActions() {
         var wentBack = false
         composeTestRule.setContent {
             TrainrTheme {
-                WeeklyPlanScreen(state = state, onBackClick = { wentBack = true })
+                WeeklyPlanScreen(state = pastWeek, onBackClick = { wentBack = true })
             }
         }
 
@@ -106,10 +112,10 @@ class WeeklyPlanScreenTest {
         composeTestRule.onNodeWithContentDescription(string(R.string.plan_options)).performClick()
     }
 
-    // Changing the profile has to be reachable without the destructive
-    // regenerate, which is the only other way in.
+    // Who you are is not one of this week's actions, so it lives in the app bar
+    // and stays reachable even when there is no plan to hang an overflow off.
     @Test
-    fun theMenuOffersUpdatingTheProfile() {
+    fun theProfileIsReachedFromTheAppBar() {
         var asked = false
         composeTestRule.setContent {
             TrainrTheme {
@@ -118,9 +124,53 @@ class WeeklyPlanScreenTest {
         }
 
         openMenu()
+        composeTestRule.onNodeWithText(string(R.string.update_profile)).assertDoesNotExist()
+        composeTestRule.onNodeWithContentDescription(string(R.string.profile_and_app))
+            .performClick()
         composeTestRule.onNodeWithText(string(R.string.update_profile)).performClick()
 
         assertThat(asked).isTrue()
+    }
+
+    @Test
+    fun theProfileIsStillReachableWithNoPlan() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                WeeklyPlanScreen(state = WeeklyPlanUiState(hasLoaded = true, hasPlan = false))
+            }
+        }
+
+        composeTestRule.onNodeWithContentDescription(string(R.string.profile_and_app))
+            .performClick()
+
+        composeTestRule.onNodeWithText(string(R.string.update_profile)).assertIsDisplayed()
+    }
+
+    // A week reached from the list is somewhere you went, and the account is
+    // not part of what you went there to see.
+    @Test
+    fun aWeekOpenedFromTheListHasNoAccountMenu() {
+        composeTestRule.setContent {
+            TrainrTheme { WeeklyPlanScreen(state = state, onBackClick = {}) }
+        }
+
+        composeTestRule.onNodeWithContentDescription(string(R.string.profile_and_app))
+            .assertDoesNotExist()
+    }
+
+    // A build number is the one thing worth saying about the app itself.
+    @Test
+    fun aboutShowsWhichBuildIsRunning() {
+        composeTestRule.setContent {
+            TrainrTheme { WeeklyPlanScreen(state = state, versionName = "9.9-test") }
+        }
+
+        composeTestRule.onNodeWithContentDescription(string(R.string.profile_and_app))
+            .performClick()
+        composeTestRule.onNodeWithText(string(R.string.about_the_app)).performClick()
+
+        composeTestRule.onNodeWithText(string(R.string.app_version_format, "9.9-test"))
+            .assertIsDisplayed()
     }
 
     // A finished week can roll straight into the next one.
@@ -142,7 +192,7 @@ class WeeklyPlanScreenTest {
         }
 
         openMenu()
-        composeTestRule.onNodeWithText(string(R.string.start_next_week)).performClick()
+        composeTestRule.onNodeWithText(string(R.string.generate_next_week)).performClick()
 
         assertThat(started).isTrue()
     }
@@ -188,7 +238,7 @@ class WeeklyPlanScreenTest {
 
         openMenu()
 
-        composeTestRule.onNodeWithText(string(R.string.start_next_week)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.generate_next_week)).assertDoesNotExist()
         composeTestRule.onNodeWithText(string(R.string.regenerate_plan)).assertIsDisplayed()
     }
 
@@ -382,7 +432,11 @@ class WeeklyPlanScreenTest {
         composeTestRule.setContent {
             TrainrTheme {
                 WeeklyPlanScreen(
-                    state = freshWeek,
+                    state = WeeklyPlanViewModel.stateFor(
+                        plan = freshWeek.plan,
+                        isCurrentWeek = false,
+                        nowMillis = SampleWorkoutData.dateOf(1)
+                    ),
                     onBackClick = {},
                     onMoveDay = { from, to -> move = from to to }
                 )
@@ -457,6 +511,67 @@ class WeeklyPlanScreenTest {
         composeTestRule.waitForIdle()
 
         assertThat(move).isNull()
+    }
+
+    // Deleting every week is allowed, so the plan screen has to be a place when
+    // there is nothing in it rather than a blank.
+    @Test
+    fun withNoPlanTheScreenSaysSoAndOffersToBuildOne() {
+        var asked = false
+        composeTestRule.setContent {
+            TrainrTheme {
+                WeeklyPlanScreen(
+                    state = WeeklyPlanUiState(hasLoaded = true, hasPlan = false),
+                    onCreatePlanClick = { asked = true }
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.no_plan_title)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.create_my_plan)).performClick()
+
+        assertThat(asked).isTrue()
+    }
+
+    // Before the plan has been read there is nothing to say yet, and saying
+    // "no plan" then would be wrong for the moment it takes to find one.
+    @Test
+    fun nothingIsSaidBeforeThePlanHasBeenRead() {
+        composeTestRule.setContent {
+            TrainrTheme { WeeklyPlanScreen(state = WeeklyPlanUiState()) }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.no_plan_title)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.start_todays_workout)).assertDoesNotExist()
+    }
+
+    // With the week done the button leads to the next week, not back into a
+    // session already finished.
+    @Test
+    fun aFinishedWeekOffersTheNextWeekOnTheButton() {
+        val finished = WeeklyPlanViewModel.stateFor(
+            plan = SampleWorkoutData.weekOne.copy(
+                workoutDays = SampleWorkoutData.weekOne.workoutDays.map {
+                    it.copy(status = WorkoutStatus.COMPLETED)
+                }
+            ),
+            nowMillis = SampleWorkoutData.dateOf(3)
+        )
+        var startedNextWeek = false
+        composeTestRule.setContent {
+            TrainrTheme {
+                WeeklyPlanScreen(
+                    state = finished,
+                    onStartNextWeekClick = { startedNextWeek = true }
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.start_next_workout)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.generate_next_week).uppercase())
+            .performClick()
+
+        assertThat(startedNextWeek).isTrue()
     }
 
 }

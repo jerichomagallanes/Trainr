@@ -11,10 +11,10 @@ data class WeekProgressUi(
     val endDateMillis: Long,
     val planId: Long = 0
 ) {
-    // Only a week that has not begun can be thrown away: anything else is a
-    // record of training that happened. The day count is checked as well as the
-    // status, so a session trained ahead of schedule cannot be swiped away.
-    val canDelete: Boolean get() = status == WeekStatus.UPCOMING && completedDays == 0
+    // Training already done is still the client's to throw away — the app asks
+    // first and says what goes, rather than deciding for them. Whether anything
+    // was logged only changes how firmly it asks.
+    val hasTraining: Boolean get() = completedDays > 0
 
     val completionPercentage: Int
         get() = if (totalDays == 0) 0 else (completedDays * 100.0 / totalDays).roundToInt()

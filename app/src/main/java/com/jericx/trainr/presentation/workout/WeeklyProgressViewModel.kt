@@ -7,7 +7,6 @@ import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.domain.repository.UserRepository
 import com.jericx.trainr.presentation.workout.model.WeekProgressUi
 import com.jericx.trainr.presentation.workout.model.WeekStatus
-import com.jericx.trainr.presentation.workout.sample.SampleWeeklyProgress
 import com.jericx.trainr.presentation.workout.util.WorkoutWeek
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,8 +17,10 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class WeeklyProgressUiState(
-    val weeks: List<WeekProgressUi> = SampleWeeklyProgress.weeks,
-    val isSampleData: Boolean = true
+    // No stand-in weeks: the screen lists what is stored, and nothing when
+    // nothing is. Showing a built-in set here would read as a training history
+    // that never happened.
+    val weeks: List<WeekProgressUi> = emptyList()
 )
 
 @HiltViewModel
@@ -41,29 +42,39 @@ class WeeklyProgressViewModel @Inject constructor(
                 .orEmpty()
                 .sortedBy { it.weekNumber }
 
-            _uiState.value = if (plans.isEmpty()) {
-                WeeklyProgressUiState()
-            } else {
-                WeeklyProgressUiState(
-                    weeks = plans.map { weekProgressOf(it) },
-                    isSampleData = false
-                )
-            }
+            _uiState.value = WeeklyProgressUiState(weeks = plans.map { weekProgressOf(it) })
         }
     }
 
-    // Deleting an upcoming week clears the way to generate it again; the guard
-    // is repeated here so nothing but an unstarted week can be dropped.
+    // Any week can go, trained or not, down to the last one: it is the client's
+    // record to keep or drop, and a plan emptied out says so and offers to
+    // build another rather than pretending one is still there.
     fun deleteWeek(weekNumber: Int) {
         viewModelScope.launch {
             val user = userRepository.getCurrentUser() ?: return@launch
-            val plan = userRepository.getWeeklyWorkoutPlans(user.id).first()
-                .firstOrNull { it.weekNumber == weekNumber } ?: return@launch
-            if (!weekProgressOf(plan).canDelete) return@launch
+            val plans = userRepository.getWeeklyWorkoutPlans(user.id).first()
+            val plan = plans.firstOrNull { it.weekNumber == weekNumber } ?: return@launch
 
             userRepository.deleteWeeklyWorkoutPlan(plan.id)
+            renumber(plans - plan)
             refresh()
         }
+    }
+
+    // Deleting from the middle would otherwise leave week two missing between
+    // one and three. The numbers are the plan's running order, not a record of
+    // anything — each week's dates say when it was, and those never move — so
+    // closing the gap tells the truth and reads as it should. Renumbered in
+    // ascending order, since two of the same number cannot exist at once.
+    private suspend fun renumber(remaining: List<WeeklyWorkoutPlan>) {
+        remaining
+            .sortedBy { it.weekNumber }
+            .forEachIndexed { index, plan ->
+                val number = index + 1
+                if (plan.weekNumber != number) {
+                    userRepository.updateWeeklyWorkoutPlan(plan.copy(weekNumber = number))
+                }
+            }
     }
 
     companion object {

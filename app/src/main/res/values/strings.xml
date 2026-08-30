@@ -138,8 +138,8 @@
     
     <!-- Workout Screens -->
     <string name="week_range_format">Week %1$d: %2$s</string>
-    <string name="leave_plan_title">Regenerate your plan?</string>
-    <string name="leave_plan_message">A new plan erases every week you have trained and everything you have logged. Are you sure?</string>
+    <string name="leave_plan_title">Regenerate your workout plan?</string>
+    <string name="leave_plan_message">A new workout plan erases every week you have trained and everything you have logged. Are you sure?</string>
     <string name="leave_plan_confirm">Regenerate</string>
     <string name="cancel">Cancel</string>
     <string name="mark_exercise_complete">Mark exercise as complete</string>
@@ -164,7 +164,6 @@
     <string name="back_to_weekly_routine">Back to Weekly Routine</string>
     <string name="week_completed_format">WEEK %d COMPLETED</string>
     <string name="week_completed_message">You\'ve finished all your workouts this week. Amazing consistency. Keep it up!</string>
-    <string name="preview_next_week">Preview Next Week</string>
     <string name="slide_to_complete_routine">SLIDE TO COMPLETE ALL ROUTINE</string>
     <string name="day_number">DAY %d</string>
     <string name="full_body_strength">Full Body Strength</string>
@@ -198,23 +197,34 @@
     <string name="previous_column">Previous</string>
     <string name="delete_set">Delete set</string>
     <string name="plan_options">Plan options</string>
-    <string name="regenerate_plan">Regenerate plan</string>
+    <string name="app_about_message">Your workout plans are written for you by AI from the fitness profile you set.</string>
+    <string name="app_version_format">Version %1$s</string>
+    <string name="about_the_app">About Trainr</string>
+    <string name="profile_and_app">Profile and app</string>
+    <string name="regenerate_plan">Start a new workout plan</string>
+    <string name="no_plan_title">No workout plan</string>
+    <string name="no_plan_message">Your fitness profile is saved. You can create a new workout plan whenever you are ready.</string>
+    <string name="create_my_plan">CREATE MY WORKOUT PLAN</string>
     <string name="repeat_this_week">Repeat this week</string>
-    <string name="generation_failed_title">Could not create your plan</string>
+    <string name="generation_failed_title">Could not create your workout plan</string>
     <string name="generation_failed_offline">Trainr could not reach the internet. Check your connection and try again.</string>
-    <string name="generation_failed_message">Something went wrong while writing your plan. Please try again.</string>
+    <string name="generation_failed_message">Something went wrong while writing your workout plan. Please try again.</string>
     <string name="try_again">Try again</string>
     <string name="back_to_profile">Back to profile</string>
     <string name="missed">Missed</string>
     <string name="start_next_workout">START NEXT WORKOUT</string>
     <string name="move_earlier">Move to an earlier day</string>
     <string name="move_later">Move to a later day</string>
-    <string name="delete_week_title">Delete this week?</string>
-    <string name="delete_week_message">This week has not started yet. Its workouts will be removed and you can generate it again.</string>
+    <string name="delete_week_title">Delete week %1$d?</string>
+    <string name="delete_week_message">Its workouts will be removed. You can generate the week again whenever you like.</string>
     <string name="delete_week_confirm">Delete</string>
+    <plurals name="delete_week_message_trained">
+        <item quantity="one">%1$d of %2$d workouts is logged in this week. Deleting removes it for good.</item>
+        <item quantity="other">%1$d of %2$d workouts are logged in this week. Deleting removes them for good.</item>
+    </plurals>
     <string name="review_profile_description">Changes apply to the next week you generate</string>
     <string name="save_profile">SAVE PROFILE</string>
-    <string name="start_next_week">Start next week</string>
+    <string name="generate_next_week">Generate next week</string>
     <string name="update_profile">Update profile</string>
     <string name="weight_column">kg</string>
     <string name="reps_column">Reps</string>

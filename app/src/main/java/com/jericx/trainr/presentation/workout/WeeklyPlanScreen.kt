@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -16,6 +17,10 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -39,6 +44,8 @@ import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.presentation.common.components.layout.TrainrTopBar
 import com.jericx.trainr.presentation.common.components.core.TrainrButton
 import com.jericx.trainr.presentation.common.theme.Orange500
+import androidx.compose.ui.text.style.TextAlign
+import com.jericx.trainr.presentation.common.theme.TextMuted
 import com.jericx.trainr.presentation.common.theme.Slate800
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
@@ -55,7 +62,9 @@ fun WeeklyPlanRoute(
     onUpdateProfileClick: () -> Unit = {},
     onStartNextWeekClick: () -> Unit = {},
     onRepeatWeekClick: () -> Unit = {},
+    onCreatePlanClick: () -> Unit = {},
     onBackClick: (() -> Unit)? = null,
+    versionName: String = "",
     viewModel: WeeklyPlanViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -73,6 +82,8 @@ fun WeeklyPlanRoute(
         onUpdateProfileClick = onUpdateProfileClick,
         onStartNextWeekClick = onStartNextWeekClick,
         onRepeatWeekClick = onRepeatWeekClick,
+        onCreatePlanClick = onCreatePlanClick,
+        versionName = versionName,
         onMoveDay = viewModel::moveDay,
         onBackClick = onBackClick
     )
@@ -89,6 +100,8 @@ fun WeeklyPlanScreen(
     onUpdateProfileClick: () -> Unit = {},
     onStartNextWeekClick: () -> Unit = {},
     onRepeatWeekClick: () -> Unit = {},
+    onCreatePlanClick: () -> Unit = {},
+    versionName: String = "",
     onMoveDay: (Int, Int) -> Unit = { _, _ -> },
     // Set only when a week was opened from Weekly Progress.
     onBackClick: (() -> Unit)? = null
@@ -97,7 +110,11 @@ fun WeeklyPlanScreen(
     // so it gets a way back and drops the actions that belong to the plan
     // standing in as home: regenerating, starting today, and the progress link
     // that leads back where the reader just came from.
-    val isBrowsedWeek = onBackClick != null
+    // A week already behind you is a record: it keeps its dates and its order,
+    // and offers none of the actions that belong to the week being trained. The
+    // newest week is live wherever it was opened from, so home and the list
+    // show the same thing rather than two versions of it.
+    val isBrowsedWeek = state.hasPlan && !state.isCurrentWeek
     val locale = LocalLocale.current.platformLocale
     var showLeaveDialog by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
@@ -116,8 +133,35 @@ fun WeeklyPlanScreen(
 
     Column(modifier = modifier.fillMaxSize()) {
         // Home has nowhere to go back to. Plan-level actions live behind the
-        // heading's overflow, where the design puts them.
-        TrainrTopBar(onBackClick = onBackClick)
+        // heading's overflow, where the design puts them; who you are and what
+        // the app is belong to home's app bar, and stay reachable there even
+        // when there is no plan for the overflow to hang off.
+        TrainrTopBar(
+            onBackClick = onBackClick,
+            actions = {
+                // Who you are belongs to home, not to a week you opened from
+                // somewhere else: a screen with a way back is somewhere you
+                // went, and the account is not part of what you went to see.
+                if (onBackClick == null) {
+                    ProfileMenu(
+                        versionName = versionName,
+                        onUpdateProfileClick = onUpdateProfileClick
+                    )
+                }
+            }
+        )
+
+        // Nothing is drawn until the plan has been looked for: a blank moment
+        // is honest, where a stand-in week would be read as the real thing.
+        if (!state.hasLoaded) return@Column
+
+        if (!state.hasPlan) {
+            NoPlanYet(
+                onCreatePlanClick = onCreatePlanClick,
+                modifier = Modifier.weight(1f)
+            )
+            return@Column
+        }
 
         Column(
             modifier = Modifier
@@ -146,22 +190,13 @@ fun WeeklyPlanScreen(
                             expanded = showMenu,
                             onDismissRequest = { showMenu = false }
                         ) {
-                            // Editing the profile keeps the plan and its
-                            // history; regenerating is the deliberate restart.
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.update_profile)) },
-                                onClick = {
-                                    showMenu = false
-                                    onUpdateProfileClick()
-                                }
-                            )
                             // With the week behind you there are two sound
                             // ways on: progress from what you lifted, or run
                             // the same week again. The second is a coaching
                             // decision, so it is offered rather than assumed.
                             if (state.canStartNextWeek) {
                                 DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.start_next_week)) },
+                                    text = { Text(stringResource(R.string.generate_next_week)) },
                                     onClick = {
                                         showMenu = false
                                         onStartNextWeekClick()
@@ -243,15 +278,129 @@ fun WeeklyPlanScreen(
         }
 
         if (!isBrowsedWeek) {
-            TrainrButton(
-                text = stringResource(
-                    if (state.nextWorkoutIsToday) R.string.start_todays_workout
-                    else R.string.start_next_workout
-                ),
-                onClick = { state.todaysDay?.let(onStartTodayClick) },
-                modifier = Modifier.padding(horizontal = Spacing.screen, vertical = Spacing.medium)
+            // Whatever is actually left: a session to train, or — with the week
+            // behind you — the week that follows it. Never a finished session
+            // dressed as the next one.
+            val next = state.nextWorkout
+            when {
+                next != null -> TrainrButton(
+                    text = stringResource(
+                        if (state.nextWorkoutIsToday) R.string.start_todays_workout
+                        else R.string.start_next_workout
+                    ),
+                    onClick = { onStartTodayClick(next.day) },
+                    modifier = Modifier
+                        .padding(horizontal = Spacing.screen, vertical = Spacing.medium)
+                )
+
+                state.canStartNextWeek -> TrainrButton(
+                    text = stringResource(R.string.generate_next_week),
+                    onClick = onStartNextWeekClick,
+                    modifier = Modifier
+                        .padding(horizontal = Spacing.screen, vertical = Spacing.medium)
+                )
+            }
+        }
+    }
+}
+
+// Who you are and what the app is: the two things that are about the client
+// rather than about this week's training, kept out of the plan's own overflow.
+@Composable
+private fun ProfileMenu(
+    versionName: String,
+    onUpdateProfileClick: () -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    var showAbout by remember { mutableStateOf(false) }
+
+    if (showAbout) {
+        AboutDialog(versionName = versionName, onDismiss = { showAbout = false })
+    }
+
+    Box {
+        IconButton(onClick = { expanded = true }) {
+            Icon(
+                imageVector = Icons.Default.AccountCircle,
+                contentDescription = stringResource(R.string.profile_and_app),
+                tint = Slate800
             )
         }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.update_profile)) },
+                onClick = {
+                    expanded = false
+                    onUpdateProfileClick()
+                }
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.about_the_app)) },
+                onClick = {
+                    expanded = false
+                    showAbout = true
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun AboutDialog(versionName: String, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = stringResource(R.string.about_the_app)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
+                Text(text = stringResource(R.string.app_version_format, versionName))
+                Text(text = stringResource(R.string.app_about_message))
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = stringResource(R.string.close), color = Orange500)
+            }
+        }
+    )
+}
+
+// Deleting every week is allowed, so landing there has to be a place rather
+// than a gap: it says what happened and offers the way out of it.
+@Composable
+private fun NoPlanYet(
+    onCreatePlanClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = Spacing.screen),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = stringResource(R.string.no_plan_title),
+            style = MaterialTheme.typography.titleLarge,
+            color = Slate800,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.size(Spacing.small))
+
+        Text(
+            text = stringResource(R.string.no_plan_message),
+            style = MaterialTheme.typography.bodyLarge,
+            color = TextMuted,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.size(Spacing.sectionGap))
+
+        TrainrButton(
+            text = stringResource(R.string.create_my_plan),
+            onClick = onCreatePlanClick,
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 

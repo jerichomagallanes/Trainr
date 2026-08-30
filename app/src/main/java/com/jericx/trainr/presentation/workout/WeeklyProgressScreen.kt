@@ -26,6 +26,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLocale
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.jericx.trainr.R
@@ -55,8 +56,8 @@ fun WeeklyProgressRoute(
         weeks = state.weeks,
         onBackClick = onBackClick,
         // Sample weeks stand for nothing stored, so they lead nowhere.
-        onWeekClick = { if (!state.isSampleData) onWeekClick(it) },
-        onDeleteWeek = { if (!state.isSampleData) viewModel.deleteWeek(it.weekNumber) }
+        onWeekClick = onWeekClick,
+        onDeleteWeek = { viewModel.deleteWeek(it.weekNumber) }
     )
 }
 
@@ -73,6 +74,7 @@ fun WeeklyProgressScreen(
 
     weekToDelete?.let { week ->
         DeleteWeekDialog(
+            week = week,
             onConfirm = {
                 weekToDelete = null
                 onDeleteWeek(week)
@@ -100,7 +102,7 @@ fun WeeklyProgressScreen(
 
             weeks.forEach { week ->
                 DeletableWeek(
-                    week = week,
+                    canDelete = true,
                     onDelete = { weekToDelete = week }
                 ) {
                 WeekProgressCard(
@@ -129,15 +131,15 @@ fun WeeklyProgressScreen(
 // question is not left half open.
 @Composable
 private fun DeletableWeek(
-    week: WeekProgressUi,
+    canDelete: Boolean,
     onDelete: () -> Unit,
     content: @Composable () -> Unit
 ) {
     TrainrSwipeToDelete(
         onDelete = onDelete,
         contentDescription = stringResource(R.string.delete_week_confirm),
-        // A week that has been trained is a record: it does not slide aside.
-        enabled = week.canDelete
+        // Every week slides aside; the dialog is where the weight of it lands.
+        enabled = canDelete
     ) {
         content()
     }
@@ -145,13 +147,31 @@ private fun DeletableWeek(
 
 @Composable
 private fun DeleteWeekDialog(
+    week: WeekProgressUi,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(text = stringResource(R.string.delete_week_title)) },
-        text = { Text(text = stringResource(R.string.delete_week_message)) },
+        title = {
+            Text(text = stringResource(R.string.delete_week_title, week.weekNumber))
+        },
+        text = {
+            // Training that was actually done is named before it goes, so the
+            // choice is made knowing what it costs.
+            Text(
+                text = if (week.hasTraining) {
+                    pluralStringResource(
+                        R.plurals.delete_week_message_trained,
+                        week.completedDays,
+                        week.completedDays,
+                        week.totalDays
+                    )
+                } else {
+                    stringResource(R.string.delete_week_message)
+                }
+            )
+        },
         confirmButton = {
             TextButton(onClick = onConfirm) {
                 Text(text = stringResource(R.string.delete_week_confirm), color = RedError)

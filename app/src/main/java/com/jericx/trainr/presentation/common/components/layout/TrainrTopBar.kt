@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -28,6 +29,8 @@ import com.jericx.trainr.R
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 
+private val EmptyActions: @Composable RowScope.() -> Unit = {}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TrainrTopBar(
@@ -36,8 +39,14 @@ fun TrainrTopBar(
     showLogo: Boolean = true,
     // A close is a way OUT of a detour, where a back arrow would promise a
     // step backwards through a flow that is not there.
-    closeInsteadOfBack: Boolean = false
+    closeInsteadOfBack: Boolean = false,
+    // Account-level things live at the trailing edge, where they are looked for.
+    actions: @Composable RowScope.() -> Unit = EmptyActions
 ) {
+    // Whether the trailing edge carries anything, so the logo can be balanced
+    // against it. Compose gives no way to ask a slot, so it is tracked here.
+    val hasActions = actions !== EmptyActions
+
     TopAppBar(
         navigationIcon = {
             if (onBackClick != null) {
@@ -62,17 +71,26 @@ fun TrainrTopBar(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center
                 ) {
+                    // The title sits between whatever icons are present, so
+                    // the logo is nudged back towards the middle by however
+                    // many sides carry one.
+                    val lean = when {
+                        onBackClick != null && !hasActions -> -Spacing.large
+                        onBackClick == null && hasActions -> Spacing.large
+                        else -> 0.dp
+                    }
                     Image(
                         painter = painterResource(id = R.drawable.img_trainr),
                         contentDescription = stringResource(R.string.trainr),
                         modifier = Modifier
                             .height(32.dp)
-                            .offset(x = (-Spacing.large)),
+                            .offset(x = lean),
                         contentScale = ContentScale.FillHeight
                     )
                 }
             }
         },
+        actions = actions,
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.background,
             navigationIconContentColor = MaterialTheme.colorScheme.onBackground
