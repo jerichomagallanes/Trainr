@@ -14,10 +14,23 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Trainr"
         tools:targetApi="31">
+        <!--
+            Portrait is a design decision, not an oversight, so both lint
+            warnings about it are answered here rather than left open.
+            LockedOrientationActivity asks for an orientation-agnostic app:
+            every screen is laid out for a phone held upright and there is no
+            landscape layout to fall back on, so rotating would rearrange the
+            plan and the set table into something never designed.
+            DiscouragedApi notes that Android 16 ignores fixed orientations on
+            large screens; on a phone, which is what this app is for, the lock
+            still holds, and there is no supported way to ask for it there.
+        -->
         <activity
             android:name=".presentation.MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.Trainr">
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.Trainr"
+            tools:ignore="DiscouragedApi,LockedOrientationActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
