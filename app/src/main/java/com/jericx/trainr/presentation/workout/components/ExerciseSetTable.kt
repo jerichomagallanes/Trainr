@@ -16,17 +16,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.key
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -277,22 +272,8 @@ private fun DeletableRow(
     onDelete: () -> Unit,
     content: @Composable () -> Unit
 ) {
-    // Read through rememberUpdatedState: the effect outlives the composition
-    // that captured it, and Compose keeps the memoized callback of a row whose
-    // set a reload replaced with an equal instance.
-    val currentOnDelete by rememberUpdatedState(onDelete)
-    val dismissState = rememberSwipeToDismissBoxState()
-    LaunchedEffect(dismissState) {
-        snapshotFlow { dismissState.currentValue }.collect { value ->
-            if (value == SwipeToDismissBoxValue.EndToStart) {
-                currentOnDelete()
-                dismissState.snapTo(SwipeToDismissBoxValue.Settled)
-            }
-        }
-    }
-
     TrainrSwipeToDelete(
-        state = dismissState,
+        onDelete = onDelete,
         contentDescription = stringResource(R.string.delete_set)
     ) {
         content()
