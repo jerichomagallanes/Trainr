@@ -51,6 +51,11 @@ class RoutineDetailViewModel @Inject constructor(
         savedStateHandle[Screen.RoutineDetail.ARG_DAY_NUMBER]
             ?: SampleWorkoutData.DEFAULT_DAY_NUMBER
 
+    // A day opened from an earlier week must load that week's routine, not the
+    // same weekday of the newest one.
+    private val requestedWeekNumber: Int? =
+        savedStateHandle.get<Int>(Screen.RoutineDetail.ARG_WEEK_NUMBER)?.takeIf { it > 0 }
+
     private val _uiState = MutableStateFlow(
         sampleState(requestedDayNumber).copy(isLoaded = false)
     )
@@ -65,12 +70,14 @@ class RoutineDetailViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            // Days open out of the plan the home surface shows, which is
-            // always the newest stored week.
             val plan = userRepository.getCurrentUser()
                 ?.let { user ->
-                    userRepository.getWeeklyWorkoutPlans(user.id).first()
-                        .maxByOrNull { it.weekNumber }
+                    val plans = userRepository.getWeeklyWorkoutPlans(user.id).first()
+                    if (requestedWeekNumber == null) {
+                        plans.maxByOrNull { it.weekNumber }
+                    } else {
+                        plans.firstOrNull { it.weekNumber == requestedWeekNumber }
+                    }
                 }
             val index = plan?.workoutDays
                 ?.indexOfFirst { it.dayNumber == requestedDayNumber } ?: -1

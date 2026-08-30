@@ -51,9 +51,15 @@ class RoutineDetailViewModelTest {
 
     private fun viewModel(
         dayNumber: Int = SampleWorkoutData.DEFAULT_DAY_NUMBER,
-        repository: UserRepository = emptyRepository()
+        repository: UserRepository = emptyRepository(),
+        weekNumber: Int = Screen.RoutineDetail.LATEST_WEEK
     ) = RoutineDetailViewModel(
-        SavedStateHandle(mapOf(Screen.RoutineDetail.ARG_DAY_NUMBER to dayNumber)),
+        SavedStateHandle(
+            mapOf(
+                Screen.RoutineDetail.ARG_DAY_NUMBER to dayNumber,
+                Screen.RoutineDetail.ARG_WEEK_NUMBER to weekNumber
+            )
+        ),
         repository
     )
 
@@ -427,6 +433,57 @@ class RoutineDetailViewModelTest {
             coEvery { it.getCurrentUser() } returns UserProfile(id = 1)
             every { it.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(plan))
         }
+
+    // Opening a day from an earlier week must load that week's routine; the
+    // weekday exists in both, so only the requested week tells them apart.
+    @Test
+    fun loadsTheDayOfTheRequestedWeek() = runTest {
+        val laterWeek = storedPlan.copy(
+            id = 8,
+            weekNumber = 2,
+            title = "Later week",
+            workoutDays = storedPlan.workoutDays.map {
+                it.copy(id = it.id + 100, title = it.title + " Again")
+            }
+        )
+        val repository = mockk<UserRepository>(relaxed = true).also {
+            coEvery { it.getCurrentUser() } returns UserProfile(id = 1)
+            every { it.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(storedPlan, laterWeek))
+        }
+
+        val viewModel = viewModel(dayNumber = 3, repository = repository, weekNumber = 1)
+        advanceUntilIdle()
+
+        with(viewModel.uiState.value) {
+            assertThat(routine.title).isEqualTo("Stored Pull")
+            assertThat(weekNumber).isEqualTo(1)
+        }
+    }
+
+    // With no week asked for — every day opened from home — the newest wins.
+    @Test
+    fun loadsTheNewestWeekWhenNoneWasRequested() = runTest {
+        val laterWeek = storedPlan.copy(
+            id = 8,
+            weekNumber = 2,
+            title = "Later week",
+            workoutDays = storedPlan.workoutDays.map {
+                it.copy(id = it.id + 100, title = it.title + " Again")
+            }
+        )
+        val repository = mockk<UserRepository>(relaxed = true).also {
+            coEvery { it.getCurrentUser() } returns UserProfile(id = 1)
+            every { it.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(storedPlan, laterWeek))
+        }
+
+        val viewModel = viewModel(dayNumber = 3, repository = repository)
+        advanceUntilIdle()
+
+        with(viewModel.uiState.value) {
+            assertThat(routine.title).isEqualTo("Stored Pull Again")
+            assertThat(weekNumber).isEqualTo(2)
+        }
+    }
 
     @Test
     fun loadsTheStoredDayWhenOneExists() = runTest {

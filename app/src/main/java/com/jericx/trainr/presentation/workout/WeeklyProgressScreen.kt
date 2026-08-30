@@ -31,6 +31,7 @@ import com.jericx.trainr.presentation.workout.util.WorkoutDateFormatter
 @Composable
 fun WeeklyProgressRoute(
     onBackClick: () -> Unit = {},
+    onWeekClick: (WeekProgressUi) -> Unit = {},
     viewModel: WeeklyProgressViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -41,7 +42,9 @@ fun WeeklyProgressRoute(
 
     WeeklyProgressScreen(
         weeks = state.weeks,
-        onBackClick = onBackClick
+        onBackClick = onBackClick,
+        // Sample weeks stand for nothing stored, so they lead nowhere.
+        onWeekClick = { if (!state.isSampleData) onWeekClick(it) }
     )
 }
 

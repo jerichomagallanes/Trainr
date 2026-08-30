@@ -1,11 +1,13 @@
 package com.jericx.trainr.presentation.workout
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
 import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.domain.repository.UserRepository
+import com.jericx.trainr.presentation.Screen
 import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
 import com.jericx.trainr.presentation.workout.util.WorkoutWeek
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -37,8 +39,14 @@ data class WeeklyPlanUiState(
 
 @HiltViewModel
 class WeeklyPlanViewModel @Inject constructor(
+    savedStateHandle: SavedStateHandle,
     private val userRepository: UserRepository
 ) : ViewModel() {
+
+    // Absent on home, which always shows the newest week; set when one
+    // particular week was opened from Weekly Progress.
+    private val requestedWeekNumber: Int? =
+        savedStateHandle.get<Int>(Screen.WeekPlan.ARG_WEEK_NUMBER)?.takeIf { it > 0 }
 
     private val _uiState = MutableStateFlow(stateFor(SampleWorkoutData.weekOne, isSample = true))
     val uiState: StateFlow<WeeklyPlanUiState> = _uiState.asStateFlow()
@@ -49,12 +57,14 @@ class WeeklyPlanViewModel @Inject constructor(
 
     fun refresh() {
         viewModelScope.launch {
-            // The home surface always shows the newest week; earlier weeks stay
-            // reachable through Weekly Progress.
             val stored = userRepository.getCurrentUser()
                 ?.let { user ->
-                    userRepository.getWeeklyWorkoutPlans(user.id).first()
-                        .maxByOrNull { it.weekNumber }
+                    val plans = userRepository.getWeeklyWorkoutPlans(user.id).first()
+                    if (requestedWeekNumber == null) {
+                        plans.maxByOrNull { it.weekNumber }
+                    } else {
+                        plans.firstOrNull { it.weekNumber == requestedWeekNumber }
+                    }
                 }
 
             _uiState.value = if (stored == null) {

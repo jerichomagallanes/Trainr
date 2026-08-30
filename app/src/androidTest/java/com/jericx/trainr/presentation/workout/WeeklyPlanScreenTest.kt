@@ -43,6 +43,41 @@ class WeeklyPlanScreenTest {
         }
     }
 
+    // A week opened from Weekly Progress is a record to read: it needs a way
+    // back, and must not offer to regenerate, start today, or bounce the
+    // reader back to the progress screen they arrived from.
+    @Test
+    fun aBrowsedWeekOffersAWayBackAndNoPlanActions() {
+        var wentBack = false
+        composeTestRule.setContent {
+            TrainrTheme {
+                WeeklyPlanScreen(state = state, onBackClick = { wentBack = true })
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.start_todays_workout))
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithContentDescription(string(R.string.plan_options))
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.track_weekly_progress) + " →")
+            .assertDoesNotExist()
+
+        composeTestRule.onNodeWithContentDescription(string(R.string.back)).performClick()
+
+        assertThat(wentBack).isTrue()
+    }
+
+    // Home is the plan being trained: no back arrow, all actions present.
+    @Test
+    fun theHomePlanKeepsItsActionsAndHasNoWayBack() {
+        setScreen()
+
+        composeTestRule.onNodeWithContentDescription(string(R.string.back)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.start_todays_workout)).assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription(string(R.string.plan_options))
+            .assertIsDisplayed()
+    }
+
     // The CTA has to name a day, and it should be the one still to do.
     @Test
     fun startingTodaysWorkoutOpensTheFirstOutstandingDay() {

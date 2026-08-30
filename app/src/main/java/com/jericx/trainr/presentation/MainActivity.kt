@@ -301,14 +301,41 @@ fun AppContent(versionName: String) {
 
                 composable(Screen.WeeklyProgress.route) {
                     WeeklyProgressRoute(
-                        onBackClick = { navController.popBackStack() }
+                        onBackClick = { navController.popBackStack() },
+                        onWeekClick = { week ->
+                            navController.navigate(Screen.WeekPlan.createRoute(week.weekNumber))
+                        }
+                    )
+                }
+
+                // The same plan surface as home, read as a record: its days open
+                // that week's routines rather than the newest week's.
+                composable(
+                    route = Screen.WeekPlan.route,
+                    arguments = listOf(
+                        navArgument(Screen.WeekPlan.ARG_WEEK_NUMBER) { type = NavType.IntType }
+                    )
+                ) { entry ->
+                    val weekNumber = entry.arguments
+                        ?.getInt(Screen.WeekPlan.ARG_WEEK_NUMBER) ?: 1
+                    WeeklyPlanRoute(
+                        onBackClick = { navController.popBackStack() },
+                        onDayClick = { day ->
+                            navController.navigate(
+                                Screen.RoutineDetail.createRoute(day.dayNumber, weekNumber)
+                            )
+                        }
                     )
                 }
 
                 composable(
                     route = Screen.RoutineDetail.route,
                     arguments = listOf(
-                        navArgument(Screen.RoutineDetail.ARG_DAY_NUMBER) { type = NavType.IntType }
+                        navArgument(Screen.RoutineDetail.ARG_DAY_NUMBER) { type = NavType.IntType },
+                        navArgument(Screen.RoutineDetail.ARG_WEEK_NUMBER) {
+                            type = NavType.IntType
+                            defaultValue = Screen.RoutineDetail.LATEST_WEEK
+                        }
                     )
                 ) {
                     RoutineDetailRoute(
