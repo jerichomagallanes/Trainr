@@ -72,6 +72,8 @@ class PlanPromptBuilder(
         - Day titles are short and name the session's focus ("Full Body
           Strength", "Lower Body Power") — never letter or index labels like
           "Full Body A" or "Day 1".
+        - The plan title names the block, not its position: "Beginner Muscle
+          Building", never "... - Week 2". The app shows which week it is.
         - prescription is a short chip under about 25 characters, shaped like
           "3 sets of 12 reps", "3 sets of 45 seconds" or "5 minutes". Per-side,
           tempo or pacing detail belongs in instructions, never the prescription.
