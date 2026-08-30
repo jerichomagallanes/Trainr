@@ -436,4 +436,18 @@ class WeeklyPlanViewModelTest {
         assertThat(state.nextWorkoutIsToday).isFalse()
     }
 
+    // The built-in week stands in for a moment while the stored plan loads. It
+    // is dated in the past, so read against the clock it would greet a new user
+    // with a screen of missed workouts.
+    @Test
+    fun thePlaceholderWeekNeverLooksMissed() = runTest {
+        coEvery { userRepository.getCurrentUser() } returns null
+
+        val viewModel = viewModel()
+        assertThat(viewModel.uiState.value.days.any { it.isMissed }).isFalse()
+
+        advanceUntilIdle()
+        assertThat(viewModel.uiState.value.days.any { it.isMissed }).isFalse()
+    }
+
 }

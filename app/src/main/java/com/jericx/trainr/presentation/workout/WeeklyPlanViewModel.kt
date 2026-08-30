@@ -68,7 +68,16 @@ class WeeklyPlanViewModel @Inject constructor(
     private val requestedWeekNumber: Int? =
         savedStateHandle.get<Int>(Screen.WeekPlan.ARG_WEEK_NUMBER)?.takeIf { it > 0 }
 
-    private val _uiState = MutableStateFlow(stateFor(SampleWorkoutData.weekOne, isSample = true))
+    // Read against its own dates: the built-in week stands in for a fraction of
+    // a second while the stored plan loads, and a placeholder has no business
+    // telling anyone they missed a workout in 2025.
+    private val _uiState = MutableStateFlow(
+        stateFor(
+            plan = SampleWorkoutData.weekOne,
+            isSample = true,
+            nowMillis = SampleWorkoutData.weekStartMillis
+        )
+    )
     val uiState: StateFlow<WeeklyPlanUiState> = _uiState.asStateFlow()
 
     init {
@@ -88,7 +97,11 @@ class WeeklyPlanViewModel @Inject constructor(
                 }
 
             _uiState.value = if (stored == null) {
-                stateFor(SampleWorkoutData.weekOne, isSample = true)
+                stateFor(
+                    plan = SampleWorkoutData.weekOne,
+                    isSample = true,
+                    nowMillis = SampleWorkoutData.weekStartMillis
+                )
             } else {
                 stateFor(stored, isSample = false)
             }
