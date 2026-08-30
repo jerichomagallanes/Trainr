@@ -24,11 +24,18 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.withStyle
 import com.jericx.trainr.R
 import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.common.Constants
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.shape.RoundedCornerShape
+import com.jericx.trainr.presentation.common.theme.ComponentHeight
+import com.jericx.trainr.presentation.common.theme.TextMuted
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.components.core.TrainrButton
 import com.jericx.trainr.presentation.common.components.core.TrainrProgress
@@ -126,15 +133,15 @@ fun BodyMetricsScreen(
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.card)
                 ) {
-                    TrainrToggleChip(
+                    UnitTab(
                         text = stringResource(R.string.metric),
                         selected = useMetric,
                         onClick = { switchUnits(toMetric = true) },
                         modifier = Modifier.weight(1f)
                     )
-                    TrainrToggleChip(
+                    UnitTab(
                         text = stringResource(R.string.imperial),
                         selected = !useMetric,
                         onClick = { switchUnits(toMetric = false) },
@@ -191,6 +198,47 @@ fun BodyMetricsScreen(
 
                 Spacer(modifier = Modifier.height(Spacing.large))
             }
+        }
+    }
+}
+
+// The frames draw the unit switch as tabs: square-bottomed segments that sit
+// on the fields they control, not free-floating chips.
+@Composable
+private fun UnitTab(
+    text: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val shape = RoundedCornerShape(
+        topStart = 10.dp,
+        topEnd = 10.dp,
+        bottomStart = 0.dp,
+        bottomEnd = 0.dp
+    )
+
+    Surface(
+        onClick = onClick,
+        modifier = modifier.height(ComponentHeight.ChipTall),
+        shape = shape,
+        color = if (selected)
+            MaterialTheme.colorScheme.onBackground
+        else
+            MaterialTheme.colorScheme.surface,
+        border = if (selected) null else BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
+                ),
+                color = if (selected)
+                    MaterialTheme.colorScheme.background
+                else
+                    TextMuted
+            )
         }
     }
 }

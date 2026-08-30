@@ -101,7 +101,7 @@ fun LimitationsScreen(
                 Spacer(modifier = Modifier.height(Spacing.medium))
 
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(Spacing.small),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.card),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     injuryOptions.forEach { injury ->
@@ -136,7 +136,7 @@ fun LimitationsScreen(
                     title = stringResource(R.string.preferred_workout_style)
                 ) {
                     Column(
-                        verticalArrangement = Arrangement.spacedBy(Spacing.small)
+                        verticalArrangement = Arrangement.spacedBy(Spacing.card)
                     ) {
                         TrainrIconCard(
                             iconRes = R.drawable.ic_exercise,

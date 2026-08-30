@@ -71,7 +71,7 @@ fun FitnessGoalScreen(
                 Spacer(modifier = Modifier.height(Spacing.extraLarge))
 
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(Spacing.medium)
+                    verticalArrangement = Arrangement.spacedBy(Spacing.card)
                 ) {
                     TrainrIconCard(
                         iconRes = R.drawable.ic_mode_heat,
