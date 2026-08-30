@@ -43,6 +43,10 @@ interface UserDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertWorkoutDays(days: List<WorkoutDayEntity>): List<Long>
 
+    // Days, exercises and sets go with it: every child cascades on delete.
+    @Query("DELETE FROM weekly_workout_plans WHERE id = :planId")
+    suspend fun deleteWeeklyWorkoutPlan(planId: Long)
+
     @Query("SELECT * FROM workout_days WHERE weeklyPlanId = :weeklyPlanId ORDER BY dayNumber")
     suspend fun getWorkoutDaysForPlan(weeklyPlanId: Long): List<WorkoutDayEntity>
 

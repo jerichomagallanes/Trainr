@@ -10,6 +10,7 @@ import com.jericx.trainr.presentation.workout.model.WeekStatus
 import com.jericx.trainr.presentation.workout.sample.SampleWeeklyProgress
 import com.jericx.trainr.presentation.workout.util.WorkoutWeek
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -163,4 +164,39 @@ class WeeklyProgressViewModelTest {
         assertThat(viewModel.uiState.value.weeks).isEqualTo(SampleWeeklyProgress.weeks)
         assertThat(viewModel.uiState.value.isSampleData).isTrue()
     }
+    // A week generated ahead of its start can be thrown away and made again.
+    @Test
+    fun anUpcomingWeekCanBeDeleted() = runTest {
+        // deleteWeek reads the clock, so this week has to be genuinely ahead of it.
+        val upcoming = plan(
+            weekNumber = 2,
+            start = System.currentTimeMillis() + TimeUnit.DAYS.toMillis(30),
+            statuses = arrayOf(WorkoutStatus.NOT_STARTED)
+        )
+        coEvery { userRepository.getCurrentUser() } returns UserProfile(id = 1)
+        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(upcoming))
+
+        val viewModel = WeeklyProgressViewModel(userRepository)
+        advanceUntilIdle()
+        viewModel.deleteWeek(2)
+        advanceUntilIdle()
+
+        coVerify { userRepository.deleteWeeklyWorkoutPlan(upcoming.id) }
+    }
+
+    // Anything already trained is a record, not a draft.
+    @Test
+    fun aWeekThatHasStartedIsNotDeletable() = runTest {
+        val past = plan(weekNumber = 1, statuses = arrayOf(WorkoutStatus.COMPLETED))
+        coEvery { userRepository.getCurrentUser() } returns UserProfile(id = 1)
+        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(past))
+
+        val viewModel = WeeklyProgressViewModel(userRepository)
+        advanceUntilIdle()
+        viewModel.deleteWeek(1)
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { userRepository.deleteWeeklyWorkoutPlan(any()) }
+    }
+
 }

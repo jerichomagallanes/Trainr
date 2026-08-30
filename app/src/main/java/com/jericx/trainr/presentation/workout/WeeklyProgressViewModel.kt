@@ -52,6 +52,20 @@ class WeeklyProgressViewModel @Inject constructor(
         }
     }
 
+    // Deleting an upcoming week clears the way to generate it again; the guard
+    // is repeated here so nothing but an unstarted week can be dropped.
+    fun deleteWeek(weekNumber: Int) {
+        viewModelScope.launch {
+            val user = userRepository.getCurrentUser() ?: return@launch
+            val plan = userRepository.getWeeklyWorkoutPlans(user.id).first()
+                .firstOrNull { it.weekNumber == weekNumber } ?: return@launch
+            if (!weekProgressOf(plan).canDelete) return@launch
+
+            userRepository.deleteWeeklyWorkoutPlan(plan.id)
+            refresh()
+        }
+    }
+
     companion object {
         private const val LAST_ISO_DAY = 7
 
@@ -73,6 +87,7 @@ class WeeklyProgressViewModel @Inject constructor(
                 else -> WeekStatus.NOT_COMPLETED
             }
             return WeekProgressUi(
+                planId = plan.id,
                 weekNumber = plan.weekNumber,
                 completedDays = completed,
                 totalDays = total,

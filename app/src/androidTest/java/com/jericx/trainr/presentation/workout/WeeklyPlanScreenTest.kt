@@ -2,6 +2,11 @@ package com.jericx.trainr.presentation.workout
 
 import androidx.activity.ComponentActivity
 import com.jericx.trainr.domain.model.WorkoutStatus
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.down
+import androidx.compose.ui.test.moveBy
+import androidx.compose.ui.test.up
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -248,4 +253,80 @@ class WeeklyPlanScreenTest {
 
         assertThat(left).isTrue()
     }
+    private val freshWeek = WeeklyPlanViewModel.stateFor(
+        plan = SampleWorkoutData.weekOne.copy(
+            workoutDays = SampleWorkoutData.weekOne.workoutDays.map {
+                it.copy(status = WorkoutStatus.NOT_STARTED)
+            }
+        ),
+        isSample = false
+    )
+
+    // Long-press lifts a session; dragging it past the next card hands it that
+    // card's weekday and reports the move.
+    @Test
+    fun draggingASessionPastTheNextOneReschedulesIt() {
+        var move: Pair<Int, Int>? = null
+        composeTestRule.setContent {
+            TrainrTheme {
+                WeeklyPlanScreen(state = freshWeek, onMoveDay = { from, to -> move = from to to })
+            }
+        }
+
+        val first = freshWeek.days[0].day.title
+        val secondCardHeight = composeTestRule.onNodeWithText(freshWeek.days[1].day.title)
+            .fetchSemanticsNode().size.height
+
+        composeTestRule.onNodeWithText(first).performTouchInput {
+            down(center)
+            advanceEventTime(viewConfiguration.longPressTimeoutMillis + 200)
+            moveBy(Offset(0f, secondCardHeight * 0.4f))
+            advanceEventTime(32)
+            moveBy(Offset(0f, secondCardHeight * 0.4f))
+            advanceEventTime(32)
+            up()
+        }
+        composeTestRule.waitForIdle()
+
+        assertThat(move).isEqualTo(0 to 1)
+    }
+
+    // A finished session is the record of a date it was trained on.
+    @Test
+    fun aFinishedSessionDoesNotLift() {
+        var move: Pair<Int, Int>? = null
+        val withFinishedFirst = WeeklyPlanViewModel.stateFor(
+            plan = SampleWorkoutData.weekOne.copy(
+                workoutDays = SampleWorkoutData.weekOne.workoutDays.mapIndexed { index, day ->
+                    day.copy(
+                        status = if (index == 0) WorkoutStatus.COMPLETED
+                        else WorkoutStatus.NOT_STARTED
+                    )
+                }
+            ),
+            isSample = false
+        )
+        composeTestRule.setContent {
+            TrainrTheme {
+                WeeklyPlanScreen(
+                    state = withFinishedFirst,
+                    onMoveDay = { from, to -> move = from to to }
+                )
+            }
+        }
+
+        val height = composeTestRule.onNodeWithText(withFinishedFirst.days[1].day.title)
+            .fetchSemanticsNode().size.height
+        composeTestRule.onNodeWithText(withFinishedFirst.days[0].day.title).performTouchInput {
+            down(center)
+            advanceEventTime(viewConfiguration.longPressTimeoutMillis + 200)
+            moveBy(Offset(0f, height * 0.9f))
+            advanceEventTime(32)
+            up()
+        }
+        composeTestRule.waitForIdle()
+
+        assertThat(move).isNull()
+    }
+
 }

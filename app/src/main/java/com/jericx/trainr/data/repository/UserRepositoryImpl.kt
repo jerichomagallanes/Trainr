@@ -102,6 +102,10 @@ class UserRepositoryImpl @Inject constructor(
         return mapper.mapToDomain(dayEntity, exercises)
     }
 
+    override suspend fun deleteWeeklyWorkoutPlan(planId: Long) {
+        userDao.deleteWeeklyWorkoutPlan(planId)
+    }
+
     override suspend fun updateWorkoutDay(day: WorkoutDay, weeklyPlanId: Long) {
         userDao.updateWorkoutDay(mapper.mapToEntity(day, weeklyPlanId))
     }

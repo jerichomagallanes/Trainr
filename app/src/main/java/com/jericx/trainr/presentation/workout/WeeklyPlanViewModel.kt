@@ -78,8 +78,43 @@ class WeeklyPlanViewModel @Inject constructor(
         }
     }
 
+    // Dragging a session onto another weekday swaps the two around; the slots
+    // themselves never move, so the week keeps the shape it was generated with.
+    fun moveDay(from: Int, to: Int) {
+        val state = _uiState.value
+        if (state.isSampleData) return
+
+        val plan = state.plan
+        val reordered = reorderedDays(plan.workoutDays, from, to)
+        if (reordered == plan.workoutDays) return
+
+        _uiState.value = stateFor(
+            plan.copy(workoutDays = reordered.sortedBy { it.dayNumber }),
+            isSample = false
+        )
+
+        viewModelScope.launch {
+            val before = plan.workoutDays.associateBy { it.id }
+            reordered
+                .filter { before[it.id]?.dayNumber != it.dayNumber }
+                .forEach { userRepository.updateWorkoutDay(it, plan.id) }
+        }
+    }
+
     companion object {
         private const val LAST_ISO_DAY = 7
+
+        // A finished session is the record of a date it was actually done on,
+        // so it stays put and nothing may be dragged across it.
+        fun reorderedDays(days: List<WorkoutDay>, from: Int, to: Int): List<WorkoutDay> {
+            if (from == to || from !in days.indices || to !in days.indices) return days
+            val crossed = if (from < to) from..to else to..from
+            if (crossed.any { days[it].status == WorkoutStatus.COMPLETED }) return days
+
+            val slots = days.map { it.dayNumber }
+            val moved = days.toMutableList().apply { add(to, removeAt(from)) }
+            return moved.mapIndexed { index, day -> day.copy(dayNumber = slots[index]) }
+        }
 
         // Plans stored before startDateMillis existed fall back to the sample week.
         fun stateFor(
