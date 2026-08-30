@@ -54,8 +54,9 @@ class WeeklyPlanScreenTest {
         assertThat(started?.title).isEqualTo("Cardio & Core")
     }
 
-    private fun tapBack() {
-        composeTestRule.onNodeWithContentDescription(string(R.string.back)).performClick()
+    private fun openRegenerate() {
+        composeTestRule.onNodeWithContentDescription(string(R.string.plan_options)).performClick()
+        composeTestRule.onNodeWithText(string(R.string.regenerate_plan)).performClick()
     }
 
     @Test
@@ -114,15 +115,23 @@ class WeeklyPlanScreenTest {
     }
 
     @Test
-    fun goingBackAsksBeforeLeavingThePlan() {
+    fun regeneratingAsksBeforeLeavingThePlan() {
         var left = false
         setScreen(onLeavePlanConfirmed = { left = true })
 
-        tapBack()
+        openRegenerate()
 
         composeTestRule.onNodeWithText(string(R.string.leave_plan_title)).assertIsDisplayed()
         composeTestRule.onNodeWithText(string(R.string.leave_plan_message)).assertIsDisplayed()
         assertThat(left).isFalse()
+    }
+
+    // The plan is home: nothing to go back to, so no back arrow to mislead.
+    @Test
+    fun theHomeScreenOffersNoBackArrow() {
+        setScreen()
+
+        composeTestRule.onNodeWithContentDescription(string(R.string.back)).assertDoesNotExist()
     }
 
     @Test
@@ -130,7 +139,7 @@ class WeeklyPlanScreenTest {
         var left = false
         setScreen(onLeavePlanConfirmed = { left = true })
 
-        tapBack()
+        openRegenerate()
         composeTestRule.onNodeWithText(string(R.string.cancel)).performClick()
 
         composeTestRule.onNodeWithText(string(R.string.leave_plan_title)).assertDoesNotExist()
@@ -143,7 +152,7 @@ class WeeklyPlanScreenTest {
         var left = false
         setScreen(onLeavePlanConfirmed = { left = true })
 
-        tapBack()
+        openRegenerate()
         composeTestRule.onNodeWithText(string(R.string.leave_plan_confirm)).performClick()
 
         assertThat(left).isTrue()

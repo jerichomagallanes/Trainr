@@ -196,6 +196,8 @@
     <string name="set_column">Set</string>
     <string name="previous_column">Previous</string>
     <string name="delete_set">Delete set</string>
+    <string name="plan_options">Plan options</string>
+    <string name="regenerate_plan">Regenerate plan</string>
     <string name="weight_column">kg</string>
     <string name="reps_column">Reps</string>
     <string name="time_column">Time</string>

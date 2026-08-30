@@ -194,6 +194,8 @@
     <string name="set_column">セット</string>
     <string name="previous_column">前回</string>
     <string name="delete_set">セットを削除</string>
+    <string name="plan_options">プランのオプション</string>
+    <string name="regenerate_plan">プランを再生成</string>
     <string name="weight_column">kg</string>
     <string name="reps_column">回数</string>
     <string name="time_column">時間</string>

@@ -197,6 +197,8 @@
     <string name="set_column">Set</string>
     <string name="previous_column">Nakaraan</string>
     <string name="delete_set">Burahin ang set</string>
+    <string name="plan_options">Mga opsyon ng plano</string>
+    <string name="regenerate_plan">Muling buuin ang plano</string>
     <string name="weight_column">kg</string>
     <string name="reps_column">Reps</string>
     <string name="time_column">Oras</string>
