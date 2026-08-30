@@ -32,12 +32,21 @@ import com.jericx.trainr.R
 import com.jericx.trainr.presentation.common.theme.Spacing
 import kotlinx.coroutines.delay
 
+// The animation covers the wait; it must not create one. Generating starts
+// with the screen rather than after a timer, and the screen stays only long
+// enough to be read when the answer comes back at once — which it does when
+// the built-in week stands in for a generation that could not run.
+private const val MINIMUM_VISIBLE_MILLIS = 1_500L
+
 @Composable
 fun GeneratingScreen(
-    onGenerationComplete: () -> Unit
+    isReady: Boolean,
+    onStart: () -> Unit,
+    onDone: () -> Unit
 ) {
     var activeIndicator by remember { mutableIntStateOf(0) }
     val totalIndicators = 14
+    val shownAt = remember { System.currentTimeMillis() }
 
     LaunchedEffect(Unit) {
         while (true) {
@@ -49,9 +58,13 @@ fun GeneratingScreen(
         }
     }
 
-    LaunchedEffect(Unit) {
-        delay(8000)
-        onGenerationComplete()
+    LaunchedEffect(Unit) { onStart() }
+
+    LaunchedEffect(isReady) {
+        if (!isReady) return@LaunchedEffect
+        val shown = System.currentTimeMillis() - shownAt
+        delay((MINIMUM_VISIBLE_MILLIS - shown).coerceAtLeast(0L))
+        onDone()
     }
     
     Box(

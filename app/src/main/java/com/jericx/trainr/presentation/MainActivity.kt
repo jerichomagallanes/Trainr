@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -304,14 +305,15 @@ fun AppContent(versionName: String) {
                 }
 
                 composable(Screen.Generating.route) {
+                    var planIsReady by rememberSaveable { mutableStateOf(false) }
                     GeneratingScreen(
-                        onGenerationComplete = {
-                            onboardingViewModel.saveUserProfile {
-                                // The new plan is a fresh start whichever door led
-                                // here, so the whole back stack goes.
-                                navController.navigate(Screen.Home.route) {
-                                    popUpTo(0) { inclusive = true }
-                                }
+                        isReady = planIsReady,
+                        onStart = { onboardingViewModel.saveUserProfile { planIsReady = true } },
+                        onDone = {
+                            // The new plan is a fresh start whichever door led
+                            // here, so the whole back stack goes.
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(0) { inclusive = true }
                             }
                         }
                     )
@@ -413,12 +415,13 @@ fun AppContent(versionName: String) {
 
                 composable(Screen.GeneratingNextWeek.route) {
                     val nextWeekViewModel: NextWeekViewModel = hiltViewModel()
+                    var weekIsReady by rememberSaveable { mutableStateOf(false) }
                     GeneratingScreen(
-                        onGenerationComplete = {
-                            nextWeekViewModel.generateNextWeek {
-                                navController.navigate(Screen.Home.route) {
-                                    popUpTo(0) { inclusive = true }
-                                }
+                        isReady = weekIsReady,
+                        onStart = { nextWeekViewModel.generateNextWeek { weekIsReady = true } },
+                        onDone = {
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(0) { inclusive = true }
                             }
                         }
                     )
