@@ -1,17 +1,14 @@
 package com.jericx.trainr.presentation.onboarding.screens
 
 import androidx.activity.ComponentActivity
-import androidx.compose.ui.semantics.SemanticsActions
-import androidx.compose.ui.semantics.getOrNull
-import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollTo
-import androidx.compose.ui.text.TextLayoutResult
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.jericx.trainr.R
+import com.jericx.trainr.testing.notEllipsized
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 import org.junit.Rule
 import org.junit.Test
@@ -53,18 +50,11 @@ class WorkoutSetupScreenTest {
             }
         }
 
-        val notEllipsized = SemanticsMatcher("label is not ellipsized") { node ->
-            val results = mutableListOf<TextLayoutResult>()
-            node.config.getOrNull(SemanticsActions.GetTextLayoutResult)
-                ?.action?.invoke(results)
-            results.firstOrNull()?.isLineEllipsized(0) == false
-        }
-
         listOf(30, 45, 60, 90).forEach { minutes ->
             composeTestRule.onNodeWithText(
                 composeTestRule.activity.resources
                     .getQuantityString(R.plurals.minutes, minutes, minutes)
-            ).performScrollTo().assert(notEllipsized)
+            ).performScrollTo().assert(notEllipsized())
         }
     }
 

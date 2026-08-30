@@ -17,6 +17,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.text.TextAutoSize
+import androidx.compose.foundation.text.BasicText
 import com.jericx.trainr.presentation.common.theme.ComponentHeight
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
@@ -45,17 +48,24 @@ fun TrainrToggleChip(
             modifier = Modifier.padding(horizontal = horizontalPadding),
             contentAlignment = Alignment.Center
         ) {
-            Text(
+            BasicText(
                 text = text,
                 style = MaterialTheme.typography.bodyLarge.copy(
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Medium,
+                    color = if (selected)
+                        MaterialTheme.colorScheme.background
+                    else
+                        MaterialTheme.colorScheme.onSurface
                 ),
-                color = if (selected)
-                    MaterialTheme.colorScheme.background
-                else
-                    MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
+                // Phones narrower than the 412dp frame get a smaller label,
+                // never an ellipsis.
+                autoSize = TextAutoSize.StepBased(
+                    minFontSize = 12.sp,
+                    maxFontSize = 16.sp,
+                    stepSize = 0.5.sp
+                )
             )
         }
     }

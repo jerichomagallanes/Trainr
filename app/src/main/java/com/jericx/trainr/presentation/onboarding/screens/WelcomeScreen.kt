@@ -82,7 +82,7 @@ fun WelcomeScreen(
                     .padding(vertical = Spacing.large),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Spacer(modifier = Modifier.weight(1f))
+                Spacer(modifier = Modifier.height(Spacing.extraLarge))
 
                 InfiniteHorizontalPager(
                     items = pages,

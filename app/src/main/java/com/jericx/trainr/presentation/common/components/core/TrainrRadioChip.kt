@@ -15,6 +15,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.text.TextAutoSize
+import androidx.compose.foundation.text.BasicText
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -52,20 +55,27 @@ fun TrainrRadioChip(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(
+            BasicText(
                 text = text,
                 style = MaterialTheme.typography.bodyLarge.copy(
-                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
+                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                    color = when {
+                        selected -> MaterialTheme.colorScheme.background
+                        mutedWhenUnselected -> TextMuted
+                        else -> MaterialTheme.colorScheme.onSurface
+                    }
                 ),
-                color = when {
-                    selected -> MaterialTheme.colorScheme.background
-                    mutedWhenUnselected -> TextMuted
-                    else -> MaterialTheme.colorScheme.onSurface
-                },
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+                // Phones narrower than the 412dp frame get a smaller label,
+                // never an ellipsis.
+                autoSize = TextAutoSize.StepBased(
+                    minFontSize = 12.sp,
+                    maxFontSize = 16.sp,
+                    stepSize = 0.5.sp
+                ),
                 // Weighted so the label yields to the dot rather than squashing
-                // it: an unweighted Text is measured first and takes the row.
+                // it: an unweighted text is measured first and takes the row.
                 modifier = Modifier.weight(1f, fill = false)
             )
 

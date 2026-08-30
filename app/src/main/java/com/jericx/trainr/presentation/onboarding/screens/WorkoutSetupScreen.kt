@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -52,7 +51,6 @@ import com.jericx.trainr.presentation.common.components.typography.TrainrSection
 import com.jericx.trainr.presentation.common.theme.ComponentHeight
 import com.jericx.trainr.presentation.common.theme.Spacing
 
-private val DurationChipWidth = 80.dp
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -258,10 +256,11 @@ fun WorkoutSetupScreen(
                                 selected = selectedDuration == duration,
                                 onClick = { selectedDuration = duration },
                                 height = ComponentHeight.ChipTall,
-                                // The width is fixed and the label nearly fills
-                                // it, so any padding turns "90 mins" into "90...".
+                                // Equal shares rather than the frame's fixed 80dp:
+                                // four fixed chips overflow narrower phones, and
+                                // any padding turns "90 mins" into "90...".
                                 horizontalPadding = 0.dp,
-                                modifier = Modifier.width(DurationChipWidth)
+                                modifier = Modifier.weight(1f)
                             )
                         }
                     }
