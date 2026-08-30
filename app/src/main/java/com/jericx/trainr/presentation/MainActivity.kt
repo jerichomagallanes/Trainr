@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import com.jericx.trainr.R
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -315,7 +316,13 @@ fun AppContent(versionName: String) {
                             navController.navigate(Screen.Home.route) {
                                 popUpTo(0) { inclusive = true }
                             }
-                        }
+                        },
+                        failure = onboardingState.generationFailure,
+                        onRetry = { onboardingViewModel.saveUserProfile { planIsReady = true } },
+                        // Nothing was written, so the way out is back to the
+                        // profile the plan would have been built from.
+                        onGiveUp = { navController.popBackStack() },
+                        giveUpLabel = R.string.back_to_profile
                     )
                 }
 
@@ -415,6 +422,7 @@ fun AppContent(versionName: String) {
 
                 composable(Screen.GeneratingNextWeek.route) {
                     val nextWeekViewModel: NextWeekViewModel = hiltViewModel()
+                    val nextWeekFailure by nextWeekViewModel.failure.collectAsStateWithLifecycle()
                     var weekIsReady by rememberSaveable { mutableStateOf(false) }
                     GeneratingScreen(
                         isReady = weekIsReady,
@@ -423,7 +431,11 @@ fun AppContent(versionName: String) {
                             navController.navigate(Screen.Home.route) {
                                 popUpTo(0) { inclusive = true }
                             }
-                        }
+                        },
+                        failure = nextWeekFailure,
+                        onRetry = { nextWeekViewModel.generateNextWeek { weekIsReady = true } },
+                        // The plan they already have is still there to go back to.
+                        onGiveUp = { navController.popBackStack() }
                     )
                 }
 

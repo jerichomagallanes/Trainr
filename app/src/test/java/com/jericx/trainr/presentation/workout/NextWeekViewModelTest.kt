@@ -2,6 +2,7 @@ package com.jericx.trainr.presentation.workout
 
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.domain.generation.PlanGenerator
+import com.jericx.trainr.domain.generation.PlanGenerationResult
 import com.jericx.trainr.domain.generation.PlanRequest
 import com.jericx.trainr.domain.model.ExerciseSet
 import com.jericx.trainr.domain.model.UserProfile
@@ -98,7 +99,8 @@ class NextWeekViewModelTest {
         every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(finishedWeek))
         val request = slot<PlanRequest>()
         val generated = finishedWeek.copy(id = 0, weekNumber = 2, title = "Progression")
-        coEvery { planGenerator.generate(capture(request)) } returns generated
+        coEvery { planGenerator.generate(capture(request)) } returns
+            PlanGenerationResult.Generated(generated)
 
         var done = false
         viewModel().generateNextWeek { done = true }
@@ -119,7 +121,7 @@ class NextWeekViewModelTest {
             flowOf(listOf(finishedWeek, weekTwo))
         val request = slot<PlanRequest>()
         coEvery { planGenerator.generate(capture(request)) } returns
-            weekTwo.copy(id = 0, weekNumber = 3)
+            PlanGenerationResult.Generated(weekTwo.copy(id = 0, weekNumber = 3))
 
         viewModel().generateNextWeek {}
         advanceUntilIdle()
@@ -128,36 +130,22 @@ class NextWeekViewModelTest {
         assertThat(request.captured.previousWeek).isEqualTo(weekTwo)
     }
 
-    // The fallback repeats the finished week rather than inventing progress,
-    // and every log and storage id from the old week must be cleared.
+    // A week that could not be generated is said out loud. Repeating the last
+    // one used to stand in silently, which told the client next week was ready
+    // when the coach never wrote it.
     @Test
-    fun fallsBackToRepeatingTheWeekWithClearedLogs() = runTest {
+    fun aFailedGenerationSavesNothingAndReportsWhy() = runTest {
         every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(finishedWeek))
-        coEvery { planGenerator.generate(any()) } returns null
-        val saved = slot<WeeklyWorkoutPlan>()
-        coEvery { userRepository.saveWeeklyWorkoutPlan(capture(saved)) } returns 2L
+        coEvery { planGenerator.generate(any()) } returns PlanGenerationResult.Offline
 
-        viewModel().generateNextWeek {}
+        var done = false
+        val viewModel = viewModel()
+        viewModel.generateNextWeek { done = true }
         advanceUntilIdle()
 
-        with(saved.captured) {
-            assertThat(id).isEqualTo(0)
-            assertThat(weekNumber).isEqualTo(2)
-            assertThat(startDateMillis).isEqualTo(WorkoutWeek.dateOfDay(weekOneStart, 8))
-            val day = workoutDays.single()
-            assertThat(day.id).isEqualTo(0)
-            assertThat(day.status).isEqualTo(WorkoutStatus.NOT_STARTED)
-            assertThat(day.completedAt).isNull()
-            val exercise = day.exercises.single()
-            assertThat(exercise.id).isEqualTo(0)
-            assertThat(exercise.isCompleted).isFalse()
-            val set = exercise.sets.single()
-            assertThat(set.id).isEqualTo(0)
-            assertThat(set.targetReps).isEqualTo(10)
-            assertThat(set.actualReps).isNull()
-            assertThat(set.actualWeightKg).isNull()
-            assertThat(set.isCompleted).isFalse()
-        }
+        assertThat(viewModel.failure.value).isEqualTo(PlanGenerationResult.Offline)
+        assertThat(done).isFalse()
+        coVerify(exactly = 0) { userRepository.saveWeeklyWorkoutPlan(any()) }
     }
 
     // Reopening the completion screen after the next week exists must not
@@ -198,7 +186,8 @@ class NextWeekViewModelTest {
         )
         every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(longAgo))
         val request = slot<PlanRequest>()
-        coEvery { planGenerator.generate(capture(request)) } returns longAgo.copy(weekNumber = 2)
+        coEvery { planGenerator.generate(capture(request)) } returns
+            PlanGenerationResult.Generated(longAgo.copy(weekNumber = 2))
 
         viewModel().generateNextWeek {}
         advanceUntilIdle()
@@ -210,7 +199,8 @@ class NextWeekViewModelTest {
     fun aWeekThatStillLiesAheadFollowsTheOneBeforeIt() = runTest {
         every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(finishedWeek))
         val request = slot<PlanRequest>()
-        coEvery { planGenerator.generate(capture(request)) } returns finishedWeek.copy(weekNumber = 2)
+        coEvery { planGenerator.generate(capture(request)) } returns
+            PlanGenerationResult.Generated(finishedWeek.copy(weekNumber = 2))
 
         viewModel().generateNextWeek {}
         advanceUntilIdle()

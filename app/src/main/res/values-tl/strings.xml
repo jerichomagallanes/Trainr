@@ -200,6 +200,11 @@
     <string name="delete_set">Burahin ang set</string>
     <string name="plan_options">Mga opsyon ng plano</string>
     <string name="regenerate_plan">Muling buuin ang plano</string>
+    <string name="generation_failed_title">Hindi nagawa ang plano mo</string>
+    <string name="generation_failed_offline">Hindi maabot ang internet. Tingnan ang koneksyon at subukan ulit.</string>
+    <string name="generation_failed_message">May nangyaring mali habang ginagawa ang plano mo. Subukan ulit.</string>
+    <string name="try_again">Subukan ulit</string>
+    <string name="back_to_profile">Bumalik sa profile</string>
     <string name="missed">Hindi nagawa</string>
     <string name="start_next_workout">SIMULAN ANG SUSUNOD NA WORKOUT</string>
     <string name="move_earlier">Ilipat sa mas maagang araw</string>

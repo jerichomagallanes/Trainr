@@ -1,5 +1,6 @@
 package com.jericx.trainr.data.generation
 
+import java.io.IOException
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -17,9 +18,17 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 
+// What came back from a single call: the model's text, or the reason there
+// isn't any. Being unable to reach the model reads differently to the client
+// than the model answering with nonsense, so the two are kept apart.
+sealed interface GeminiResponse {
+    data class Text(val value: String) : GeminiResponse
+    data object Unreachable : GeminiResponse
+    data object Failed : GeminiResponse
+}
+
 // A single generateContent call against the free-tier Gemini API, constrained
-// to JSON by a response schema. Returns the model's text or null on any
-// failure — a plan the app cannot get is never worth an error screen.
+// to JSON by a response schema.
 class GeminiClient(
     private val apiKey: String,
     private val model: String = DEFAULT_MODEL,
@@ -31,8 +40,8 @@ class GeminiClient(
         systemInstruction: String,
         userPrompt: String,
         responseSchema: JsonObject
-    ): String? {
-        if (apiKey.isBlank()) return null
+    ): GeminiResponse {
+        if (apiKey.isBlank()) return GeminiResponse.Failed
 
         val body = buildJsonObject {
             put("system_instruction", buildJsonObject {
@@ -62,12 +71,18 @@ class GeminiClient(
             .build()
 
         return withContext(Dispatchers.IO) {
-            runCatching {
+            try {
                 http.newCall(request).execute().use { response ->
-                    if (!response.isSuccessful) return@use null
+                    if (!response.isSuccessful) return@use GeminiResponse.Failed
                     firstCandidateText(response.body?.string().orEmpty())
+                        ?.let(GeminiResponse::Text)
+                        ?: GeminiResponse.Failed
                 }
-            }.getOrNull()
+            } catch (_: IOException) {
+                // No route to the model: no network, a dropped connection, or a
+                // request that ran out of time trying.
+                GeminiResponse.Unreachable
+            }
         }
     }
 

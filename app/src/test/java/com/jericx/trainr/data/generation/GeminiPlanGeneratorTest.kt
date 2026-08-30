@@ -1,6 +1,7 @@
 package com.jericx.trainr.data.generation
 
 import com.google.common.truth.Truth.assertThat
+import com.jericx.trainr.domain.generation.PlanGenerationResult
 import com.jericx.trainr.domain.generation.PlanRequest
 import com.jericx.trainr.domain.model.UserProfile
 import kotlinx.coroutines.test.runTest
@@ -92,7 +93,7 @@ class GeminiPlanGeneratorTest {
     fun aValidResponseBecomesAPlan() = runTest {
         enqueue(validPlanJson)
 
-        val plan = generator().generate(request())!!
+        val plan = (generator().generate(request()) as PlanGenerationResult.Generated).plan!!
 
         assertThat(plan.userId).isEqualTo(7)
         assertThat(plan.startDateMillis).isEqualTo(1_000L)
@@ -112,7 +113,7 @@ class GeminiPlanGeneratorTest {
         enqueue("""{ "title": " ", "days": [] }""")
         enqueue(validPlanJson)
 
-        val plan = generator().generate(request())
+        val plan = (generator().generate(request()) as PlanGenerationResult.Generated).plan
 
         assertThat(plan).isNotNull()
         assertThat(server.requestCount).isEqualTo(2)
@@ -130,7 +131,7 @@ class GeminiPlanGeneratorTest {
 
         val plan = generator().generate(request(daysPerWeek = 3))
 
-        assertThat(plan).isNull()
+        assertThat(plan).isEqualTo(PlanGenerationResult.Failed)
         assertThat(server.requestCount).isEqualTo(3)
         server.takeRequest()
         assertThat(server.takeRequest().body.readUtf8())
@@ -141,13 +142,13 @@ class GeminiPlanGeneratorTest {
     fun persistentGarbageGivesUpAfterThreeAttempts() = runTest {
         repeat(4) { enqueue("not json at all") }
 
-        assertThat(generator().generate(request())).isNull()
+        assertThat(generator().generate(request())).isEqualTo(PlanGenerationResult.Failed)
         assertThat(server.requestCount).isEqualTo(3)
     }
 
     @Test
     fun aMissingKeyMeansNoCallAtAll() = runTest {
-        assertThat(generator(apiKey = "").generate(request())).isNull()
+        assertThat(generator(apiKey = "").generate(request())).isEqualTo(PlanGenerationResult.Failed)
         assertThat(server.requestCount).isEqualTo(0)
     }
 
@@ -166,7 +167,7 @@ class GeminiPlanGeneratorTest {
     fun persistentServerErrorsFailSoftly() = runTest {
         repeat(3) { server.enqueue(MockResponse().setResponseCode(503)) }
 
-        assertThat(generator().generate(request())).isNull()
+        assertThat(generator().generate(request())).isEqualTo(PlanGenerationResult.Failed)
         assertThat(server.requestCount).isEqualTo(3)
     }
 }
