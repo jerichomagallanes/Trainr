@@ -152,6 +152,18 @@ class GeminiPlanGeneratorTest {
         assertThat(server.requestCount).isEqualTo(0)
     }
 
+    // An alias resolves onto a model that is already in the list and shares its
+    // allowance, so it would add waiting rather than capacity: driving
+    // gemini-3.5-flash-lite to its per-minute limit refuses
+    // gemini-flash-lite-latest in the same breath. Checked here because the
+    // list looks like somewhere you would helpfully add more names.
+    @Test
+    fun theModelListHoldsRealNamesRatherThanAliases() {
+        assertThat(GeminiClient.MODELS).isNotEmpty()
+        assertThat(GeminiClient.MODELS.filter { it.endsWith("-latest") }).isEmpty()
+        assertThat(GeminiClient.MODELS).containsNoDuplicates()
+    }
+
     // An overloaded model is one of the three that will not answer, so the next
     // one is asked and the plan still arrives.
     @Test
