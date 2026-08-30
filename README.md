@@ -15,9 +15,17 @@ App Demo
 - **Equipment Adaptation**: Workouts adapt to your available equipment (bodyweight, dumbbells, barbells, etc.)
 - **Goal-Oriented Training**: Specialized programs for weight loss, muscle gain, strength, endurance, and general fitness
 - **Injury Considerations**: Safe workout modifications based on reported limitations
-- **Progress Tracking**: Monitor your fitness journey over time
-- **Dark Mode Support**: Comfortable viewing in low-light conditions
-- **Multi-Language Support**: Available in English, Japanese, and Tagalog with runtime locale switching
+- **Session Logging**: Record weight, reps and time per set, with last week's numbers shown beside each one
+- **Built-in Timer**: Count down a timed exercise without leaving the session
+- **Video Tutorials**: A hand-checked YouTube demonstration for each exercise in the catalog
+- **Rescheduling**: Long-press a session to drag it onto another weekday; days you have missed are derived from the calendar, never stored
+- **Week by Week**: Generate the next week from what you actually lifted, run any past week again, or rebuild the week you are in
+- **Progress Tracking**: Every stored week with its dates, status and completion
+
+### Not yet
+
+- **Dark mode**: the theme exists but the app is pinned to light — the design has no dark variant yet
+- **Japanese and Tagalog**: the translations are in the repository but excluded from the build; the app forces English so dates and strings cannot disagree
 
 ## 🎯 Fitness Goals Supported
 
@@ -47,6 +55,9 @@ App Demo
 - **Kotlin Coroutines & Flow**: Asynchronous programming and reactive streams
 - **Material Design 3**: Modern UI components and theming
 - **Navigation Compose**: Single-activity navigation between Compose screens
+- **Firebase AI Logic**: Gemini generation without an API key in the app
+- **Firebase App Check**: Play Integrity attestation, so only the real app can spend the quota
+- **android-youtube-player**: Official IFrame Player API, bound to the screen's lifecycle
 
 ## 🏗️ Architecture
 
@@ -55,6 +66,13 @@ The app follows Clean Architecture principles with three main layers:
 - **Presentation Layer**: UI components, ViewModels, and Compose screens
 - **Domain Layer**: Repository contracts and framework-independent domain models
 - **Data Layer**: Repository implementations, local database, and data sources
+
+Plan generation sits behind a single `PlanGenerator` interface returning
+`Generated`, `Offline` or `Failed` — never a plan the model did not write. The
+Firebase-backed implementation walks an ordered list of Gemini models, because the
+free allowance is counted per model: one that has run out for the day hands over to
+the next without spending a retry. Every answer is validated against the generation
+contract and re-asked with the specific errors when it does not hold.
 
 ## 🚀 Getting Started
 
@@ -65,17 +83,33 @@ The app follows Clean Architecture principles with three main layers:
 
 2. Open the project in Android Studio
 
-3. Build and run the application on an Android device or emulator
+3. **Add a Firebase project.** The build fails without it — `File google-services.json is missing`.
+
+   - Create a project at [console.firebase.google.com](https://console.firebase.google.com)
+   - Register an Android app for `com.jericx.trainr` and another for `com.jericx.trainr.dev`
+   - Enable **AI Services → AI Logic** and choose the **Gemini Developer API** provider
+   - Download `google-services.json` and put it at `app/google-services.json`
+
+   The file is deliberately not in this repository, so a clone has to bring its own.
+
+4. **Register an App Check debug token.** App Check is enforced, and nothing installed
+   by adb can pass Play Integrity. Run the app once, take the token from logcat
+   (`Firebase App Check debug token: …`), and add it under **App Check → your app →
+   Manage debug tokens**. Without this, generation is refused.
+
+5. Build and run the application on an Android device or emulator
 
 ## 🛠️ Build Variants
 
 The project includes multiple build variants for different environments:
 
-- **Dev**: Development build with debug features and mock data
-- **SIT**: System Integration Testing environment
+- **Dev**: Development build, the one CI exercises
+- **SIT**: System Integration Testing environment — currently has no Firebase app registered, so it does not build
 - **Prod**: Production-ready build
 
-Each variant supports both debug and release build types for comprehensive testing and deployment flexibility.
+Alongside `debug` and `release` there is a **minified** build type: release's R8
+configuration with a debug signature, so CI can launch a shrunk build and catch a
+missing keep rule before production does.
 
 ## 📱 Minimum Requirements
 
