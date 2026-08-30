@@ -110,12 +110,27 @@ class GeminiClient(
         // Asked in order. The free allowance is counted per model, so a model
         // that has run out for the day says nothing about the next one — these
         // are separate daily buckets, and the plan is worth more than the
-        // marginal quality between them. Newest and strongest first; the lite
-        // models are the reserve that keeps the app working once it is spent.
+        // marginal quality between them. Strongest first; the lite models are
+        // the reserve that keeps the app working once it is spent.
+        //
+        // Every name here was checked against the live API with a
+        // schema-constrained request like the real one, because being listed by
+        // the API is not the same as being able to do this job. Deliberately
+        // absent: the `-latest` aliases, which resolve onto a model already in
+        // this list and share its allowance — driving gemini-3.5-flash-lite to
+        // its per-minute limit refuses gemini-flash-lite-latest in the same
+        // breath, so they add waiting rather than capacity; retired names,
+        // which answer "no longer available to new users"; the pro and
+        // deep-research models, whose free allowances are far smaller and whose
+        // paid rates are far higher; and anything that has been unreachable
+        // more than once, since a model that times out reads as the client
+        // being offline and stops the whole list.
         val MODELS = listOf(
             "gemini-3.6-flash",
+            "gemini-3.5-flash",
             "gemini-3.5-flash-lite",
-            "gemini-3.1-flash-lite"
+            "gemini-3.1-flash-lite",
+            "gemini-3-flash-preview"
         )
 
         // 429 spent, 404 retired, 503 overloaded: reasons to ask someone else.
