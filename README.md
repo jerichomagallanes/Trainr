@@ -18,14 +18,14 @@ App Demo
 - **Session Logging**: Record weight, reps and time per set, with last week's numbers shown beside each one
 - **Built-in Timer**: Count down a timed exercise without leaving the session
 - **Video Tutorials**: A hand-checked YouTube demonstration for each exercise in the catalog
-- **Rescheduling**: Long-press a session to drag it onto another weekday; days you have missed are derived from the calendar, never stored
+- **Rescheduling**: Long-press a session to drag it onto another weekday
 - **Week by Week**: Generate the next week from what you actually lifted, run any past week again, or rebuild the week you are in
 - **Progress Tracking**: Every stored week with its dates, status and completion
 
 ### Not yet
 
-- **Dark mode**: the theme exists but the app is pinned to light — the design has no dark variant yet
-- **Japanese and Tagalog**: the translations are in the repository but excluded from the build; the app forces English so dates and strings cannot disagree
+- **Dark mode** — the app is pinned to light
+- **Japanese and Tagalog** — translated, but not yet enabled
 
 ## 🎯 Fitness Goals Supported
 
@@ -56,8 +56,8 @@ App Demo
 - **Material Design 3**: Modern UI components and theming
 - **Navigation Compose**: Single-activity navigation between Compose screens
 - **Firebase AI Logic**: Gemini generation without an API key in the app
-- **Firebase App Check**: Play Integrity attestation, so only the real app can spend the quota
-- **android-youtube-player**: Official IFrame Player API, bound to the screen's lifecycle
+- **Firebase App Check**: Play Integrity attestation for every generation request
+- **android-youtube-player**: In-app exercise demonstrations via the official IFrame Player API
 
 ## 🏗️ Architecture
 
@@ -67,12 +67,10 @@ The app follows Clean Architecture principles with three main layers:
 - **Domain Layer**: Repository contracts and framework-independent domain models
 - **Data Layer**: Repository implementations, local database, and data sources
 
-Plan generation sits behind a single `PlanGenerator` interface returning
-`Generated`, `Offline` or `Failed` — never a plan the model did not write. The
-Firebase-backed implementation walks an ordered list of Gemini models, because the
-free allowance is counted per model: one that has run out for the day hands over to
-the next without spending a retry. Every answer is validated against the generation
-contract and re-asked with the specific errors when it does not hold.
+Plan generation sits behind a single `PlanGenerator` interface that answers
+`Generated`, `Offline` or `Failed` — never a plan the model did not write. Every
+answer is validated before it is stored, and re-asked with the specific errors when
+it does not hold.
 
 ## 🚀 Getting Started
 
@@ -83,39 +81,33 @@ contract and re-asked with the specific errors when it does not hold.
 
 2. Open the project in Android Studio
 
-3. **Add a Firebase project.** The build fails without it — `File google-services.json is missing`.
+3. **Add your own Firebase project** — the build fails without it.
 
    - Create a project at [console.firebase.google.com](https://console.firebase.google.com)
-   - Register an Android app for `com.jericx.trainr` and another for `com.jericx.trainr.dev`
-   - Enable **AI Services → AI Logic** and choose the **Gemini Developer API** provider
-   - Download `google-services.json` and put it at `app/google-services.json`
+   - Register Android apps for `com.jericx.trainr` and `com.jericx.trainr.dev`
+   - Enable **AI Services → AI Logic**, choosing the **Gemini Developer API**
+   - Save `google-services.json` to `app/google-services.json`
 
-   The file is deliberately not in this repository, so a clone has to bring its own.
+4. Build and run on a device or emulator.
 
-4. **Register an App Check debug token.** App Check is enforced, and nothing installed
-   by adb can pass Play Integrity. Run the app once, take the token from logcat
-   (`Firebase App Check debug token: …`), and add it under **App Check → your app →
-   Manage debug tokens**. Without this, generation is refused.
-
-5. Build and run the application on an Android device or emulator
+   To generate a plan on a debug build, run it once and register the App Check
+   debug token it prints to logcat under **App Check → Manage debug tokens**.
 
 ## 🛠️ Build Variants
 
 The project includes multiple build variants for different environments:
 
-- **Dev**: Development build, the one CI exercises
-- **SIT**: System Integration Testing environment — currently has no Firebase app registered, so it does not build
+- **Dev**: Development build
+- **SIT**: System Integration Testing environment
 - **Prod**: Production-ready build
 
-Alongside `debug` and `release` there is a **minified** build type: release's R8
-configuration with a debug signature, so CI can launch a shrunk build and catch a
-missing keep rule before production does.
+Each supports `debug` and `release` build types.
 
 ## 📱 Minimum Requirements
 
 - Android API Level 24 (Android 7.0)
 - Compile SDK 37, Target SDK 36
-- Kotlin 2.3+
+- Kotlin 2.4
 
 ## 🏃‍♀️ Start Your Fitness Journey
 
