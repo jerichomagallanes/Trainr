@@ -11,6 +11,8 @@ import com.jericx.trainr.domain.model.WorkoutLocation
 import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.domain.model.WorkoutTime
 import com.jericx.trainr.domain.model.WorkoutType
+import com.jericx.trainr.domain.generation.PlanGenerator
+import com.jericx.trainr.domain.generation.PlanRequest
 import com.jericx.trainr.domain.repository.UserRepository
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -32,13 +34,16 @@ class OnboardingViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var userRepository: UserRepository
+    private lateinit var planGenerator: PlanGenerator
     private lateinit var viewModel: OnboardingViewModel
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         userRepository = mockk(relaxed = true)
-        viewModel = OnboardingViewModel(userRepository)
+        planGenerator = mockk()
+        coEvery { planGenerator.generate(any()) } returns null
+        viewModel = OnboardingViewModel(userRepository, planGenerator) { "en" }
     }
 
     @After
@@ -179,6 +184,31 @@ class OnboardingViewModelTest {
             assertThat(workoutDays.flatMap { it.exercises }.any { it.isCompleted }).isFalse()
             assertThat(workoutDays.flatMap { it.exercises }.flatMap { it.sets }
                 .mapNotNull { it.actualReps ?: it.actualWeightKg ?: it.actualSeconds }).isEmpty()
+        }
+    }
+
+    @Test
+    fun `a generated plan is saved instead of the sample fallback`() = runTest(testDispatcher) {
+        coEvery { userRepository.getCurrentUser() } returns null
+        coEvery { userRepository.saveUser(any()) } returns 42L
+        val generated = WeeklyWorkoutPlan(
+            userId = 42L, weekNumber = 1, title = "Generated week",
+            startDateMillis = 1L, workoutDays = emptyList()
+        )
+        val request = slot<PlanRequest>()
+        coEvery { planGenerator.generate(capture(request)) } returns generated
+        val saved = slot<WeeklyWorkoutPlan>()
+        coEvery { userRepository.saveWeeklyWorkoutPlan(capture(saved)) } returns 1L
+
+        viewModel.saveUserProfile(onSuccess = {})
+        advanceUntilIdle()
+
+        assertThat(saved.captured).isEqualTo(generated)
+        with(request.captured) {
+            assertThat(user.id).isEqualTo(42L)
+            assertThat(weekNumber).isEqualTo(1)
+            assertThat(languageCode).isEqualTo("en")
+            assertThat(previousWeek).isNull()
         }
     }
 

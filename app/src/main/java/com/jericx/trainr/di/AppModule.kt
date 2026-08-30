@@ -2,11 +2,19 @@ package com.jericx.trainr.di
 
 import android.content.Context
 import androidx.room.Room
+import com.jericx.trainr.BuildConfig
 import com.jericx.trainr.common.Constants
+import com.jericx.trainr.data.generation.GeminiClient
+import com.jericx.trainr.data.generation.GeminiPlanGenerator
+import com.jericx.trainr.data.generation.GeneratedPlanParser
+import com.jericx.trainr.data.generation.PlanPromptBuilder
 import com.jericx.trainr.data.local.TrainrDatabase
 import com.jericx.trainr.data.local.UserDao
 import com.jericx.trainr.data.local.UserMapper
+import com.jericx.trainr.data.preferences.LanguageCodeProvider
+import com.jericx.trainr.data.preferences.LanguagePreferences
 import com.jericx.trainr.data.repository.UserRepositoryImpl
+import com.jericx.trainr.domain.generation.PlanGenerator
 import com.jericx.trainr.domain.repository.UserRepository
 import dagger.Module
 import dagger.Provides
@@ -52,5 +60,23 @@ object AppModule {
         mapper: UserMapper
     ): UserRepository {
         return UserRepositoryImpl(userDao, mapper)
+    }
+
+    @Provides
+    @Singleton
+    fun providePlanGenerator(): PlanGenerator {
+        return GeminiPlanGenerator(
+            client = GeminiClient(apiKey = BuildConfig.GEMINI_API_KEY),
+            parser = GeneratedPlanParser(),
+            promptBuilder = PlanPromptBuilder()
+        )
+    }
+
+    @Provides
+    @Singleton
+    fun provideLanguageCodeProvider(@ApplicationContext context: Context): LanguageCodeProvider {
+        return LanguageCodeProvider {
+            LanguagePreferences(context).getCurrentLanguageObject(context).code
+        }
     }
 }
