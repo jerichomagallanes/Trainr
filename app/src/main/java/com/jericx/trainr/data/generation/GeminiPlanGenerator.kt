@@ -1,52 +1,74 @@
 package com.jericx.trainr.data.generation
 
 import com.jericx.trainr.domain.generation.PlanGenerator
+import com.jericx.trainr.domain.generation.PlanGenerationResult
 import com.jericx.trainr.domain.generation.PlanRequest
-import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
 import kotlinx.coroutines.delay
 
 // Generation is a conversation with a deadline: ask, validate, and when the
 // answer breaks the contract, ask again quoting every problem. After that,
-// give up and let the caller fall back — never ship a plan that failed
-// validation.
+// report why it could not be done — never ship a plan that failed validation,
+// and never let the caller mistake a failure for a plan.
 class GeminiPlanGenerator(
     private val client: GeminiClient,
     private val parser: GeneratedPlanParser,
     private val promptBuilder: PlanPromptBuilder
 ) : PlanGenerator {
 
-    override suspend fun generate(request: PlanRequest): WeeklyWorkoutPlan? {
+    override suspend fun generate(request: PlanRequest): PlanGenerationResult {
         val basePrompt = promptBuilder.userPrompt(request)
         var feedback: List<String> = emptyList()
+        // Whatever went wrong last is what the client hears about. A failure to
+        // reach the model at all is worth saying plainly, so it survives the
+        // loop rather than being flattened into "something went wrong".
+        var failure: PlanGenerationResult.Failure = PlanGenerationResult.Failed
 
         repeat(MAX_ATTEMPTS) { attempt ->
             if (attempt > 0) delay(RETRY_DELAY_MILLIS * attempt)
 
             val prompt = if (feedback.isEmpty()) basePrompt else withFeedback(basePrompt, feedback)
-            // A null answer is transient (congestion, a dropped connection) as
-            // often as it is fatal, so it spends an attempt rather than all of them.
-            val json = client.generate(
-                systemInstruction = promptBuilder.systemInstruction(),
-                userPrompt = prompt,
-                responseSchema = GENERATED_PLAN_SCHEMA
-            ) ?: return@repeat
+            // An unusable answer is transient (congestion, a dropped connection)
+            // as often as it is fatal, so it spends an attempt, not all of them.
+            val json = when (
+                val answer = client.generate(
+                    systemInstruction = promptBuilder.systemInstruction(),
+                    userPrompt = prompt,
+                    responseSchema = GENERATED_PLAN_SCHEMA
+                )
+            ) {
+                is GeminiResponse.Text -> answer.value
+                GeminiResponse.Unreachable -> {
+                    failure = PlanGenerationResult.Offline
+                    return@repeat
+                }
+                GeminiResponse.Failed -> {
+                    failure = PlanGenerationResult.Failed
+                    return@repeat
+                }
+            }
 
             when (val result = parser.parse(
                 json, request.user.id, request.weekNumber, request.startDateMillis
             )) {
                 is PlanParseResult.Parsed -> {
                     val plan = result.plan
-                    if (plan.workoutDays.size == request.user.workoutDaysPerWeek) return plan
+                    if (plan.workoutDays.size == request.user.workoutDaysPerWeek) {
+                        return PlanGenerationResult.Generated(plan)
+                    }
                     feedback = listOf(
                         "plan: has ${plan.workoutDays.size} days but the client " +
                             "asked for exactly ${request.user.workoutDaysPerWeek}"
                     )
+                    failure = PlanGenerationResult.Failed
                 }
 
-                is PlanParseResult.Invalid -> feedback = result.errors
+                is PlanParseResult.Invalid -> {
+                    feedback = result.errors
+                    failure = PlanGenerationResult.Failed
+                }
             }
         }
-        return null
+        return failure
     }
 
     private fun withFeedback(basePrompt: String, errors: List<String>) = buildString {

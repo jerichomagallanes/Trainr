@@ -12,6 +12,7 @@ import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.domain.model.WorkoutTime
 import com.jericx.trainr.domain.model.WorkoutType
 import com.jericx.trainr.domain.generation.PlanGenerator
+import com.jericx.trainr.domain.generation.PlanGenerationResult
 import com.jericx.trainr.domain.generation.PlanRequest
 import com.jericx.trainr.domain.repository.UserRepository
 import com.jericx.trainr.presentation.workout.util.WorkoutWeek
@@ -44,7 +45,17 @@ class OnboardingViewModelTest {
         userRepository = mockk(relaxed = true)
         coEvery { userRepository.getCurrentUser() } returns null
         planGenerator = mockk()
-        coEvery { planGenerator.generate(any()) } returns null
+        coEvery { planGenerator.generate(any()) } answers {
+            PlanGenerationResult.Generated(
+                WeeklyWorkoutPlan(
+                    userId = firstArg<PlanRequest>().user.id,
+                    weekNumber = firstArg<PlanRequest>().weekNumber,
+                    title = "Generated week",
+                    startDateMillis = firstArg<PlanRequest>().startDateMillis,
+                    workoutDays = emptyList()
+                )
+            )
+        }
         viewModel = OnboardingViewModel(userRepository, planGenerator) { "en" }
     }
 
@@ -168,7 +179,7 @@ class OnboardingViewModelTest {
     }
 
     @Test
-    fun `saveUserProfile seeds a fresh week-one plan for the saved user`() = runTest(testDispatcher) {
+    fun `the generated plan is stored against the saved user`() = runTest(testDispatcher) {
         coEvery { userRepository.getCurrentUser() } returns null
         coEvery { userRepository.saveUser(any()) } returns 42L
         val plan = slot<WeeklyWorkoutPlan>()
@@ -181,12 +192,43 @@ class OnboardingViewModelTest {
             assertThat(userId).isEqualTo(42L)
             assertThat(weekNumber).isEqualTo(1)
             assertThat(startDateMillis).isNotNull()
-            assertThat(workoutDays.map { it.status }.toSet())
-                .containsExactly(WorkoutStatus.NOT_STARTED)
-            assertThat(workoutDays.flatMap { it.exercises }.any { it.isCompleted }).isFalse()
-            assertThat(workoutDays.flatMap { it.exercises }.flatMap { it.sets }
-                .mapNotNull { it.actualReps ?: it.actualWeightKg ?: it.actualSeconds }).isEmpty()
         }
+    }
+
+    // A plan that could not be written is said out loud. It used to be replaced
+    // by the built-in week, which told the client their coach had written them
+    // a plan when it had not.
+    @Test
+    fun `a failed generation writes nothing and reports why`() = runTest(testDispatcher) {
+        coEvery { planGenerator.generate(any()) } returns PlanGenerationResult.Offline
+        var done = false
+
+        viewModel.saveUserProfile(onSuccess = { done = true })
+        advanceUntilIdle()
+
+        with(viewModel.onboardingState.value) {
+            assertThat(generationFailure).isEqualTo(PlanGenerationResult.Offline)
+            assertThat(isCompleted).isFalse()
+            assertThat(isLoading).isFalse()
+        }
+        assertThat(done).isFalse()
+        coVerify(exactly = 0) { userRepository.saveWeeklyWorkoutPlan(any()) }
+        coVerify(exactly = 0) { userRepository.saveUser(any()) }
+    }
+
+    // Saving the user first would replace the stored one, and that REPLACE
+    // cascades every stored week away: a regeneration that failed destroyed the
+    // history it was meant to build on.
+    @Test
+    fun `a failed regeneration leaves the stored plan alone`() = runTest(testDispatcher) {
+        coEvery { userRepository.getCurrentUser() } returns UserProfile(id = 7)
+        coEvery { planGenerator.generate(any()) } returns PlanGenerationResult.Failed
+
+        viewModel.saveUserProfile(onSuccess = {})
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { userRepository.saveUser(any()) }
+        coVerify(exactly = 0) { userRepository.saveWeeklyWorkoutPlan(any()) }
     }
 
     @Test
@@ -198,7 +240,8 @@ class OnboardingViewModelTest {
             startDateMillis = 1L, workoutDays = emptyList()
         )
         val request = slot<PlanRequest>()
-        coEvery { planGenerator.generate(capture(request)) } returns generated
+        coEvery { planGenerator.generate(capture(request)) } returns
+            PlanGenerationResult.Generated(generated)
         val saved = slot<WeeklyWorkoutPlan>()
         coEvery { userRepository.saveWeeklyWorkoutPlan(capture(saved)) } returns 1L
 
@@ -207,7 +250,9 @@ class OnboardingViewModelTest {
 
         assertThat(saved.captured).isEqualTo(generated)
         with(request.captured) {
-            assertThat(user.id).isEqualTo(42L)
+            // Generation runs before the user row exists, so the request
+            // carries the id it will be saved under: none, for a new client.
+            assertThat(user.id).isEqualTo(0L)
             assertThat(weekNumber).isEqualTo(1)
             assertThat(languageCode).isEqualTo("en")
             assertThat(previousWeek).isNull()
@@ -284,7 +329,8 @@ class OnboardingViewModelTest {
     @Test
     fun `the first week starts today`() = runTest {
         val request = slot<PlanRequest>()
-        coEvery { planGenerator.generate(capture(request)) } returns null
+        coEvery { planGenerator.generate(capture(request)) } returns PlanGenerationResult.Failed
+        // The request is captured before generation is allowed to fail.
 
         viewModel.saveUserProfile {}
         advanceUntilIdle()

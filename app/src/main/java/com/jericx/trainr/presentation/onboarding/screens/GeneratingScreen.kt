@@ -11,6 +11,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.annotation.StringRes
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import com.jericx.trainr.domain.generation.PlanGenerationResult
+import com.jericx.trainr.presentation.common.theme.Orange500
+import com.jericx.trainr.presentation.common.theme.Slate800
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -42,7 +48,14 @@ private const val MINIMUM_VISIBLE_MILLIS = 1_500L
 fun GeneratingScreen(
     isReady: Boolean,
     onStart: () -> Unit,
-    onDone: () -> Unit
+    onDone: () -> Unit,
+    // Non-null when there is no plan and there will not be one until something
+    // changes. The animation stays behind the dialog rather than pretending to
+    // still be working.
+    failure: PlanGenerationResult.Failure? = null,
+    onRetry: () -> Unit = {},
+    onGiveUp: () -> Unit = {},
+    @StringRes giveUpLabel: Int = R.string.cancel
 ) {
     var activeIndicator by remember { mutableIntStateOf(0) }
     val totalIndicators = 14
@@ -59,6 +72,15 @@ fun GeneratingScreen(
     }
 
     LaunchedEffect(Unit) { onStart() }
+
+    failure?.let {
+        GenerationFailedDialog(
+            failure = it,
+            giveUpLabel = giveUpLabel,
+            onRetry = onRetry,
+            onGiveUp = onGiveUp
+        )
+    }
 
     LaunchedEffect(isReady) {
         if (!isReady) return@LaunchedEffect
@@ -136,4 +158,39 @@ private fun LoadingIndicator(
             )
         }
     }
+}
+
+@Composable
+private fun GenerationFailedDialog(
+    failure: PlanGenerationResult.Failure,
+    @StringRes giveUpLabel: Int,
+    onRetry: () -> Unit,
+    onGiveUp: () -> Unit
+) {
+    AlertDialog(
+        // Dismissing is the way out, not a way to go on waiting for a plan that
+        // is not coming.
+        onDismissRequest = onGiveUp,
+        title = { Text(text = stringResource(R.string.generation_failed_title)) },
+        text = {
+            Text(
+                text = stringResource(
+                    when (failure) {
+                        PlanGenerationResult.Offline -> R.string.generation_failed_offline
+                        PlanGenerationResult.Failed -> R.string.generation_failed_message
+                    }
+                )
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onRetry) {
+                Text(text = stringResource(R.string.try_again), color = Orange500)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onGiveUp) {
+                Text(text = stringResource(giveUpLabel), color = Slate800)
+            }
+        }
+    )
 }

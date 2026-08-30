@@ -3,6 +3,7 @@ package com.jericx.trainr.presentation.workout
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jericx.trainr.data.preferences.LanguageCodeProvider
+import com.jericx.trainr.domain.generation.PlanGenerationResult
 import com.jericx.trainr.domain.generation.PlanGenerator
 import com.jericx.trainr.domain.generation.PlanRequest
 import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
@@ -10,6 +11,9 @@ import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.domain.repository.UserRepository
 import com.jericx.trainr.presentation.workout.util.WorkoutWeek
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -21,10 +25,14 @@ class NextWeekViewModel @Inject constructor(
     private val languageCode: LanguageCodeProvider
 ) : ViewModel() {
 
+    private val _failure = MutableStateFlow<PlanGenerationResult.Failure?>(null)
+    val failure: StateFlow<PlanGenerationResult.Failure?> = _failure.asStateFlow()
+
     // The finished week seeds the request, so the model progresses from what
     // was actually lifted instead of restarting from the intake answers.
     fun generateNextWeek(onDone: () -> Unit) {
         viewModelScope.launch {
+            _failure.value = null
             val user = userRepository.getCurrentUser() ?: return@launch onDone()
             val latest = userRepository.getWeeklyWorkoutPlans(user.id).first()
                 .maxByOrNull { it.weekNumber } ?: return@launch onDone()
@@ -44,7 +52,7 @@ class NextWeekViewModel @Inject constructor(
                     ?: WorkoutWeek.startOfDay(),
                 WorkoutWeek.startOfDay()
             )
-            val plan = planGenerator.generate(
+            val result = planGenerator.generate(
                 PlanRequest(
                     user = user,
                     weekNumber = nextNumber,
@@ -52,53 +60,23 @@ class NextWeekViewModel @Inject constructor(
                     languageCode = languageCode.current(),
                     previousWeek = latest
                 )
-            ) ?: repeatWeek(latest, nextNumber, start)
+            )
 
-            userRepository.saveWeeklyWorkoutPlan(plan)
+            // Repeating the finished week used to stand in here. It is the same
+            // dishonesty as the sample week: the client is told next week is
+            // ready when the coach never wrote it, and repeating a week is a
+            // decision they should get to make.
+            if (result !is PlanGenerationResult.Generated) {
+                _failure.value = result as PlanGenerationResult.Failure
+                return@launch
+            }
+
+            userRepository.saveWeeklyWorkoutPlan(result.plan)
             onDone()
         }
     }
 
     companion object {
         private const val DAYS_PER_WEEK = 7
-
-        // The offline fallback runs the finished week again with the logs
-        // cleared: repeating a week is sound coaching, inventing progress is not.
-        fun repeatWeek(
-            previous: WeeklyWorkoutPlan,
-            weekNumber: Int,
-            startDateMillis: Long
-        ): WeeklyWorkoutPlan {
-            val now = System.currentTimeMillis()
-            return previous.copy(
-                id = 0,
-                weekNumber = weekNumber,
-                startDateMillis = startDateMillis,
-                createdAt = now,
-                updatedAt = now,
-                workoutDays = previous.workoutDays.map { day ->
-                    day.copy(
-                        id = 0,
-                        status = WorkoutStatus.NOT_STARTED,
-                        completedAt = null,
-                        exercises = day.exercises.map { exercise ->
-                            exercise.copy(
-                                id = 0,
-                                isCompleted = false,
-                                sets = exercise.sets.map {
-                                    it.copy(
-                                        id = 0,
-                                        actualReps = null,
-                                        actualWeightKg = null,
-                                        actualSeconds = null,
-                                        isCompleted = false
-                                    )
-                                }
-                            )
-                        }
-                    )
-                }
-            )
-        }
     }
 }

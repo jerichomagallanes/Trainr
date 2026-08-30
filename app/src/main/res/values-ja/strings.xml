@@ -197,6 +197,11 @@
     <string name="delete_set">セットを削除</string>
     <string name="plan_options">プランのオプション</string>
     <string name="regenerate_plan">プランを再生成</string>
+    <string name="generation_failed_title">プランを作成できませんでした</string>
+    <string name="generation_failed_offline">インターネットに接続できません。接続を確認してもう一度お試しください。</string>
+    <string name="generation_failed_message">プランの作成中に問題が発生しました。もう一度お試しください。</string>
+    <string name="try_again">再試行</string>
+    <string name="back_to_profile">プロフィールに戻る</string>
     <string name="missed">未実施</string>
     <string name="start_next_workout">次のワークアウトを開始</string>
     <string name="move_earlier">前の日に移動</string>

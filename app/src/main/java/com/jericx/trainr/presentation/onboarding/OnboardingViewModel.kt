@@ -11,10 +11,10 @@ import com.jericx.trainr.domain.model.WorkoutLocation
 import com.jericx.trainr.domain.model.WorkoutTime
 import com.jericx.trainr.domain.model.WorkoutType
 import com.jericx.trainr.data.preferences.LanguageCodeProvider
+import com.jericx.trainr.domain.generation.PlanGenerationResult
 import com.jericx.trainr.domain.generation.PlanGenerator
 import com.jericx.trainr.domain.generation.PlanRequest
 import com.jericx.trainr.domain.repository.UserRepository
-import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
 import com.jericx.trainr.presentation.workout.util.WorkoutWeek
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -125,28 +125,40 @@ class OnboardingViewModel @Inject constructor(
     fun saveUserProfile(onSuccess: () -> Unit) {
         viewModelScope.launch {
             try {
-                _onboardingState.value = _onboardingState.value.copy(isLoading = true)
-                // Redoing onboarding replaces the existing user; the REPLACE
-                // cascades the old plan away, so the reseed below starts clean.
-                val profile = _onboardingState.value.userProfile
-                val existing = userRepository.getCurrentUser()
-                val userId = userRepository.saveUser(
-                    if (existing == null) profile else profile.copy(id = existing.id)
+                _onboardingState.value = _onboardingState.value.copy(
+                    isLoading = true,
+                    generationFailure = null
                 )
+                val existing = userRepository.getCurrentUser()
+                val profile = _onboardingState.value.userProfile
+                    .let { if (existing == null) it else it.copy(id = existing.id) }
                 // The plan starts today. Anchoring it to the Monday just gone
                 // would hand a new user a week of sessions already missed.
                 val start = WorkoutWeek.startOfDay()
-                // The sample week stands in when generation is unavailable —
-                // no key, offline, or the model never produced a valid plan.
-                val plan = planGenerator.generate(
+
+                // Nothing is written until there is a plan to write. Saving the
+                // user first would replace the stored one, and that REPLACE
+                // cascades every existing week away — so a regeneration that
+                // failed used to destroy the history it was meant to build on.
+                val result = planGenerator.generate(
                     PlanRequest(
-                        user = profile.copy(id = userId),
+                        user = profile,
                         weekNumber = FIRST_WEEK,
                         startDateMillis = start,
                         languageCode = languageCode.current()
                     )
-                ) ?: SampleWorkoutData.freshWeekOne(userId, start)
-                userRepository.saveWeeklyWorkoutPlan(plan)
+                )
+
+                if (result !is PlanGenerationResult.Generated) {
+                    _onboardingState.value = _onboardingState.value.copy(
+                        isLoading = false,
+                        generationFailure = result as PlanGenerationResult.Failure
+                    )
+                    return@launch
+                }
+
+                val userId = userRepository.saveUser(profile)
+                userRepository.saveWeeklyWorkoutPlan(result.plan.copy(userId = userId))
                 _onboardingState.value = _onboardingState.value.copy(
                     isLoading = false,
                     isCompleted = true
@@ -155,7 +167,8 @@ class OnboardingViewModel @Inject constructor(
             } catch (e: Exception) {
                 _onboardingState.value = _onboardingState.value.copy(
                     isLoading = false,
-                    error = e.message
+                    error = e.message,
+                    generationFailure = PlanGenerationResult.Failed
                 )
             }
         }
@@ -171,5 +184,8 @@ data class OnboardingState(
     val currentStep: Int = 0,
     val isLoading: Boolean = false,
     val error: String? = null,
-    val isCompleted: Boolean = false
+    val isCompleted: Boolean = false,
+    // Set when a plan could not be written, so the screen can say why rather
+    // than handing over a week nobody asked for.
+    val generationFailure: PlanGenerationResult.Failure? = null
 )
