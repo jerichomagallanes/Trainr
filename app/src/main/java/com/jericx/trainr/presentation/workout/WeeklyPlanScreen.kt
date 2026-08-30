@@ -1,9 +1,9 @@
 package com.jericx.trainr.presentation.workout
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -78,10 +80,7 @@ fun WeeklyPlanScreen(
 ) {
     val locale = LocalLocale.current.platformLocale
     var showLeaveDialog by remember { mutableStateOf(false) }
-
-    // The system back gesture leaves the plan just as the toolbar arrow does,
-    // so it has to go through the same confirmation.
-    BackHandler { showLeaveDialog = true }
+    var showMenu by remember { mutableStateOf(false) }
 
     if (showLeaveDialog) {
         LeavePlanDialog(
@@ -94,7 +93,9 @@ fun WeeklyPlanScreen(
     }
 
     Column(modifier = modifier.fillMaxSize()) {
-        TrainrTopBar(onBackClick = { showLeaveDialog = true })
+        // The plan is home: there is nowhere to go back to. Plan-level actions
+        // live behind the heading's overflow, where the design puts them.
+        TrainrTopBar(onBackClick = null)
 
         Column(
             modifier = Modifier
@@ -103,11 +104,35 @@ fun WeeklyPlanScreen(
                 .padding(horizontal = Spacing.screen, vertical = Spacing.medium),
             verticalArrangement = Arrangement.spacedBy(Spacing.medium)
         ) {
-            Text(
-                text = stringResource(R.string.your_weekly_workout_plan),
-                style = MaterialTheme.typography.titleLarge,
-                color = Slate800
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = stringResource(R.string.your_weekly_workout_plan),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = Slate800,
+                    modifier = Modifier.weight(1f)
+                )
+                Box {
+                    Image(
+                        painter = painterResource(R.drawable.ic_more_horiz),
+                        contentDescription = stringResource(R.string.plan_options),
+                        modifier = Modifier
+                            .size(24.dp)
+                            .clickable { showMenu = true }
+                    )
+                    DropdownMenu(
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.regenerate_plan)) },
+                            onClick = {
+                                showMenu = false
+                                showLeaveDialog = true
+                            }
+                        )
+                    }
+                }
+            }
 
             HorizontalDivider()
 
