@@ -198,7 +198,11 @@
     <string name="previous_column">Nakaraan</string>
     <string name="delete_set">Burahin ang set</string>
     <string name="plan_options">Mga opsyon ng plano</string>
-    <string name="regenerate_plan">Muling buuin ang plano</string>
+    <string name="app_about_message">Ang workout plan mo ay ginagawa ng AI batay sa fitness profile na itinakda mo.</string>
+    <string name="app_version_format">Bersyon %1$s</string>
+    <string name="about_the_app">Tungkol sa Trainr</string>
+    <string name="profile_and_app">Profile at app</string>
+    <string name="regenerate_plan">Gumawa ng bagong workout plan</string>
     <string name="no_plan_title">Walang workout plan</string>
     <string name="no_plan_message">Nakasave ang fitness profile mo. Pwede kang gumawa ng bagong workout plan anumang oras.</string>
     <string name="create_my_plan">GUMAWA NG WORKOUT PLAN</string>

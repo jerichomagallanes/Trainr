@@ -490,7 +490,8 @@ fun AppContent(versionName: String) {
                         // plan: the review is where a new one is built from.
                         onCreatePlanClick = {
                             navController.navigate(Screen.Review.createRoute(fromPlan = true))
-                        }
+                        },
+                        versionName = versionName
                     )
                 }
             }

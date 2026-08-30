@@ -17,6 +17,10 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -60,6 +64,7 @@ fun WeeklyPlanRoute(
     onRepeatWeekClick: () -> Unit = {},
     onCreatePlanClick: () -> Unit = {},
     onBackClick: (() -> Unit)? = null,
+    versionName: String = "",
     viewModel: WeeklyPlanViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -78,6 +83,7 @@ fun WeeklyPlanRoute(
         onStartNextWeekClick = onStartNextWeekClick,
         onRepeatWeekClick = onRepeatWeekClick,
         onCreatePlanClick = onCreatePlanClick,
+        versionName = versionName,
         onMoveDay = viewModel::moveDay,
         onBackClick = onBackClick
     )
@@ -95,6 +101,7 @@ fun WeeklyPlanScreen(
     onStartNextWeekClick: () -> Unit = {},
     onRepeatWeekClick: () -> Unit = {},
     onCreatePlanClick: () -> Unit = {},
+    versionName: String = "",
     onMoveDay: (Int, Int) -> Unit = { _, _ -> },
     // Set only when a week was opened from Weekly Progress.
     onBackClick: (() -> Unit)? = null
@@ -126,8 +133,20 @@ fun WeeklyPlanScreen(
 
     Column(modifier = modifier.fillMaxSize()) {
         // Home has nowhere to go back to. Plan-level actions live behind the
-        // heading's overflow, where the design puts them.
-        TrainrTopBar(onBackClick = onBackClick)
+        // heading's overflow, where the design puts them; who you are and what
+        // the app is belong to the app bar, and stay reachable even when there
+        // is no plan for the overflow to hang off.
+        TrainrTopBar(
+            onBackClick = onBackClick,
+            actions = {
+                if (!isBrowsedWeek) {
+                    ProfileMenu(
+                        versionName = versionName,
+                        onUpdateProfileClick = onUpdateProfileClick
+                    )
+                }
+            }
+        )
 
         // Nothing is drawn until the plan has been looked for: a blank moment
         // is honest, where a stand-in week would be read as the real thing.
@@ -168,15 +187,6 @@ fun WeeklyPlanScreen(
                             expanded = showMenu,
                             onDismissRequest = { showMenu = false }
                         ) {
-                            // Editing the profile keeps the plan and its
-                            // history; regenerating is the deliberate restart.
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.update_profile)) },
-                                onClick = {
-                                    showMenu = false
-                                    onUpdateProfileClick()
-                                }
-                            )
                             // With the week behind you there are two sound
                             // ways on: progress from what you lifted, or run
                             // the same week again. The second is a coaching
@@ -289,6 +299,66 @@ fun WeeklyPlanScreen(
             }
         }
     }
+}
+
+// Who you are and what the app is: the two things that are about the client
+// rather than about this week's training, kept out of the plan's own overflow.
+@Composable
+private fun ProfileMenu(
+    versionName: String,
+    onUpdateProfileClick: () -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    var showAbout by remember { mutableStateOf(false) }
+
+    if (showAbout) {
+        AboutDialog(versionName = versionName, onDismiss = { showAbout = false })
+    }
+
+    Box {
+        IconButton(onClick = { expanded = true }) {
+            Icon(
+                imageVector = Icons.Default.AccountCircle,
+                contentDescription = stringResource(R.string.profile_and_app),
+                tint = Slate800
+            )
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.update_profile)) },
+                onClick = {
+                    expanded = false
+                    onUpdateProfileClick()
+                }
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.about_the_app)) },
+                onClick = {
+                    expanded = false
+                    showAbout = true
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun AboutDialog(versionName: String, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = stringResource(R.string.about_the_app)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
+                Text(text = stringResource(R.string.app_version_format, versionName))
+                Text(text = stringResource(R.string.app_about_message))
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = stringResource(R.string.close), color = Orange500)
+            }
+        }
+    )
 }
 
 // Deleting every week is allowed, so landing there has to be a place rather

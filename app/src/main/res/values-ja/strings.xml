@@ -195,7 +195,11 @@
     <string name="previous_column">前回</string>
     <string name="delete_set">セットを削除</string>
     <string name="plan_options">プランのオプション</string>
-    <string name="regenerate_plan">プランを再生成</string>
+    <string name="app_about_message">ワークアウトプランは、設定したフィットネスプロフィールをもとにAIが作成します。</string>
+    <string name="app_version_format">バージョン %1$s</string>
+    <string name="about_the_app">Trainrについて</string>
+    <string name="profile_and_app">プロフィールとアプリ</string>
+    <string name="regenerate_plan">新しいワークアウトプランを作成</string>
     <string name="no_plan_title">ワークアウトプランがありません</string>
     <string name="no_plan_message">フィットネスプロフィールは保存されています。いつでも新しいワークアウトプランを作成できます。</string>
     <string name="create_my_plan">ワークアウトプランを作成</string>

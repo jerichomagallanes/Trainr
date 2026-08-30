@@ -29,7 +29,8 @@ class WeeklyPlanScreenTest {
     @get:Rule
     val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 
-    private fun string(id: Int) = composeTestRule.activity.getString(id)
+    private fun string(id: Int, vararg args: Any) =
+        composeTestRule.activity.getString(id, *args)
 
     // The sample week is dated in the past, so every test says when "today" is:
     // it decides which sessions are missed, and so which of them can be moved.
@@ -111,10 +112,10 @@ class WeeklyPlanScreenTest {
         composeTestRule.onNodeWithContentDescription(string(R.string.plan_options)).performClick()
     }
 
-    // Changing the profile has to be reachable without the destructive
-    // regenerate, which is the only other way in.
+    // Who you are is not one of this week's actions, so it lives in the app bar
+    // and stays reachable even when there is no plan to hang an overflow off.
     @Test
-    fun theMenuOffersUpdatingTheProfile() {
+    fun theProfileIsReachedFromTheAppBar() {
         var asked = false
         composeTestRule.setContent {
             TrainrTheme {
@@ -123,9 +124,41 @@ class WeeklyPlanScreenTest {
         }
 
         openMenu()
+        composeTestRule.onNodeWithText(string(R.string.update_profile)).assertDoesNotExist()
+        composeTestRule.onNodeWithContentDescription(string(R.string.profile_and_app))
+            .performClick()
         composeTestRule.onNodeWithText(string(R.string.update_profile)).performClick()
 
         assertThat(asked).isTrue()
+    }
+
+    @Test
+    fun theProfileIsStillReachableWithNoPlan() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                WeeklyPlanScreen(state = WeeklyPlanUiState(hasLoaded = true, hasPlan = false))
+            }
+        }
+
+        composeTestRule.onNodeWithContentDescription(string(R.string.profile_and_app))
+            .performClick()
+
+        composeTestRule.onNodeWithText(string(R.string.update_profile)).assertIsDisplayed()
+    }
+
+    // A build number is the one thing worth saying about the app itself.
+    @Test
+    fun aboutShowsWhichBuildIsRunning() {
+        composeTestRule.setContent {
+            TrainrTheme { WeeklyPlanScreen(state = state, versionName = "9.9-test") }
+        }
+
+        composeTestRule.onNodeWithContentDescription(string(R.string.profile_and_app))
+            .performClick()
+        composeTestRule.onNodeWithText(string(R.string.about_the_app)).performClick()
+
+        composeTestRule.onNodeWithText(string(R.string.app_version_format, "9.9-test"))
+            .assertIsDisplayed()
     }
 
     // A finished week can roll straight into the next one.
