@@ -1,6 +1,7 @@
 package com.jericx.trainr.presentation.workout
 
 import androidx.activity.ComponentActivity
+import com.jericx.trainr.domain.model.WorkoutStatus
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -87,6 +88,61 @@ class WeeklyPlanScreenTest {
         composeTestRule.onNodeWithText(string(R.string.start_todays_workout)).performClick()
 
         assertThat(started?.title).isEqualTo("Cardio & Core")
+    }
+
+    private fun openMenu() {
+        composeTestRule.onNodeWithContentDescription(string(R.string.plan_options)).performClick()
+    }
+
+    // Changing the profile has to be reachable without the destructive
+    // regenerate, which is the only other way in.
+    @Test
+    fun theMenuOffersUpdatingTheProfile() {
+        var asked = false
+        composeTestRule.setContent {
+            TrainrTheme {
+                WeeklyPlanScreen(state = state, onUpdateProfileClick = { asked = true })
+            }
+        }
+
+        openMenu()
+        composeTestRule.onNodeWithText(string(R.string.update_profile)).performClick()
+
+        assertThat(asked).isTrue()
+    }
+
+    // A finished week can roll straight into the next one.
+    @Test
+    fun aFinishedWeekOffersStartingTheNextOne() {
+        val finished = WeeklyPlanViewModel.stateFor(
+            plan = SampleWorkoutData.weekOne.copy(
+                workoutDays = SampleWorkoutData.weekOne.workoutDays.map {
+                    it.copy(status = WorkoutStatus.COMPLETED)
+                }
+            ),
+            isSample = false
+        )
+        var started = false
+        composeTestRule.setContent {
+            TrainrTheme {
+                WeeklyPlanScreen(state = finished, onStartNextWeekClick = { started = true })
+            }
+        }
+
+        openMenu()
+        composeTestRule.onNodeWithText(string(R.string.start_next_week)).performClick()
+
+        assertThat(started).isTrue()
+    }
+
+    @Test
+    fun anUnfinishedWeekDoesNotOfferToStartTheNextOne() {
+        setScreen()
+
+        openMenu()
+
+        composeTestRule.onNodeWithText(string(R.string.start_next_week)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.regenerate_plan)).assertIsDisplayed()
     }
 
     private fun openRegenerate() {

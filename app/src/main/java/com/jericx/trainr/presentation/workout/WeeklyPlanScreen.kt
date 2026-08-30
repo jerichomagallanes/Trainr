@@ -52,6 +52,8 @@ fun WeeklyPlanRoute(
     onTrackProgressClick: () -> Unit = {},
     onStartTodayClick: (WorkoutDay) -> Unit = {},
     onLeavePlanConfirmed: () -> Unit = {},
+    onUpdateProfileClick: () -> Unit = {},
+    onStartNextWeekClick: () -> Unit = {},
     onBackClick: (() -> Unit)? = null,
     viewModel: WeeklyPlanViewModel = hiltViewModel()
 ) {
@@ -67,6 +69,8 @@ fun WeeklyPlanRoute(
         onTrackProgressClick = onTrackProgressClick,
         onStartTodayClick = onStartTodayClick,
         onLeavePlanConfirmed = onLeavePlanConfirmed,
+        onUpdateProfileClick = onUpdateProfileClick,
+        onStartNextWeekClick = onStartNextWeekClick,
         onBackClick = onBackClick
     )
 }
@@ -79,6 +83,8 @@ fun WeeklyPlanScreen(
     onTrackProgressClick: () -> Unit = {},
     onStartTodayClick: (WorkoutDay) -> Unit = {},
     onLeavePlanConfirmed: () -> Unit = {},
+    onUpdateProfileClick: () -> Unit = {},
+    onStartNextWeekClick: () -> Unit = {},
     // Set only when a week was opened from Weekly Progress.
     onBackClick: (() -> Unit)? = null
 ) {
@@ -133,6 +139,24 @@ fun WeeklyPlanScreen(
                             expanded = showMenu,
                             onDismissRequest = { showMenu = false }
                         ) {
+                            // Editing the profile keeps the plan and its
+                            // history; regenerating is the deliberate restart.
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.update_profile)) },
+                                onClick = {
+                                    showMenu = false
+                                    onUpdateProfileClick()
+                                }
+                            )
+                            if (state.canStartNextWeek) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.start_next_week)) },
+                                    onClick = {
+                                        showMenu = false
+                                        onStartNextWeekClick()
+                                    }
+                                )
+                            }
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.regenerate_plan)) },
                                 onClick = {

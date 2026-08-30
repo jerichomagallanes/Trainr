@@ -258,16 +258,34 @@ fun AppContent(versionName: String) {
                         navArgument(Screen.Review.ARG_FROM_PLAN) {
                             type = NavType.BoolType
                             defaultValue = false
+                        },
+                        navArgument(Screen.Review.ARG_PROFILE_ONLY) {
+                            type = NavType.BoolType
+                            defaultValue = false
                         }
                     )
                 ) { entry ->
                     val fromPlan =
                         entry.arguments?.getBoolean(Screen.Review.ARG_FROM_PLAN) ?: false
+                    val profileOnly =
+                        entry.arguments?.getBoolean(Screen.Review.ARG_PROFILE_ONLY) ?: false
                     ReviewScreen(
                         userProfile = onboardingState.userProfile,
                         isRegenerating = fromPlan,
+                        isProfileUpdate = profileOnly,
                         onConfirmClick = {
-                            navController.navigate(Screen.Generating.route)
+                            if (profileOnly) {
+                                // The plan and its history stay exactly as they
+                                // are; the edited profile shapes the next week.
+                                onboardingViewModel.updateProfileOnly {
+                                    navController.popBackStack(
+                                        Screen.Home.route,
+                                        inclusive = false
+                                    )
+                                }
+                            } else {
+                                navController.navigate(Screen.Generating.route)
+                            }
                         },
                         onBackClick = { navController.popBackStack() },
                         onEditPersonal = {
@@ -427,6 +445,14 @@ fun AppContent(versionName: String) {
                         // review is a real way back out of regenerating.
                         onLeavePlanConfirmed = {
                             navController.navigate(Screen.Review.createRoute(fromPlan = true))
+                        },
+                        onUpdateProfileClick = {
+                            navController.navigate(
+                                Screen.Review.createRoute(fromPlan = true, profileOnly = true)
+                            )
+                        },
+                        onStartNextWeekClick = {
+                            navController.navigate(Screen.GeneratingNextWeek.route)
                         }
                     )
                 }
