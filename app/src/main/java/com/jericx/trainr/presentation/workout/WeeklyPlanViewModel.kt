@@ -10,6 +10,7 @@ import com.jericx.trainr.domain.repository.UserRepository
 import com.jericx.trainr.presentation.Screen
 import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
 import com.jericx.trainr.presentation.workout.util.WorkoutWeek
+import com.jericx.trainr.presentation.workout.util.isReadyForTheNextWeek
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -108,7 +109,7 @@ class WeeklyPlanViewModel @Inject constructor(
                     // Read off the newest week, not the one being looked at: an
                     // old week is always finished, and that says nothing about
                     // whether the plan is ready for another.
-                    canAddWeek = newest?.let { stateFor(it).canStartNextWeek } ?: false
+                    canAddWeek = newest?.isReadyForTheNextWeek() ?: false
                 )
             }
         }
@@ -167,9 +168,7 @@ class WeeklyPlanViewModel @Inject constructor(
             nowMillis: Long = System.currentTimeMillis()
         ): WeeklyPlanUiState {
             val start = plan.startDateMillis ?: SampleWorkoutData.weekStartMillis
-            val allDone = plan.workoutDays.isNotEmpty() &&
-                plan.workoutDays.all { it.status == WorkoutStatus.COMPLETED }
-            val weekIsOver = nowMillis >= WorkoutWeek.dateOfDay(start, LAST_ISO_DAY + 1)
+            val readyForTheNext = plan.isReadyForTheNextWeek(nowMillis)
 
             val today = WorkoutWeek.startOfDay(nowMillis)
 
@@ -189,8 +188,8 @@ class WeeklyPlanViewModel @Inject constructor(
                 hasLoaded = true,
                 hasPlan = !isSample,
                 isCurrentWeek = isCurrentWeek,
-                canStartNextWeek = !isSample && (allDone || weekIsOver),
-                canAddWeek = canAddWeek ?: (!isSample && (allDone || weekIsOver))
+                canStartNextWeek = !isSample && readyForTheNext,
+                canAddWeek = canAddWeek ?: (!isSample && readyForTheNext)
             )
         }
     }

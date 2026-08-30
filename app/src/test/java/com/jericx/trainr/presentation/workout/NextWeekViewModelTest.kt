@@ -209,6 +209,28 @@ class NextWeekViewModelTest {
         assertThat(request.captured.startDateMillis).isGreaterThan(WorkoutWeek.startOfDay())
     }
 
+    // The rule is enforced where the write happens, not only where the menu is
+    // drawn: a week still being trained is the week that is yours, and another
+    // one now would become the newest and take that title from it.
+    @Test
+    fun neitherWayOnIsTakenWhileTheWeekIsStillBeingTrained() = runTest {
+        val unfinished = finishedWeek.copy(
+            startDateMillis = WorkoutWeek.startOfDay(),
+            workoutDays = finishedWeek.workoutDays.map {
+                it.copy(status = WorkoutStatus.NOT_STARTED, completedAt = null)
+            }
+        )
+        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(unfinished))
+
+        viewModel().generateNextWeek()
+        advanceUntilIdle()
+        viewModel().repeatWeek()
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { userRepository.saveWeeklyWorkoutPlan(any()) }
+        coVerify(exactly = 0) { planGenerator.generate(any()) }
+    }
+
     // A block worth another turn need not be the newest one. The copy joins the
     // plan at the end — its number and its dates come from there, its training
     // from the week being copied.
