@@ -46,7 +46,8 @@ fun WorkoutDayCard(
     weekday: String,
     day: WorkoutDay,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isMissed: Boolean = false
 ) {
     // A started workout gets the dark header; one not begun stays light.
     val headerIsDark = day.status != WorkoutStatus.NOT_STARTED
@@ -77,7 +78,7 @@ fun WorkoutDayCard(
                     color = if (headerIsDark) Color.White else Slate800
                 )
             }
-            WorkoutStatusChip(status = day.status)
+            WorkoutStatusChip(status = day.status, isMissed = isMissed)
         }
 
         HorizontalDivider(color = OutlineGray)

@@ -21,6 +21,19 @@ object WorkoutWeek {
         return calendar.timeInMillis
     }
 
+    // Local midnight of the day containing nowMillis, so "has this date passed"
+    // is answered by the calendar rather than by the time of day.
+    fun startOfDay(nowMillis: Long = System.currentTimeMillis()): Long =
+        Calendar.getInstance().run {
+            timeInMillis = nowMillis
+            val year = get(Calendar.YEAR)
+            val month = get(Calendar.MONTH)
+            val day = get(Calendar.DAY_OF_MONTH)
+            clear()
+            set(year, month, day)
+            timeInMillis
+        }
+
     fun dateOfDay(startDateMillis: Long, dayNumber: Int): Long =
         Calendar.getInstance().run {
             timeInMillis = startDateMillis

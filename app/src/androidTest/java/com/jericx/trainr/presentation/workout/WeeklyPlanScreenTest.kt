@@ -31,7 +31,13 @@ class WeeklyPlanScreenTest {
 
     private fun string(id: Int) = composeTestRule.activity.getString(id)
 
-    private val state = WeeklyPlanViewModel.stateFor(SampleWorkoutData.weekOne, isSample = true)
+    // The sample week is dated in the past, so every test says when "today" is:
+    // it decides which sessions are missed, and so which of them can be moved.
+    private val state = WeeklyPlanViewModel.stateFor(
+        plan = SampleWorkoutData.weekOne,
+        isSample = true,
+        nowMillis = SampleWorkoutData.dateOf(3)
+    )
 
     private fun setScreen(
         onDayClick: (WorkoutDay) -> Unit = {},
@@ -260,7 +266,8 @@ class WeeklyPlanScreenTest {
                 it.copy(status = WorkoutStatus.NOT_STARTED)
             }
         ),
-        isSample = false
+        isSample = false,
+        nowMillis = SampleWorkoutData.dateOf(1)
     )
 
     // Long-press lifts a session; dragging it past the next card hands it that
@@ -305,7 +312,8 @@ class WeeklyPlanScreenTest {
                     )
                 }
             ),
-            isSample = false
+            isSample = false,
+            nowMillis = SampleWorkoutData.dateOf(1)
         )
         composeTestRule.setContent {
             TrainrTheme {
@@ -363,6 +371,57 @@ class WeeklyPlanScreenTest {
         // The order on screen is still the plan's own.
         composeTestRule.onAllNodesWithText(freshWeek.days[0].day.title)
             .fetchSemanticsNodes().let { assertThat(it).hasSize(1) }
+    }
+
+    private val weekGoneBy = WeeklyPlanViewModel.stateFor(
+        plan = SampleWorkoutData.weekOne.copy(
+            workoutDays = SampleWorkoutData.weekOne.workoutDays.map {
+                it.copy(status = WorkoutStatus.NOT_STARTED)
+            }
+        ),
+        isSample = false,
+        // Looked at after the week has run out, so every session was missed.
+        nowMillis = SampleWorkoutData.dateOf(9)
+    )
+
+    // Missed is stated plainly and neutrally: the app says where you stand
+    // without turning a quiet week into a scolding.
+    @Test
+    fun aSessionWhoseDateHasGoneReadsAsMissed() {
+        composeTestRule.setContent {
+            TrainrTheme { WeeklyPlanScreen(state = weekGoneBy) }
+        }
+
+        assertThat(
+            composeTestRule.onAllNodesWithText(string(R.string.missed)).fetchSemanticsNodes()
+        ).hasSize(weekGoneBy.days.size)
+        // Nothing is scheduled today, so the button does not claim there is.
+        composeTestRule.onNodeWithText(string(R.string.start_next_workout)).assertIsDisplayed()
+    }
+
+    // The past is a record: a missed session holds its date until it is either
+    // trained or rescheduled, and dragging is not how that happens.
+    @Test
+    fun aMissedSessionDoesNotLift() {
+        var move: Pair<Int, Int>? = null
+        composeTestRule.setContent {
+            TrainrTheme {
+                WeeklyPlanScreen(state = weekGoneBy, onMoveDay = { from, to -> move = from to to })
+            }
+        }
+
+        val height = composeTestRule.onNodeWithText(weekGoneBy.days[1].day.title)
+            .fetchSemanticsNode().size.height
+        composeTestRule.onNodeWithText(weekGoneBy.days[0].day.title).performTouchInput {
+            down(center)
+            advanceEventTime(viewConfiguration.longPressTimeoutMillis + 200)
+            moveBy(Offset(0f, height * 0.9f))
+            advanceEventTime(32)
+            up()
+        }
+        composeTestRule.waitForIdle()
+
+        assertThat(move).isNull()
     }
 
 }

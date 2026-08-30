@@ -20,8 +20,18 @@ import javax.inject.Inject
 
 data class WeeklyPlanDay(
     val day: WorkoutDay,
-    val dateMillis: Long
-)
+    val dateMillis: Long,
+    val isToday: Boolean = false,
+    val isPast: Boolean = false
+) {
+    // Missed is not a state a day enters, it is what an unfinished day in the
+    // past IS. Deriving it means a session moved to a later day stops being
+    // missed on its own, with no flag to correct.
+    val isMissed: Boolean get() = isPast && day.status != WorkoutStatus.COMPLETED
+
+    // The past is a record: what happened on that date, or what did not.
+    val isFrozen: Boolean get() = isPast || day.status == WorkoutStatus.COMPLETED
+}
 
 data class WeeklyPlanUiState(
     val plan: WeeklyWorkoutPlan = SampleWorkoutData.weekOne,
@@ -33,11 +43,18 @@ data class WeeklyPlanUiState(
     // out; a missed day must not strand the plan on the same week forever.
     val canStartNextWeek: Boolean = false
 ) {
-    // "Today's workout" is the first one still outstanding; once the week is
-    // done the button falls back to the start of it rather than doing nothing.
-    val todaysDay: WorkoutDay?
-        get() = plan.workoutDays.firstOrNull { it.status != WorkoutStatus.COMPLETED }
-            ?: plan.workoutDays.firstOrNull()
+    // Today's session when there is one, otherwise the next one still to come.
+    // A day that has already passed is never the target: opening it under a
+    // button that says "today's workout" would be a lie, and catching up is a
+    // tap on the day itself.
+    val nextWorkout: WeeklyPlanDay?
+        get() = days.firstOrNull { !it.isPast && it.day.status != WorkoutStatus.COMPLETED }
+            ?: days.firstOrNull { it.day.status != WorkoutStatus.COMPLETED }
+            ?: days.firstOrNull()
+
+    val nextWorkoutIsToday: Boolean get() = nextWorkout?.isToday == true
+
+    val todaysDay: WorkoutDay? get() = nextWorkout?.day
 }
 
 @HiltViewModel
@@ -127,10 +144,18 @@ class WeeklyPlanViewModel @Inject constructor(
                 plan.workoutDays.all { it.status == WorkoutStatus.COMPLETED }
             val weekIsOver = nowMillis >= WorkoutWeek.dateOfDay(start, LAST_ISO_DAY + 1)
 
+            val today = WorkoutWeek.startOfDay(nowMillis)
+
             return WeeklyPlanUiState(
                 plan = plan,
                 days = plan.workoutDays.map {
-                    WeeklyPlanDay(day = it, dateMillis = WorkoutWeek.dateOfDay(start, it.dayNumber))
+                    val date = WorkoutWeek.dateOfDay(start, it.dayNumber)
+                    WeeklyPlanDay(
+                        day = it,
+                        dateMillis = date,
+                        isToday = WorkoutWeek.startOfDay(date) == today,
+                        isPast = WorkoutWeek.startOfDay(date) < today
+                    )
                 },
                 weekStartMillis = start,
                 weekEndMillis = WorkoutWeek.dateOfDay(start, LAST_ISO_DAY),

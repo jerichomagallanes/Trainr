@@ -328,4 +328,112 @@ class WeeklyPlanViewModelTest {
         }
     }
 
+    private fun weekOfSessions(start: Long, vararg statuses: WorkoutStatus) = storedPlan.copy(
+        startDateMillis = start,
+        workoutDays = statuses.mapIndexed { index, status ->
+            storedPlan.workoutDays.first().copy(
+                id = index + 1L,
+                dayNumber = index + 1,
+                title = "Session $index",
+                status = status
+            )
+        }
+    )
+
+    // Missed is derived from the calendar, never stored: an unfinished day whose
+    // date has gone is missed, and the same day moved later stops being missed
+    // with no flag to correct.
+    @Test
+    fun anUnfinishedDayThatHasPassedReadsAsMissed() {
+        val start = WorkoutWeek.mondayOf(1_755_000_000_000L)
+        val state = WeeklyPlanViewModel.stateFor(
+            plan = weekOfSessions(start, WorkoutStatus.NOT_STARTED, WorkoutStatus.NOT_STARTED),
+            isSample = false,
+            nowMillis = start + TimeUnit.DAYS.toMillis(1)
+        )
+
+        assertThat(state.days[0].isMissed).isTrue()
+        assertThat(state.days[1].isMissed).isFalse()
+    }
+
+    @Test
+    fun aFinishedDayInThePastIsNotMissed() {
+        val start = WorkoutWeek.mondayOf(1_755_000_000_000L)
+        val state = WeeklyPlanViewModel.stateFor(
+            plan = weekOfSessions(start, WorkoutStatus.COMPLETED),
+            isSample = false,
+            nowMillis = start + TimeUnit.DAYS.toMillis(3)
+        )
+
+        assertThat(state.days[0].isMissed).isFalse()
+    }
+
+    // The past holds its place: neither a missed nor a finished day can be
+    // dragged, and nothing can be dropped onto a date that has gone.
+    @Test
+    fun everyDayThatHasPassedIsFrozen() {
+        val start = WorkoutWeek.mondayOf(1_755_000_000_000L)
+        val state = WeeklyPlanViewModel.stateFor(
+            plan = weekOfSessions(start, WorkoutStatus.NOT_STARTED, WorkoutStatus.NOT_STARTED),
+            isSample = false,
+            nowMillis = start + TimeUnit.DAYS.toMillis(1)
+        )
+
+        assertThat(state.days[0].isFrozen).isTrue()
+        assertThat(state.days[1].isFrozen).isFalse()
+    }
+
+    // The button must not open last Monday while calling it today's workout.
+    @Test
+    fun theStartButtonSkipsDaysThatHavePassed() {
+        val start = WorkoutWeek.mondayOf(1_755_000_000_000L)
+        val state = WeeklyPlanViewModel.stateFor(
+            plan = weekOfSessions(start, WorkoutStatus.NOT_STARTED, WorkoutStatus.NOT_STARTED),
+            isSample = false,
+            nowMillis = start + TimeUnit.DAYS.toMillis(1)
+        )
+
+        assertThat(state.nextWorkout?.day?.title).isEqualTo("Session 1")
+        assertThat(state.nextWorkoutIsToday).isTrue()
+    }
+
+    @Test
+    fun theStartButtonNamesTheNextDayWhenThereIsNoneToday() {
+        val start = WorkoutWeek.mondayOf(1_755_000_000_000L)
+        val state = WeeklyPlanViewModel.stateFor(
+            // Sessions on Monday and Wednesday, looked at on Tuesday.
+            plan = storedPlan.copy(
+                startDateMillis = start,
+                workoutDays = listOf(1, 3).mapIndexed { index, slot ->
+                    storedPlan.workoutDays.first().copy(
+                        id = index + 1L,
+                        dayNumber = slot,
+                        title = "Session $index",
+                        status = WorkoutStatus.NOT_STARTED
+                    )
+                }
+            ),
+            isSample = false,
+            nowMillis = start + TimeUnit.DAYS.toMillis(1)
+        )
+
+        assertThat(state.nextWorkout?.day?.title).isEqualTo("Session 1")
+        assertThat(state.nextWorkoutIsToday).isFalse()
+    }
+
+    // Everything behind you and nothing ahead: the button still has a target
+    // rather than doing nothing.
+    @Test
+    fun theStartButtonFallsBackToAMissedDayWhenNothingIsLeft() {
+        val start = WorkoutWeek.mondayOf(1_755_000_000_000L)
+        val state = WeeklyPlanViewModel.stateFor(
+            plan = weekOfSessions(start, WorkoutStatus.NOT_STARTED),
+            isSample = false,
+            nowMillis = start + TimeUnit.DAYS.toMillis(5)
+        )
+
+        assertThat(state.nextWorkout?.day?.title).isEqualTo("Session 0")
+        assertThat(state.nextWorkoutIsToday).isFalse()
+    }
+
 }

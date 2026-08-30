@@ -199,6 +199,8 @@
     <string name="delete_set">Delete set</string>
     <string name="plan_options">Plan options</string>
     <string name="regenerate_plan">Regenerate plan</string>
+    <string name="missed">Missed</string>
+    <string name="start_next_workout">START NEXT WORKOUT</string>
     <string name="move_earlier">Move to an earlier day</string>
     <string name="move_later">Move to a later day</string>
     <string name="delete_week_title">Delete this week?</string>

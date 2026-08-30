@@ -200,6 +200,8 @@
     <string name="delete_set">Burahin ang set</string>
     <string name="plan_options">Mga opsyon ng plano</string>
     <string name="regenerate_plan">Muling buuin ang plano</string>
+    <string name="missed">Hindi nagawa</string>
+    <string name="start_next_workout">SIMULAN ANG SUSUNOD NA WORKOUT</string>
     <string name="move_earlier">Ilipat sa mas maagang araw</string>
     <string name="move_later">Ilipat sa mas huling araw</string>
     <string name="delete_week_title">Burahin ang linggong ito?</string>
