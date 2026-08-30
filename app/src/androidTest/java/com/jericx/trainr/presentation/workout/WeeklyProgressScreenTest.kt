@@ -170,4 +170,27 @@ class WeeklyProgressScreenTest {
         assertThat(deleted).isNull()
     }
 
+    // A swipe that cannot delete must not fall through as a tap and navigate.
+    @Test
+    fun aRefusedSwipeDoesNotOpenTheWeek() {
+        var opened: WeekProgressUi? = null
+        val trained = SampleWeeklyProgress.weeks.first { !it.canDelete }
+        composeTestRule.setContent {
+            TrainrTheme {
+                WeeklyProgressScreen(
+                    weeks = SampleWeeklyProgress.weeks,
+                    onWeekClick = { opened = it }
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(
+            string(R.string.week_number_format, trained.weekNumber),
+            substring = true
+        ).performScrollTo().performTouchInput { swipeLeft() }
+        composeTestRule.waitForIdle()
+
+        assertThat(opened).isNull()
+    }
+
 }

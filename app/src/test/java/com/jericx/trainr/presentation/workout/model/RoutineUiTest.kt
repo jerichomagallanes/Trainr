@@ -180,4 +180,41 @@ class RoutineUiTest {
         assertThat(completed.completionPercentage).isEqualTo(100)
         assertThat(completed.isComplete).isTrue()
     }
+    // Sliding a routine complete says the prescription was done; leaving the
+    // sets blank would reach next week's prompt as "did: skipped".
+    @Test
+    fun completingRecordsThePrescriptionOnBlankSets() {
+        val completed = routineWithSets().completeAll()
+
+        val sets = completed.exercises.first().sets
+        assertThat(sets.map { it.actualReps }).isEqualTo(sets.map { it.targetReps })
+        assertThat(sets.map { it.actualWeightKg }).isEqualTo(sets.map { it.targetWeightKg })
+        assertThat(sets.all { it.isCompleted }).isTrue()
+    }
+
+    // What the user actually typed always wins over the prescription.
+    @Test
+    fun completingKeepsTheNumbersThatWereLogged() {
+        val routine = routineWithSets()
+        val logged = routine.exercises.first().sets.first()
+            .copy(actualReps = 6, actualWeightKg = 30f)
+        val completed = routine.updateSet(1, logged).completeAll()
+
+        with(completed.exercises.first().sets.first()) {
+            assertThat(actualReps).isEqualTo(6)
+            assertThat(actualWeightKg).isEqualTo(30f)
+        }
+    }
+
+    // Un-ticking must not throw away numbers, hand-typed or filled in.
+    @Test
+    fun unTickingAnExerciseLeavesItsNumbersAlone() {
+        val ticked = routineWithSets().toggleCompleted(1)
+        val unticked = ticked.toggleCompleted(1)
+
+        assertThat(unticked.exercises.first().isCompleted).isFalse()
+        assertThat(unticked.exercises.first().sets.map { it.actualReps })
+            .isEqualTo(ticked.exercises.first().sets.map { it.actualReps })
+    }
+
 }

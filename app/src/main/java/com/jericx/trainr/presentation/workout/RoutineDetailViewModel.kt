@@ -181,6 +181,7 @@ class RoutineDetailViewModel @Inject constructor(
         storedDay = completed
         viewModelScope.launch {
             completed.exercises.forEach { userRepository.updateWorkoutExercise(it, day.id) }
+            persistFilledSets(_uiState.value.routine.exercises.map { it.position })
             persistDayStatus()
         }
     }
@@ -293,8 +294,33 @@ class RoutineDetailViewModel @Inject constructor(
         )
         viewModelScope.launch {
             userRepository.updateWorkoutExercise(exercise, day.id)
+            if (completed) persistFilledSets(listOf(position))
             persistDayStatus()
         }
+    }
+
+    // Completing writes the prescription onto sets that were never filled in,
+    // so the day is stored the way it will be read back — by the PREVIOUS
+    // column, and by the prompt that builds next week.
+    private suspend fun persistFilledSets(positions: List<Int>) {
+        var day = storedDay ?: return
+        positions.forEach { position ->
+            val stored = day.exercises.getOrNull(position - 1) ?: return@forEach
+            val logged = _uiState.value.routine.exercises
+                .firstOrNull { it.position == position }?.sets.orEmpty()
+            val before = stored.sets.associateBy { it.id }
+
+            logged
+                .filter { it.id != 0L && before[it.id] != it }
+                .forEach { userRepository.updateExerciseSet(it, stored.id) }
+
+            day = day.copy(
+                exercises = day.exercises.mapIndexed { index, exercise ->
+                    if (index == position - 1) exercise.copy(sets = logged) else exercise
+                }
+            )
+        }
+        storedDay = day
     }
 
     private suspend fun persistDayStatus() {

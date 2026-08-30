@@ -1,6 +1,14 @@
 package com.jericx.trainr.presentation.workout.components
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.unit.dp
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
@@ -40,6 +48,21 @@ import kotlin.math.abs
 
 private const val LIFTED_SCALE = 1.02f
 private const val LIFTED_ELEVATION = 12f
+private val AUTO_SCROLL_STEP = 12.dp
+private const val EDGE_FRACTION = 0.15f
+
+// Scrolls faster the deeper the finger sits into the edge band, and not at all
+// while it stays in the middle of the screen.
+internal fun autoScrollStep(pointerY: Float, viewportHeight: Float, maxStep: Float): Float {
+    if (viewportHeight <= 0f) return 0f
+    val edge = viewportHeight * EDGE_FRACTION
+    return when {
+        pointerY < edge -> -(edge - pointerY) / edge * maxStep
+        pointerY > viewportHeight - edge ->
+            (pointerY - (viewportHeight - edge)) / edge * maxStep
+        else -> 0f
+    }
+}
 
 // Long-press lifts a session and drags it onto another weekday. The weekday
 // belongs to the SLOT rather than the session, so the cards relabel themselves
@@ -52,7 +75,12 @@ fun ReorderableDayList(
     locale: Locale,
     onDayClick: (WorkoutDay) -> Unit,
     onMove: (from: Int, to: Int) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    // A week being read back is a record: its cards do not lift at all.
+    canReorder: Boolean = true,
+    // The plan scrolls, and a week is taller than the screen: without this a
+    // card cannot be dragged past the fold in one gesture.
+    scrollState: ScrollState? = null
 ) {
     val haptics = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
@@ -72,13 +100,51 @@ fun ReorderableDayList(
     var draggedId by remember { mutableStateOf<Long?>(null) }
     val liftOffset = remember { Animatable(0f) }
 
+    // Where the finger is on screen, so the list can scroll itself when the
+    // drag reaches an edge.
+    val cardTops = remember(days) { mutableStateMapOf<Int, Float>() }
+    // Null until the finger's position is known: a default of zero reads as
+    // the top edge and scrolls the list away the moment a card is lifted.
+    var pointerY by remember { mutableStateOf<Float?>(null) }
+    val viewportHeight = LocalWindowInfo.current.containerSize.height.toFloat()
+    val maxScrollStep = with(LocalDensity.current) { AUTO_SCROLL_STEP.toPx() }
+
+    if (scrollState != null) {
+        LaunchedEffect(draggedId) {
+            val source = days.indexOfFirst { it.day.id == draggedId }
+            if (source < 0) return@LaunchedEffect
+            while (true) {
+                withFrameNanos { }
+                val finger = pointerY ?: continue
+                val step = autoScrollStep(finger, viewportHeight, maxScrollStep)
+                if (step == 0f) continue
+                val scrolled = scrollState.scrollBy(step)
+                if (scrolled == 0f) continue
+                // The list moved under the finger, so the card has to keep up.
+                rawOffset = settleIntoSlots(
+                    source = source,
+                    days = days,
+                    heights = heights,
+                    spacingPx = spacingPx,
+                    offset = rawOffset + scrolled,
+                    order = order,
+                    onReorder = { order = it },
+                    onCrossed = {
+                        haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    }
+                )
+                liftOffset.snapTo(rawOffset)
+            }
+        }
+    }
+
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(Spacing.medium)
     ) {
         order.forEachIndexed { position, source ->
             val planDay = days[source]
-            val movable = planDay.day.status != WorkoutStatus.COMPLETED
+            val movable = canReorder && planDay.day.status != WorkoutStatus.COMPLETED
             val isDragged = draggedId == planDay.day.id
 
             key(planDay.day.id) {
@@ -96,6 +162,7 @@ fun ReorderableDayList(
                                 shadowElevation = LIFTED_ELEVATION
                             }
                         }
+                        .onGloballyPositioned { cardTops[source] = it.positionInRoot().y }
                         .onSizeChanged { heights[source] = it.height.toFloat() }
                         .semantics {
                             if (movable) {
@@ -117,10 +184,15 @@ fun ReorderableDayList(
                             } else {
                                 Modifier.pointerInput(days) {
                                     detectDragGesturesAfterLongPress(
-                                        onDragStart = {
+                                        onDragStart = { start ->
                                             draggedId = planDay.day.id
                                             dragStartPosition = order.indexOf(source)
                                             rawOffset = 0f
+                                            // Seed the finger position before the
+                                            // auto-scroll loop starts: left at
+                                            // zero it reads as the top edge and
+                                            // scrolls the list away on lift.
+                                            pointerY = (cardTops[source] ?: 0f) + start.y
                                             scope.launch { liftOffset.snapTo(0f) }
                                             haptics.performHapticFeedback(
                                                 HapticFeedbackType.LongPress
@@ -129,6 +201,8 @@ fun ReorderableDayList(
                                         onDrag = { change, amount ->
                                             change.consume()
                                             rawOffset += amount.y
+                                            pointerY = (cardTops[source] ?: 0f) +
+                                                rawOffset + change.position.y
                                             rawOffset = settleIntoSlots(
                                                 source = source,
                                                 days = days,
@@ -147,6 +221,12 @@ fun ReorderableDayList(
                                         },
                                         onDragEnd = {
                                             val to = order.indexOf(source)
+                                            // The plan owns the order; the draft
+                                            // only existed for the drag. Letting
+                                            // it stand would show a move that was
+                                            // refused as though it had been made.
+                                            order = days.indices.toList()
+                                            pointerY = null
                                             if (to != dragStartPosition) onMove(dragStartPosition, to)
                                             scope.launch {
                                                 liftOffset.animateTo(
@@ -160,6 +240,7 @@ fun ReorderableDayList(
                                             }
                                         },
                                         onDragCancel = {
+                                            pointerY = null
                                             order = days.indices.toList()
                                             scope.launch {
                                                 liftOffset.animateTo(0f)
