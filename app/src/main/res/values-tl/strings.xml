@@ -155,6 +155,7 @@
     </plurals>
     <string name="not_completed">Hindi tapos</string>
     <string name="skipped">Nilaktawan</string>
+    <string name="upcoming">Paparating</string>
     <string name="weekly_progress">LINGGUHANG PROGRESS</string>
     <string name="completed_percentage" formatted="false">%d%% Tapos na (%d%%)</string>
     <string name="start_todays_workout">SIMULAN ANG WORKOUT NGAYONG ARAW</string>

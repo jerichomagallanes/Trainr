@@ -56,22 +56,31 @@ class WeeklyProgressScreenTest {
         composeTestRule.onNodeWithText(string(R.string.week_number_format, 1), substring = true)
             .assertIsDisplayed()
 
-        // Weeks 1, 5 and 7 are all fully completed, so this row repeats.
+        // Weeks 1, 5 and 7 are all fully completed, so this row repeats; the
+        // skipped and upcoming weeks share an untouched 0/3.
         val fullyCompleted = composeTestRule
             .onAllNodesWithText(daysCompleted(3, 3, 100))
             .fetchSemanticsNodes()
         assertThat(fullyCompleted).hasSize(3)
 
-        composeTestRule.onNodeWithText(daysCompleted(0, 3, 0))
-            .assertIsDisplayed()
+        val untouched = composeTestRule
+            .onAllNodesWithText(daysCompleted(0, 3, 0))
+            .fetchSemanticsNodes()
+        assertThat(untouched).hasSize(2)
     }
 
-    // Four statuses across seven weeks; every one should be on screen somewhere.
+    // Five statuses across eight weeks; every one should be on screen somewhere.
     @Test
-    fun showsAllFourWeekStatuses() {
+    fun showsEveryWeekStatus() {
         setScreen()
 
-        listOf(R.string.completed, R.string.in_progress, R.string.not_completed, R.string.skipped)
+        listOf(
+            R.string.completed,
+            R.string.in_progress,
+            R.string.not_completed,
+            R.string.skipped,
+            R.string.upcoming
+        )
             .forEach { status ->
                 assertThat(
                     composeTestRule.onAllNodesWithText(string(status)).fetchSemanticsNodes()
@@ -84,7 +93,7 @@ class WeeklyProgressScreenTest {
         var tapped: WeekProgressUi? = null
         setScreen(onWeekClick = { tapped = it })
 
-        composeTestRule.onNodeWithText(daysCompleted(0, 3, 0)).performClick()
+        composeTestRule.onNodeWithText(string(R.string.skipped)).performClick()
 
         assertThat(tapped?.weekNumber).isEqualTo(3)
     }
@@ -96,7 +105,9 @@ class WeeklyProgressScreenTest {
             weekNumber = 1,
             completedDays = 1,
             totalDays = 1,
-            status = WeekStatus.COMPLETED
+            status = WeekStatus.COMPLETED,
+            startDateMillis = SampleWeeklyProgress.weeks.first().startDateMillis,
+            endDateMillis = SampleWeeklyProgress.weeks.first().endDateMillis
         )
 
         composeTestRule.setContent {

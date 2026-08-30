@@ -37,7 +37,8 @@ class WeekStatusTest {
             R.string.completed,
             R.string.in_progress,
             R.string.not_completed,
-            R.string.skipped
+            R.string.skipped,
+            R.string.upcoming
         )
         assertThat(labels.toSet()).hasSize(WeekStatus.entries.size)
     }
@@ -47,6 +48,7 @@ class WeekStatusTest {
     fun missedAndPartDoneWeeksShareAColour() {
         assertThat(WeekStatus.NOT_COMPLETED.chipColor).isEqualTo(StatusNotStarted)
         assertThat(WeekStatus.SKIPPED.chipColor).isEqualTo(StatusNotStarted)
+        assertThat(WeekStatus.UPCOMING.chipColor).isEqualTo(StatusNotStarted)
         assertThat(WeekStatus.COMPLETED.chipColor).isEqualTo(StatusCompleted)
         assertThat(WeekStatus.IN_PROGRESS.chipColor).isEqualTo(StatusInProgress)
     }
@@ -68,16 +70,16 @@ class WeekStatusTest {
 
     @Test
     fun percentageIsTheShareOfDaysCompleted() {
-        assertThat(WeekProgressUi(1, 3, 3, WeekStatus.COMPLETED).completionPercentage).isEqualTo(100)
-        assertThat(WeekProgressUi(1, 2, 3, WeekStatus.NOT_COMPLETED).completionPercentage).isEqualTo(67)
-        assertThat(WeekProgressUi(1, 1, 3, WeekStatus.IN_PROGRESS).completionPercentage).isEqualTo(33)
-        assertThat(WeekProgressUi(1, 0, 3, WeekStatus.SKIPPED).completionPercentage).isEqualTo(0)
+        assertThat(WeekProgressUi(1, 3, 3, WeekStatus.COMPLETED, startDateMillis = 0L, endDateMillis = 0L).completionPercentage).isEqualTo(100)
+        assertThat(WeekProgressUi(1, 2, 3, WeekStatus.NOT_COMPLETED, startDateMillis = 0L, endDateMillis = 0L).completionPercentage).isEqualTo(67)
+        assertThat(WeekProgressUi(1, 1, 3, WeekStatus.IN_PROGRESS, startDateMillis = 0L, endDateMillis = 0L).completionPercentage).isEqualTo(33)
+        assertThat(WeekProgressUi(1, 0, 3, WeekStatus.SKIPPED, startDateMillis = 0L, endDateMillis = 0L).completionPercentage).isEqualTo(0)
     }
 
     // A plan with no scheduled days must not divide by zero.
     @Test
     fun percentageIsZeroWhenNoDaysAreScheduled() {
-        assertThat(WeekProgressUi(1, 0, 0, WeekStatus.SKIPPED).completionPercentage).isEqualTo(0)
+        assertThat(WeekProgressUi(1, 0, 0, WeekStatus.SKIPPED, startDateMillis = 0L, endDateMillis = 0L).completionPercentage).isEqualTo(0)
     }
 
     // The mockups label week 1 "Jul 22 – 28", but 22 July 2025 is a Tuesday, and
@@ -86,12 +88,8 @@ class WeekStatusTest {
     @Test
     fun everyWeekRunsMondayToSunday() {
         SampleWeeklyProgress.weeks.forEach { week ->
-            val start = WorkoutDateFormatter.formatWeekday(
-                SampleWeeklyProgress.weekStartMillis(week.weekNumber), Locale.US
-            )
-            val end = WorkoutDateFormatter.formatWeekday(
-                SampleWeeklyProgress.weekEndMillis(week.weekNumber), Locale.US
-            )
+            val start = WorkoutDateFormatter.formatWeekday(week.startDateMillis, Locale.US)
+            val end = WorkoutDateFormatter.formatWeekday(week.endDateMillis, Locale.US)
 
             assertThat(start).isEqualTo("Monday")
             assertThat(end).isEqualTo("Sunday")
@@ -101,7 +99,7 @@ class WeekStatusTest {
     @Test
     fun weeksRunConsecutivelyAndAreSevenDaysApart() {
         val millisPerWeek = 7L * 24 * 60 * 60 * 1000
-        val starts = SampleWeeklyProgress.weeks.map { SampleWeeklyProgress.weekStartMillis(it.weekNumber) }
+        val starts = SampleWeeklyProgress.weeks.map { it.startDateMillis }
 
         starts.zipWithNext().forEach { (a, b) ->
             assertThat(b - a).isEqualTo(millisPerWeek)

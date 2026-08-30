@@ -8,19 +8,27 @@ object SampleWeeklyProgress {
 
     private const val DAYS_PER_WEEK = 7
 
-    val weeks: List<WeekProgressUi> = listOf(
-        WeekProgressUi(1, completedDays = 3, totalDays = 3, status = WeekStatus.COMPLETED),
-        WeekProgressUi(2, completedDays = 2, totalDays = 3, status = WeekStatus.NOT_COMPLETED),
-        WeekProgressUi(3, completedDays = 0, totalDays = 3, status = WeekStatus.SKIPPED),
-        WeekProgressUi(4, completedDays = 1, totalDays = 3, status = WeekStatus.IN_PROGRESS),
-        WeekProgressUi(5, completedDays = 3, totalDays = 3, status = WeekStatus.COMPLETED),
-        WeekProgressUi(6, completedDays = 2, totalDays = 3, status = WeekStatus.NOT_COMPLETED),
-        WeekProgressUi(7, completedDays = 3, totalDays = 3, status = WeekStatus.COMPLETED)
+    // Computed per access so the dates follow the current default time zone.
+    val weeks: List<WeekProgressUi>
+        get() = listOf(
+            week(1, completedDays = 3, status = WeekStatus.COMPLETED),
+            week(2, completedDays = 2, status = WeekStatus.NOT_COMPLETED),
+            week(3, completedDays = 0, status = WeekStatus.SKIPPED),
+            week(4, completedDays = 1, status = WeekStatus.IN_PROGRESS),
+            week(5, completedDays = 3, status = WeekStatus.COMPLETED),
+            week(6, completedDays = 2, status = WeekStatus.NOT_COMPLETED),
+            week(7, completedDays = 3, status = WeekStatus.COMPLETED),
+            week(8, completedDays = 0, status = WeekStatus.UPCOMING)
+        )
+
+    private fun week(number: Int, completedDays: Int, status: WeekStatus) = WeekProgressUi(
+        weekNumber = number,
+        completedDays = completedDays,
+        totalDays = 3,
+        status = status,
+        startDateMillis = shift(SampleWorkoutData.weekStartMillis, number),
+        endDateMillis = shift(SampleWorkoutData.weekEndMillis, number)
     )
-
-    fun weekStartMillis(weekNumber: Int): Long = shift(SampleWorkoutData.weekStartMillis, weekNumber)
-
-    fun weekEndMillis(weekNumber: Int): Long = shift(SampleWorkoutData.weekEndMillis, weekNumber)
 
     private fun shift(millis: Long, weekNumber: Int): Long = Calendar.getInstance().apply {
         timeInMillis = millis

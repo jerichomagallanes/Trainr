@@ -10,6 +10,10 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.stringResource
@@ -23,6 +27,23 @@ import com.jericx.trainr.presentation.workout.components.WeekProgressCard
 import com.jericx.trainr.presentation.workout.model.WeekProgressUi
 import com.jericx.trainr.presentation.workout.sample.SampleWeeklyProgress
 import com.jericx.trainr.presentation.workout.util.WorkoutDateFormatter
+
+@Composable
+fun WeeklyProgressRoute(
+    onBackClick: () -> Unit = {},
+    viewModel: WeeklyProgressViewModel = hiltViewModel()
+) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // Coming back from a routine re-reads the plans, so a day completed there
+    // is reflected here.
+    LaunchedEffect(Unit) { viewModel.refresh() }
+
+    WeeklyProgressScreen(
+        weeks = state.weeks,
+        onBackClick = onBackClick
+    )
+}
 
 @Composable
 fun WeeklyProgressScreen(
@@ -54,8 +75,8 @@ fun WeeklyProgressScreen(
                 WeekProgressCard(
                     weekNumber = week.weekNumber,
                     dateRange = WorkoutDateFormatter.formatWeekRange(
-                        startMillis = SampleWeeklyProgress.weekStartMillis(week.weekNumber),
-                        endMillis = SampleWeeklyProgress.weekEndMillis(week.weekNumber),
+                        startMillis = week.startDateMillis,
+                        endMillis = week.endDateMillis,
                         locale = locale,
                         abbreviated = true
                     ),
