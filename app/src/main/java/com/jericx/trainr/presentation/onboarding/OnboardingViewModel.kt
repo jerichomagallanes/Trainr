@@ -33,6 +33,16 @@ class OnboardingViewModel @Inject constructor(
     private val _onboardingState = MutableStateFlow(OnboardingState())
     val onboardingState: StateFlow<OnboardingState> = _onboardingState.asStateFlow()
 
+    // A returning user editing or regenerating starts from the profile they
+    // saved, not from blank forms.
+    init {
+        viewModelScope.launch {
+            userRepository.getCurrentUser()?.let { stored ->
+                _onboardingState.value = _onboardingState.value.copy(userProfile = stored)
+            }
+        }
+    }
+
     fun updateBasicInfo(firstName: String, age: Int, gender: Gender, experience: ExperienceLevel) {
         _onboardingState.value = _onboardingState.value.copy(
             userProfile = _onboardingState.value.userProfile.copy(

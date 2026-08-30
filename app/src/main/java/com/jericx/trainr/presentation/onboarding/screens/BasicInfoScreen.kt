@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import com.jericx.trainr.R
+import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.model.ExperienceLevel
 import com.jericx.trainr.domain.model.Gender
 import com.jericx.trainr.presentation.common.theme.Spacing
@@ -34,13 +35,14 @@ import com.jericx.trainr.presentation.common.components.typography.TrainrScreenT
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BasicInfoScreen(
+    initial: UserProfile? = null,
     onNextClick: (firstName: String, age: Int, gender: Gender, experience: ExperienceLevel) -> Unit,
     onBackClick: () -> Unit
 ) {
-    var firstName by remember { mutableStateOf("") }
-    var age by remember { mutableStateOf("") }
-    var selectedGender by remember { mutableStateOf<Gender?>(null) }
-    var selectedExperience by remember { mutableStateOf<ExperienceLevel?>(null) }
+    var firstName by remember { mutableStateOf(initial?.firstName.orEmpty()) }
+    var age by remember { mutableStateOf(initial?.age?.takeIf { it > 0 }?.toString().orEmpty()) }
+    var selectedGender by remember { mutableStateOf(initial?.gender) }
+    var selectedExperience by remember { mutableStateOf(initial?.experienceLevel) }
 
     val isFormValid = firstName.isNotBlank() &&
             age.isNotBlank() &&

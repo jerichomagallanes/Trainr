@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.withStyle
 import com.jericx.trainr.R
+import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.common.Constants
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.components.core.TrainrButton
@@ -43,11 +44,21 @@ import com.jericx.trainr.presentation.onboarding.util.BodyMetricsConverter
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BodyMetricsScreen(
+    initial: UserProfile? = null,
+    isEditing: Boolean = false,
     onNextClick: (height: Float, weight: Float) -> Unit,
     onBackClick: () -> Unit
 ) {
-    var height by remember { mutableStateOf("") }
-    var weight by remember { mutableStateOf("") }
+    var height by remember {
+        mutableStateOf(initial?.height?.takeIf { it > 0f }?.toInt()?.toString().orEmpty())
+    }
+    var weight by remember {
+        mutableStateOf(
+            initial?.weight?.takeIf { it > 0f }
+                ?.let { if (it % 1f == 0f) it.toInt().toString() else it.toString() }
+                .orEmpty()
+        )
+    }
     var useMetric by remember { mutableStateOf(true) }
 
     val focusManager = LocalFocusManager.current
@@ -80,7 +91,7 @@ fun BodyMetricsScreen(
         onBackClick = onBackClick,
         bottomButton = {
             TrainrButton(
-                text = stringResource(R.string.next),
+                text = stringResource(if (isEditing) R.string.save else R.string.next),
                 onClick = {
                     val (h, w) = BodyMetricsConverter.parseMetrics(height, weight, useMetric)
                     onNextClick(h, w)

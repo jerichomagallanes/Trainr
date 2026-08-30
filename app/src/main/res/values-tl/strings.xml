@@ -139,9 +139,9 @@
     
     <!-- Workout Screens -->
     <string name="week_range_format">Linggo %1$d: %2$s</string>
-    <string name="leave_plan_title">Aalis sa plano?</string>
-    <string name="leave_plan_message">Kapag bumalik ka, kakailanganin mong buuin muli ang iyong workout plan. Okay lang ba?</string>
-    <string name="leave_plan_confirm">Oo, bumalik</string>
+    <string name="leave_plan_title">Muling buuin ang plano?</string>
+    <string name="leave_plan_message">Papalitan ng bagong plano ang linggong ito at lahat ng nai-log mo rito. Sigurado ka ba?</string>
+    <string name="leave_plan_confirm">Muling buuin</string>
     <string name="cancel">Kanselahin</string>
     <string name="mark_exercise_complete">Markahan bilang tapos</string>
     <string name="mark_exercise_incomplete">Markahan bilang hindi tapos</string>
@@ -208,6 +208,9 @@
     <string name="exercise_in_progress">Isinasagawa ang ehersisyo…</string>
     <string name="timer_paused">Naka-pause ang timer</string>
     <string name="edit">I-edit</string>
+    <string name="close">Isara</string>
+    <string name="save">I-save</string>
+    <string name="none_label">Wala</string>
     
     <!-- Common -->
     <string name="next">SUSUNOD</string>

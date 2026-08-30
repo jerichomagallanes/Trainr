@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.NavHost
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
@@ -46,6 +47,16 @@ import com.jericx.trainr.presentation.workout.WeeklyProgressScreen
 import com.jericx.trainr.presentation.workout.sample.SampleWeeklyProgress
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
+
+private val editArguments = listOf(
+    navArgument(Screen.EditableStep.ARG_EDIT) {
+        type = NavType.BoolType
+        defaultValue = false
+    }
+)
+
+private val NavBackStackEntry.isEditing: Boolean
+    get() = arguments?.getBoolean(Screen.EditableStep.ARG_EDIT) ?: false
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -129,69 +140,150 @@ fun AppContent(versionName: String) {
                     }
                     WelcomeScreen(
                         onGetStartedClick = {
-                            NavigationStateManager.saveCurrentRoute(context, Screen.BasicInfo.route)
-                            navController.navigate(Screen.BasicInfo.route)
+                            NavigationStateManager.saveCurrentRoute(
+                                context, Screen.BasicInfo.createRoute()
+                            )
+                            navController.navigate(Screen.BasicInfo.createRoute())
                         }
                     )
                 }
 
-                composable(Screen.BasicInfo.route) {
+                composable(
+                    route = Screen.BasicInfo.route,
+                    arguments = editArguments
+                ) { entry ->
+                    val editing = entry.isEditing
                     BasicInfoScreen(
+                        initial = if (editing) onboardingState.userProfile else null,
                         onNextClick = { firstName, age, gender, experience ->
                             onboardingViewModel.updateBasicInfo(firstName, age, gender, experience)
-                            navController.navigate(Screen.BodyMetrics.route)
+                            if (editing) {
+                                // The review's Personal card covers both steps, so
+                                // its edit walks basics then measurements before
+                                // dropping back onto the review.
+                                navController.navigate(
+                                    Screen.BodyMetrics.createRoute(edit = true)
+                                ) {
+                                    popUpTo(Screen.BasicInfo.route) { inclusive = true }
+                                }
+                            } else {
+                                navController.navigate(Screen.BodyMetrics.createRoute())
+                            }
                         },
                         onBackClick = { navController.popBackStack() }
                     )
                 }
 
-                composable(Screen.BodyMetrics.route) {
+                composable(
+                    route = Screen.BodyMetrics.route,
+                    arguments = editArguments
+                ) { entry ->
+                    val editing = entry.isEditing
                     BodyMetricsScreen(
+                        initial = if (editing) onboardingState.userProfile else null,
+                        isEditing = editing,
                         onNextClick = { height, weight ->
                             onboardingViewModel.updateBodyMetrics(height, weight)
-                            navController.navigate(Screen.FitnessGoal.route)
+                            if (editing) {
+                                navController.popBackStack()
+                            } else {
+                                navController.navigate(Screen.FitnessGoal.createRoute())
+                            }
                         },
                         onBackClick = { navController.popBackStack() }
                     )
                 }
 
-                composable(Screen.FitnessGoal.route) {
+                composable(
+                    route = Screen.FitnessGoal.route,
+                    arguments = editArguments
+                ) { entry ->
+                    val editing = entry.isEditing
                     FitnessGoalScreen(
+                        initial = if (editing) onboardingState.userProfile else null,
+                        isEditing = editing,
                         onNextClick = { goal ->
                             onboardingViewModel.updateFitnessGoal(goal)
-                            navController.navigate(Screen.WorkoutSetup.route)
+                            if (editing) {
+                                navController.popBackStack()
+                            } else {
+                                navController.navigate(Screen.WorkoutSetup.createRoute())
+                            }
                         },
                         onBackClick = { navController.popBackStack() }
                     )
                 }
 
-                composable(Screen.WorkoutSetup.route) {
+                composable(
+                    route = Screen.WorkoutSetup.route,
+                    arguments = editArguments
+                ) { entry ->
+                    val editing = entry.isEditing
                     WorkoutSetupScreen(
+                        initial = if (editing) onboardingState.userProfile else null,
+                        isEditing = editing,
                         onNextClick = { location, equipment, days, duration, time ->
                             onboardingViewModel.updateWorkoutSetup(location, equipment, days, duration, time)
-                            navController.navigate(Screen.Limitations.route)
+                            if (editing) {
+                                navController.popBackStack()
+                            } else {
+                                navController.navigate(Screen.Limitations.createRoute())
+                            }
                         },
                         onBackClick = { navController.popBackStack() }
                     )
                 }
 
-                composable(Screen.Limitations.route) {
+                composable(
+                    route = Screen.Limitations.route,
+                    arguments = editArguments
+                ) { entry ->
+                    val editing = entry.isEditing
                     LimitationsScreen(
+                        initial = if (editing) onboardingState.userProfile else null,
+                        isEditing = editing,
                         onNextClick = { injuries, workoutType ->
                             onboardingViewModel.updateLimitations(injuries, workoutType)
-                            navController.navigate(Screen.Review.route)
+                            if (editing) {
+                                navController.popBackStack()
+                            } else {
+                                navController.navigate(Screen.Review.createRoute())
+                            }
                         },
                         onBackClick = { navController.popBackStack() }
                     )
                 }
 
-                composable(Screen.Review.route) {
+                composable(
+                    route = Screen.Review.route,
+                    arguments = listOf(
+                        navArgument(Screen.Review.ARG_FROM_PLAN) {
+                            type = NavType.BoolType
+                            defaultValue = false
+                        }
+                    )
+                ) { entry ->
+                    val fromPlan =
+                        entry.arguments?.getBoolean(Screen.Review.ARG_FROM_PLAN) ?: false
                     ReviewScreen(
                         userProfile = onboardingState.userProfile,
+                        isRegenerating = fromPlan,
                         onConfirmClick = {
                             navController.navigate(Screen.Generating.route)
                         },
-                        onBackClick = { navController.popBackStack() }
+                        onBackClick = { navController.popBackStack() },
+                        onEditPersonal = {
+                            navController.navigate(Screen.BasicInfo.createRoute(edit = true))
+                        },
+                        onEditGoals = {
+                            navController.navigate(Screen.FitnessGoal.createRoute(edit = true))
+                        },
+                        onEditSetup = {
+                            navController.navigate(Screen.WorkoutSetup.createRoute(edit = true))
+                        },
+                        onEditLimitations = {
+                            navController.navigate(Screen.Limitations.createRoute(edit = true))
+                        }
                     )
                 }
 
@@ -199,8 +291,10 @@ fun AppContent(versionName: String) {
                     GeneratingScreen(
                         onGenerationComplete = {
                             onboardingViewModel.saveUserProfile {
+                                // The new plan is a fresh start whichever door led
+                                // here, so the whole back stack goes.
                                 navController.navigate(Screen.Home.route) {
-                                    popUpTo(Screen.Welcome.route) { inclusive = true }
+                                    popUpTo(0) { inclusive = true }
                                 }
                             }
                         }
@@ -296,10 +390,10 @@ fun AppContent(versionName: String) {
                                 Screen.RoutineDetail.createRoute(day.dayNumber)
                             )
                         },
+                        // The plan stays underneath so the close button on the
+                        // review is a real way back out of regenerating.
                         onLeavePlanConfirmed = {
-                            navController.navigate(Screen.Review.route) {
-                                popUpTo(Screen.Home.route) { inclusive = true }
-                            }
+                            navController.navigate(Screen.Review.createRoute(fromPlan = true))
                         }
                     )
                 }

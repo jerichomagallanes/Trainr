@@ -27,6 +27,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.jericx.trainr.R
+import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.common.Constants
 import com.jericx.trainr.domain.model.Equipment
 import com.jericx.trainr.domain.model.WorkoutLocation
@@ -56,6 +57,8 @@ private val DurationChipWidth = 80.dp
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun WorkoutSetupScreen(
+    initial: UserProfile? = null,
+    isEditing: Boolean = false,
     onNextClick: (
         location: WorkoutLocation,
         equipment: List<Equipment>,
@@ -65,11 +68,17 @@ fun WorkoutSetupScreen(
     ) -> Unit,
     onBackClick: () -> Unit
 ) {
-    var selectedLocation by remember { mutableStateOf<WorkoutLocation?>(null) }
-    var selectedEquipment by remember { mutableStateOf<Set<Equipment>>(emptySet()) }
-    var selectedDays by remember { mutableIntStateOf(Constants.Workout.DEFAULT_WORKOUT_DAYS_PER_WEEK) }
-    var selectedDuration by remember { mutableIntStateOf(Constants.Workout.DEFAULT_WORKOUT_DURATION) }
-    var selectedTime by remember { mutableStateOf(WorkoutTime.MORNING) }
+    var selectedLocation by remember { mutableStateOf(initial?.workoutLocation) }
+    var selectedEquipment by remember {
+        mutableStateOf(initial?.availableEquipment?.toSet() ?: emptySet())
+    }
+    var selectedDays by remember {
+        mutableIntStateOf(initial?.workoutDaysPerWeek ?: Constants.Workout.DEFAULT_WORKOUT_DAYS_PER_WEEK)
+    }
+    var selectedDuration by remember {
+        mutableIntStateOf(initial?.workoutDuration ?: Constants.Workout.DEFAULT_WORKOUT_DURATION)
+    }
+    var selectedTime by remember { mutableStateOf(initial?.preferredWorkoutTime ?: WorkoutTime.MORNING) }
 
     TrainrScaffold(
         onBackClick = onBackClick,
@@ -78,7 +87,7 @@ fun WorkoutSetupScreen(
         },
         bottomButton = {
             TrainrButton(
-                text = stringResource(R.string.next),
+                text = stringResource(if (isEditing) R.string.save else R.string.next),
                 onClick = {
                     selectedLocation?.let { location ->
                         val equipment = if (selectedEquipment.isEmpty()) {
