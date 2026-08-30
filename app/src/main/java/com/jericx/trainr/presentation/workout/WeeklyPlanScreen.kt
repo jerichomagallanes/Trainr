@@ -230,7 +230,10 @@ fun WeeklyPlanScreen(
 
         if (!isBrowsedWeek) {
             TrainrButton(
-                text = stringResource(R.string.start_todays_workout),
+                text = stringResource(
+                    if (state.nextWorkoutIsToday) R.string.start_todays_workout
+                    else R.string.start_next_workout
+                ),
                 onClick = { state.todaysDay?.let(onStartTodayClick) },
                 modifier = Modifier.padding(horizontal = Spacing.screen, vertical = Spacing.medium)
             )

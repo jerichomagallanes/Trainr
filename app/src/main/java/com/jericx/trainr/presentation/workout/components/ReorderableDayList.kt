@@ -38,7 +38,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.zIndex
 import com.jericx.trainr.R
 import com.jericx.trainr.domain.model.WorkoutDay
-import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.workout.WeeklyPlanDay
 import com.jericx.trainr.presentation.workout.util.WorkoutDateFormatter
@@ -144,13 +143,16 @@ fun ReorderableDayList(
     ) {
         order.forEachIndexed { position, source ->
             val planDay = days[source]
-            val movable = canReorder && planDay.day.status != WorkoutStatus.COMPLETED
+            // The past is a record and a finished session is a record: neither
+            // lifts, and nothing may be dropped onto a date that has gone.
+            val movable = canReorder && !planDay.isFrozen
             val isDragged = draggedId == planDay.day.id
 
             key(planDay.day.id) {
                 WorkoutDayCard(
                     weekday = WorkoutDateFormatter.formatWeekday(days[position].dateMillis, locale),
                     day = planDay.day,
+                    isMissed = planDay.isMissed,
                     onClick = { onDayClick(planDay.day) },
                     modifier = Modifier
                         .zIndex(if (isDragged) 1f else 0f)
@@ -276,8 +278,8 @@ private fun settleIntoSlots(
         val from = current.indexOf(source)
         val to = if (remaining > 0) from + 1 else from - 1
         if (to !in current.indices) break
-        // A finished session holds its date; nothing crosses it.
-        if (days[current[to]].day.status == WorkoutStatus.COMPLETED) break
+        // A finished session, and any day already gone, holds its place.
+        if (days[current[to]].isFrozen) break
 
         val step = (heights[current[to]] ?: return remaining) + spacingPx
         if (abs(remaining) < step / 2) break

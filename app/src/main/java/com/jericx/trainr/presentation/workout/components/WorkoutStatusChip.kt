@@ -13,6 +13,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.jericx.trainr.R
+import com.jericx.trainr.presentation.common.theme.StatusNotStarted
 import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
@@ -20,14 +22,20 @@ import com.jericx.trainr.presentation.common.theme.TrainrTheme
 @Composable
 fun WorkoutStatusChip(
     status: WorkoutStatus,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    // A day whose date has passed with nothing logged. It reads in the same
+    // grey as "not started": the app says where you stand without scolding.
+    isMissed: Boolean = false
 ) {
     Text(
-        text = stringResource(status.labelRes),
+        text = stringResource(if (isMissed) R.string.missed else status.labelRes),
         color = Color.White,
         style = MaterialTheme.typography.labelSmall,
         modifier = modifier
-            .background(status.chipColor, MaterialTheme.shapes.small)
+            .background(
+                if (isMissed) StatusNotStarted else status.chipColor,
+                MaterialTheme.shapes.small
+            )
             .padding(PaddingValues(horizontal = Spacing.small, vertical = 3.dp))
     )
 }

@@ -197,6 +197,8 @@
     <string name="delete_set">セットを削除</string>
     <string name="plan_options">プランのオプション</string>
     <string name="regenerate_plan">プランを再生成</string>
+    <string name="missed">未実施</string>
+    <string name="start_next_workout">次のワークアウトを開始</string>
     <string name="move_earlier">前の日に移動</string>
     <string name="move_later">後の日に移動</string>
     <string name="delete_week_title">この週を削除しますか？</string>
