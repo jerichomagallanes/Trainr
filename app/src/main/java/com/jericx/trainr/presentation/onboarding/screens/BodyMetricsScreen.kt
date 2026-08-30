@@ -113,11 +113,13 @@ fun BodyMetricsScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            TrainrProgress(
-                currentStep = 2,
-                totalSteps = 7,
-                modifier = Modifier.padding(horizontal = Spacing.large)
-            )
+            if (!isEditing) {
+                TrainrProgress(
+                    currentStep = 2,
+                    totalSteps = 7,
+                    modifier = Modifier.padding(horizontal = Spacing.large)
+                )
+            }
 
             TrainrScreenContent {
                 Spacer(modifier = Modifier.height(Spacing.extraLarge))

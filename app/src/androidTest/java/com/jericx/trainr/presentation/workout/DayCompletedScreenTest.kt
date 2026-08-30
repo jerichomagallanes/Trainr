@@ -52,7 +52,7 @@ class DayCompletedScreenTest {
 
         composeTestRule.onNodeWithText(string(R.string.view_weekly_progress).uppercase())
             .assertIsDisplayed()
-        composeTestRule.onNodeWithText(string(R.string.back_to_weekly_routine).uppercase())
+        composeTestRule.onNodeWithText(string(R.string.back_to_workout_plan).uppercase())
             .assertIsDisplayed()
     }
 
@@ -67,7 +67,7 @@ class DayCompletedScreenTest {
 
         composeTestRule.onNodeWithText(string(R.string.view_weekly_progress).uppercase())
             .performClick()
-        composeTestRule.onNodeWithText(string(R.string.back_to_weekly_routine).uppercase())
+        composeTestRule.onNodeWithText(string(R.string.back_to_workout_plan).uppercase())
             .performClick()
 
         assertThat(viewedProgress).isTrue()

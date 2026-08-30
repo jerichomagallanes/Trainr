@@ -366,15 +366,17 @@ fun AppContent(versionName: String) {
                 ) {
                     RoutineDetailRoute(
                         onBackClick = { navController.popBackStack() },
+                        // The session stays behind the congratulations, so
+                        // back out of it returns to the workout that was just
+                        // finished — where a mistyped number gets corrected.
+                        // Tearing it down made the completion screen's back
+                        // arrow a second way to reach home wearing the icon for
+                        // the one place it could not go.
                         onDayCompleted = { dayNumber ->
-                            navController.navigate(Screen.DayCompleted.createRoute(dayNumber)) {
-                                popUpTo(Screen.RoutineDetail.route) { inclusive = true }
-                            }
+                            navController.navigate(Screen.DayCompleted.createRoute(dayNumber))
                         },
                         onWeekCompleted = { weekNumber ->
-                            navController.navigate(Screen.WeekCompleted.createRoute(weekNumber)) {
-                                popUpTo(Screen.RoutineDetail.route) { inclusive = true }
-                            }
+                            navController.navigate(Screen.WeekCompleted.createRoute(weekNumber))
                         }
                     )
                 }

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.progressSemantics
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -26,6 +27,12 @@ fun TrainrProgress(
 ) {
     Box(
         modifier = modifier
+            // A bar with no semantics is furniture: nothing announces how far
+            // through the setup a screen reader is, and nothing can ask.
+            .progressSemantics(
+                value = currentStep.toFloat(),
+                valueRange = 0f..totalSteps.toFloat()
+            )
             .fillMaxWidth()
             .height(8.dp)
             .clip(MaterialTheme.shapes.large)

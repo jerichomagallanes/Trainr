@@ -75,14 +75,19 @@ fun BasicInfoScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            TrainrProgress(
-                currentStep = 1,
-                totalSteps = 7,
-                modifier = Modifier.padding(
-                    horizontal = Spacing.large,
-                    vertical = Spacing.medium
+            // The bar counts the way through first-time setup. Coming back
+            // to change one answer is not a seventh of anything, so it says
+            // nothing then.
+            if (!isEditing) {
+                TrainrProgress(
+                    currentStep = 1,
+                    totalSteps = 7,
+                    modifier = Modifier.padding(
+                        horizontal = Spacing.large,
+                        vertical = Spacing.medium
+                    )
                 )
-            )
+            }
 
             TrainrScreenContent {
                 TrainrScreenTitle(text = stringResource(R.string.tell_us_about_yourself))
