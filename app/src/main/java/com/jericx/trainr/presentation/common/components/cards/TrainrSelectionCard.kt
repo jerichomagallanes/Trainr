@@ -5,7 +5,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -13,8 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -22,7 +19,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.jericx.trainr.presentation.common.components.core.TrainrRadioDot
 import com.jericx.trainr.presentation.common.theme.Spacing
+import com.jericx.trainr.presentation.common.theme.TextMuted
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 
 @Composable
@@ -44,36 +43,31 @@ fun TrainrSelectionCard(
             else
                 MaterialTheme.colorScheme.surface
         ),
-        border = if (!isSelected)
-            BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
-        else null,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(Spacing.medium)
+                .padding(Spacing.tight)
         ) {
-            RadioButton(
+            TrainrRadioDot(
                 selected = isSelected,
-                onClick = null,
-                modifier = Modifier.align(Alignment.TopEnd),
-                colors = RadioButtonDefaults.colors(
-                    selectedColor = if (isSelected)
-                        MaterialTheme.colorScheme.background
-                    else
-                        MaterialTheme.colorScheme.primary,
-                    unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                )
+                modifier = Modifier.align(Alignment.TopEnd)
             )
 
             Column(
-                modifier = Modifier.padding(end = Spacing.huge)
+                modifier = Modifier.padding(
+                    start = 5.dp,
+                    top = 5.dp,
+                    bottom = 5.dp,
+                    end = Spacing.extraLarge
+                )
             ) {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.bodyLarge.copy(
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                     ),
                     color = if (isSelected)
                         MaterialTheme.colorScheme.background
@@ -81,14 +75,14 @@ fun TrainrSelectionCard(
                         MaterialTheme.colorScheme.onSurface
                 )
                 if (description != null) {
-                    Spacer(modifier = Modifier.height(Spacing.extraSmall))
+                    Spacer(modifier = Modifier.height(Spacing.small))
                     Text(
                         text = description,
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = if (isSelected)
                             MaterialTheme.colorScheme.background
                         else
-                            MaterialTheme.colorScheme.onSurfaceVariant
+                            TextMuted
                     )
                 }
             }
@@ -101,16 +95,21 @@ fun TrainrSelectionCard(
 private fun TrainrSelectionCardPreview() {
     TrainrTheme {
         Column(
-            verticalArrangement = Arrangement.spacedBy(Spacing.small),
+            verticalArrangement = Arrangement.spacedBy(Spacing.card),
             modifier = Modifier.padding(Spacing.medium)
         ) {
             TrainrSelectionCard(
-                title = "Strength Training",
-                description = "Power and strength development",
+                title = "Intermediate",
+                description = "Working out regularly for 6+ months.",
                 isSelected = true,
                 onClick = {}
             )
-            TrainrSelectionCard(title = "General Fitness", isSelected = false, onClick = {})
+            TrainrSelectionCard(
+                title = "Beginner",
+                description = "New to working out or getting back into it.",
+                isSelected = false,
+                onClick = {}
+            )
         }
     }
 }

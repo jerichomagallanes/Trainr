@@ -14,11 +14,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.jericx.trainr.presentation.common.theme.ComponentHeight
 import com.jericx.trainr.presentation.common.theme.Spacing
+import com.jericx.trainr.presentation.common.theme.TextMuted
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 
 @Composable
@@ -26,13 +28,15 @@ fun TrainrRadioChip(
     text: String,
     selected: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    height: Dp = ComponentHeight.Option,
+    mutedWhenUnselected: Boolean = false
 ) {
     Surface(
         onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
-            .height(ComponentHeight.Option),
+            .height(height),
         shape = MaterialTheme.shapes.medium,
         color = if (selected)
             MaterialTheme.colorScheme.onBackground
@@ -53,10 +57,11 @@ fun TrainrRadioChip(
                 style = MaterialTheme.typography.bodyLarge.copy(
                     fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
                 ),
-                color = if (selected)
-                    MaterialTheme.colorScheme.background
-                else
-                    MaterialTheme.colorScheme.onSurface,
+                color = when {
+                    selected -> MaterialTheme.colorScheme.background
+                    mutedWhenUnselected -> TextMuted
+                    else -> MaterialTheme.colorScheme.onSurface
+                },
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 // Weighted so the label yields to the dot rather than squashing

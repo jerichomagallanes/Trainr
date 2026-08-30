@@ -21,6 +21,7 @@ import com.jericx.trainr.R
 import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.model.ExperienceLevel
 import com.jericx.trainr.domain.model.Gender
+import com.jericx.trainr.presentation.common.theme.ComponentHeight
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.components.core.TrainrButton
 import com.jericx.trainr.presentation.common.components.core.TrainrProgress
@@ -116,26 +117,32 @@ fun BasicInfoScreen(
                             text = stringResource(R.string.male),
                             selected = selectedGender == Gender.MALE,
                             onClick = { selectedGender = Gender.MALE },
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            height = ComponentHeight.Field,
+                            mutedWhenUnselected = true
                         )
                         TrainrRadioChip(
                             text = stringResource(R.string.female),
                             selected = selectedGender == Gender.FEMALE,
                             onClick = { selectedGender = Gender.FEMALE },
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            height = ComponentHeight.Field,
+                            mutedWhenUnselected = true
                         )
                         TrainrRadioChip(
                             text = stringResource(R.string.other),
                             selected = selectedGender == Gender.NON_BINARY,
                             onClick = { selectedGender = Gender.NON_BINARY },
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            height = ComponentHeight.Field,
+                            mutedWhenUnselected = true
                         )
                     }
                 }
 
                 TrainrFormSection(title = stringResource(R.string.fitness_experience)) {
                     Column(
-                        verticalArrangement = Arrangement.spacedBy(Spacing.small)
+                        verticalArrangement = Arrangement.spacedBy(Spacing.card)
                     ) {
                         TrainrSelectionCard(
                             title = stringResource(R.string.beginner),
