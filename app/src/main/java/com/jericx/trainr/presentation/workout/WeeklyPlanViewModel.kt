@@ -12,6 +12,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -48,8 +49,13 @@ class WeeklyPlanViewModel @Inject constructor(
 
     fun refresh() {
         viewModelScope.launch {
+            // The home surface always shows the newest week; earlier weeks stay
+            // reachable through Weekly Progress.
             val stored = userRepository.getCurrentUser()
-                ?.let { userRepository.getWeeklyWorkoutPlan(it.id, FIRST_WEEK) }
+                ?.let { user ->
+                    userRepository.getWeeklyWorkoutPlans(user.id).first()
+                        .maxByOrNull { it.weekNumber }
+                }
 
             _uiState.value = if (stored == null) {
                 stateFor(SampleWorkoutData.weekOne, isSample = true)
@@ -60,7 +66,6 @@ class WeeklyPlanViewModel @Inject constructor(
     }
 
     companion object {
-        private const val FIRST_WEEK = 1
         private const val LAST_ISO_DAY = 7
 
         // Plans stored before startDateMillis existed fall back to the sample week.

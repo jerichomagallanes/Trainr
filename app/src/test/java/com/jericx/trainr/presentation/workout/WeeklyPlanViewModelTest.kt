@@ -9,8 +9,10 @@ import com.jericx.trainr.domain.repository.UserRepository
 import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
 import com.jericx.trainr.presentation.workout.util.WorkoutWeek
 import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -70,7 +72,7 @@ class WeeklyPlanViewModelTest {
     @Test
     fun fallsBackToSampleDataWhenTheUserHasNoPlanYet() = runTest {
         coEvery { userRepository.getCurrentUser() } returns UserProfile(id = 1)
-        coEvery { userRepository.getWeeklyWorkoutPlan(1, 1) } returns null
+        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(emptyList())
 
         val viewModel = WeeklyPlanViewModel(userRepository)
         advanceUntilIdle()
@@ -81,7 +83,7 @@ class WeeklyPlanViewModelTest {
     @Test
     fun usesTheStoredPlanWhenOneExists() = runTest {
         coEvery { userRepository.getCurrentUser() } returns UserProfile(id = 1)
-        coEvery { userRepository.getWeeklyWorkoutPlan(1, 1) } returns storedPlan
+        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(storedPlan))
 
         val viewModel = WeeklyPlanViewModel(userRepository)
         advanceUntilIdle()
@@ -90,14 +92,29 @@ class WeeklyPlanViewModelTest {
         assertThat(viewModel.uiState.value.isSampleData).isFalse()
     }
 
+    // After a regeneration there are several stored weeks; home shows the
+    // newest one.
+    @Test
+    fun showsTheLatestWeekWhenSeveralAreStored() = runTest {
+        val weekTwo = storedPlan.copy(id = 10, weekNumber = 2, title = "Second week")
+        coEvery { userRepository.getCurrentUser() } returns UserProfile(id = 1)
+        every { userRepository.getWeeklyWorkoutPlans(1) } returns
+            flowOf(listOf(weekTwo, storedPlan))
+
+        val viewModel = WeeklyPlanViewModel(userRepository)
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.plan).isEqualTo(weekTwo)
+    }
+
     // The known gap this closes: a stored plan used to render the sample
     // week's hardcoded July dates whatever week it actually was.
     @Test
     fun aStoredPlanRendersItsOwnDates() = runTest {
         val start = 1_755_000_000_000L
         coEvery { userRepository.getCurrentUser() } returns UserProfile(id = 1)
-        coEvery { userRepository.getWeeklyWorkoutPlan(1, 1) } returns
-            storedPlan.copy(startDateMillis = start)
+        every { userRepository.getWeeklyWorkoutPlans(1) } returns
+            flowOf(listOf(storedPlan.copy(startDateMillis = start)))
 
         val viewModel = WeeklyPlanViewModel(userRepository)
         advanceUntilIdle()

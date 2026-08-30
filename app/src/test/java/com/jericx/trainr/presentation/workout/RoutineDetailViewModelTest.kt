@@ -14,9 +14,11 @@ import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.domain.repository.UserRepository
 import com.jericx.trainr.presentation.workout.model.ExerciseUi
 import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
@@ -423,7 +425,7 @@ class RoutineDetailViewModelTest {
     private fun repositoryWith(plan: WeeklyWorkoutPlan): UserRepository =
         mockk<UserRepository>(relaxed = true).also {
             coEvery { it.getCurrentUser() } returns UserProfile(id = 1)
-            coEvery { it.getWeeklyWorkoutPlan(1, 1) } returns plan
+            every { it.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(plan))
         }
 
     @Test

@@ -14,6 +14,7 @@ sealed class Screen(val route: String) {
         fun createRoute(fromPlan: Boolean = false) = "review_screen?fromPlan=$fromPlan"
     }
     data object Generating : Screen("generating_screen")
+    data object GeneratingNextWeek : Screen("generating_next_week_screen")
 
     // An onboarding step that the review screen can reopen on its own: in
     // edit mode, finishing the step returns to the review instead of walking
