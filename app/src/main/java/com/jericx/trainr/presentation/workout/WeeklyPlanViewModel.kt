@@ -28,7 +28,10 @@ data class WeeklyPlanUiState(
     val days: List<WeeklyPlanDay> = emptyList(),
     val weekStartMillis: Long = SampleWorkoutData.weekStartMillis,
     val weekEndMillis: Long = SampleWorkoutData.weekEndMillis,
-    val isSampleData: Boolean = true
+    val isSampleData: Boolean = true,
+    // Next week is offered once this one is finished or its dates have run
+    // out; a missed day must not strand the plan on the same week forever.
+    val canStartNextWeek: Boolean = false
 ) {
     // "Today's workout" is the first one still outstanding; once the week is
     // done the button falls back to the start of it rather than doing nothing.
@@ -79,8 +82,15 @@ class WeeklyPlanViewModel @Inject constructor(
         private const val LAST_ISO_DAY = 7
 
         // Plans stored before startDateMillis existed fall back to the sample week.
-        fun stateFor(plan: WeeklyWorkoutPlan, isSample: Boolean): WeeklyPlanUiState {
+        fun stateFor(
+            plan: WeeklyWorkoutPlan,
+            isSample: Boolean,
+            nowMillis: Long = System.currentTimeMillis()
+        ): WeeklyPlanUiState {
             val start = plan.startDateMillis ?: SampleWorkoutData.weekStartMillis
+            val allDone = plan.workoutDays.isNotEmpty() &&
+                plan.workoutDays.all { it.status == WorkoutStatus.COMPLETED }
+            val weekIsOver = nowMillis >= WorkoutWeek.dateOfDay(start, LAST_ISO_DAY + 1)
 
             return WeeklyPlanUiState(
                 plan = plan,
@@ -89,7 +99,9 @@ class WeeklyPlanViewModel @Inject constructor(
                 },
                 weekStartMillis = start,
                 weekEndMillis = WorkoutWeek.dateOfDay(start, LAST_ISO_DAY),
-                isSampleData = isSample
+                isSampleData = isSample,
+                // Sample data stands for nothing stored, so it leads nowhere.
+                canStartNextWeek = !isSample && (allDone || weekIsOver)
             )
         }
     }

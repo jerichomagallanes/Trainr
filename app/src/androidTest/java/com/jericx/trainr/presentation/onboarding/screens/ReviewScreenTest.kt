@@ -189,4 +189,31 @@ class ReviewScreenTest {
 
         assertThat(confirmed).isTrue()
     }
+    // Saving the profile writes no routine, so the screen must not promise one.
+    @Test
+    fun theProfileUpdateSavesInsteadOfGenerating() {
+        var saved = false
+        composeTestRule.setContent {
+            TrainrTheme {
+                ReviewScreen(
+                    userProfile = sampleProfile,
+                    isProfileUpdate = true,
+                    onConfirmClick = { saved = true },
+                    onBackClick = {}
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.generate_my_workout_plan))
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.ai_routine_preview_label))
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.review_profile_description))
+            .assertIsDisplayed()
+
+        composeTestRule.onNodeWithText(string(R.string.save_profile)).performClick()
+
+        assertThat(saved).isTrue()
+    }
+
 }

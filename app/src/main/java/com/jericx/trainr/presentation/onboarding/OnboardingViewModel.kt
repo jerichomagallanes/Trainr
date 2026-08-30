@@ -98,6 +98,30 @@ class OnboardingViewModel @Inject constructor(
 
     suspend fun hasCompletedOnboarding(): Boolean = userRepository.hasUsers()
 
+    // Editing the profile from the plan must leave training history alone, so
+    // the stored user is updated in place: saveUserProfile's REPLACE would
+    // cascade every stored week away. The change takes effect on the next week
+    // generated, which reads the profile fresh.
+    fun updateProfileOnly(onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            try {
+                _onboardingState.value = _onboardingState.value.copy(isLoading = true)
+                userRepository.getCurrentUser()?.let { existing ->
+                    userRepository.updateUser(
+                        _onboardingState.value.userProfile.copy(id = existing.id)
+                    )
+                }
+                _onboardingState.value = _onboardingState.value.copy(isLoading = false)
+                onSuccess()
+            } catch (e: Exception) {
+                _onboardingState.value = _onboardingState.value.copy(
+                    isLoading = false,
+                    error = e.message
+                )
+            }
+        }
+    }
+
     fun saveUserProfile(onSuccess: () -> Unit) {
         viewModelScope.launch {
             try {

@@ -8,10 +8,15 @@ sealed class Screen(val route: String) {
     data object FitnessGoal : EditableStep("fitness_goal_screen")
     data object WorkoutSetup : EditableStep("workout_setup_screen")
     data object Limitations : EditableStep("limitations_screen")
-    data object Review : Screen("review_screen?fromPlan={fromPlan}") {
+    data object Review : Screen("review_screen?fromPlan={fromPlan}&profileOnly={profileOnly}") {
         const val ARG_FROM_PLAN = "fromPlan"
 
-        fun createRoute(fromPlan: Boolean = false) = "review_screen?fromPlan=$fromPlan"
+        // Editing the profile without regenerating: the review saves and
+        // returns instead of leading into generation.
+        const val ARG_PROFILE_ONLY = "profileOnly"
+
+        fun createRoute(fromPlan: Boolean = false, profileOnly: Boolean = false) =
+            "review_screen?fromPlan=$fromPlan&profileOnly=$profileOnly"
     }
     data object Generating : Screen("generating_screen")
     data object GeneratingNextWeek : Screen("generating_next_week_screen")

@@ -252,4 +252,30 @@ class OnboardingViewModelTest {
         assertThat(state.error).isEqualTo("DB write failed")
         assertThat(callbackInvoked).isFalse()
     }
+    // The regenerate flow deliberately wipes history; editing the profile must
+    // not, so it updates the stored user rather than re-inserting it.
+    @Test
+    fun `updateProfileOnly saves the profile and leaves the plan alone`() = runTest {
+        val stored = UserProfile(id = 4, firstName = "Jet", age = 28)
+        coEvery { userRepository.getCurrentUser() } returns stored
+        val viewModel = OnboardingViewModel(userRepository, planGenerator) { "en" }
+        advanceUntilIdle()
+        viewModel.updateFitnessGoal(FitnessGoal.STRENGTH)
+
+        var done = false
+        viewModel.updateProfileOnly { done = true }
+        advanceUntilIdle()
+
+        coVerify {
+            userRepository.updateUser(
+                match { it.id == 4L && it.fitnessGoal == FitnessGoal.STRENGTH }
+            )
+        }
+        coVerify(exactly = 0) { userRepository.saveUser(any()) }
+        coVerify(exactly = 0) { userRepository.saveWeeklyWorkoutPlan(any()) }
+        coVerify(exactly = 0) { planGenerator.generate(any()) }
+        assertThat(done).isTrue()
+        assertThat(viewModel.onboardingState.value.isLoading).isFalse()
+    }
+
 }

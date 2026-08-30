@@ -24,6 +24,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class WeeklyPlanViewModelTest {
@@ -189,4 +190,61 @@ class WeeklyPlanViewModelTest {
 
         assertThat(state.todaysDay?.title).isEqualTo("Full Body Strength")
     }
+    private fun weekStarting(start: Long, vararg statuses: WorkoutStatus) = storedPlan.copy(
+        startDateMillis = start,
+        workoutDays = statuses.mapIndexed { index, status ->
+            storedPlan.workoutDays.first().copy(id = index + 1L, dayNumber = index + 1, status = status)
+        }
+    )
+
+    // Next week is offered once the week is done...
+    @Test
+    fun aFinishedWeekCanStartTheNextOne() {
+        val start = WorkoutWeek.mondayOf(1_755_000_000_000L)
+        val state = WeeklyPlanViewModel.stateFor(
+            plan = weekStarting(start, WorkoutStatus.COMPLETED, WorkoutStatus.COMPLETED),
+            isSample = false,
+            nowMillis = start + TimeUnit.DAYS.toMillis(2)
+        )
+
+        assertThat(state.canStartNextWeek).isTrue()
+    }
+
+    // ...or once its dates have run out, so a missed day cannot strand the plan.
+    @Test
+    fun anExpiredWeekCanStartTheNextOneEvenUnfinished() {
+        val start = WorkoutWeek.mondayOf(1_755_000_000_000L)
+        val state = WeeklyPlanViewModel.stateFor(
+            plan = weekStarting(start, WorkoutStatus.COMPLETED, WorkoutStatus.NOT_STARTED),
+            isSample = false,
+            nowMillis = start + TimeUnit.DAYS.toMillis(8)
+        )
+
+        assertThat(state.canStartNextWeek).isTrue()
+    }
+
+    @Test
+    fun anUnfinishedWeekStillRunningCannotSkipAhead() {
+        val start = WorkoutWeek.mondayOf(1_755_000_000_000L)
+        val state = WeeklyPlanViewModel.stateFor(
+            plan = weekStarting(start, WorkoutStatus.COMPLETED, WorkoutStatus.NOT_STARTED),
+            isSample = false,
+            nowMillis = start + TimeUnit.DAYS.toMillis(2)
+        )
+
+        assertThat(state.canStartNextWeek).isFalse()
+    }
+
+    // Sample data stands for nothing stored, so it can generate nothing.
+    @Test
+    fun theSampleWeekNeverOffersToStartTheNextOne() {
+        val state = WeeklyPlanViewModel.stateFor(
+            plan = SampleWorkoutData.weekOne,
+            isSample = true,
+            nowMillis = Long.MAX_VALUE / 2
+        )
+
+        assertThat(state.canStartNextWeek).isFalse()
+    }
+
 }

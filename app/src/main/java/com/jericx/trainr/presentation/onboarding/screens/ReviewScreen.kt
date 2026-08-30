@@ -49,6 +49,9 @@ fun ReviewScreen(
     onConfirmClick: () -> Unit,
     onBackClick: () -> Unit,
     isRegenerating: Boolean = false,
+    // Saving the profile on its own: no plan is generated, so the button says
+    // what it does and the subtitle explains when the change lands.
+    isProfileUpdate: Boolean = false,
     onEditPersonal: () -> Unit = {},
     onEditGoals: () -> Unit = {},
     onEditSetup: () -> Unit = {},
@@ -62,12 +65,15 @@ fun ReviewScreen(
                 showLogo = true,
                 // Entered from the plan this is a detour, not a flow: X leads
                 // back out; during onboarding the arrow steps back as usual.
-                closeInsteadOfBack = isRegenerating
+                closeInsteadOfBack = isRegenerating || isProfileUpdate
             )
         },
         bottomButton = {
             TrainrButton(
-                text = stringResource(R.string.generate_my_workout_plan),
+                text = stringResource(
+                    if (isProfileUpdate) R.string.save_profile
+                    else R.string.generate_my_workout_plan
+                ),
                 onClick = onConfirmClick
             )
         }
@@ -91,7 +97,10 @@ fun ReviewScreen(
                 Spacer(modifier = Modifier.height(Spacing.small))
 
                 TrainrSubtitle(
-                    text = stringResource(R.string.review_description)
+                    text = stringResource(
+                        if (isProfileUpdate) R.string.review_profile_description
+                        else R.string.review_description
+                    )
                 )
 
                 Spacer(modifier = Modifier.height(Spacing.extraLarge))
@@ -179,9 +188,13 @@ fun ReviewScreen(
 
                 Spacer(modifier = Modifier.height(Spacing.extraLarge))
 
-                AIPreviewCard(userProfile = userProfile)
+                // The card promises a routine about to be written; saving the
+                // profile alone writes none.
+                if (!isProfileUpdate) {
+                    AIPreviewCard(userProfile = userProfile)
 
-                Spacer(modifier = Modifier.height(Spacing.medium))
+                    Spacer(modifier = Modifier.height(Spacing.medium))
+                }
             }
         }
     }
