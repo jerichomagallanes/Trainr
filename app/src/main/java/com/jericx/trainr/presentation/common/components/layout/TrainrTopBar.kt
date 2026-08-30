@@ -30,18 +30,20 @@ import com.jericx.trainr.presentation.common.theme.TrainrTheme
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TrainrTopBar(
-    onBackClick: () -> Unit,
+    onBackClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
     showLogo: Boolean = true
 ) {
     TopAppBar(
         navigationIcon = {
-            IconButton(onClick = onBackClick) {
-                Icon(
-                    Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(R.string.back),
-                    tint = MaterialTheme.colorScheme.onBackground
-                )
+            if (onBackClick != null) {
+                IconButton(onClick = onBackClick) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = stringResource(R.string.back),
+                        tint = MaterialTheme.colorScheme.onBackground
+                    )
+                }
             }
         },
         title = {

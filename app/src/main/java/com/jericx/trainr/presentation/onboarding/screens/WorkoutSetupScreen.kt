@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -24,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import com.jericx.trainr.R
 import com.jericx.trainr.common.Constants
 import com.jericx.trainr.domain.model.Equipment
@@ -46,7 +48,10 @@ import com.jericx.trainr.presentation.common.components.layout.TrainrScreenConte
 import com.jericx.trainr.presentation.common.components.layout.TrainrTopBar
 import com.jericx.trainr.presentation.common.components.typography.TrainrScreenTitle
 import com.jericx.trainr.presentation.common.components.typography.TrainrSectionTitle
+import com.jericx.trainr.presentation.common.theme.ComponentHeight
 import com.jericx.trainr.presentation.common.theme.Spacing
+
+private val DurationChipWidth = 80.dp
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -108,11 +113,11 @@ fun WorkoutSetupScreen(
 
                 TrainrSectionTitle(stringResource(R.string.where_will_you_work_out))
 
-                Spacer(modifier = Modifier.height(Spacing.medium))
+                Spacer(modifier = Modifier.height(Spacing.card))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.small)
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
                 ) {
                     TrainrLocationCard(
                         text = stringResource(R.string.home),
@@ -147,9 +152,13 @@ fun WorkoutSetupScreen(
                 }
 
                 if (selectedLocation != null) {
-                    Spacer(modifier = Modifier.height(Spacing.large))
+                    Spacer(modifier = Modifier.height(Spacing.sectionGap))
 
-                    TrainrFormSection(title = stringResource(R.string.available_equipment)) {
+                    TrainrFormSection(
+                        title = stringResource(R.string.available_equipment),
+                        verticalPadding = 0.dp,
+                        titleGap = Spacing.card
+                    ) {
                         val equipmentOptions = when (selectedLocation) {
                             WorkoutLocation.HOME -> listOf(
                                 Equipment.NONE to stringResource(R.string.bodyweight_only),
@@ -172,8 +181,8 @@ fun WorkoutSetupScreen(
 
                         FlowRow(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-                            verticalArrangement = Arrangement.spacedBy(Spacing.small)
+                            horizontalArrangement = Arrangement.spacedBy(Spacing.tight),
+                            verticalArrangement = Arrangement.spacedBy(Spacing.card)
                         ) {
                             equipmentOptions.forEach { (equipment, label) ->
                                 TrainrToggleChip(
@@ -201,9 +210,13 @@ fun WorkoutSetupScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(Spacing.large))
+                Spacer(modifier = Modifier.height(Spacing.sectionGap))
 
-                TrainrFormSection(title = stringResource(R.string.workout_days_per_week)) {
+                TrainrFormSection(
+                    title = stringResource(R.string.workout_days_per_week),
+                    verticalPadding = 0.dp,
+                    titleGap = Spacing.card
+                ) {
                     TrainrDropdown(
                         selectedValue = selectedDays.toString(),
                         options = Constants.Workout.DAYS_PER_WEEK_OPTIONS.map { days ->
@@ -219,29 +232,39 @@ fun WorkoutSetupScreen(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(Spacing.large))
+                Spacer(modifier = Modifier.height(Spacing.sectionGap))
 
-                TrainrFormSection(title = stringResource(R.string.session_duration)) {
-                    FlowRow(
+                TrainrFormSection(
+                    title = stringResource(R.string.session_duration),
+                    verticalPadding = 0.dp,
+                    titleGap = Spacing.card
+                ) {
+                    Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-                        verticalArrangement = Arrangement.spacedBy(Spacing.small)
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.card)
                     ) {
                         Constants.Workout.DURATION_OPTIONS.forEach { duration ->
                             TrainrToggleChip(
                                 text = pluralStringResource(R.plurals.minutes, duration, duration),
                                 selected = selectedDuration == duration,
-                                onClick = { selectedDuration = duration }
+                                onClick = { selectedDuration = duration },
+                                height = ComponentHeight.ChipTall,
+                                horizontalPadding = Spacing.tight,
+                                modifier = Modifier.width(DurationChipWidth)
                             )
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(Spacing.large))
+                Spacer(modifier = Modifier.height(Spacing.sectionGap))
 
-                TrainrFormSection(title = stringResource(R.string.preferred_workout_time)) {
+                TrainrFormSection(
+                    title = stringResource(R.string.preferred_workout_time),
+                    verticalPadding = 0.dp,
+                    titleGap = Spacing.card
+                ) {
                     Column(
-                        verticalArrangement = Arrangement.spacedBy(Spacing.small)
+                        verticalArrangement = Arrangement.spacedBy(Spacing.card)
                     ) {
                         TrainrRadioChip(
                             text = stringResource(R.string.early_morning_time),
