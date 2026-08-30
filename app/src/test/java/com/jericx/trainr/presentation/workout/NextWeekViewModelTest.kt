@@ -210,4 +210,45 @@ class NextWeekViewModelTest {
         assertThat(request.captured.startDateMillis).isGreaterThan(WorkoutWeek.startOfDay())
     }
 
+    // Running the same week again is sound coaching after a week that was not
+    // finished, and it asks nothing of the network. It is chosen, not
+    // substituted, so it saves the week with every log cleared.
+    @Test
+    fun repeatingTheLastWeekCopiesItWithNothingLogged() = runTest {
+        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(finishedWeek))
+        val saved = slot<WeeklyWorkoutPlan>()
+        coEvery { userRepository.saveWeeklyWorkoutPlan(capture(saved)) } returns 2L
+
+        var done = false
+        viewModel().repeatLastWeek { done = true }
+        advanceUntilIdle()
+
+        with(saved.captured) {
+            assertThat(id).isEqualTo(0)
+            assertThat(weekNumber).isEqualTo(2)
+            assertThat(startDateMillis).isEqualTo(WorkoutWeek.dateOfDay(weekOneStart, 8))
+            val day = workoutDays.single()
+            assertThat(day.status).isEqualTo(WorkoutStatus.NOT_STARTED)
+            assertThat(day.completedAt).isNull()
+            val set = day.exercises.single().sets.single()
+            assertThat(set.targetReps).isEqualTo(10)
+            assertThat(set.actualReps).isNull()
+            assertThat(set.isCompleted).isFalse()
+        }
+        coVerify(exactly = 0) { planGenerator.generate(any()) }
+        assertThat(done).isTrue()
+    }
+
+    @Test
+    fun repeatingCannotStackASecondCopyOfAWeekThatExists() = runTest {
+        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(finishedWeek))
+        coEvery { userRepository.getWeeklyWorkoutPlan(1, 2) } returns
+            finishedWeek.copy(id = 10, weekNumber = 2)
+
+        viewModel().repeatLastWeek {}
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { userRepository.saveWeeklyWorkoutPlan(any()) }
+    }
+
 }
