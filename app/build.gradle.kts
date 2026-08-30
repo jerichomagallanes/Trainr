@@ -45,6 +45,12 @@ android {
         buildConfig = true
     }
 
+    // English-only for now: ja and tl stay in the repo but out of the build
+    // until language switching returns.
+    androidResources {
+        localeFilters += listOf("en")
+    }
+
     flavorDimensions += "environment"
 
     productFlavors {

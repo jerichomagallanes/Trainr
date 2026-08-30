@@ -147,21 +147,20 @@ class RoutineUiTest {
             .updateSet(1, ExerciseSet(setNumber = 3, targetReps = 12, targetWeightKg = 20f, actualReps = 9))
         val victim = routine.exercises.first().sets[1]
 
-        val sets = routine.removeSet(1, victim).exercises.first().sets
+        val sets = routine.removeSet(1, victim.setNumber).exercises.first().sets
 
         assertThat(sets.map { it.setNumber }).containsExactly(1, 2).inOrder()
         assertThat(sets.last().actualReps).isEqualTo(9)
     }
 
-    // A swipe can report the same deletion twice, and the sample week's sets
-    // are value-identical — only the stale instance must match nothing.
+    // Deletion is keyed by set number so a reload that replaced every set
+    // instance cannot strand a swipe; a number nothing holds removes nothing.
     @Test
-    fun aRepeatedDeleteReportRemovesNothingMore() {
+    fun deletingAMissingNumberRemovesNothing() {
         val routine = routineWithSets()
-        val victim = routine.exercises.first().sets[1]
-        val once = routine.removeSet(1, victim)
+        val once = routine.removeSet(1, 3)
 
-        assertThat(once.removeSet(1, victim)).isEqualTo(once)
+        assertThat(once.removeSet(1, 3)).isEqualTo(once)
         assertThat(once.exercises.first().sets).hasSize(2)
     }
 
@@ -171,7 +170,7 @@ class RoutineUiTest {
         val routine = routineWithSets()
         val only = routine.exercises[1].sets.single()
 
-        assertThat(routine.removeSet(2, only)).isEqualTo(routine)
+        assertThat(routine.removeSet(2, only.setNumber)).isEqualTo(routine)
     }
 
     @Test

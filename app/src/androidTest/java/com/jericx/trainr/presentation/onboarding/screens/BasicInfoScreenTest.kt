@@ -11,6 +11,9 @@ import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.R
+import com.jericx.trainr.testing.notEllipsized
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.assert
 import com.jericx.trainr.domain.model.ExperienceLevel
 import com.jericx.trainr.domain.model.Gender
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
@@ -25,6 +28,23 @@ class BasicInfoScreenTest {
     val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 
     private fun string(id: Int) = composeTestRule.activity.getString(id)
+
+    // "Female" rendered as "Fema..." on narrower phones; the chip label must
+    // shrink, never truncate.
+    @Test
+    fun everyGenderChipShowsItsWholeLabel() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                BasicInfoScreen(onNextClick = { _, _, _, _ -> }, onBackClick = {})
+            }
+        }
+
+        listOf(R.string.male, R.string.female, R.string.other).forEach { label ->
+            composeTestRule.onNodeWithText(string(label))
+                .performScrollTo()
+                .assert(notEllipsized())
+        }
+    }
 
     @Test
     fun displaysScreenTitle() {

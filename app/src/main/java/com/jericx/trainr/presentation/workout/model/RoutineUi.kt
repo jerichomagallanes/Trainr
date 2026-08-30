@@ -66,14 +66,14 @@ data class RoutineUi(
     // a number — or an equal-looking set — would point at an innocent
     // neighbour, while the stale instance matches nothing. The last set cannot
     // be deleted: an empty table has no target left to grow back from.
-    fun removeSet(position: Int, set: ExerciseSet): RoutineUi = copy(
+    fun removeSet(position: Int, setNumber: Int): RoutineUi = copy(
         exercises = exercises.map { exercise ->
             if (exercise.position != position || exercise.sets.size <= 1) {
                 exercise
             } else {
                 exercise.copy(
                     sets = exercise.sets
-                        .filter { it !== set }
+                        .filter { it.setNumber != setNumber }
                         .mapIndexed { index, kept -> kept.copy(setNumber = index + 1) }
                 )
             }

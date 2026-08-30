@@ -27,7 +27,11 @@ import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -96,26 +100,28 @@ fun ExerciseSetTable(
         }
 
         sets.forEach { set ->
-            val row = @Composable {
-                SetRow(
-                    measure = measure,
-                    set = set,
-                    previousText = if (showPrevious) {
-                        previousCellText(
-                            measure,
-                            previousSets.firstOrNull { it.setNumber == set.setNumber }
-                        )
-                    } else {
-                        null
-                    },
-                    onSetChanged = onSetChanged
-                )
-            }
+            key(set.id, set.setNumber) {
+                val row = @Composable {
+                    SetRow(
+                        measure = measure,
+                        set = set,
+                        previousText = if (showPrevious) {
+                            previousCellText(
+                                measure,
+                                previousSets.firstOrNull { it.setNumber == set.setNumber }
+                            )
+                        } else {
+                            null
+                        },
+                        onSetChanged = onSetChanged
+                    )
+                }
 
-            if (sets.size > 1) {
-                DeletableRow(set = set, onDelete = { onDeleteSet(set) }) { row() }
-            } else {
-                row()
+                if (sets.size > 1) {
+                    DeletableRow(onDelete = { onDeleteSet(set) }) { row() }
+                } else {
+                    row()
+                }
             }
         }
 
@@ -267,27 +273,28 @@ private fun NumberCell(
 }
 
 // Swiping a row away deletes its set, the way every logging app does it. The
-// dismiss state never settles: deletion happens through recomposition, so a
-// renumbered row can't inherit a dismissed state from the one it replaced.
+// delete fires exactly once per completed dismissal — confirmValueChange can
+// repeat within a drag — and rows are keyed to their set above, so a
+// renumbered survivor can't inherit the dismissed state and fire again. The
+// snap back only resets a row whose deletion the view model refused.
 @Composable
 private fun DeletableRow(
-    set: ExerciseSet,
     onDelete: () -> Unit,
     content: @Composable () -> Unit
 ) {
-    // One drag can confirm more than once; only the first report deletes. The
-    // guard is keyed to the set INSTANCE: renumbering after a delete rebuilds
-    // every remaining set, so a reused row slot cannot inherit a spent guard.
-    val reported = remember(System.identityHashCode(set)) { mutableStateOf(false) }
-    val dismissState = rememberSwipeToDismissBoxState(
-        confirmValueChange = { value ->
-            if (value == SwipeToDismissBoxValue.EndToStart && !reported.value) {
-                reported.value = true
-                onDelete()
+    // Read through rememberUpdatedState: the effect outlives the composition
+    // that captured it, and Compose keeps the memoized callback of a row whose
+    // set a reload replaced with an equal instance.
+    val currentOnDelete by rememberUpdatedState(onDelete)
+    val dismissState = rememberSwipeToDismissBoxState()
+    LaunchedEffect(dismissState) {
+        snapshotFlow { dismissState.currentValue }.collect { value ->
+            if (value == SwipeToDismissBoxValue.EndToStart) {
+                currentOnDelete()
+                dismissState.snapTo(SwipeToDismissBoxValue.Settled)
             }
-            false
         }
-    )
+    }
 
     SwipeToDismissBox(
         state = dismissState,

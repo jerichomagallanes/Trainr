@@ -508,7 +508,7 @@ class RoutineDetailViewModelTest {
         val viewModel = viewModel(dayNumber = 3, repository = repository)
         advanceUntilIdle()
 
-        viewModel.deleteSet(1, viewModel.exercise(1).sets.first())
+        viewModel.deleteSet(1, viewModel.exercise(1).sets.first().setNumber)
         advanceUntilIdle()
 
         assertThat(viewModel.exercise(1).sets.map { it.setNumber }).containsExactly(1)
@@ -524,8 +524,8 @@ class RoutineDetailViewModelTest {
         val viewModel = viewModel(dayNumber = 3, repository = repository)
         advanceUntilIdle()
 
-        viewModel.deleteSet(1, viewModel.exercise(1).sets.first())
-        viewModel.deleteSet(1, viewModel.exercise(1).sets.single())
+        viewModel.deleteSet(1, viewModel.exercise(1).sets.first().setNumber)
+        viewModel.deleteSet(1, viewModel.exercise(1).sets.single().setNumber)
         advanceUntilIdle()
 
         assertThat(viewModel.exercise(1).sets).hasSize(1)
@@ -586,7 +586,7 @@ class RoutineDetailViewModelTest {
         viewModel.toggleExercise(3)
         viewModel.updateSet(3, viewModel.exercise(3).sets.first().copy(actualReps = 20))
         viewModel.addSet(3)
-        viewModel.deleteSet(3, viewModel.exercise(3).sets.first())
+        viewModel.deleteSet(3, viewModel.exercise(3).sets.first().setNumber)
         viewModel.completeRoutine()
         advanceUntilIdle()
 

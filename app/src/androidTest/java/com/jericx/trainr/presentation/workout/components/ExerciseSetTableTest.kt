@@ -1,6 +1,10 @@
 package com.jericx.trainr.presentation.workout.components
 
 import androidx.activity.ComponentActivity
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -146,6 +150,68 @@ class ExerciseSetTableTest {
         composeTestRule.waitForIdle()
 
         assertThat(deleted?.setNumber).isEqualTo(2)
+    }
+
+    // The stored routine lands after first composition and replaces every set
+    // instance; a swipe must delete the CURRENT set, not fire a stale capture.
+    @Test
+    fun aSwipeAfterTheSetsWereReplacedStillDeletes() {
+        var deleted: ExerciseSet? = null
+        lateinit var replaceSets: (List<ExerciseSet>) -> Unit
+        composeTestRule.setContent {
+            var sets by remember {
+                mutableStateOf((1..3).map { ExerciseSet(setNumber = it, targetReps = 12) })
+            }
+            replaceSets = { sets = it }
+            TrainrTheme {
+                ExerciseSetTable(
+                    measure = ExerciseMeasure.REPS,
+                    sets = sets,
+                    onSetChanged = {},
+                    onAddSet = {},
+                    onDeleteSet = { deleted = it }
+                )
+            }
+        }
+
+        val replaced = (1..3).map { ExerciseSet(setNumber = it, targetReps = 12) }
+        composeTestRule.runOnIdle { replaceSets(replaced) }
+
+        composeTestRule.onNodeWithText("2").performTouchInput { swipeLeft() }
+        composeTestRule.waitForIdle()
+
+        assertThat(deleted?.setNumber).isEqualTo(2)
+    }
+
+    // The app removes the set and renumbers on every report, so a single
+    // gesture must never report twice.
+    @Test
+    fun oneSwipeDeletesExactlyOneSet() {
+        val deletions = mutableListOf<Int>()
+        composeTestRule.setContent {
+            var sets by remember {
+                mutableStateOf((1..3).map { ExerciseSet(setNumber = it, targetReps = 12) })
+            }
+            TrainrTheme {
+                ExerciseSetTable(
+                    measure = ExerciseMeasure.REPS,
+                    sets = sets,
+                    onSetChanged = {},
+                    onAddSet = {},
+                    onDeleteSet = { victim ->
+                        deletions += victim.setNumber
+                        sets = sets
+                            .filter { it.setNumber != victim.setNumber }
+                            .mapIndexed { index, kept -> kept.copy(setNumber = index + 1) }
+                    }
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText("2").performTouchInput { swipeLeft() }
+        composeTestRule.waitForIdle()
+
+        assertThat(deletions).containsExactly(2)
     }
 
     // With a single set there is nothing sensible left after a delete, so the

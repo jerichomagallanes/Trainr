@@ -37,6 +37,7 @@ import com.jericx.trainr.presentation.common.components.typography.TrainrScreenT
 @Composable
 fun BasicInfoScreen(
     initial: UserProfile? = null,
+    isEditing: Boolean = false,
     onNextClick: (firstName: String, age: Int, gender: Gender, experience: ExperienceLevel) -> Unit,
     onBackClick: () -> Unit
 ) {
@@ -53,6 +54,7 @@ fun BasicInfoScreen(
 
     TrainrScaffold(
         onBackClick = onBackClick,
+        closeInsteadOfBack = isEditing,
         bottomButton = {
             TrainrButton(
                 text = stringResource(R.string.next),

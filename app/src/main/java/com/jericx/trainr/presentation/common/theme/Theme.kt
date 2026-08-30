@@ -93,7 +93,9 @@ private val LightColorScheme = lightColorScheme(
 
 @Composable
 fun TrainrTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    // Light-only for now: the design has no dark variant yet, so following the
+    // system would show unstyled dark surfaces.
+    darkTheme: Boolean = false,
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
