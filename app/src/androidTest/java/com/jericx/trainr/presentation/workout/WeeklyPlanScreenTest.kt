@@ -500,4 +500,32 @@ class WeeklyPlanScreenTest {
         composeTestRule.onNodeWithText(string(R.string.start_todays_workout)).assertDoesNotExist()
     }
 
+    // With the week done the button leads to the next week, not back into a
+    // session already finished.
+    @Test
+    fun aFinishedWeekOffersTheNextWeekOnTheButton() {
+        val finished = WeeklyPlanViewModel.stateFor(
+            plan = SampleWorkoutData.weekOne.copy(
+                workoutDays = SampleWorkoutData.weekOne.workoutDays.map {
+                    it.copy(status = WorkoutStatus.COMPLETED)
+                }
+            ),
+            nowMillis = SampleWorkoutData.dateOf(3)
+        )
+        var startedNextWeek = false
+        composeTestRule.setContent {
+            TrainrTheme {
+                WeeklyPlanScreen(
+                    state = finished,
+                    onStartNextWeekClick = { startedNextWeek = true }
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.start_next_workout)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.start_next_week_button)).performClick()
+
+        assertThat(startedNextWeek).isTrue()
+    }
+
 }

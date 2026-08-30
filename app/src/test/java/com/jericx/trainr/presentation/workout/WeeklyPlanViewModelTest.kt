@@ -176,17 +176,6 @@ class WeeklyPlanViewModelTest {
 
         assertThat(state.todaysDay?.title).isEqualTo("Cardio & Core")
     }
-
-    @Test
-    fun aFinishedWeekFallsBackToItsFirstDay() {
-        val finished = SampleWorkoutData.weekOne.let { plan ->
-            plan.copy(workoutDays = plan.workoutDays.map { it.copy(status = WorkoutStatus.COMPLETED) })
-        }
-
-        val state = WeeklyPlanViewModel.stateFor(finished, isSample = true)
-
-        assertThat(state.todaysDay?.title).isEqualTo("Full Body Strength")
-    }
     private fun weekStarting(start: Long, vararg statuses: WorkoutStatus) = storedPlan.copy(
         startDateMillis = start,
         workoutDays = statuses.mapIndexed { index, status ->
@@ -435,6 +424,32 @@ class WeeklyPlanViewModelTest {
             assertThat(hasLoaded).isTrue()
             assertThat(hasPlan).isFalse()
         }
+    }
+
+    // Found on screen: a week with every session done still offered to start
+    // one, because the target fell back to the first day — already finished.
+    @Test
+    fun aFinishedWeekHasNoNextWorkoutToStart() {
+        val start = WorkoutWeek.mondayOf(1_755_000_000_000L)
+        val state = WeeklyPlanViewModel.stateFor(
+            plan = weekOfSessions(start, WorkoutStatus.COMPLETED, WorkoutStatus.COMPLETED),
+            nowMillis = start + TimeUnit.DAYS.toMillis(2)
+        )
+
+        assertThat(state.nextWorkout).isNull()
+        // ...and the week behind you is what leads on.
+        assertThat(state.canStartNextWeek).isTrue()
+    }
+
+    @Test
+    fun aWeekWithWorkLeftStillOffersIt() {
+        val start = WorkoutWeek.mondayOf(1_755_000_000_000L)
+        val state = WeeklyPlanViewModel.stateFor(
+            plan = weekOfSessions(start, WorkoutStatus.COMPLETED, WorkoutStatus.NOT_STARTED),
+            nowMillis = start + TimeUnit.DAYS.toMillis(1)
+        )
+
+        assertThat(state.nextWorkout?.day?.title).isEqualTo("Session 1")
     }
 
 }

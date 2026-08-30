@@ -217,6 +217,7 @@
     <string name="review_profile_description">変更は次に生成する週から反映されます</string>
     <string name="save_profile">プロフィールを保存</string>
     <string name="start_next_week">次の週を始める</string>
+    <string name="start_next_week_button">次の週を始める</string>
     <string name="update_profile">プロフィールを更新</string>
     <string name="weight_column">kg</string>
     <string name="reps_column">回数</string>

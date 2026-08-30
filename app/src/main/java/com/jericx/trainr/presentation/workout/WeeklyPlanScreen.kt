@@ -265,14 +265,28 @@ fun WeeklyPlanScreen(
         }
 
         if (!isBrowsedWeek) {
-            TrainrButton(
-                text = stringResource(
-                    if (state.nextWorkoutIsToday) R.string.start_todays_workout
-                    else R.string.start_next_workout
-                ),
-                onClick = { state.todaysDay?.let(onStartTodayClick) },
-                modifier = Modifier.padding(horizontal = Spacing.screen, vertical = Spacing.medium)
-            )
+            // Whatever is actually left: a session to train, or — with the week
+            // behind you — the week that follows it. Never a finished session
+            // dressed as the next one.
+            val next = state.nextWorkout
+            when {
+                next != null -> TrainrButton(
+                    text = stringResource(
+                        if (state.nextWorkoutIsToday) R.string.start_todays_workout
+                        else R.string.start_next_workout
+                    ),
+                    onClick = { onStartTodayClick(next.day) },
+                    modifier = Modifier
+                        .padding(horizontal = Spacing.screen, vertical = Spacing.medium)
+                )
+
+                state.canStartNextWeek -> TrainrButton(
+                    text = stringResource(R.string.start_next_week_button),
+                    onClick = onStartNextWeekClick,
+                    modifier = Modifier
+                        .padding(horizontal = Spacing.screen, vertical = Spacing.medium)
+                )
+            }
         }
     }
 }

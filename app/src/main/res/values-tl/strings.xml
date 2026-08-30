@@ -220,6 +220,7 @@
     <string name="review_profile_description">Ilalapat ang mga pagbabago sa susunod na linggong bubuoin</string>
     <string name="save_profile">I-SAVE ANG PROFILE</string>
     <string name="start_next_week">Simulan ang susunod na linggo</string>
+    <string name="start_next_week_button">SIMULAN ANG SUSUNOD NA LINGGO</string>
     <string name="update_profile">I-update ang profile</string>
     <string name="weight_column">kg</string>
     <string name="reps_column">Reps</string>

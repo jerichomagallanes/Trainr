@@ -219,6 +219,7 @@
     <string name="review_profile_description">Changes apply to the next week you generate</string>
     <string name="save_profile">SAVE PROFILE</string>
     <string name="start_next_week">Start next week</string>
+    <string name="start_next_week_button">START NEXT WEEK</string>
     <string name="update_profile">Update profile</string>
     <string name="weight_column">kg</string>
     <string name="reps_column">Reps</string>

@@ -54,10 +54,12 @@ data class WeeklyPlanUiState(
     // A day that has already passed is never the target: opening it under a
     // button that says "today's workout" would be a lie, and catching up is a
     // tap on the day itself.
+    // Null once every session is done: falling back to the first day handed
+    // back a workout already finished and called it the next one. A week with
+    // nothing left in it leads to the next week instead.
     val nextWorkout: WeeklyPlanDay?
         get() = days.firstOrNull { !it.isPast && it.day.status != WorkoutStatus.COMPLETED }
             ?: days.firstOrNull { it.day.status != WorkoutStatus.COMPLETED }
-            ?: days.firstOrNull()
 
     val nextWorkoutIsToday: Boolean get() = nextWorkout?.isToday == true
 
