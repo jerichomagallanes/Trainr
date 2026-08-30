@@ -179,6 +179,13 @@
     <string name="no_plan_message">Nakasave ang fitness profile mo. Pwede kang gumawa ng bagong workout plan anumang oras.</string>
     <string name="create_my_plan">GUMAWA NG WORKOUT PLAN</string>
     <string name="repeat_this_week">Ulitin ang linggong ito</string>
+    <string name="regenerate_week">Bumuo ulit ng linggong ito</string>
+    <string name="regenerate_week_title">Bumuo ulit ng linggong ito?</string>
+    <string name="regenerate_week_confirm">Bumuo ulit</string>
+    <plurals name="regenerate_week_message_trained">
+        <item quantity="one">%1$d sa %2$d workout ang naitala sa linggong ito. Papalitan ito ng bagong linggo at hindi na mababawi.</item>
+        <item quantity="other">%1$d sa %2$d workout ang naitala sa linggong ito. Papalitan ang mga ito ng bagong linggo at hindi na mababawi.</item>
+    </plurals>
     <string name="generation_failed_title">Hindi nagawa ang workout plan mo</string>
     <string name="generation_failed_offline">Offline ang Trainr. Tingnan ang koneksyon at subukan ulit.</string>
     <string name="generation_failed_message">May nangyaring mali habang ginagawa ang workout plan mo. Subukan ulit.</string>

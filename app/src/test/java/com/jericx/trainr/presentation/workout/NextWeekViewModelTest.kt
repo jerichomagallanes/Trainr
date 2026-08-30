@@ -209,6 +209,70 @@ class NextWeekViewModelTest {
         assertThat(request.captured.startDateMillis).isGreaterThan(WorkoutWeek.startOfDay())
     }
 
+    // Replacing the week you are in: same number, same dates, new training —
+    // and the week before it seeds the request so a replacement still
+    // progresses from what was actually lifted.
+    @Test
+    fun regeneratingReplacesTheWeekBeingTrainedInPlace() = runTest {
+        val current = finishedWeek.copy(
+            id = 10,
+            weekNumber = 2,
+            startDateMillis = WorkoutWeek.dateOfDay(weekOneStart, 8),
+            workoutDays = finishedWeek.workoutDays.map {
+                it.copy(status = WorkoutStatus.NOT_STARTED, completedAt = null)
+            }
+        )
+        every { userRepository.getWeeklyWorkoutPlans(1) } returns
+            flowOf(listOf(finishedWeek, current))
+        val request = slot<PlanRequest>()
+        val replacement = current.copy(id = 0, title = "Something better")
+        coEvery { planGenerator.generate(capture(request)) } returns
+            PlanGenerationResult.Generated(replacement)
+
+        viewModel().regenerateThisWeek()
+        advanceUntilIdle()
+
+        assertThat(request.captured.weekNumber).isEqualTo(2)
+        assertThat(request.captured.startDateMillis).isEqualTo(current.startDateMillis)
+        assertThat(request.captured.previousWeek?.weekNumber).isEqualTo(1)
+        coVerify { userRepository.deleteWeeklyWorkoutPlan(10) }
+        coVerify { userRepository.saveWeeklyWorkoutPlan(replacement) }
+    }
+
+    // The safe way round: ask the model first, and drop the old week only once
+    // there is one to put in its place.
+    @Test
+    fun aFailedRegenerationLeavesTheWeekWhereItWas() = runTest {
+        val current = finishedWeek.copy(
+            workoutDays = finishedWeek.workoutDays.map {
+                it.copy(status = WorkoutStatus.NOT_STARTED, completedAt = null)
+            }
+        )
+        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(current))
+        coEvery { planGenerator.generate(any()) } returns PlanGenerationResult.Offline
+
+        val viewModel = viewModel()
+        viewModel.regenerateThisWeek()
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { userRepository.deleteWeeklyWorkoutPlan(any()) }
+        coVerify(exactly = 0) { userRepository.saveWeeklyWorkoutPlan(any()) }
+        assertThat(viewModel.failure.value).isEqualTo(PlanGenerationResult.Offline)
+        assertThat(viewModel.isReady.value).isFalse()
+    }
+
+    // A week that is behind you is a record, not something to rewrite.
+    @Test
+    fun aWeekYouAreDoneWithIsNotRegenerated() = runTest {
+        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(finishedWeek))
+
+        viewModel().regenerateThisWeek()
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { planGenerator.generate(any()) }
+        coVerify(exactly = 0) { userRepository.deleteWeeklyWorkoutPlan(any()) }
+    }
+
     // The rule is enforced where the write happens, not only where the menu is
     // drawn: a week still being trained is the week that is yours, and another
     // one now would become the newest and take that title from it.

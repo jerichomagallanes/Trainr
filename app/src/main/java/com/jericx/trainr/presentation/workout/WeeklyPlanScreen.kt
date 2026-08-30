@@ -34,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -41,11 +42,13 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jericx.trainr.R
 import com.jericx.trainr.domain.model.WorkoutDay
+import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.presentation.common.components.layout.TrainrTopBar
 import com.jericx.trainr.presentation.common.components.core.TrainrButton
 import com.jericx.trainr.presentation.common.theme.Orange500
 import androidx.compose.ui.text.style.TextAlign
 import com.jericx.trainr.presentation.common.theme.TextMuted
+import com.jericx.trainr.presentation.common.theme.RedError
 import com.jericx.trainr.presentation.common.theme.Slate800
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
@@ -62,6 +65,7 @@ fun WeeklyPlanRoute(
     onUpdateProfileClick: () -> Unit = {},
     onStartNextWeekClick: () -> Unit = {},
     onRepeatWeekClick: () -> Unit = {},
+    onRegenerateWeekClick: () -> Unit = {},
     onCreatePlanClick: () -> Unit = {},
     onBackClick: (() -> Unit)? = null,
     versionName: String = "",
@@ -82,6 +86,7 @@ fun WeeklyPlanRoute(
         onUpdateProfileClick = onUpdateProfileClick,
         onStartNextWeekClick = onStartNextWeekClick,
         onRepeatWeekClick = onRepeatWeekClick,
+        onRegenerateWeekClick = onRegenerateWeekClick,
         onCreatePlanClick = onCreatePlanClick,
         versionName = versionName,
         onMoveDay = viewModel::moveDay,
@@ -100,6 +105,7 @@ fun WeeklyPlanScreen(
     onUpdateProfileClick: () -> Unit = {},
     onStartNextWeekClick: () -> Unit = {},
     onRepeatWeekClick: () -> Unit = {},
+    onRegenerateWeekClick: () -> Unit = {},
     onCreatePlanClick: () -> Unit = {},
     versionName: String = "",
     onMoveDay: (Int, Int) -> Unit = { _, _ -> },
@@ -126,7 +132,20 @@ fun WeeklyPlanScreen(
     val isHome = onBackClick == null
     val locale = LocalLocale.current.platformLocale
     var showLeaveDialog by remember { mutableStateOf(false) }
+    var showRegenerateDialog by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
+
+    if (showRegenerateDialog) {
+        RegenerateWeekDialog(
+            loggedWorkouts = state.days.count { it.day.status == WorkoutStatus.COMPLETED },
+            totalWorkouts = state.days.size,
+            onConfirm = {
+                showRegenerateDialog = false
+                onRegenerateWeekClick()
+            },
+            onDismiss = { showRegenerateDialog = false }
+        )
+    }
 
     if (showLeaveDialog) {
         LeavePlanDialog(
@@ -191,7 +210,7 @@ fun WeeklyPlanScreen(
                 // it belongs on whichever week that is. Building the next week
                 // and starting over are about the plan's future, and stay on
                 // home, which is where they have somewhere to go afterwards.
-                if (state.hasPlan && (isHome || state.canAddWeek)) {
+                if (state.hasPlan && (isHome || state.canAddWeek || !isBrowsedWeek)) {
                     Box {
                         Image(
                             painter = painterResource(R.drawable.ic_more_horiz),
@@ -228,6 +247,25 @@ fun WeeklyPlanScreen(
                                     onClick = {
                                         showMenu = false
                                         onRepeatWeekClick()
+                                    }
+                                )
+                            }
+                            // The other half of the same question: still in
+                            // this week, so it can be written again; done with
+                            // it, and the offer becomes the week that follows.
+                            if (!state.canAddWeek) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.regenerate_week)) },
+                                    onClick = {
+                                        showMenu = false
+                                        if (state.days.any {
+                                                it.day.status == WorkoutStatus.COMPLETED
+                                            }
+                                        ) {
+                                            showRegenerateDialog = true
+                                        } else {
+                                            onRegenerateWeekClick()
+                                        }
                                     }
                                 )
                             }
@@ -424,6 +462,41 @@ private fun NoPlanYet(
             modifier = Modifier.fillMaxWidth()
         )
     }
+}
+
+// A week with nothing logged in it is just a week; one with training in it is a
+// record, and what a new week costs is named before it is asked for.
+@Composable
+private fun RegenerateWeekDialog(
+    loggedWorkouts: Int,
+    totalWorkouts: Int,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = stringResource(R.string.regenerate_week_title)) },
+        text = {
+            Text(
+                text = pluralStringResource(
+                    R.plurals.regenerate_week_message_trained,
+                    loggedWorkouts,
+                    loggedWorkouts,
+                    totalWorkouts
+                )
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(text = stringResource(R.string.regenerate_week_confirm), color = RedError)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = stringResource(R.string.cancel), color = Slate800)
+            }
+        }
+    )
 }
 
 @Composable

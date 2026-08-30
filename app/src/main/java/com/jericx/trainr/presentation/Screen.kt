@@ -20,6 +20,7 @@ sealed class Screen(val route: String) {
     }
     data object Generating : Screen("generating_screen")
     data object GeneratingNextWeek : Screen("generating_next_week_screen")
+    data object RegeneratingWeek : Screen("regenerating_week_screen")
 
     // An onboarding step that the review screen can reopen on its own: in
     // edit mode, finishing the step returns to the review instead of walking
