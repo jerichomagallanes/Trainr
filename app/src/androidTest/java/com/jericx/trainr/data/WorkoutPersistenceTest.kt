@@ -214,6 +214,19 @@ class WorkoutPersistenceTest {
         assertThat(previous.single().actualReps).isEqualTo(10)
     }
 
+    @Test
+    fun aDeletedSetStaysDeleted() = runTest {
+        val userId = seedSamplePlan()
+        val exercise = repository.getWeeklyWorkoutPlan(userId, 1)!!
+            .workoutDays.first().exercises.first()
+
+        repository.deleteExerciseSet(exercise.sets[1].id)
+
+        val reread = repository.getWorkoutExercise(exercise.id)!!
+        assertThat(reread.sets).hasSize(exercise.sets.size - 1)
+        assertThat(reread.sets.map { it.id }).doesNotContain(exercise.sets[1].id)
+    }
+
     // Redoing onboarding REPLACEs the user row, which must cascade the old plan
     // away so the reseed starts clean instead of leaving two week ones.
     @Test

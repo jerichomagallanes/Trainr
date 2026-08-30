@@ -44,6 +44,7 @@ fun ExerciseCard(
     modifier: Modifier = Modifier,
     onSetChanged: (ExerciseSet) -> Unit = {},
     onAddSet: () -> Unit = {},
+    onDeleteSet: (ExerciseSet) -> Unit = {},
     content: @Composable ColumnScope.() -> Unit = {}
 ) {
     // A finished exercise turns green throughout: badge, name and rule.
@@ -139,6 +140,7 @@ fun ExerciseCard(
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.White,
                     modifier = Modifier
+                        .weight(1f, fill = false)
                         .padding(start = Spacing.small)
                         .background(Slate800, MaterialTheme.shapes.medium)
                         .padding(horizontal = Spacing.tight, vertical = 3.dp)
@@ -151,6 +153,7 @@ fun ExerciseCard(
                     sets = exercise.sets,
                     onSetChanged = onSetChanged,
                     onAddSet = onAddSet,
+                    onDeleteSet = onDeleteSet,
                     previousSets = exercise.previousSets
                 )
             }

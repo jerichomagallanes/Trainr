@@ -65,6 +65,7 @@ fun RoutineDetailRoute(
         onToggleExercise = viewModel::toggleExercise,
         onSetChanged = viewModel::updateSet,
         onAddSet = viewModel::addSet,
+        onDeleteSet = viewModel::deleteSet,
         onCompleteRoutine = viewModel::completeRoutine,
         onStartTimer = viewModel::startTimer,
         onPauseTimer = viewModel::pauseTimer,
@@ -84,6 +85,7 @@ fun RoutineDetailScreen(
     onToggleExercise: (Int) -> Unit = {},
     onSetChanged: (Int, ExerciseSet) -> Unit = { _, _ -> },
     onAddSet: (Int) -> Unit = {},
+    onDeleteSet: (Int, ExerciseSet) -> Unit = { _, _ -> },
     onCompleteRoutine: () -> Unit = {},
     onStartTimer: (ExerciseUi) -> Unit = {},
     onPauseTimer: () -> Unit = {},
@@ -152,7 +154,10 @@ fun RoutineDetailScreen(
                 Text(
                     text = routine.title.uppercase(),
                     style = MaterialTheme.typography.titleLarge,
-                    color = Slate800
+                    color = Slate800,
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = Spacing.small)
                 )
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -201,7 +206,8 @@ fun RoutineDetailScreen(
                         exercise = exercise,
                         onToggleCompleted = { onToggleExercise(exercise.position) },
                         onSetChanged = { onSetChanged(exercise.position, it) },
-                        onAddSet = { onAddSet(exercise.position) }
+                        onAddSet = { onAddSet(exercise.position) },
+                        onDeleteSet = { onDeleteSet(exercise.position, it) }
                     ) {
                         if (!exercise.isCompleted) {
                             ExerciseTimer(

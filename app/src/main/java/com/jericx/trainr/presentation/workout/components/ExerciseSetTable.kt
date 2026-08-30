@@ -1,12 +1,14 @@
 package com.jericx.trainr.presentation.workout.components
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -14,9 +16,19 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,14 +36,18 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.jericx.trainr.R
 import com.jericx.trainr.domain.model.ExerciseMeasure
 import com.jericx.trainr.domain.model.ExerciseSet
+import androidx.compose.ui.graphics.Color
 import com.jericx.trainr.presentation.common.theme.OutlineGray
+import com.jericx.trainr.presentation.common.theme.RedError
 import com.jericx.trainr.presentation.common.theme.Slate800
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TextMuted
@@ -48,6 +64,7 @@ fun ExerciseSetTable(
     onSetChanged: (ExerciseSet) -> Unit,
     onAddSet: () -> Unit,
     modifier: Modifier = Modifier,
+    onDeleteSet: (ExerciseSet) -> Unit = {},
     previousSets: List<ExerciseSet> = emptyList()
 ) {
     // No column at all without history: a week-one card looks exactly like the
@@ -79,19 +96,27 @@ fun ExerciseSetTable(
         }
 
         sets.forEach { set ->
-            SetRow(
-                measure = measure,
-                set = set,
-                previousText = if (showPrevious) {
-                    previousCellText(
-                        measure,
-                        previousSets.firstOrNull { it.setNumber == set.setNumber }
-                    )
-                } else {
-                    null
-                },
-                onSetChanged = onSetChanged
-            )
+            val row = @Composable {
+                SetRow(
+                    measure = measure,
+                    set = set,
+                    previousText = if (showPrevious) {
+                        previousCellText(
+                            measure,
+                            previousSets.firstOrNull { it.setNumber == set.setNumber }
+                        )
+                    } else {
+                        null
+                    },
+                    onSetChanged = onSetChanged
+                )
+            }
+
+            if (sets.size > 1) {
+                DeletableRow(set = set, onDelete = { onDeleteSet(set) }) { row() }
+            } else {
+                row()
+            }
         }
 
         Text(
@@ -149,11 +174,10 @@ private fun SetRow(
         }
 
         when (measure) {
-            ExerciseMeasure.DURATION -> NumberCell(
-                value = set.actualSeconds?.toString(),
-                placeholder = set.targetSeconds?.toString(),
-                decimal = false,
-                onValueChange = { onSetChanged(set.copy(actualSeconds = it?.toIntOrNull())) },
+            ExerciseMeasure.DURATION -> DurationCell(
+                seconds = set.actualSeconds,
+                placeholderSeconds = set.targetSeconds,
+                onSecondsChange = { onSetChanged(set.copy(actualSeconds = it)) },
                 modifier = Modifier.weight(1f)
             )
 
@@ -242,8 +266,130 @@ private fun NumberCell(
     }
 }
 
+// Swiping a row away deletes its set, the way every logging app does it. The
+// dismiss state never settles: deletion happens through recomposition, so a
+// renumbered row can't inherit a dismissed state from the one it replaced.
+@Composable
+private fun DeletableRow(
+    set: ExerciseSet,
+    onDelete: () -> Unit,
+    content: @Composable () -> Unit
+) {
+    // One drag can confirm more than once; only the first report deletes. The
+    // guard is keyed to the set INSTANCE: renumbering after a delete rebuilds
+    // every remaining set, so a reused row slot cannot inherit a spent guard.
+    val reported = remember(System.identityHashCode(set)) { mutableStateOf(false) }
+    val dismissState = rememberSwipeToDismissBoxState(
+        confirmValueChange = { value ->
+            if (value == SwipeToDismissBoxValue.EndToStart && !reported.value) {
+                reported.value = true
+                onDelete()
+            }
+            false
+        }
+    )
+
+    SwipeToDismissBox(
+        state = dismissState,
+        enableDismissFromStartToEnd = false,
+        backgroundContent = {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = Spacing.extraSmall)
+                    .clip(MaterialTheme.shapes.small)
+                    .background(RedError),
+                contentAlignment = Alignment.CenterEnd
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = stringResource(R.string.delete_set),
+                    tint = Color.White,
+                    modifier = Modifier.padding(end = Spacing.tight)
+                )
+            }
+        }
+    ) {
+        content()
+    }
+}
+
+// Time is typed like a microwave timer: digits fill in from the seconds end
+// ("500" is 5:00), shown as m:ss to match the exercise timer, stored as seconds.
+@Composable
+private fun DurationCell(
+    seconds: Int?,
+    placeholderSeconds: Int?,
+    onSecondsChange: (Int?) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var digits by remember(seconds) {
+        mutableStateOf(seconds?.let(::durationDigits) ?: "")
+    }
+    val shown = secondsFromDigits(digits)?.let(::formatSeconds).orEmpty()
+
+    Box(
+        modifier = modifier.padding(horizontal = Spacing.extraSmall),
+        contentAlignment = Alignment.Center
+    ) {
+        BasicTextField(
+            value = TextFieldValue(shown, selection = TextRange(shown.length)),
+            onValueChange = { new ->
+                digits = new.text.filter { it.isDigit() }.takeLast(4).trimStart('0')
+                onSecondsChange(secondsFromDigits(digits))
+            },
+            singleLine = true,
+            textStyle = MaterialTheme.typography.bodyMedium.copy(
+                color = Slate800,
+                textAlign = TextAlign.Center
+            ),
+            cursorBrush = SolidColor(Slate800),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(RowHeight)
+                .clip(MaterialTheme.shapes.small)
+                .border(1.dp, OutlineGray, MaterialTheme.shapes.small),
+            decorationBox = { field ->
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (shown.isEmpty()) {
+                        Text(
+                            text = placeholderSeconds?.let(::formatSeconds).orEmpty(),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = TextMuted,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                    field()
+                }
+            }
+        )
+    }
+}
+
 private fun formatWeight(kg: Float): String =
     if (kg % 1f == 0f) kg.toInt().toString() else kg.toString()
+
+internal fun formatSeconds(totalSeconds: Int): String =
+    "${totalSeconds / 60}:" + (totalSeconds % 60).toString().padStart(2, '0')
+
+internal fun durationDigits(totalSeconds: Int): String =
+    ("${totalSeconds / 60}" + (totalSeconds % 60).toString().padStart(2, '0'))
+        .trimStart('0')
+
+internal fun secondsFromDigits(digits: String): Int? {
+    val cleaned = digits.filter { it.isDigit() }.takeLast(4).trimStart('0')
+    if (cleaned.isEmpty()) return null
+
+    val seconds = cleaned.takeLast(2).toInt()
+    val minutes = cleaned.dropLast(2).ifEmpty { "0" }.toInt()
+    return minutes * SECONDS_PER_MINUTE + seconds
+}
+
+private const val SECONDS_PER_MINUTE = 60
 
 private const val NO_PREVIOUS = "—"
 
@@ -260,7 +406,7 @@ internal fun previousCellText(measure: ExerciseMeasure, previous: ExerciseSet?):
         }
 
         ExerciseMeasure.REPS -> previous.actualReps?.toString() ?: NO_PREVIOUS
-        ExerciseMeasure.DURATION -> previous.actualSeconds?.toString() ?: NO_PREVIOUS
+        ExerciseMeasure.DURATION -> previous.actualSeconds?.let(::formatSeconds) ?: NO_PREVIOUS
     }
 }
 

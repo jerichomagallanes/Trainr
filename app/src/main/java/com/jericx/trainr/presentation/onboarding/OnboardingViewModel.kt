@@ -10,6 +10,9 @@ import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.model.WorkoutLocation
 import com.jericx.trainr.domain.model.WorkoutTime
 import com.jericx.trainr.domain.model.WorkoutType
+import com.jericx.trainr.data.preferences.LanguageCodeProvider
+import com.jericx.trainr.domain.generation.PlanGenerator
+import com.jericx.trainr.domain.generation.PlanRequest
 import com.jericx.trainr.domain.repository.UserRepository
 import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
 import com.jericx.trainr.presentation.workout.util.WorkoutWeek
@@ -22,7 +25,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class OnboardingViewModel @Inject constructor(
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val planGenerator: PlanGenerator,
+    private val languageCode: LanguageCodeProvider
 ) : ViewModel() {
 
     private val _onboardingState = MutableStateFlow(OnboardingState())
@@ -94,9 +99,18 @@ class OnboardingViewModel @Inject constructor(
                 val userId = userRepository.saveUser(
                     if (existing == null) profile else profile.copy(id = existing.id)
                 )
-                userRepository.saveWeeklyWorkoutPlan(
-                    SampleWorkoutData.freshWeekOne(userId, WorkoutWeek.mondayOf())
-                )
+                val monday = WorkoutWeek.mondayOf()
+                // The sample week stands in when generation is unavailable —
+                // no key, offline, or the model never produced a valid plan.
+                val plan = planGenerator.generate(
+                    PlanRequest(
+                        user = profile.copy(id = userId),
+                        weekNumber = FIRST_WEEK,
+                        startDateMillis = monday,
+                        languageCode = languageCode.current()
+                    )
+                ) ?: SampleWorkoutData.freshWeekOne(userId, monday)
+                userRepository.saveWeeklyWorkoutPlan(plan)
                 _onboardingState.value = _onboardingState.value.copy(
                     isLoading = false,
                     isCompleted = true
@@ -109,6 +123,10 @@ class OnboardingViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    companion object {
+        private const val FIRST_WEEK = 1
     }
 }
 

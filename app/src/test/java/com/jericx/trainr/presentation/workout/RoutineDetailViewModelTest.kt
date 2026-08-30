@@ -503,6 +503,36 @@ class RoutineDetailViewModelTest {
     }
 
     @Test
+    fun deletingASetRemovesItsRowAndRenumbersTheRest() = runTest {
+        val repository = repositoryWith(storedPlan)
+        val viewModel = viewModel(dayNumber = 3, repository = repository)
+        advanceUntilIdle()
+
+        viewModel.deleteSet(1, viewModel.exercise(1).sets.first())
+        advanceUntilIdle()
+
+        assertThat(viewModel.exercise(1).sets.map { it.setNumber }).containsExactly(1)
+        coVerify { repository.deleteExerciseSet(320L) }
+        coVerify {
+            repository.updateExerciseSet(match { it.id == 321L && it.setNumber == 1 }, 32L)
+        }
+    }
+
+    @Test
+    fun theOnlySetOfAnExerciseCannotBeDeleted() = runTest {
+        val repository = repositoryWith(storedPlan)
+        val viewModel = viewModel(dayNumber = 3, repository = repository)
+        advanceUntilIdle()
+
+        viewModel.deleteSet(1, viewModel.exercise(1).sets.first())
+        viewModel.deleteSet(1, viewModel.exercise(1).sets.single())
+        advanceUntilIdle()
+
+        assertThat(viewModel.exercise(1).sets).hasSize(1)
+        coVerify(exactly = 1) { repository.deleteExerciseSet(any()) }
+    }
+
+    @Test
     fun anAddedSetIsPersistedAndKeepsItsStorageId() = runTest {
         val repository = repositoryWith(storedPlan)
         coEvery { repository.addExerciseSet(any(), 32L) } returns 99L
@@ -556,6 +586,7 @@ class RoutineDetailViewModelTest {
         viewModel.toggleExercise(3)
         viewModel.updateSet(3, viewModel.exercise(3).sets.first().copy(actualReps = 20))
         viewModel.addSet(3)
+        viewModel.deleteSet(3, viewModel.exercise(3).sets.first())
         viewModel.completeRoutine()
         advanceUntilIdle()
 
@@ -563,5 +594,6 @@ class RoutineDetailViewModelTest {
         coVerify(exactly = 0) { repository.updateWorkoutDay(any(), any()) }
         coVerify(exactly = 0) { repository.updateExerciseSet(any(), any()) }
         coVerify(exactly = 0) { repository.addExerciseSet(any(), any()) }
+        coVerify(exactly = 0) { repository.deleteExerciseSet(any()) }
     }
 }

@@ -34,6 +34,7 @@ interface UserRepository {
     suspend fun updateWorkoutExercise(exercise: WorkoutExercise, workoutDayId: Long)
     suspend fun updateExerciseSet(set: ExerciseSet, workoutExerciseId: Long)
     suspend fun addExerciseSet(set: ExerciseSet, workoutExerciseId: Long): Long
+    suspend fun deleteExerciseSet(setId: Long)
     suspend fun getPreviousSets(
         userId: Long,
         exerciseKey: String,

@@ -1,3 +1,4 @@
+import java.util.Properties
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -28,6 +29,15 @@ android {
         // Fallback for components that are not app variants (e.g. the unit test
         // manifest); real variants get a labelled name from androidComponents below.
         manifestPlaceholders["appName"] = "Trainr"
+
+        // Free-tier Gemini key, kept out of version control; blank means plan
+        // generation quietly falls back to the built-in sample week.
+        val geminiApiKey = Properties().run {
+            val file = rootProject.file("local.properties")
+            if (file.exists()) file.inputStream().use { load(it) }
+            getProperty("GEMINI_API_KEY") ?: System.getenv("GEMINI_API_KEY") ?: ""
+        }
+        buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
     }
 
     buildFeatures {
@@ -174,6 +184,7 @@ dependencies {
     // Video tutorials
     implementation(libs.youtube.player)
     implementation(libs.bundles.coil)
+    implementation(libs.okhttp)
 
     // Unit tests
     testImplementation(libs.junit)
@@ -181,6 +192,7 @@ dependencies {
     testImplementation(libs.mockk)
     testImplementation(libs.androidx.arch.core.testing)
     testImplementation(libs.truth)
+    testImplementation(libs.mockwebserver)
 
     // Instrumentation tests
     androidTestImplementation(platform(libs.compose.bom))
