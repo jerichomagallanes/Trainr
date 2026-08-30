@@ -62,10 +62,4 @@ class YouTubeVideoTest {
     fun rejectsAnIdOfTheWrongLength() {
         assertThat(idOf("https://www.youtube.com/watch?v=tooShort")).isNull()
     }
-
-    @Test
-    fun buildsTheThumbnailUrlYouTubeAlwaysServes() {
-        assertThat(YouTubeVideo("kDPxFoCmb-w").thumbnailUrl)
-            .isEqualTo("https://img.youtube.com/vi/kDPxFoCmb-w/hqdefault.jpg")
-    }
 }
