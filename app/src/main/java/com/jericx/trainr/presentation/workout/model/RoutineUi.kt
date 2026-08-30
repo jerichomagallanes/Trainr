@@ -21,9 +21,7 @@ data class RoutineUi(
         exercises = exercises.map {
             when {
                 it.position != position -> it
-                // Un-ticking leaves the numbers on the rows: they are logs now,
-                // and clearing them would throw away hand-typed ones too.
-                it.isCompleted -> it.copy(isCompleted = false)
+                it.isCompleted -> it.notLogged()
                 else -> it.loggedAsPrescribed()
             }
         }
@@ -42,7 +40,7 @@ data class RoutineUi(
             } else {
                 exercise.copy(
                     sets = exercise.sets.map { if (it.setNumber == set.setNumber) set else it }
-                )
+                ).tickedFromItsSets()
             }
         }
     )
@@ -62,16 +60,15 @@ data class RoutineUi(
                         targetWeightKg = last?.targetWeightKg,
                         targetSeconds = last?.targetSeconds
                     )
-                )
+                ).tickedFromItsSets()
             }
         }
     )
 
     // The remaining sets renumber so the table never shows 1, 3. Matching is by
-    // instance, not value: a swipe can report twice, and after the renumbering
-    // a number — or an equal-looking set — would point at an innocent
-    // neighbour, while the stale instance matches nothing. The last set cannot
-    // be deleted: an empty table has no target left to grow back from.
+    // set number rather than instance: a reload replaces every instance with an
+    // equal-looking one, and the row that reports the swipe may be holding the
+    // old one.
     fun removeSet(position: Int, setNumber: Int): RoutineUi = copy(
         exercises = exercises.map { exercise ->
             if (exercise.position != position) {
@@ -81,7 +78,7 @@ data class RoutineUi(
                     sets = exercise.sets
                         .filter { it.setNumber != setNumber }
                         .mapIndexed { index, kept -> kept.copy(setNumber = index + 1) }
-                )
+                ).tickedFromItsSets()
             }
         }
     )
@@ -95,6 +92,13 @@ data class RoutineUi(
 // records what was asked for. Without this a finished day is stored with
 // nothing on its sets: the PREVIOUS column has nothing to show, and next
 // week's prompt reads the whole session back as "did: skipped".
+// An exercise is done when its sets are: ticking off the last one finishes it
+// there and then, and adding a set that has not been done reopens it. Kept
+// beside the edits themselves so no later one can leave the two disagreeing —
+// which is what left a finished exercise looking untouched.
+private fun ExerciseUi.tickedFromItsSets(): ExerciseUi =
+    copy(isCompleted = sets.isNotEmpty() && sets.all { it.isCompleted })
+
 private fun ExerciseUi.loggedAsPrescribed(): ExerciseUi = copy(
     isCompleted = true,
     sets = sets.map {
@@ -105,4 +109,11 @@ private fun ExerciseUi.loggedAsPrescribed(): ExerciseUi = copy(
             isCompleted = true
         )
     }
+)
+
+// Un-ticking clears the marks and leaves the numbers: they are logs, and
+// hand-typed ones would be thrown away with them.
+private fun ExerciseUi.notLogged(): ExerciseUi = copy(
+    isCompleted = false,
+    sets = sets.map { it.copy(isCompleted = false) }
 )

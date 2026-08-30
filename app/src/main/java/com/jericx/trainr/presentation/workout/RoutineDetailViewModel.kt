@@ -127,7 +127,9 @@ class RoutineDetailViewModel @Inject constructor(
     }
 
     fun updateSet(position: Int, set: ExerciseSet) {
+        val was = completionOf(position)
         _uiState.update { it.copy(routine = it.routine.updateSet(position, set)) }
+        reconcileCompletion(position, was)
 
         val exercise = storedExerciseAt(position) ?: return
         if (set.id == 0L) return
@@ -135,7 +137,9 @@ class RoutineDetailViewModel @Inject constructor(
     }
 
     fun addSet(position: Int) {
+        val was = completionOf(position)
         _uiState.update { it.copy(routine = it.routine.addSet(position)) }
+        reconcileCompletion(position, was)
 
         val exercise = storedExerciseAt(position) ?: return
         val added = _uiState.value.routine.exercises
@@ -158,7 +162,9 @@ class RoutineDetailViewModel @Inject constructor(
             .firstOrNull { it.position == position }?.sets ?: return
         val set = sets.firstOrNull { it.setNumber == setNumber } ?: return
 
+        val was = completionOf(position)
         _uiState.update { it.copy(routine = it.routine.removeSet(position, setNumber)) }
+        reconcileCompletion(position, was)
 
         val exercise = storedExerciseAt(position) ?: return
         if (set.id == 0L) return
@@ -279,6 +285,17 @@ class RoutineDetailViewModel @Inject constructor(
         }
     }
 
+    private fun completionOf(position: Int): Boolean? =
+        _uiState.value.routine.exercises.firstOrNull { it.position == position }?.isCompleted
+
+    // Ticking off the last set finishes the exercise, and can finish the day
+    // with it; adding one that has not been done reopens both. The screen shows
+    // that the moment it happens, so the record has to follow at once.
+    private fun reconcileCompletion(position: Int, was: Boolean?) {
+        val now = completionOf(position) ?: return
+        if (now != was) persistExerciseCompleted(position, now)
+    }
+
     private fun storedExerciseAt(position: Int): WorkoutExercise? =
         storedDay?.exercises?.getOrNull(position - 1)
 
@@ -293,7 +310,9 @@ class RoutineDetailViewModel @Inject constructor(
         )
         viewModelScope.launch {
             userRepository.updateWorkoutExercise(exercise, day.id)
-            if (completed) persistFilledSets(listOf(position))
+            // Both ways round: un-ticking clears the marks on the sets, and
+            // those have to reach the record too.
+            persistFilledSets(listOf(position))
             persistDayStatus()
         }
     }

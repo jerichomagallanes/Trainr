@@ -95,6 +95,64 @@ class RoutineUiTest {
         )
     )
 
+    private fun RoutineUi.tickEverySetOf(position: Int): RoutineUi =
+        exercises.first { it.position == position }.sets
+            .fold(this) { routine, set -> routine.updateSet(position, set.copy(isCompleted = true)) }
+
+    // The exercise is its sets: the last one ticked finishes it, with no second
+    // tap on the card's own box.
+    @Test
+    fun tickingEverySetFinishesTheExercise() {
+        val routine = routineWithSets()
+
+        val partly = routine.updateSet(1, routine.exercises.first().sets.first().copy(isCompleted = true))
+        assertThat(partly.exercises.first().isCompleted).isFalse()
+
+        assertThat(routine.tickEverySetOf(1).exercises.first().isCompleted).isTrue()
+    }
+
+    @Test
+    fun clearingASetReopensTheExercise() {
+        val done = routineWithSets().tickEverySetOf(1)
+
+        val reopened = done.updateSet(1, done.exercises.first().sets.last().copy(isCompleted = false))
+
+        assertThat(reopened.exercises.first().isCompleted).isFalse()
+    }
+
+    // A set you have not done yet is work outstanding, whatever the card said a
+    // moment ago.
+    @Test
+    fun addingASetReopensAFinishedExercise() {
+        val done = routineWithSets().tickEverySetOf(1)
+
+        assertThat(done.addSet(1).exercises.first().isCompleted).isFalse()
+    }
+
+    @Test
+    fun removingTheOnlySetLeftOutstandingFinishesTheExercise() {
+        val routine = routineWithSets().tickEverySetOf(1).addSet(1)
+
+        val trimmed = routine.removeSet(1, routine.exercises.first().sets.size)
+
+        assertThat(trimmed.exercises.first().isCompleted).isTrue()
+    }
+
+    // Un-ticking the card clears the marks but keeps what was typed: those are
+    // logs, including hand-typed ones.
+    @Test
+    fun unTickingAnExerciseClearsItsMarksAndKeepsItsNumbers() {
+        val logged = routineWithSets()
+            .updateSet(1, ExerciseSet(setNumber = 1, targetReps = 12, targetWeightKg = 20f, actualReps = 9))
+            .markCompleted(1)
+
+        val reopened = logged.toggleCompleted(1).exercises.first()
+
+        assertThat(reopened.isCompleted).isFalse()
+        assertThat(reopened.sets.none { it.isCompleted }).isTrue()
+        assertThat(reopened.sets.first().actualReps).isEqualTo(9)
+    }
+
     @Test
     fun loggingASetTouchesOnlyThatSetOfThatExercise() {
         val logged = routineWithSets()
