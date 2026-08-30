@@ -306,10 +306,9 @@ fun AppContent(versionName: String) {
                 }
 
                 composable(Screen.Generating.route) {
-                    var planIsReady by rememberSaveable { mutableStateOf(false) }
                     GeneratingScreen(
-                        isReady = planIsReady,
-                        onStart = { onboardingViewModel.saveUserProfile { planIsReady = true } },
+                        isReady = onboardingState.isCompleted,
+                        onStart = { onboardingViewModel.saveUserProfile() },
                         onDone = {
                             // The new plan is a fresh start whichever door led
                             // here, so the whole back stack goes.
@@ -318,7 +317,7 @@ fun AppContent(versionName: String) {
                             }
                         },
                         failure = onboardingState.generationFailure,
-                        onRetry = { onboardingViewModel.saveUserProfile { planIsReady = true } },
+                        onRetry = { onboardingViewModel.saveUserProfile() },
                         // Nothing was written, so the way out is back to the
                         // profile the plan would have been built from.
                         onGiveUp = { navController.popBackStack() },
@@ -423,17 +422,17 @@ fun AppContent(versionName: String) {
                 composable(Screen.GeneratingNextWeek.route) {
                     val nextWeekViewModel: NextWeekViewModel = hiltViewModel()
                     val nextWeekFailure by nextWeekViewModel.failure.collectAsStateWithLifecycle()
-                    var weekIsReady by rememberSaveable { mutableStateOf(false) }
+                    val weekIsReady by nextWeekViewModel.isReady.collectAsStateWithLifecycle()
                     GeneratingScreen(
                         isReady = weekIsReady,
-                        onStart = { nextWeekViewModel.generateNextWeek { weekIsReady = true } },
+                        onStart = { nextWeekViewModel.generateNextWeek() },
                         onDone = {
                             navController.navigate(Screen.Home.route) {
                                 popUpTo(0) { inclusive = true }
                             }
                         },
                         failure = nextWeekFailure,
-                        onRetry = { nextWeekViewModel.generateNextWeek { weekIsReady = true } },
+                        onRetry = { nextWeekViewModel.generateNextWeek() },
                         // The plan they already have is still there to go back to.
                         onGiveUp = { navController.popBackStack() }
                     )
@@ -441,6 +440,20 @@ fun AppContent(versionName: String) {
 
                 composable(Screen.Home.route) {
                     val nextWeekViewModel: NextWeekViewModel = hiltViewModel()
+                    val weekWasRepeated by nextWeekViewModel.isReady
+                        .collectAsStateWithLifecycle()
+
+                    // The copy lands in storage, so home is entered again to
+                    // read it. The entry is rebuilt, and with it the view model
+                    // that reported the copy, so this cannot come round twice.
+                    LaunchedEffect(weekWasRepeated) {
+                        if (weekWasRepeated) {
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        }
+                    }
+
                     WeeklyPlanRoute(
                         onTrackProgressClick = {
                             navController.navigate(Screen.WeeklyProgress.route)
@@ -472,13 +485,7 @@ fun AppContent(versionName: String) {
                         },
                         // Copying a week needs nothing from the model, so there
                         // is no waiting to show: it lands and home reloads.
-                        onRepeatWeekClick = {
-                            nextWeekViewModel.repeatLastWeek {
-                                navController.navigate(Screen.Home.route) {
-                                    popUpTo(0) { inclusive = true }
-                                }
-                            }
-                        }
+                        onRepeatWeekClick = { nextWeekViewModel.repeatLastWeek() }
                     )
                 }
             }

@@ -102,8 +102,8 @@ class NextWeekViewModelTest {
         coEvery { planGenerator.generate(capture(request)) } returns
             PlanGenerationResult.Generated(generated)
 
-        var done = false
-        viewModel().generateNextWeek { done = true }
+                val viewModel = viewModel()
+        viewModel.generateNextWeek()
         advanceUntilIdle()
 
         assertThat(request.captured.weekNumber).isEqualTo(2)
@@ -111,7 +111,7 @@ class NextWeekViewModelTest {
         assertThat(request.captured.startDateMillis)
             .isEqualTo(WorkoutWeek.dateOfDay(weekOneStart, 8))
         coVerify { userRepository.saveWeeklyWorkoutPlan(generated) }
-        assertThat(done).isTrue()
+        assertThat(viewModel.isReady.value).isTrue()
     }
 
     @Test
@@ -123,7 +123,7 @@ class NextWeekViewModelTest {
         coEvery { planGenerator.generate(capture(request)) } returns
             PlanGenerationResult.Generated(weekTwo.copy(id = 0, weekNumber = 3))
 
-        viewModel().generateNextWeek {}
+        viewModel().generateNextWeek()
         advanceUntilIdle()
 
         assertThat(request.captured.weekNumber).isEqualTo(3)
@@ -138,13 +138,12 @@ class NextWeekViewModelTest {
         every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(finishedWeek))
         coEvery { planGenerator.generate(any()) } returns PlanGenerationResult.Offline
 
-        var done = false
-        val viewModel = viewModel()
-        viewModel.generateNextWeek { done = true }
+                val viewModel = viewModel()
+        viewModel.generateNextWeek()
         advanceUntilIdle()
 
         assertThat(viewModel.failure.value).isEqualTo(PlanGenerationResult.Offline)
-        assertThat(done).isFalse()
+        assertThat(viewModel.isReady.value).isFalse()
         coVerify(exactly = 0) { userRepository.saveWeeklyWorkoutPlan(any()) }
     }
 
@@ -156,25 +155,25 @@ class NextWeekViewModelTest {
         coEvery { userRepository.getWeeklyWorkoutPlan(1, 2) } returns
             finishedWeek.copy(id = 10, weekNumber = 2)
 
-        var done = false
-        viewModel().generateNextWeek { done = true }
+                val viewModel = viewModel()
+        viewModel.generateNextWeek()
         advanceUntilIdle()
 
         coVerify(exactly = 0) { planGenerator.generate(any()) }
         coVerify(exactly = 0) { userRepository.saveWeeklyWorkoutPlan(any()) }
-        assertThat(done).isTrue()
+        assertThat(viewModel.isReady.value).isTrue()
     }
 
     @Test
     fun finishesQuietlyWhenThereIsNothingToBuildOn() = runTest {
         every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(emptyList())
 
-        var done = false
-        viewModel().generateNextWeek { done = true }
+                val viewModel = viewModel()
+        viewModel.generateNextWeek()
         advanceUntilIdle()
 
         coVerify(exactly = 0) { userRepository.saveWeeklyWorkoutPlan(any()) }
-        assertThat(done).isTrue()
+        assertThat(viewModel.isReady.value).isTrue()
     }
     // Coming back long after the plan ran out, the next week starts today
     // rather than on a date that has already gone: nothing is missed before it
@@ -189,7 +188,7 @@ class NextWeekViewModelTest {
         coEvery { planGenerator.generate(capture(request)) } returns
             PlanGenerationResult.Generated(longAgo.copy(weekNumber = 2))
 
-        viewModel().generateNextWeek {}
+        viewModel().generateNextWeek()
         advanceUntilIdle()
 
         assertThat(request.captured.startDateMillis).isEqualTo(WorkoutWeek.startOfDay())
@@ -202,7 +201,7 @@ class NextWeekViewModelTest {
         coEvery { planGenerator.generate(capture(request)) } returns
             PlanGenerationResult.Generated(finishedWeek.copy(weekNumber = 2))
 
-        viewModel().generateNextWeek {}
+        viewModel().generateNextWeek()
         advanceUntilIdle()
 
         assertThat(request.captured.startDateMillis)
@@ -219,8 +218,8 @@ class NextWeekViewModelTest {
         val saved = slot<WeeklyWorkoutPlan>()
         coEvery { userRepository.saveWeeklyWorkoutPlan(capture(saved)) } returns 2L
 
-        var done = false
-        viewModel().repeatLastWeek { done = true }
+                val viewModel = viewModel()
+        viewModel.repeatLastWeek()
         advanceUntilIdle()
 
         with(saved.captured) {
@@ -239,7 +238,7 @@ class NextWeekViewModelTest {
             assertThat(set.isCompleted).isFalse()
         }
         coVerify(exactly = 0) { planGenerator.generate(any()) }
-        assertThat(done).isTrue()
+        assertThat(viewModel.isReady.value).isTrue()
     }
 
     @Test
@@ -248,10 +247,41 @@ class NextWeekViewModelTest {
         coEvery { userRepository.getWeeklyWorkoutPlan(1, 2) } returns
             finishedWeek.copy(id = 10, weekNumber = 2)
 
-        viewModel().repeatLastWeek {}
+        viewModel().repeatLastWeek()
         advanceUntilIdle()
 
         coVerify(exactly = 0) { userRepository.saveWeeklyWorkoutPlan(any()) }
+    }
+
+    // Generating takes the better part of a minute. A second ask in that window
+    // — an impatient tap, or a screen rebuilt by a rotation — used to run
+    // alongside the first, and both wrote a week.
+    @Test
+    fun aSecondAskWhileGeneratingIsIgnored() = runTest {
+        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(finishedWeek))
+        coEvery { planGenerator.generate(any()) } returns
+            PlanGenerationResult.Generated(finishedWeek.copy(id = 0, weekNumber = 2))
+
+        val viewModel = viewModel()
+        viewModel.generateNextWeek()
+        viewModel.generateNextWeek()
+        viewModel.generateNextWeek()
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { planGenerator.generate(any()) }
+        coVerify(exactly = 1) { userRepository.saveWeeklyWorkoutPlan(any()) }
+    }
+
+    @Test
+    fun repeatingTwiceOverStillWritesOneWeek() = runTest {
+        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(finishedWeek))
+
+        val viewModel = viewModel()
+        viewModel.repeatLastWeek()
+        viewModel.repeatLastWeek()
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { userRepository.saveWeeklyWorkoutPlan(any()) }
     }
 
 }

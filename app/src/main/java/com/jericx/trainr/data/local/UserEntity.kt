@@ -37,7 +37,14 @@ data class UserEntity(
             onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index("userId")]
+    // A client has one week three. Enforced here because the check that used to
+    // stand for it — read, then generate for half a minute, then write — leaves
+    // room for a second generation to pass the same check before the first one
+    // saves.
+    indices = [
+        Index("userId"),
+        Index(value = ["userId", "weekNumber"], unique = true)
+    ]
 )
 data class WeeklyWorkoutPlanEntity(
     @PrimaryKey(autoGenerate = true)

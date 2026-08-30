@@ -30,28 +30,61 @@ class NextWeekViewModel @Inject constructor(
     private val _failure = MutableStateFlow<PlanGenerationResult.Failure?>(null)
     val failure: StateFlow<PlanGenerationResult.Failure?> = _failure.asStateFlow()
 
+    // Finishing is state rather than a callback: a callback belongs to the
+    // composition that made it, so a screen rebuilt mid-generation — a rotation
+    // is enough — would never hear that its week had arrived.
+    private val _isReady = MutableStateFlow(false)
+    val isReady: StateFlow<Boolean> = _isReady.asStateFlow()
+
+    // One week at a time. Generating takes the better part of a minute, so
+    // without this a second ask — a re-entered screen, an impatient tap — runs
+    // alongside the first and both write a week.
+    private var isWorking = false
+
     // Running the same week again: the sessions and their loads as they were
     // written, with every log cleared. Sound coaching after a week that was not
     // finished, or one where the prescribed weights never went up — and it asks
     // nothing of the network, so it is the way through when the model cannot be
     // reached. It is offered, never substituted.
-    fun repeatLastWeek(onDone: () -> Unit) {
+    fun repeatLastWeek() {
+        if (isWorking) return
+        isWorking = true
+        _failure.value = null
         viewModelScope.launch {
-            _failure.value = null
-            val (user, latest) = nextWeekFrom() ?: return@launch onDone()
-            userRepository.saveWeeklyWorkoutPlan(
-                repeatedWeek(latest, latest.weekNumber + 1, startAfter(latest))
-            )
-            onDone()
+            try {
+                val (_, latest) = nextWeekFrom() ?: return@launch
+                userRepository.saveWeeklyWorkoutPlan(
+                    repeatedWeek(latest, latest.weekNumber + 1, startAfter(latest))
+                )
+            } finally {
+                isWorking = false
+                _isReady.value = true
+            }
         }
     }
 
     // The finished week seeds the request, so the model progresses from what
     // was actually lifted instead of restarting from the intake answers.
-    fun generateNextWeek(onDone: () -> Unit) {
+    fun generateNextWeek() {
+        if (isWorking) return
+        isWorking = true
+        _failure.value = null
         viewModelScope.launch {
-            _failure.value = null
-            val (user, latest) = nextWeekFrom() ?: return@launch onDone()
+            try {
+                generate()
+            } finally {
+                isWorking = false
+            }
+        }
+    }
+
+    private suspend fun generate() {
+            // Nothing to build on, or the week is already there: either way the
+            // client is where they wanted to be.
+            val (user, latest) = nextWeekFrom() ?: run {
+                _isReady.value = true
+                return
+            }
             val nextNumber = latest.weekNumber + 1
             val start = startAfter(latest)
             val result = planGenerator.generate(
@@ -70,12 +103,11 @@ class NextWeekViewModel @Inject constructor(
             // decision they should get to make.
             if (result !is PlanGenerationResult.Generated) {
                 _failure.value = result as PlanGenerationResult.Failure
-                return@launch
+                return
             }
 
             userRepository.saveWeeklyWorkoutPlan(result.plan)
-            onDone()
-        }
+            _isReady.value = true
     }
 
     // The user and the week to build on, or nothing when there is neither —
