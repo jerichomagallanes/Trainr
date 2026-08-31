@@ -81,9 +81,9 @@ it does not hold.
 
 2. Open the project in Android Studio
 
-3. **Set up Firebase.** Generation runs through Firebase AI Logic, so the build
-   needs a `google-services.json`. This repository does not ship one, so create
-   your own free project:
+3. **Set up Firebase.** Every build needs a `google-services.json`, and the prod
+   build generates through Firebase AI Logic. This repository does not ship one,
+   so create your own free project:
 
    - Create a project at [console.firebase.google.com](https://console.firebase.google.com)
    - Add two Android apps, using the package names this project already builds:
@@ -94,19 +94,20 @@ it does not hold.
    It is your own project and your own free quota. If you would rather use your
    own package name, change `applicationId` in `app/build.gradle.kts` first.
 
-4. Build and run on a device or emulator.
+4. Build and run on a device or emulator. The **dev** flavour generates locally,
+   so it works offline and needs nothing further.
 
-   Generation is guarded by App Check, which a debug build cannot satisfy on its
-   own. Run the app once, then register the debug token it prints to logcat under
-   **App Check → Manage debug tokens**.
+   For the **prod** flavour, generation is guarded by App Check, which a debug
+   build cannot satisfy on its own. Run it once, then register the debug token it
+   prints to logcat under **App Check → Manage debug tokens**.
 
 ## 🛠️ Build Variants
 
 The project includes multiple build variants for different environments:
 
-- **Dev**: Development build
-- **SIT**: System Integration Testing environment
-- **Prod**: Production-ready build
+- **Dev**: Development build. Plans come from a canned generator, so it needs no
+  network, no quota and no API access, and produces the same week every time.
+- **Prod**: The shipped build. Plans come from Gemini through Firebase AI Logic.
 
 Each supports `debug` and `release` build types.
 

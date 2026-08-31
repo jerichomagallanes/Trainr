@@ -51,12 +51,6 @@ android {
             versionNameSuffix = "-dev"
         }
 
-        create("sit") {
-            dimension = "environment"
-            applicationIdSuffix = ".sit"
-            versionNameSuffix = "-sit"
-        }
-
         create("prod") {
             dimension = "environment"
         }
