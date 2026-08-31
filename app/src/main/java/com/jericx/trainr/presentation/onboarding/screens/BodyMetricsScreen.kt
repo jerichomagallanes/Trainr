@@ -33,6 +33,7 @@ import com.jericx.trainr.R
 import com.jericx.trainr.domain.model.UnitSystem
 import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.common.Constants
+import com.jericx.trainr.presentation.common.theme.RedError
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.jericx.trainr.presentation.common.theme.ComponentHeight
@@ -90,7 +91,17 @@ fun BodyMetricsScreen(
 
     val focusManager = LocalFocusManager.current
 
-    val isFormValid = height.isNotBlank() && weight.isNotBlank()
+    // Validated on what the text parses to, not on whether anything was typed.
+    // The imperial field's own filter makes the apostrophe optional, so "595"
+    // reached it happily and parsed to a height of zero, which is what the
+    // model would then have planned around.
+    val (parsedHeightCm, parsedWeightKg) =
+        BodyMetricsConverter.parseMetrics(height, weight, useMetric)
+    val heightIsUsable = parsedHeightCm in
+        Constants.Workout.MIN_HEIGHT_CM..Constants.Workout.MAX_HEIGHT_CM
+    val weightIsUsable = parsedWeightKg in
+        Constants.Workout.MIN_WEIGHT_KG..Constants.Workout.MAX_WEIGHT_KG
+    val isFormValid = heightIsUsable && weightIsUsable
 
     // Switching units rewrites both field values, swaps the height keyboard
     // between decimal and text, and changes which input each field accepts.
@@ -197,6 +208,21 @@ fun BodyMetricsScreen(
                         placeholder = if (useMetric) stringResource(R.string.height_placeholder_cm) else stringResource(R.string.height_placeholder_imperial),
                         keyboardType = if (useMetric) KeyboardType.Decimal else KeyboardType.Text
                     )
+
+                    // Shown only once something has been typed, so the field
+                    // does not open already complaining, and phrased as the
+                    // shape wanted rather than as a rejection.
+                    FieldHint(
+                        visible = height.isNotBlank() && !heightIsUsable,
+                        text = stringResource(
+                            R.string.height_format_hint,
+                            if (useMetric) {
+                                stringResource(R.string.height_placeholder_cm)
+                            } else {
+                                stringResource(R.string.height_placeholder_imperial)
+                            }
+                        )
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(Spacing.extraLarge))
@@ -213,6 +239,18 @@ fun BodyMetricsScreen(
                         },
                         placeholder = if (useMetric) stringResource(R.string.weight_placeholder_kg) else stringResource(R.string.weight_placeholder_lbs),
                         keyboardType = KeyboardType.Decimal
+                    )
+
+                    FieldHint(
+                        visible = weight.isNotBlank() && !weightIsUsable,
+                        text = stringResource(
+                            R.string.weight_format_hint,
+                            if (useMetric) {
+                                stringResource(R.string.weight_placeholder_kg)
+                            } else {
+                                stringResource(R.string.weight_placeholder_lbs)
+                            }
+                        )
                     )
                 }
 
@@ -322,4 +360,16 @@ private fun getBMICategory(bmi: Float): String {
         bmi < Constants.Workout.BMI_OVERWEIGHT_THRESHOLD -> stringResource(R.string.overweight)
         else -> stringResource(R.string.obese)
     }
+}
+
+@Composable
+private fun FieldHint(visible: Boolean, text: String) {
+    if (!visible) return
+
+    Spacer(modifier = Modifier.height(Spacing.small))
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodySmall,
+        color = RedError
+    )
 }

@@ -240,4 +240,77 @@ class BodyMetricsScreenTest {
         composeTestRule.onNodeWithText("175").assertIsDisplayed()
         composeTestRule.onNodeWithText("70").assertIsDisplayed()
     }
+
+    // The imperial field's own filter makes the apostrophe optional, so "595"
+    // was accepted and parsed to a height of zero.
+    @Test
+    fun aHeightThatIsNotFeetAndInchesCannotBeSubmitted() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                BodyMetricsScreen(onNextClick = { _, _, _ -> }, onBackClick = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.imperial)).performClick()
+        composeTestRule.onNodeWithText(string(R.string.height_placeholder_imperial))
+            .performTextInput("595")
+        composeTestRule.onNodeWithText(string(R.string.weight_placeholder_lbs))
+            .performTextInput("154")
+
+        composeTestRule.onNodeWithText(string(R.string.next)).assertIsNotEnabled()
+    }
+
+    @Test
+    fun aHeightThatIsNotFeetAndInchesSaysWhatIsWanted() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                BodyMetricsScreen(onNextClick = { _, _, _ -> }, onBackClick = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.imperial)).performClick()
+        composeTestRule.onNodeWithText(string(R.string.height_placeholder_imperial))
+            .performTextInput("595")
+
+        composeTestRule.onNodeWithText(
+            composeTestRule.activity.getString(
+                R.string.height_format_hint,
+                string(R.string.height_placeholder_imperial)
+            )
+        ).assertIsDisplayed()
+    }
+
+    @Test
+    fun properFeetAndInchesAreAccepted() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                BodyMetricsScreen(onNextClick = { _, _, _ -> }, onBackClick = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.imperial)).performClick()
+        composeTestRule.onNodeWithText(string(R.string.height_placeholder_imperial))
+            .performTextInput("5'10\"")
+        composeTestRule.onNodeWithText(string(R.string.weight_placeholder_lbs))
+            .performTextInput("154")
+
+        composeTestRule.onNodeWithText(string(R.string.next)).assertIsEnabled()
+    }
+
+    // A weight of zero reaches the model as the body it plans around.
+    @Test
+    fun anImplausibleWeightCannotBeSubmitted() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                BodyMetricsScreen(onNextClick = { _, _, _ -> }, onBackClick = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.height_placeholder_cm))
+            .performTextInput("175")
+        composeTestRule.onNodeWithText(string(R.string.weight_placeholder_kg))
+            .performTextInput("2")
+
+        composeTestRule.onNodeWithText(string(R.string.next)).assertIsNotEnabled()
+    }
 }

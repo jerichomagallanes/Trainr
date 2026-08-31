@@ -29,9 +29,12 @@ import androidx.navigation.navArgument
 import androidx.navigation.compose.rememberNavController
 import com.jericx.trainr.BuildConfig
 import com.jericx.trainr.data.preferences.NavigationStateManager
+import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.presentation.common.LocaleManager
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
+import com.jericx.trainr.presentation.onboarding.OnboardingState
+import com.jericx.trainr.presentation.onboarding.OnboardingStep
 import com.jericx.trainr.presentation.onboarding.OnboardingViewModel
 import com.jericx.trainr.presentation.onboarding.screens.BasicInfoScreen
 import com.jericx.trainr.presentation.onboarding.screens.BodyMetricsScreen
@@ -57,6 +60,15 @@ private val editArguments = listOf(
         defaultValue = false
     }
 )
+
+// An onboarding step is seeded with what the client typed once they have
+// answered it, so stepping back to a screen shows their answers instead of an
+// empty form. Before that it stays blank: the profile's defaults are real
+// values and would read as choices nobody made.
+private fun OnboardingState.filledFor(
+    step: OnboardingStep,
+    editing: Boolean
+): UserProfile? = if (editing || step in answeredSteps) userProfile else null
 
 private val NavBackStackEntry.isEditing: Boolean
     get() = arguments?.getBoolean(Screen.EditableStep.ARG_EDIT) ?: false
@@ -163,7 +175,7 @@ fun AppContent(versionName: String) {
                 ) { entry ->
                     val editing = entry.isEditing
                     BasicInfoScreen(
-                        initial = if (editing) onboardingState.userProfile else null,
+                        initial = onboardingState.filledFor(OnboardingStep.BASIC_INFO, editing),
                         isEditing = editing,
                         onNextClick = { firstName, age, gender, experience ->
                             onboardingViewModel.updateBasicInfo(firstName, age, gender, experience)
@@ -190,7 +202,7 @@ fun AppContent(versionName: String) {
                 ) { entry ->
                     val editing = entry.isEditing
                     BodyMetricsScreen(
-                        initial = if (editing) onboardingState.userProfile else null,
+                        initial = onboardingState.filledFor(OnboardingStep.BODY_METRICS, editing),
                         isEditing = editing,
                         onNextClick = { height, weight, units ->
                             onboardingViewModel.updateBodyMetrics(height, weight, units)
@@ -210,7 +222,7 @@ fun AppContent(versionName: String) {
                 ) { entry ->
                     val editing = entry.isEditing
                     FitnessGoalScreen(
-                        initial = if (editing) onboardingState.userProfile else null,
+                        initial = onboardingState.filledFor(OnboardingStep.GOALS, editing),
                         isEditing = editing,
                         onNextClick = { goal, workoutType ->
                             onboardingViewModel.updateFitnessGoal(goal, workoutType)
@@ -230,7 +242,7 @@ fun AppContent(versionName: String) {
                 ) { entry ->
                     val editing = entry.isEditing
                     WorkoutSetupScreen(
-                        initial = if (editing) onboardingState.userProfile else null,
+                        initial = onboardingState.filledFor(OnboardingStep.SETUP, editing),
                         isEditing = editing,
                         onNextClick = { location, equipment, days, duration, time ->
                             onboardingViewModel.updateWorkoutSetup(location, equipment, days, duration, time)
@@ -250,7 +262,7 @@ fun AppContent(versionName: String) {
                 ) { entry ->
                     val editing = entry.isEditing
                     LimitationsScreen(
-                        initial = if (editing) onboardingState.userProfile else null,
+                        initial = onboardingState.filledFor(OnboardingStep.LIMITATIONS, editing),
                         isEditing = editing,
                         onNextClick = { injuries ->
                             onboardingViewModel.updateLimitations(injuries)
