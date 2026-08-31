@@ -71,13 +71,28 @@ fun ReviewScreen(
             )
         },
         bottomButton = {
-            TrainrButton(
-                text = stringResource(
-                    if (isProfileUpdate) R.string.save_profile
-                    else R.string.generate_my_workout_plan
-                ),
-                onClick = onConfirmClick
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
+                // Sits with the button rather than at the end of the scroll: a
+                // client who taps generate without reading the cards would
+                // never reach it down there, and the moment it matters is the
+                // moment a plan is about to be written for their body.
+                // Saving a profile writes no plan, so it says nothing then.
+                if (!isProfileUpdate) {
+                    Text(
+                        text = stringResource(R.string.health_disclaimer),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextMuted
+                    )
+                }
+
+                TrainrButton(
+                    text = stringResource(
+                        if (isProfileUpdate) R.string.save_profile
+                        else R.string.generate_my_workout_plan
+                    ),
+                    onClick = onConfirmClick
+                )
+            }
         }
     ) { paddingValues ->
         Column(

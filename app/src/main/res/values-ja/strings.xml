@@ -169,6 +169,7 @@
     <string name="delete_set">セットを削除</string>
     <string name="plan_options">ワークアウトプランのオプション</string>
     <string name="app_about_message">ワークアウトプランは、設定したフィットネスプロフィールをもとにAIが作成します。</string>
+    <string name="health_disclaimer">プランはAIが作成したものであり、医学的助言ではありません。始める前に医師に相談し、痛みがあれば中止してください。</string>
     <string name="app_version_format">バージョン %1$s</string>
     <string name="about_the_app">Trainrについて</string>
     <string name="profile_and_app">プロフィールとアプリ</string>
