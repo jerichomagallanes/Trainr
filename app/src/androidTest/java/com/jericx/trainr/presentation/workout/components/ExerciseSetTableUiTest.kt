@@ -70,4 +70,41 @@ class ExerciseSetTableUiTest {
 
         composeTestRule.onNodeWithText(string(R.string.previous_column)).assertDoesNotExist()
     }
+
+    // Deleting every set used to take the Add set button with it, because the
+    // card only drew the table when there were rows to put in it. That left an
+    // exercise you could empty and never refill.
+    @Test
+    fun addSetSurvivesAnEmptiedTable() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                ExerciseSetTable(
+                    measure = ExerciseMeasure.WEIGHT_AND_REPS,
+                    sets = emptyList(),
+                    onSetChanged = {},
+                    onAddSet = {}
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.add_set)).assertIsDisplayed()
+    }
+
+    // Headings over nothing are noise.
+    @Test
+    fun anEmptiedTableDropsItsColumnHeadings() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                ExerciseSetTable(
+                    measure = ExerciseMeasure.WEIGHT_AND_REPS,
+                    sets = emptyList(),
+                    onSetChanged = {},
+                    onAddSet = {}
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.set_column)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.reps_column)).assertDoesNotExist()
+    }
 }
