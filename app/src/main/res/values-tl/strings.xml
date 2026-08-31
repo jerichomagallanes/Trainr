@@ -40,6 +40,8 @@
     <string name="weight_lbs">Timbang (lbs)</string>
     <string name="height_placeholder_cm">170</string>
     <string name="height_placeholder_imperial">5\'10\"</string>
+    <string name="height_format_hint">Ilagay ang taas mo tulad ng %1$s</string>
+    <string name="weight_format_hint">Ilagay ang timbang mo tulad ng %1$s</string>
     <string name="weight_placeholder_kg">70</string>
     <string name="weight_placeholder_lbs">155</string>
     <string name="bmi_label">BMI:</string>
