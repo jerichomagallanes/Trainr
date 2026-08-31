@@ -57,17 +57,36 @@ fun BodyMetricsScreen(
     onNextClick: (height: Float, weight: Float, units: UnitSystem) -> Unit,
     onBackClick: () -> Unit
 ) {
+    // The profile is stored in centimetres and kilograms whichever units were
+    // typed, so the stored numbers have to be converted before they are put
+    // back in front of a client who reads pounds. Seeding them raw showed a
+    // kilogram weight under a label saying lbs.
+    val startsImperial = initial?.unitSystem == UnitSystem.IMPERIAL
     var height by remember {
-        mutableStateOf(initial?.height?.takeIf { it > 0f }?.toInt()?.toString().orEmpty())
+        mutableStateOf(
+            initial?.height?.takeIf { it > 0f }
+                ?.toInt()
+                ?.toString()
+                ?.let { cm ->
+                    if (startsImperial) BodyMetricsConverter.convertHeightToImperial(cm) else cm
+                }
+                .orEmpty()
+        )
     }
     var weight by remember {
         mutableStateOf(
             initial?.weight?.takeIf { it > 0f }
-                ?.let { if (it % 1f == 0f) it.toInt().toString() else it.toString() }
+                ?.let { kg ->
+                    if (startsImperial) {
+                        BodyMetricsConverter.convertWeightToImperial(kg.toString())
+                    } else {
+                        BodyMetricsConverter.formatKilograms(kg)
+                    }
+                }
                 .orEmpty()
         )
     }
-    var useMetric by remember { mutableStateOf(initial?.unitSystem != UnitSystem.IMPERIAL) }
+    var useMetric by remember { mutableStateOf(!startsImperial) }
 
     val focusManager = LocalFocusManager.current
 
