@@ -46,6 +46,7 @@ class OnboardingViewModel @Inject constructor(
 
     fun updateBasicInfo(firstName: String, age: Int, gender: Gender, experience: ExperienceLevel) {
         _onboardingState.value = _onboardingState.value.copy(
+            answeredSteps = answeredWith(OnboardingStep.BASIC_INFO),
             userProfile = _onboardingState.value.userProfile.copy(
                 firstName = firstName,
                 age = age,
@@ -57,6 +58,7 @@ class OnboardingViewModel @Inject constructor(
 
     fun updateBodyMetrics(height: Float, weight: Float, units: UnitSystem) {
         _onboardingState.value = _onboardingState.value.copy(
+            answeredSteps = answeredWith(OnboardingStep.BODY_METRICS),
             userProfile = _onboardingState.value.userProfile.copy(
                 height = height,
                 weight = weight,
@@ -67,6 +69,7 @@ class OnboardingViewModel @Inject constructor(
 
     fun updateFitnessGoal(goal: FitnessGoal, workoutType: WorkoutType) {
         _onboardingState.value = _onboardingState.value.copy(
+            answeredSteps = answeredWith(OnboardingStep.GOALS),
             userProfile = _onboardingState.value.userProfile.copy(
                 fitnessGoal = goal,
                 workoutType = workoutType
@@ -82,6 +85,7 @@ class OnboardingViewModel @Inject constructor(
         preferredTime: WorkoutTime
     ) {
         _onboardingState.value = _onboardingState.value.copy(
+            answeredSteps = answeredWith(OnboardingStep.SETUP),
             userProfile = _onboardingState.value.userProfile.copy(
                 workoutLocation = location,
                 availableEquipment = equipment,
@@ -94,9 +98,13 @@ class OnboardingViewModel @Inject constructor(
 
     fun updateLimitations(injuries: List<String>) {
         _onboardingState.value = _onboardingState.value.copy(
+            answeredSteps = answeredWith(OnboardingStep.LIMITATIONS),
             userProfile = _onboardingState.value.userProfile.copy(injuries = injuries)
         )
     }
+
+    private fun answeredWith(step: OnboardingStep): Set<OnboardingStep> =
+        _onboardingState.value.answeredSteps + step
 
     suspend fun hasCompletedOnboarding(): Boolean = userRepository.hasUsers()
 
@@ -191,8 +199,23 @@ class OnboardingViewModel @Inject constructor(
     }
 }
 
+// Which questions the client has actually answered. It cannot be read off the
+// profile: every enum field starts on a real value, so an untouched profile
+// looks exactly like an answered one, and only the blank strings and zeroes
+// give anything away.
+enum class OnboardingStep {
+    BASIC_INFO,
+    BODY_METRICS,
+    GOALS,
+    SETUP,
+    LIMITATIONS
+}
+
 data class OnboardingState(
     val userProfile: UserProfile = UserProfile(),
+    // A step reopened by going back is filled in from what was typed; before
+    // it has been answered there is nothing to fill it with.
+    val answeredSteps: Set<OnboardingStep> = emptySet(),
     val currentStep: Int = 0,
     val isLoading: Boolean = false,
     val error: String? = null,

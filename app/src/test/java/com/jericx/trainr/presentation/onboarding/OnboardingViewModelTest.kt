@@ -11,6 +11,7 @@ import com.jericx.trainr.domain.model.WorkoutLocation
 import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.domain.model.WorkoutTime
 import com.jericx.trainr.domain.model.WorkoutType
+import com.jericx.trainr.presentation.onboarding.OnboardingStep
 import com.jericx.trainr.domain.model.UnitSystem
 import com.jericx.trainr.domain.generation.PlanGenerator
 import com.jericx.trainr.domain.generation.PlanGenerationResult
@@ -385,4 +386,31 @@ class OnboardingViewModelTest {
         assertThat(viewModel.onboardingState.value.isCompleted).isFalse()
     }
 
+
+    // Stepping back to a screen has to show what was typed there. The profile
+    // cannot say whether a step was answered, because every enum field starts
+    // on a real value that looks like a choice.
+    @Test
+    fun `a step is only marked answered once it has been filled in`() {
+        // Assert
+        assertThat(viewModel.onboardingState.value.answeredSteps).isEmpty()
+
+        // Act
+        viewModel.updateBodyMetrics(175f, 70f, UnitSystem.METRIC)
+
+        // Assert
+        assertThat(viewModel.onboardingState.value.answeredSteps)
+            .containsExactly(OnboardingStep.BODY_METRICS)
+    }
+
+    @Test
+    fun `answered steps accumulate rather than replace one another`() {
+        // Act
+        viewModel.updateBasicInfo("Jericho", 31, Gender.FEMALE, ExperienceLevel.ADVANCED)
+        viewModel.updateFitnessGoal(FitnessGoal.STRENGTH, WorkoutType.HIIT)
+
+        // Assert
+        assertThat(viewModel.onboardingState.value.answeredSteps)
+            .containsExactly(OnboardingStep.BASIC_INFO, OnboardingStep.GOALS)
+    }
 }

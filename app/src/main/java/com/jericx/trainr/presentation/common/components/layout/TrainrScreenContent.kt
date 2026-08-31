@@ -19,12 +19,16 @@ fun TrainrScreenContent(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit
 ) {
+    // The vertical padding insets the scrolling area rather than sitting inside
+    // it. Applied after verticalScroll it was part of the content and scrolled
+    // away with it, so a scrolled screen butted its text straight against the
+    // progress bar above with nothing between them.
     Column(
         modifier = modifier
             .fillMaxSize()
+            .padding(vertical = Spacing.medium)
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = Spacing.large)
-            .padding(vertical = Spacing.medium),
+            .padding(horizontal = Spacing.large),
         content = content
     )
 }

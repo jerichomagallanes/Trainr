@@ -13,6 +13,13 @@ object Constants {
         const val BMI_NORMAL_THRESHOLD = 25f
         const val BMI_OVERWEIGHT_THRESHOLD = 30f
 
+        // What a person can plausibly be. Anything outside this is a typo, and
+        // it reaches the model as the body it plans around.
+        const val MIN_HEIGHT_CM = 100f
+        const val MAX_HEIGHT_CM = 250f
+        const val MIN_WEIGHT_KG = 30f
+        const val MAX_WEIGHT_KG = 300f
+
         // Metric/Imperial conversion factors
         const val CM_TO_INCHES = 2.54f
         const val INCHES_PER_FOOT = 12f
