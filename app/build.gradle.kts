@@ -11,6 +11,22 @@ plugins {
     alias(libs.plugins.google.services)
 }
 
+// Play refuses an upload whose versionCode is not above the last one, and a
+// forgotten bump is only discovered after the build and the upload have already
+// been spent. Counting commits makes it climb by itself, once per merge, with no
+// step for anyone to remember.
+val commitCount = providers.exec {
+    commandLine("git", "rev-list", "--count", "HEAD")
+    isIgnoreExitValue = true
+}.standardOutput.asText.map { it.trim().toIntOrNull() ?: 0 }
+
+// A shallow clone, an exported zip or a machine without git has no history to
+// count. The floor keeps such a build from numbering itself below something
+// already uploaded, which Play would reject. Note for whoever adds a job that
+// builds a release: actions/checkout fetches one commit by default, so it would
+// count 1 and fall back to this floor. Such a job needs fetch-depth: 0.
+val minimumVersionCode = 2
+
 android {
     namespace = "com.jericx.trainr"
     compileSdk = 37
@@ -19,7 +35,7 @@ android {
         applicationId = "com.jericx.trainr"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1
+        versionCode = maxOf(runCatching { commitCount.get() }.getOrDefault(0), minimumVersionCode)
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -219,4 +235,11 @@ dependencies {
     androidTestImplementation(libs.androidx.test.espresso.core)
     androidTestImplementation(libs.compose.ui.test.junit4)
     androidTestImplementation(libs.truth)
+}
+
+// What the next upload will be numbered, without building it: Play only tells
+// you the number was wrong after the whole bundle has been sent.
+tasks.register("printVersionCode") {
+    val versionCode = android.defaultConfig.versionCode
+    doLast { println(versionCode) }
 }
