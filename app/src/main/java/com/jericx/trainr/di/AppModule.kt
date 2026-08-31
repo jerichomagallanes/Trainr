@@ -3,19 +3,15 @@ package com.jericx.trainr.di
 import android.content.Context
 import androidx.room.Room
 import com.jericx.trainr.common.Constants
-import com.jericx.trainr.data.generation.FirebaseAiClient
-import com.jericx.trainr.data.generation.GeminiPlanGenerator
-import com.jericx.trainr.data.generation.GeneratedPlanParser
-import com.jericx.trainr.data.generation.PlanPromptBuilder
 import com.jericx.trainr.data.local.TrainrDatabase
 import com.jericx.trainr.data.local.UserDao
 import com.jericx.trainr.data.local.UserMapper
 import com.jericx.trainr.data.preferences.LanguageCodeProvider
 import com.jericx.trainr.data.preferences.LanguagePreferences
 import com.jericx.trainr.data.repository.UserRepositoryImpl
+import com.jericx.trainr.data.generation.planGenerator
 import com.jericx.trainr.domain.generation.PlanGenerator
 import com.jericx.trainr.domain.repository.UserRepository
-import com.jericx.trainr.presentation.workout.model.ExerciseVideoCatalog
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -65,15 +61,9 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun providePlanGenerator(): PlanGenerator {
-        return GeminiPlanGenerator(
-            client = FirebaseAiClient(),
-            parser = GeneratedPlanParser(),
-            promptBuilder = PlanPromptBuilder(
-                canonicalKeys = ExerciseVideoCatalog.videoIds.keys
-            )
-        )
-    }
+    // Which generator answers is a property of the build, not of a flag: see
+    // planGenerator() in the dev and prod source sets.
+    fun providePlanGenerator(): PlanGenerator = planGenerator()
 
     @Provides
     @Singleton
