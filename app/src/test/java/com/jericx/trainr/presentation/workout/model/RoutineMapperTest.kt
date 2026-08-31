@@ -2,6 +2,8 @@ package com.jericx.trainr.presentation.workout.model
 
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.domain.model.ExerciseSet
+import com.jericx.trainr.domain.model.UnitSystem
+import com.jericx.trainr.domain.model.WeightUnit
 import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.model.WorkoutExercise
 import com.jericx.trainr.domain.model.WorkoutStatus
@@ -16,7 +18,8 @@ class RoutineMapperTest {
         prescription: String = "3 sets of 10 reps",
         instructions: String = "Do the thing.",
         videoTutorialUrl: String? = null,
-        isCompleted: Boolean = false
+        isCompleted: Boolean = false,
+        sets: List<ExerciseSet> = emptyList()
     ) = WorkoutExercise(
         name = name,
         exerciseKey = exerciseKey,
@@ -24,7 +27,13 @@ class RoutineMapperTest {
         prescription = prescription,
         instructions = instructions,
         videoTutorialUrl = videoTutorialUrl,
-        isCompleted = isCompleted
+        isCompleted = isCompleted,
+        sets = sets
+    )
+
+    private fun loaded(kg: Float) = exercise(
+        "Goblet Squat",
+        sets = listOf(ExerciseSet(setNumber = 1, targetReps = 10, targetWeightKg = kg))
     )
 
     private fun day(vararg exercises: WorkoutExercise) = WorkoutDay(
@@ -137,5 +146,33 @@ class RoutineMapperTest {
         ).toRoutineUi()
 
         assertThat(routine.exercises.single().videoUrl).isEqualTo("https://youtu.be/abcdefghijk")
+    }
+
+    // 20 kg is 44.09 lb, which is not a dumbbell anyone owns.
+    @Test
+    fun aClientInPoundsIsPrescribedAWeightTheyCanLoad() {
+        val routine = day(loaded(20f)).toRoutineUi(units = UnitSystem.IMPERIAL)
+
+        val target = routine.exercises.single().sets.single().targetWeightKg!!
+        assertThat(WeightUnit.forDisplay(target, UnitSystem.IMPERIAL)).isEqualTo(45f)
+    }
+
+    @Test
+    fun aClientInKilogramsKeepsThePrescriptionAsWritten() {
+        val routine = day(loaded(12f)).toRoutineUi(units = UnitSystem.METRIC)
+
+        assertThat(routine.exercises.single().sets.single().targetWeightKg).isEqualTo(12f)
+    }
+
+    // Ticking an exercise off logs its target, so the number that gets stored
+    // has to be the one the client was looking at.
+    @Test
+    fun loggingAPrescriptionRecordsTheWeightThatWasShown() {
+        val logged = day(loaded(20f))
+            .toRoutineUi(units = UnitSystem.IMPERIAL)
+            .toggleCompleted(1)
+
+        val actual = logged.exercises.single().sets.single().actualWeightKg!!
+        assertThat(WeightUnit.forDisplay(actual, UnitSystem.IMPERIAL)).isEqualTo(45f)
     }
 }

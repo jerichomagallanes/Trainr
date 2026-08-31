@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jericx.trainr.domain.model.ExerciseSet
+import com.jericx.trainr.domain.model.UnitSystem
 import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.model.WorkoutExercise
 import com.jericx.trainr.presentation.Screen
@@ -38,6 +39,8 @@ data class RoutineDetailUiState(
     val dayNumber: Int = 1,
     val weekNumber: Int = 1,
     val completesTheWeek: Boolean = false,
+    // Which units the client reads and writes; storage stays metric.
+    val unitSystem: UnitSystem = UnitSystem.Default,
     // False until the stored routine has been read. Nothing is drawn before
     // then: the screen used to open on the built-in sample week and swap it for
     // the real one a moment later, which read as a flicker of someone else's
@@ -84,9 +87,11 @@ class RoutineDetailViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            val plan = userRepository.getCurrentUser()
-                ?.let { user ->
-                    val plans = userRepository.getWeeklyWorkoutPlans(user.id).first()
+            val user = userRepository.getCurrentUser()
+            val units = user?.unitSystem ?: UnitSystem.Default
+            val plan = user
+                ?.let { profile ->
+                    val plans = userRepository.getWeeklyWorkoutPlans(profile.id).first()
                     if (requestedWeekNumber == null) {
                         plans.maxByOrNull { it.weekNumber }
                     } else {
@@ -97,7 +102,7 @@ class RoutineDetailViewModel @Inject constructor(
                 ?.indexOfFirst { it.dayNumber == requestedDayNumber } ?: -1
 
             if (plan == null || index < 0) {
-                _uiState.update { it.copy(isLoaded = true) }
+                _uiState.update { it.copy(isLoaded = true, unitSystem = units) }
             } else {
                 val day = plan.workoutDays[index]
                 storedDay = day
@@ -114,7 +119,8 @@ class RoutineDetailViewModel @Inject constructor(
                     }
                     .filterValues { sets -> sets.isNotEmpty() }
                 _uiState.value = RoutineDetailUiState(
-                    routine = day.toRoutineUi(previousByKey),
+                    unitSystem = units,
+                    routine = day.toRoutineUi(previousByKey, units),
                     equipment = day.equipment,
                     dateMillis = plan.startDateMillis
                         ?.let { WorkoutWeek.dateOfDay(it, day.dayNumber) }

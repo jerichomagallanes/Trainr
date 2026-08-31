@@ -28,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.jericx.trainr.R
 import com.jericx.trainr.domain.model.Equipment
+import com.jericx.trainr.domain.model.UnitSystem
 import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.presentation.common.components.core.TrainrButton
 import com.jericx.trainr.presentation.common.components.core.TrainrProgress
@@ -41,6 +42,7 @@ import com.jericx.trainr.presentation.common.getLocalizedName
 import com.jericx.trainr.presentation.common.getProgramPhrase
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TextMuted
+import com.jericx.trainr.presentation.onboarding.util.BodyMetricsConverter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -111,6 +113,27 @@ fun ReviewScreen(
 
                 val genderText = userProfile.gender.getLocalizedName()
                 val experienceText = userProfile.experienceLevel.getLocalizedName()
+
+                // Read back in the units they were entered in. The profile is
+                // stored in centimetres and kilograms whichever was typed, so
+                // a client in pounds was being shown their own weight
+                // converted into a number they had not used.
+                val imperial = userProfile.unitSystem == UnitSystem.IMPERIAL
+                val heightText = if (imperial) {
+                    BodyMetricsConverter.convertHeightToImperial(
+                        userProfile.height.toInt().toString()
+                    )
+                } else {
+                    stringResource(R.string.height_cm_format, userProfile.height.toInt())
+                }
+                val weightText = if (imperial) {
+                    stringResource(
+                        R.string.weight_lbs_format,
+                        BodyMetricsConverter.convertWeightToImperial(userProfile.weight.toString())
+                    )
+                } else {
+                    stringResource(R.string.weight_kg_format, userProfile.weight)
+                }
                 
                 ProfileSection(
                     title = stringResource(R.string.personal_information),
@@ -118,8 +141,8 @@ fun ReviewScreen(
                     items = listOf(
                         stringResource(R.string.age_label) to pluralStringResource(R.plurals.years_old_format, userProfile.age, userProfile.age),
                         stringResource(R.string.gender_label) to genderText,
-                        stringResource(R.string.height_label) to stringResource(R.string.height_cm_format, userProfile.height.toInt()),
-                        stringResource(R.string.weight_label) to stringResource(R.string.weight_kg_format, userProfile.weight),
+                        stringResource(R.string.height_label) to heightText,
+                        stringResource(R.string.weight_label) to weightText,
                         stringResource(R.string.experience_label) to experienceText
                     )
                 )

@@ -11,6 +11,7 @@ import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
 import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.model.WorkoutExercise
 import com.jericx.trainr.domain.model.WorkoutStatus
+import com.jericx.trainr.domain.model.UnitSystem
 import org.junit.Test
 
 class PlanPromptBuilderTest {
@@ -19,7 +20,8 @@ class PlanPromptBuilderTest {
 
     private fun request(
         languageCode: String = "en",
-        previousWeek: WeeklyWorkoutPlan? = null
+        previousWeek: WeeklyWorkoutPlan? = null,
+        units: UnitSystem = UnitSystem.METRIC
     ) = PlanRequest(
         user = UserProfile(
             id = 1,
@@ -30,7 +32,8 @@ class PlanPromptBuilderTest {
             availableEquipment = listOf(Equipment.DUMBBELLS, Equipment.PULL_UP_BAR),
             workoutDaysPerWeek = 3,
             workoutDuration = 45,
-            injuries = listOf("Lower Back Pain")
+            injuries = listOf("Lower Back Pain"),
+            unitSystem = units
         ),
         weekNumber = if (previousWeek == null) 1 else 2,
         startDateMillis = 0L,
@@ -129,6 +132,28 @@ class PlanPromptBuilderTest {
 
     // Anchors of the coaching brief the plans' quality hangs on; if one of
     // these leaves the system prompt it should be a deliberate decision.
+    // A client lifting in pounds owns 5 lb steps, so a 2.5% rise on 20 kg lands
+    // back on the same 45 lb and the progression vanishes where it is read. The
+    // brief has to name the increment for the model to avoid that.
+    @Test
+    fun theBriefNamesTheIncrementTheClientCanActuallyLoad() {
+        val metric = PlanPromptBuilder().userPrompt(request(units = UnitSystem.METRIC))
+        assertThat(metric).contains("Reads weights in kilograms")
+        assertThat(metric).contains("increment 2.5 kg")
+
+        val imperial = PlanPromptBuilder().userPrompt(request(units = UnitSystem.IMPERIAL))
+        assertThat(imperial).contains("Reads weights in pounds")
+        assertThat(imperial).contains("increment 2.27 kg")
+    }
+
+    @Test
+    fun theContractStaysInKilogramsWhicheverTheClientReads() {
+        val imperial = PlanPromptBuilder().systemInstruction()
+
+        assertThat(imperial).contains("Weights are kilograms")
+        assertThat(imperial).contains("multiple of the client's smallest loadable")
+    }
+
     @Test
     fun theCoachingBriefKeepsItsLoadBearingRules() {
         val brief = builder.systemInstruction()

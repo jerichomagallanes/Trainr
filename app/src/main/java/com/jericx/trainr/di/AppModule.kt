@@ -34,7 +34,8 @@ object AppModule {
             TrainrDatabase.MIGRATION_1_2,
             TrainrDatabase.MIGRATION_2_3,
             TrainrDatabase.MIGRATION_3_4,
-            TrainrDatabase.MIGRATION_4_5
+            TrainrDatabase.MIGRATION_4_5,
+            TrainrDatabase.MIGRATION_5_6
         ).build()
     }
 

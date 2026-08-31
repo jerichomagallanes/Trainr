@@ -14,7 +14,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         WorkoutExerciseEntity::class,
         ExerciseSetEntity::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -110,6 +110,16 @@ abstract class TrainrDatabase : RoomDatabase() {
                     "CREATE UNIQUE INDEX IF NOT EXISTS " +
                         "index_weekly_workout_plans_userId_weekNumber " +
                         "ON weekly_workout_plans (userId, weekNumber)"
+                )
+            }
+        }
+
+        // Existing clients were all reading kilograms, since the toggle that
+        // offered anything else was thrown away rather than stored.
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE users ADD COLUMN unitSystem TEXT NOT NULL DEFAULT 'METRIC'"
                 )
             }
         }

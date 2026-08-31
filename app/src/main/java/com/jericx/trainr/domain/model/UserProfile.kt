@@ -18,6 +18,8 @@ data class UserProfile(
     val preferredWorkoutTime: WorkoutTime = WorkoutTime.ANYTIME,
     val injuries: List<String> = emptyList(),
     val workoutType: WorkoutType = WorkoutType.MIXED,
+    // Which units the client reads and writes. Storage stays metric either way.
+    val unitSystem: UnitSystem = UnitSystem.Default,
     val createdAt: Long = System.currentTimeMillis()
 )
 

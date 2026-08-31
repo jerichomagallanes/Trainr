@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.withStyle
 import com.jericx.trainr.R
+import com.jericx.trainr.domain.model.UnitSystem
 import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.common.Constants
 import androidx.compose.foundation.BorderStroke
@@ -53,7 +54,7 @@ import com.jericx.trainr.presentation.onboarding.util.BodyMetricsConverter
 fun BodyMetricsScreen(
     initial: UserProfile? = null,
     isEditing: Boolean = false,
-    onNextClick: (height: Float, weight: Float) -> Unit,
+    onNextClick: (height: Float, weight: Float, units: UnitSystem) -> Unit,
     onBackClick: () -> Unit
 ) {
     var height by remember {
@@ -66,7 +67,7 @@ fun BodyMetricsScreen(
                 .orEmpty()
         )
     }
-    var useMetric by remember { mutableStateOf(true) }
+    var useMetric by remember { mutableStateOf(initial?.unitSystem != UnitSystem.IMPERIAL) }
 
     val focusManager = LocalFocusManager.current
 
@@ -102,7 +103,11 @@ fun BodyMetricsScreen(
                 text = stringResource(if (isEditing) R.string.save else R.string.next),
                 onClick = {
                     val (h, w) = BodyMetricsConverter.parseMetrics(height, weight, useMetric)
-                    onNextClick(h, w)
+                    onNextClick(
+                        h,
+                        w,
+                        if (useMetric) UnitSystem.METRIC else UnitSystem.IMPERIAL
+                    )
                 },
                 enabled = isFormValid
             )

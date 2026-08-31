@@ -209,7 +209,8 @@ fun RoutineDetailScreen(
                         onToggleCompleted = { onToggleExercise(exercise.position) },
                         onSetChanged = { onSetChanged(exercise.position, it) },
                         onAddSet = { onAddSet(exercise.position) },
-                        onDeleteSet = { onDeleteSet(exercise.position, it.setNumber) }
+                        onDeleteSet = { onDeleteSet(exercise.position, it.setNumber) },
+                        units = state.unitSystem
                     ) {
                         if (!exercise.isCompleted) {
                             ExerciseTimer(
