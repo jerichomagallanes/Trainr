@@ -172,9 +172,10 @@ class BasicInfoScreenTest {
 
         composeTestRule.onNodeWithText(
             composeTestRule.activity.getString(
-                R.string.age_range_hint,
-                Constants.Workout.MIN_AGE,
-                Constants.Workout.MAX_AGE
+                R.string.value_range_hint,
+                composeTestRule.activity.getString(R.string.age_label),
+                Constants.Workout.MIN_AGE.toString(),
+                Constants.Workout.MAX_AGE.toString()
             )
         ).assertIsDisplayed()
     }
@@ -190,10 +191,34 @@ class BasicInfoScreenTest {
 
         composeTestRule.onNodeWithText(
             composeTestRule.activity.getString(
-                R.string.age_range_hint,
-                Constants.Workout.MIN_AGE,
-                Constants.Workout.MAX_AGE
+                R.string.value_range_hint,
+                composeTestRule.activity.getString(R.string.age_label),
+                Constants.Workout.MIN_AGE.toString(),
+                Constants.Workout.MAX_AGE.toString()
             )
         ).assertDoesNotExist()
+    }
+
+    // A name is whatever its owner says it is, so the only rule is that there
+    // is one, and it is only asked for once the field has been left empty.
+    @Test
+    fun leavingTheNameEmptySaysItIsRequired() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                BasicInfoScreen(onNextClick = { _, _, _, _ -> }, onBackClick = {})
+            }
+        }
+
+        val required = composeTestRule.activity.getString(
+            R.string.field_required,
+            composeTestRule.activity.getString(R.string.name_label)
+        )
+        composeTestRule.onNodeWithText(required).assertDoesNotExist()
+
+        // Focus the name, then move to the age field to leave it.
+        composeTestRule.onNodeWithText(string(R.string.enter_your_first_name)).performClick()
+        composeTestRule.onNodeWithText(string(R.string.enter_your_age)).performClick()
+
+        composeTestRule.onNodeWithText(required).assertIsDisplayed()
     }
 }

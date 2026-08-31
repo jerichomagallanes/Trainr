@@ -26,6 +26,7 @@ import com.jericx.trainr.presentation.common.theme.ComponentHeight
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.components.core.TrainrButton
 import com.jericx.trainr.presentation.common.components.core.TrainrFieldError
+import com.jericx.trainr.presentation.common.components.core.touchedOnBlur
 import com.jericx.trainr.presentation.common.components.core.TrainrProgress
 import com.jericx.trainr.presentation.common.components.layout.TrainrScaffold
 import com.jericx.trainr.presentation.common.components.cards.TrainrSelectionCard
@@ -47,6 +48,11 @@ fun BasicInfoScreen(
     var age by remember { mutableStateOf(initial?.age?.takeIf { it > 0 }?.toString().orEmpty()) }
     var selectedGender by remember { mutableStateOf(initial?.gender) }
     var selectedExperience by remember { mutableStateOf(initial?.experienceLevel) }
+
+    // Required is only reported once a field has been left, never while it is
+    // still being filled in.
+    var nameTouched by remember { mutableStateOf(false) }
+    var ageTouched by remember { mutableStateOf(false) }
 
     val ageRange = Constants.Workout.MIN_AGE..Constants.Workout.MAX_AGE
     val ageIsUsable = (age.toIntOrNull() ?: 0) in ageRange
@@ -102,7 +108,18 @@ fun BasicInfoScreen(
                     TrainrTextField(
                         value = firstName,
                         onValueChange = { firstName = it },
-                        placeholder = stringResource(R.string.enter_your_first_name)
+                        placeholder = stringResource(R.string.enter_your_first_name),
+                        modifier = Modifier.touchedOnBlur { nameTouched = true }
+                    )
+
+                    // Nothing beyond "there is something here". A name is
+                    // whatever its owner says it is, and rules about their
+                    // shape lock real people out of the product.
+                    TrainrFieldError(
+                        message = stringResource(
+                            R.string.field_required,
+                            stringResource(R.string.name_label)
+                        ).takeIf { firstName.isBlank() && nameTouched }
                     )
                 }
 
@@ -115,17 +132,26 @@ fun BasicInfoScreen(
                             }
                         },
                         placeholder = stringResource(R.string.enter_your_age),
-                        keyboardType = KeyboardType.Number
+                        keyboardType = KeyboardType.Number,
+                        modifier = Modifier.touchedOnBlur { ageTouched = true }
                     )
 
-                    // Only once something has been typed. An age of 5 used to
-                    // leave the button dead with nothing to explain it.
+                    // States the bound rather than showing a specimen age. An
+                    // example in an error reads as the answer that was wanted.
                     TrainrFieldError(
-                        message = stringResource(
-                            R.string.age_range_hint,
-                            ageRange.first,
-                            ageRange.last
-                        ).takeIf { age.isNotBlank() && !ageIsUsable }
+                        message = when {
+                            age.isBlank() && ageTouched -> stringResource(
+                                R.string.field_required,
+                                stringResource(R.string.age_label)
+                            )
+                            age.isNotBlank() && !ageIsUsable -> stringResource(
+                                R.string.value_range_hint,
+                                stringResource(R.string.age_label),
+                                ageRange.first.toString(),
+                                ageRange.last.toString()
+                            )
+                            else -> null
+                        }
                     )
                 }
 

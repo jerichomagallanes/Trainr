@@ -33,6 +33,8 @@ import com.jericx.trainr.R
 import com.jericx.trainr.domain.model.UnitSystem
 import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.common.Constants
+import com.jericx.trainr.presentation.common.components.core.touchedOnBlur
+import com.jericx.trainr.presentation.common.components.core.TrainrFieldError
 import com.jericx.trainr.presentation.common.theme.RedError
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -101,7 +103,35 @@ fun BodyMetricsScreen(
         Constants.Workout.MIN_HEIGHT_CM..Constants.Workout.MAX_HEIGHT_CM
     val weightIsUsable = parsedWeightKg in
         Constants.Workout.MIN_WEIGHT_KG..Constants.Workout.MAX_WEIGHT_KG
+    val cmUnit = stringResource(R.string.unit_cm)
+    val kgUnit = stringResource(R.string.weight_column)
+    val lbsUnit = stringResource(R.string.weight_column_lbs)
+
     val isFormValid = heightIsUsable && weightIsUsable
+
+    var heightTouched by remember { mutableStateOf(false) }
+    var weightTouched by remember { mutableStateOf(false) }
+
+    // The bounds, in the units on screen. An error that carries an example
+    // weight reads as the weight that was expected, which is not something to
+    // put in front of somebody about their own body; a range is a limit.
+    val heightBounds = with(Constants.Workout) {
+        if (useMetric) {
+            MIN_HEIGHT_CM.toInt().toString() to
+                "${MAX_HEIGHT_CM.toInt()} ${cmUnit}"
+        } else {
+            BodyMetricsConverter.convertHeightToImperial(MIN_HEIGHT_CM.toInt().toString()) to
+                BodyMetricsConverter.convertHeightToImperial(MAX_HEIGHT_CM.toInt().toString())
+        }
+    }
+    val weightBounds = with(Constants.Workout) {
+        if (useMetric) {
+            MIN_WEIGHT_KG.toInt().toString() to "${MAX_WEIGHT_KG.toInt()} ${kgUnit}"
+        } else {
+            BodyMetricsConverter.convertWeightToImperial(MIN_WEIGHT_KG.toString()) to
+                "${BodyMetricsConverter.convertWeightToImperial(MAX_WEIGHT_KG.toString())} ${lbsUnit}"
+        }
+    }
 
     // Switching units rewrites both field values, swaps the height keyboard
     // between decimal and text, and changes which input each field accepts.
@@ -206,21 +236,17 @@ fun BodyMetricsScreen(
                             }
                         },
                         placeholder = if (useMetric) stringResource(R.string.height_placeholder_cm) else stringResource(R.string.height_placeholder_imperial),
-                        keyboardType = if (useMetric) KeyboardType.Decimal else KeyboardType.Text
+                        keyboardType = if (useMetric) KeyboardType.Decimal else KeyboardType.Text,
+                        modifier = Modifier.touchedOnBlur { heightTouched = true }
                     )
 
-                    // Shown only once something has been typed, so the field
-                    // does not open already complaining, and phrased as the
-                    // shape wanted rather than as a rejection.
-                    FieldHint(
-                        visible = height.isNotBlank() && !heightIsUsable,
-                        text = stringResource(
-                            R.string.height_format_hint,
-                            if (useMetric) {
-                                stringResource(R.string.height_placeholder_cm)
-                            } else {
-                                stringResource(R.string.height_placeholder_imperial)
-                            }
+                    TrainrFieldError(
+                        message = fieldMessage(
+                            label = stringResource(R.string.height_label),
+                            value = height,
+                            touched = heightTouched,
+                            usable = heightIsUsable,
+                            bounds = heightBounds
                         )
                     )
                 }
@@ -238,25 +264,29 @@ fun BodyMetricsScreen(
                             }
                         },
                         placeholder = if (useMetric) stringResource(R.string.weight_placeholder_kg) else stringResource(R.string.weight_placeholder_lbs),
-                        keyboardType = KeyboardType.Decimal
+                        keyboardType = KeyboardType.Decimal,
+                        modifier = Modifier.touchedOnBlur { weightTouched = true }
                     )
 
-                    FieldHint(
-                        visible = weight.isNotBlank() && !weightIsUsable,
-                        text = stringResource(
-                            R.string.weight_format_hint,
-                            if (useMetric) {
-                                stringResource(R.string.weight_placeholder_kg)
-                            } else {
-                                stringResource(R.string.weight_placeholder_lbs)
-                            }
+                    TrainrFieldError(
+                        message = fieldMessage(
+                            label = stringResource(R.string.weight_label),
+                            value = weight,
+                            touched = weightTouched,
+                            usable = weightIsUsable,
+                            bounds = weightBounds
                         )
                     )
                 }
 
                 Spacer(modifier = Modifier.height(Spacing.extraLarge))
 
+                // Only for measurements that were accepted. A rejected 300 cm
+                // and 2 kg still produced a BMI of 0.2 labelled "Underweight",
+                // which is a verdict on a body, drawn from numbers the screen
+                // had just refused.
                 val bmi = BodyMetricsConverter.calculateBMI(height, weight, useMetric)
+                    ?.takeIf { isFormValid }
                 if (bmi != null) {
                     BMICard(bmi = bmi)
                 }
@@ -362,14 +392,18 @@ private fun getBMICategory(bmi: Float): String {
     }
 }
 
+// Missing and unusable are different complaints, and neither is worth making
+// before the client has left the field alone.
 @Composable
-private fun FieldHint(visible: Boolean, text: String) {
-    if (!visible) return
-
-    Spacer(modifier = Modifier.height(Spacing.small))
-    Text(
-        text = text,
-        style = MaterialTheme.typography.bodySmall,
-        color = RedError
-    )
+private fun fieldMessage(
+    label: String,
+    value: String,
+    touched: Boolean,
+    usable: Boolean,
+    bounds: Pair<String, String>
+): String? = when {
+    value.isBlank() && touched -> stringResource(R.string.field_required, label)
+    value.isNotBlank() && !usable ->
+        stringResource(R.string.value_range_hint, label, bounds.first, bounds.second)
+    else -> null
 }
