@@ -42,8 +42,11 @@
     <string name="height_placeholder_imperial">5\'10\"</string>
     <string name="optional_label">%1$s (opsyonal)</string>
 <string name="unit_cm">cm</string>
-    <string name="field_required">Kailangan ang %1$s</string>
     <string name="value_range_hint">Ang %1$s ay dapat nasa pagitan ng %2$s at %3$s</string>
+    <string name="error_enter_name">Ilagay ang pangalan mo</string>
+    <string name="error_enter_age">Ilagay ang edad mo</string>
+    <string name="error_enter_height">Ilagay ang taas mo</string>
+    <string name="error_enter_weight">Ilagay ang timbang mo</string>
     <string name="select_days_placeholder">Pumili ng bilang ng araw</string>
     <string name="weight_placeholder_kg">70</string>
     <string name="weight_placeholder_lbs">155</string>

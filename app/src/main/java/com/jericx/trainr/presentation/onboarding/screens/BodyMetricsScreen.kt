@@ -243,6 +243,7 @@ fun BodyMetricsScreen(
                     TrainrFieldError(
                         message = fieldMessage(
                             label = stringResource(R.string.height_label),
+                            missing = stringResource(R.string.error_enter_height),
                             value = height,
                             touched = heightTouched,
                             usable = heightIsUsable,
@@ -271,6 +272,7 @@ fun BodyMetricsScreen(
                     TrainrFieldError(
                         message = fieldMessage(
                             label = stringResource(R.string.weight_label),
+                            missing = stringResource(R.string.error_enter_weight),
                             value = weight,
                             touched = weightTouched,
                             usable = weightIsUsable,
@@ -397,12 +399,16 @@ private fun getBMICategory(bmi: Float): String {
 @Composable
 private fun fieldMessage(
     label: String,
+    missing: String,
     value: String,
     touched: Boolean,
     usable: Boolean,
     bounds: Pair<String, String>
 ): String? = when {
-    value.isBlank() && touched -> stringResource(R.string.field_required, label)
+    // An empty field is told what to do; a filled one is told the rule it
+    // broke. Both forms are the GOV.UK Design System's, which is also where
+    // "valid", "invalid" and "please" come from being absent.
+    value.isBlank() && touched -> missing
     value.isNotBlank() && !usable ->
         stringResource(R.string.value_range_hint, label, bounds.first, bounds.second)
     else -> null

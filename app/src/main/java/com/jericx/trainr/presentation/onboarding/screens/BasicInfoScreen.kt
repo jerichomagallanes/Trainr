@@ -116,10 +116,8 @@ fun BasicInfoScreen(
                     // whatever its owner says it is, and rules about their
                     // shape lock real people out of the product.
                     TrainrFieldError(
-                        message = stringResource(
-                            R.string.field_required,
-                            stringResource(R.string.name_label)
-                        ).takeIf { firstName.isBlank() && nameTouched }
+                        message = stringResource(R.string.error_enter_name)
+                            .takeIf { firstName.isBlank() && nameTouched }
                     )
                 }
 
@@ -140,10 +138,8 @@ fun BasicInfoScreen(
                     // example in an error reads as the answer that was wanted.
                     TrainrFieldError(
                         message = when {
-                            age.isBlank() && ageTouched -> stringResource(
-                                R.string.field_required,
-                                stringResource(R.string.age_label)
-                            )
+                            age.isBlank() && ageTouched ->
+                                stringResource(R.string.error_enter_age)
                             age.isNotBlank() && !ageIsUsable -> stringResource(
                                 R.string.value_range_hint,
                                 stringResource(R.string.age_label),

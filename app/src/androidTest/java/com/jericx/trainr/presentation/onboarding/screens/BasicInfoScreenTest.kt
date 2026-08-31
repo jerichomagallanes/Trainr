@@ -6,6 +6,7 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
@@ -201,24 +202,26 @@ class BasicInfoScreenTest {
 
     // A name is whatever its owner says it is, so the only rule is that there
     // is one, and it is only asked for once the field has been left empty.
+    // Worded as an instruction rather than "Name is required", per the GOV.UK
+    // Design System: an empty field is told what to do.
+    //
+    // That wording is also the field's placeholder, which is why this counts
+    // nodes: one while the field is untouched, two once the error joins it.
     @Test
-    fun leavingTheNameEmptySaysItIsRequired() {
+    fun leavingTheNameEmptyAsksForIt() {
         composeTestRule.setContent {
             TrainrTheme {
                 BasicInfoScreen(onNextClick = { _, _, _, _ -> }, onBackClick = {})
             }
         }
 
-        val required = composeTestRule.activity.getString(
-            R.string.field_required,
-            composeTestRule.activity.getString(R.string.name_label)
-        )
-        composeTestRule.onNodeWithText(required).assertDoesNotExist()
+        val asked = string(R.string.error_enter_name)
+        composeTestRule.onAllNodesWithText(asked).assertCountEquals(1)
 
         // Focus the name, then move to the age field to leave it.
         composeTestRule.onNodeWithText(string(R.string.enter_your_first_name)).performClick()
         composeTestRule.onNodeWithText(string(R.string.enter_your_age)).performClick()
 
-        composeTestRule.onNodeWithText(required).assertIsDisplayed()
+        composeTestRule.onAllNodesWithText(asked).assertCountEquals(2)
     }
 }
