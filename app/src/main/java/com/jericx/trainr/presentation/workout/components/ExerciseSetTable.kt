@@ -72,30 +72,35 @@ fun ExerciseSetTable(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(Spacing.small)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            ColumnLabel(stringResource(R.string.set_column), Modifier.width(SetColumnWidth))
+        // Column headings over nothing are noise, so an emptied table is just
+        // its Add set button. The button itself is never conditional: deleting
+        // the last set has to leave a way back.
+        if (sets.isNotEmpty()) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                ColumnLabel(stringResource(R.string.set_column), Modifier.width(SetColumnWidth))
 
-            if (showPrevious) {
-                ColumnLabel(stringResource(R.string.previous_column), Modifier.weight(1f))
-            }
-            if (measure == ExerciseMeasure.WEIGHT_AND_REPS) {
+                if (showPrevious) {
+                    ColumnLabel(stringResource(R.string.previous_column), Modifier.weight(1f))
+                }
+                if (measure == ExerciseMeasure.WEIGHT_AND_REPS) {
+                    ColumnLabel(
+                        stringResource(
+                            if (units == UnitSystem.IMPERIAL) R.string.weight_column_lbs
+                            else R.string.weight_column
+                        ),
+                        Modifier.weight(1f)
+                    )
+                }
                 ColumnLabel(
-                    stringResource(
-                        if (units == UnitSystem.IMPERIAL) R.string.weight_column_lbs
-                        else R.string.weight_column
-                    ),
-                    Modifier.weight(1f)
+                    text = when (measure) {
+                        ExerciseMeasure.DURATION -> stringResource(R.string.time_column)
+                        else -> stringResource(R.string.reps_column)
+                    },
+                    modifier = Modifier.weight(1f)
                 )
-            }
-            ColumnLabel(
-                text = when (measure) {
-                    ExerciseMeasure.DURATION -> stringResource(R.string.time_column)
-                    else -> stringResource(R.string.reps_column)
-                },
-                modifier = Modifier.weight(1f)
-            )
 
-            Box(modifier = Modifier.size(CheckSize))
+                Box(modifier = Modifier.size(CheckSize))
+            }
         }
 
         sets.forEach { set ->

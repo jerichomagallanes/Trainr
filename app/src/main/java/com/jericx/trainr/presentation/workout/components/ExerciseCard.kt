@@ -149,17 +149,18 @@ fun ExerciseCard(
                 )
             }
 
-            if (exercise.sets.isNotEmpty()) {
-                ExerciseSetTable(
-                    measure = exercise.measure,
-                    sets = exercise.sets,
-                    onSetChanged = onSetChanged,
-                    onAddSet = onAddSet,
-                    onDeleteSet = onDeleteSet,
-                    previousSets = exercise.previousSets,
-                    units = units
-                )
-            }
+            // Drawn even with nothing in it. Gating the table on having sets
+            // took the Add set button away with the last row, so deleting every
+            // set left an exercise no way to get one back.
+            ExerciseSetTable(
+                measure = exercise.measure,
+                sets = exercise.sets,
+                onSetChanged = onSetChanged,
+                onAddSet = onAddSet,
+                onDeleteSet = onDeleteSet,
+                previousSets = exercise.previousSets,
+                units = units
+            )
 
             content()
         }

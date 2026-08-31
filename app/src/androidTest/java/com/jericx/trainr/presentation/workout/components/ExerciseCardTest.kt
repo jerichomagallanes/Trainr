@@ -75,4 +75,27 @@ class ExerciseCardTest {
 
         assertThat(toggled).isTrue()
     }
+
+    // The card is where the gate used to be: it only drew the table when the
+    // exercise had sets, so emptying one removed the only way to add another.
+    @Test
+    fun anExerciseWithNoSetsStillOffersAddSet() {
+        setCard(sampleExercises[1].copy(sets = emptyList()))
+
+        composeTestRule.onNodeWithText(string(R.string.add_set)).assertIsDisplayed()
+    }
+
+    // Deliberately still tickable. An exercise with no sets is one done without
+    // logging numbers, and the slide to finish marks it complete regardless, so
+    // a disabled checkbox here would be a control the screen contradicts.
+    @Test
+    fun anExerciseWithNoSetsCanStillBeTickedOff() {
+        var toggled = false
+        setCard(sampleExercises[1].copy(sets = emptyList()), onToggle = { toggled = true })
+
+        composeTestRule.onNodeWithContentDescription(string(R.string.mark_exercise_complete))
+            .performClick()
+
+        assertThat(toggled).isTrue()
+    }
 }
