@@ -114,13 +114,14 @@ class OnboardingViewModelTest {
     }
 
     @Test
-    fun `updateFitnessGoal sets the chosen goal`() {
+    fun `updateFitnessGoal sets the goal and the workout style together`() {
         // Arrange / Act
-        viewModel.updateFitnessGoal(FitnessGoal.MUSCLE_GAIN)
+        viewModel.updateFitnessGoal(FitnessGoal.MUSCLE_GAIN, WorkoutType.HIIT)
 
         // Assert
-        assertThat(viewModel.onboardingState.value.userProfile.fitnessGoal)
-            .isEqualTo(FitnessGoal.MUSCLE_GAIN)
+        val profile = viewModel.onboardingState.value.userProfile
+        assertThat(profile.fitnessGoal).isEqualTo(FitnessGoal.MUSCLE_GAIN)
+        assertThat(profile.workoutType).isEqualTo(WorkoutType.HIIT)
     }
 
     @Test
@@ -147,17 +148,31 @@ class OnboardingViewModelTest {
     }
 
     @Test
-    fun `updateLimitations sets injuries and workout type`() {
+    fun `updateLimitations sets injuries`() {
         // Arrange
         val injuries = listOf("Lower back", "Right knee")
 
         // Act
-        viewModel.updateLimitations(injuries, WorkoutType.YOGA)
+        viewModel.updateLimitations(injuries)
 
         // Assert
         val profile = viewModel.onboardingState.value.userProfile
         assertThat(profile.injuries).containsExactlyElementsIn(injuries)
-        assertThat(profile.workoutType).isEqualTo(WorkoutType.YOGA)
+    }
+
+    // Limitations used to carry the workout style too, so saving injuries
+    // overwrote a style chosen on another screen.
+    @Test
+    fun `updateLimitations leaves the workout style alone`() {
+        // Arrange
+        viewModel.updateFitnessGoal(FitnessGoal.ENDURANCE, WorkoutType.CARDIO)
+
+        // Act
+        viewModel.updateLimitations(listOf("Right knee"))
+
+        // Assert
+        assertThat(viewModel.onboardingState.value.userProfile.workoutType)
+            .isEqualTo(WorkoutType.CARDIO)
     }
 
     @Test
@@ -307,7 +322,7 @@ class OnboardingViewModelTest {
         coEvery { userRepository.getCurrentUser() } returns stored
         val viewModel = OnboardingViewModel(userRepository, planGenerator) { "en" }
         advanceUntilIdle()
-        viewModel.updateFitnessGoal(FitnessGoal.STRENGTH)
+        viewModel.updateFitnessGoal(FitnessGoal.STRENGTH, WorkoutType.MIXED)
 
         var done = false
         viewModel.updateProfileOnly { done = true }

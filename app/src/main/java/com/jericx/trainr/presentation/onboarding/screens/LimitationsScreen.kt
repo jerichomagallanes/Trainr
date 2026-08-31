@@ -17,14 +17,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.jericx.trainr.R
 import com.jericx.trainr.domain.model.UserProfile
-import com.jericx.trainr.common.Constants
-import com.jericx.trainr.domain.model.WorkoutType
 import com.jericx.trainr.presentation.common.theme.Spacing
-import com.jericx.trainr.presentation.common.components.cards.TrainrIconCard
 import com.jericx.trainr.presentation.common.components.core.TrainrButton
 import com.jericx.trainr.presentation.common.components.core.TrainrCheckboxChip
 import com.jericx.trainr.presentation.common.components.core.TrainrProgress
-import com.jericx.trainr.presentation.common.components.layout.TrainrFormSection
 import com.jericx.trainr.presentation.common.components.layout.TrainrScaffold
 import com.jericx.trainr.presentation.common.components.layout.TrainrScreenContent
 import com.jericx.trainr.presentation.common.components.typography.TrainrScreenTitle
@@ -36,16 +32,12 @@ import com.jericx.trainr.presentation.common.components.typography.TrainrSubtitl
 fun LimitationsScreen(
     initial: UserProfile? = null,
     isEditing: Boolean = false,
-    onNextClick: (injuries: List<String>, workoutType: WorkoutType) -> Unit,
+    onNextClick: (injuries: List<String>) -> Unit,
     onBackClick: () -> Unit
 ) {
     var selectedInjuries by remember {
         mutableStateOf(initial?.injuries?.toSet() ?: emptySet())
     }
-    var selectedWorkoutType by remember {
-        mutableStateOf(initial?.workoutType ?: WorkoutType.MIXED)
-    }
-
     val injuryOptions = listOf(
         stringResource(R.string.lower_back_pain_injury),
         stringResource(R.string.knee_problems_injury),
@@ -67,7 +59,7 @@ fun LimitationsScreen(
                 text = stringResource(if (isEditing) R.string.save else R.string.submit),
                 onClick = {
                     val injuries = selectedInjuries.filter { it != noneLabel }.toList()
-                    onNextClick(injuries, selectedWorkoutType)
+                    onNextClick(injuries)
                 },
                 enabled = true
             )
@@ -129,48 +121,6 @@ fun LimitationsScreen(
                                     }
                                 }
                             }
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(Spacing.extraLarge))
-
-                TrainrFormSection(
-                    title = stringResource(R.string.preferred_workout_style)
-                ) {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(Spacing.card)
-                    ) {
-                        TrainrIconCard(
-                            iconRes = R.drawable.ic_exercise,
-                            title = stringResource(R.string.strength_training),
-                            description = stringResource(R.string.strength_training_description),
-                            isSelected = selectedWorkoutType == WorkoutType.STRENGTH,
-                            onClick = { selectedWorkoutType = WorkoutType.STRENGTH }
-                        )
-
-                        TrainrIconCard(
-                            iconRes = R.drawable.ic_directions_run,
-                            title = stringResource(R.string.cardio),
-                            description = stringResource(R.string.cardio_description),
-                            isSelected = selectedWorkoutType == WorkoutType.CARDIO,
-                            onClick = { selectedWorkoutType = WorkoutType.CARDIO }
-                        )
-
-                        TrainrIconCard(
-                            iconRes = R.drawable.ic_electric_bolt,
-                            title = stringResource(R.string.hiit),
-                            description = stringResource(R.string.hiit_description),
-                            isSelected = selectedWorkoutType == WorkoutType.HIIT,
-                            onClick = { selectedWorkoutType = WorkoutType.HIIT }
-                        )
-
-                        TrainrIconCard(
-                            iconRes = R.drawable.ic_emoji_people,
-                            title = stringResource(R.string.mixed_balanced),
-                            description = stringResource(R.string.mixed_balanced_description),
-                            isSelected = selectedWorkoutType == WorkoutType.MIXED,
-                            onClick = { selectedWorkoutType = WorkoutType.MIXED }
                         )
                     }
                 }

@@ -8,7 +8,6 @@ import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.R
-import com.jericx.trainr.domain.model.WorkoutType
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 import org.junit.Rule
 import org.junit.Test
@@ -26,7 +25,7 @@ class LimitationsScreenTest {
     fun displaysScreenTitle() {
         composeTestRule.setContent {
             TrainrTheme {
-                LimitationsScreen(onNextClick = { _, _ -> }, onBackClick = {})
+                LimitationsScreen(onNextClick = {}, onBackClick = {})
             }
         }
 
@@ -37,15 +36,11 @@ class LimitationsScreenTest {
     @Test
     fun submitFiresWithDefaultsWhenNoSelectionsMade() {
         var capturedInjuries: List<String>? = null
-        var capturedType: WorkoutType? = null
 
         composeTestRule.setContent {
             TrainrTheme {
                 LimitationsScreen(
-                    onNextClick = { injuries, type ->
-                        capturedInjuries = injuries
-                        capturedType = type
-                    },
+                    onNextClick = { injuries -> capturedInjuries = injuries },
                     onBackClick = {}
                 )
             }
@@ -54,6 +49,19 @@ class LimitationsScreenTest {
         composeTestRule.onNodeWithText(string(R.string.submit)).performClick()
 
         assertThat(capturedInjuries).isEmpty()
-        assertThat(capturedType).isEqualTo(WorkoutType.MIXED)
+    }
+
+    // Workout style moved to the goals screen, where the review card that shows
+    // it can actually reach it. It must not drift back here.
+    @Test
+    fun workoutStyleIsNotAskedOnThisScreen() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                LimitationsScreen(onNextClick = {}, onBackClick = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.preferred_workout_style))
+            .assertDoesNotExist()
     }
 }

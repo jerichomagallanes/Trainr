@@ -139,6 +139,7 @@ fun ReviewScreen(
                     title = stringResource(R.string.personal_information),
                     onEdit = onEditPersonal,
                     items = listOf(
+                        stringResource(R.string.name_label) to userProfile.firstName,
                         stringResource(R.string.age_label) to pluralStringResource(R.plurals.years_old_format, userProfile.age, userProfile.age),
                         stringResource(R.string.gender_label) to genderText,
                         stringResource(R.string.height_label) to heightText,

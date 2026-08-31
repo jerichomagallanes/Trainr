@@ -65,9 +65,12 @@ class OnboardingViewModel @Inject constructor(
         )
     }
 
-    fun updateFitnessGoal(goal: FitnessGoal) {
+    fun updateFitnessGoal(goal: FitnessGoal, workoutType: WorkoutType) {
         _onboardingState.value = _onboardingState.value.copy(
-            userProfile = _onboardingState.value.userProfile.copy(fitnessGoal = goal)
+            userProfile = _onboardingState.value.userProfile.copy(
+                fitnessGoal = goal,
+                workoutType = workoutType
+            )
         )
     }
 
@@ -89,12 +92,9 @@ class OnboardingViewModel @Inject constructor(
         )
     }
 
-    fun updateLimitations(injuries: List<String>, workoutType: WorkoutType) {
+    fun updateLimitations(injuries: List<String>) {
         _onboardingState.value = _onboardingState.value.copy(
-            userProfile = _onboardingState.value.userProfile.copy(
-                injuries = injuries,
-                workoutType = workoutType
-            )
+            userProfile = _onboardingState.value.userProfile.copy(injuries = injuries)
         )
     }
 
