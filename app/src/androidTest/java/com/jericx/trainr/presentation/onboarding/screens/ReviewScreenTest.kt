@@ -283,4 +283,32 @@ class ReviewScreenTest {
         composeTestRule.onNodeWithText(string(R.string.name_label)).assertIsDisplayed()
         composeTestRule.onNodeWithText("Jericho").assertIsDisplayed()
     }
+
+    // The app prescribes loads and works around injuries the client declared,
+    // so the caveat has to be in front of them at the moment a plan is made.
+    @Test
+    fun theHealthDisclaimerIsShownBeforeAPlanIsGenerated() {
+        setScreen(sampleProfile)
+
+        composeTestRule.onNodeWithText(string(R.string.health_disclaimer))
+            .assertIsDisplayed()
+    }
+
+    // Saving a profile writes no plan, so the caveat would be about nothing.
+    @Test
+    fun theHealthDisclaimerIsAbsentWhenOnlySavingTheProfile() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                ReviewScreen(
+                    userProfile = sampleProfile,
+                    isProfileUpdate = true,
+                    onConfirmClick = {},
+                    onBackClick = {}
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.health_disclaimer))
+            .assertDoesNotExist()
+    }
 }

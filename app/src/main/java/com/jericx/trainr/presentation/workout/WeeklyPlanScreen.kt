@@ -414,6 +414,9 @@ private fun AboutDialog(versionName: String, onDismiss: () -> Unit) {
             Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
                 Text(text = stringResource(R.string.app_version_format, versionName))
                 Text(text = stringResource(R.string.app_about_message))
+                // Kept reachable after onboarding: the review shows it once,
+                // and a client training months later has nowhere else to find it.
+                Text(text = stringResource(R.string.health_disclaimer))
             }
         },
         confirmButton = {
