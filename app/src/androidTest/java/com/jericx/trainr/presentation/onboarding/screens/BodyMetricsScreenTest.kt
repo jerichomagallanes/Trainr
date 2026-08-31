@@ -13,6 +13,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.R
+import com.jericx.trainr.common.Constants
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 import org.junit.Rule
 import org.junit.Test
@@ -260,22 +261,27 @@ class BodyMetricsScreenTest {
         composeTestRule.onNodeWithText(string(R.string.next)).assertIsNotEnabled()
     }
 
+    // The message names the limits rather than an example height. An example
+    // in an error reads as the answer that was expected, which is the last
+    // thing to put in front of somebody about their own body.
     @Test
-    fun aHeightThatIsNotFeetAndInchesSaysWhatIsWanted() {
+    fun aHeightOutsideTheLimitsNamesTheLimits() {
         composeTestRule.setContent {
             TrainrTheme {
                 BodyMetricsScreen(onNextClick = { _, _, _ -> }, onBackClick = {})
             }
         }
 
-        composeTestRule.onNodeWithText(string(R.string.imperial)).performClick()
-        composeTestRule.onNodeWithText(string(R.string.height_placeholder_imperial))
-            .performTextInput("595")
+        composeTestRule.onNodeWithText(string(R.string.height_placeholder_cm))
+            .performTextInput("300")
 
         composeTestRule.onNodeWithText(
             composeTestRule.activity.getString(
-                R.string.height_format_hint,
-                string(R.string.height_placeholder_imperial)
+                R.string.value_range_hint,
+                composeTestRule.activity.getString(R.string.height_label),
+                Constants.Workout.MIN_HEIGHT_CM.toInt().toString(),
+                "${Constants.Workout.MAX_HEIGHT_CM.toInt()} " +
+                    composeTestRule.activity.getString(R.string.unit_cm)
             )
         ).assertIsDisplayed()
     }
@@ -312,5 +318,25 @@ class BodyMetricsScreenTest {
             .performTextInput("2")
 
         composeTestRule.onNodeWithText(string(R.string.next)).assertIsNotEnabled()
+    }
+
+    // A BMI computed from measurements the screen has refused is a verdict on
+    // a body drawn from numbers nobody accepted.
+    @Test
+    fun noBmiIsShownForMeasurementsThatWereRefused() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                BodyMetricsScreen(onNextClick = { _, _, _ -> }, onBackClick = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.height_placeholder_cm))
+            .performTextInput("300")
+        composeTestRule.onNodeWithText(string(R.string.weight_placeholder_kg))
+            .performTextInput("2")
+
+        composeTestRule.onNodeWithText(string(R.string.underweight)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.bmi_label), substring = true)
+            .assertDoesNotExist()
     }
 }

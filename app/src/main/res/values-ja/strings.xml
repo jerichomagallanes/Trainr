@@ -13,8 +13,8 @@
     
     <!-- Basic Info Screen -->
     <string name="tell_us_about_yourself">あなたについて教えてください</string>
-    <string name="preferred_first_name">お名前</string>
-    <string name="enter_your_first_name">お名前を入力してください</string>
+    <string name="preferred_first_name">呼ばれたい名前</string>
+    <string name="enter_your_first_name">名前を入力してください</string>
     <string name="age">年齢</string>
     <string name="enter_your_age">年齢を入力してください</string>
     <string name="gender">性別</string>
@@ -40,8 +40,14 @@
     <string name="weight_lbs">体重 (lbs)</string>
     <string name="height_placeholder_cm">170</string>
     <string name="height_placeholder_imperial">5\'10\"</string>
-    <string name="height_format_hint">身長は %1$s のように入力してください</string>
-    <string name="weight_format_hint">体重は %1$s のように入力してください</string>
+    <string name="optional_label">%1$s（任意）</string>
+<string name="unit_cm">cm</string>
+    <string name="value_range_hint">%1$sは%2$sから%3$sの間で入力してください</string>
+    <string name="error_enter_name">名前を入力してください</string>
+    <string name="error_enter_age">年齢を入力してください</string>
+    <string name="error_enter_height">身長を入力してください</string>
+    <string name="error_enter_weight">体重を入力してください</string>
+    <string name="select_days_placeholder">日数を選んでください</string>
     <string name="weight_placeholder_kg">70</string>
     <string name="weight_placeholder_lbs">155</string>
     <string name="bmi_label">BMI:</string>

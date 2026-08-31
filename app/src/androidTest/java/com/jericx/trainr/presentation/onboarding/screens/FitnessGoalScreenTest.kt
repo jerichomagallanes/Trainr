@@ -39,7 +39,7 @@ class FitnessGoalScreenTest {
     }
 
     @Test
-    fun nextDisabledUntilGoalSelected() {
+    fun nextDisabledUntilBothAnswersAreGiven() {
         composeTestRule.setContent {
             TrainrTheme {
                 FitnessGoalScreen(onNextClick = { _, _ -> }, onBackClick = {})
@@ -49,6 +49,7 @@ class FitnessGoalScreenTest {
         composeTestRule.onNodeWithText(string(R.string.next)).assertIsNotEnabled()
 
         composeTestRule.onNodeWithText(string(R.string.build_muscle)).performClick()
+        composeTestRule.onNodeWithText(string(R.string.hiit)).performScrollTo().performClick()
 
         composeTestRule.onNodeWithText(string(R.string.next)).assertIsEnabled()
     }
@@ -63,6 +64,7 @@ class FitnessGoalScreenTest {
         }
 
         composeTestRule.onNodeWithText(string(R.string.build_muscle)).performClick()
+        composeTestRule.onNodeWithText(string(R.string.hiit)).performScrollTo().performClick()
         composeTestRule.onNodeWithText(string(R.string.next)).performClick()
 
         assertThat(captured).isEqualTo(FitnessGoal.MUSCLE_GAIN)
@@ -90,23 +92,35 @@ class FitnessGoalScreenTest {
         assertThat(capturedStyle).isEqualTo(WorkoutType.HIIT)
     }
 
-    // Left unanswered the profile falls back to mixed, so the list says so
-    // rather than looking untouched.
+    // Mixed used to arrive pre-selected, so a client could reach the end of
+    // onboarding having agreed to a training style they were never asked about.
     @Test
-    fun mixedIsOfferedAlreadyChosen() {
-        var capturedStyle: WorkoutType? = null
+    fun noStyleIsChosenUntilTheClientChoosesOne() {
+        var emitted = false
         composeTestRule.setContent {
             TrainrTheme {
-                FitnessGoalScreen(
-                    onNextClick = { _, style -> capturedStyle = style },
-                    onBackClick = {}
-                )
+                FitnessGoalScreen(onNextClick = { _, _ -> emitted = true }, onBackClick = {})
             }
         }
 
         composeTestRule.onNodeWithText(string(R.string.lose_weight)).performClick()
-        composeTestRule.onNodeWithText(string(R.string.next)).performClick()
 
-        assertThat(capturedStyle).isEqualTo(WorkoutType.MIXED)
+        composeTestRule.onNodeWithText(string(R.string.next)).assertIsNotEnabled()
+        composeTestRule.onNodeWithText(string(R.string.next)).performClick()
+        assertThat(emitted).isFalse()
+    }
+
+    @Test
+    fun bothAnswersTogetherAreEnough() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                FitnessGoalScreen(onNextClick = { _, _ -> }, onBackClick = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.lose_weight)).performClick()
+        composeTestRule.onNodeWithText(string(R.string.mixed_balanced)).performScrollTo().performClick()
+
+        composeTestRule.onNodeWithText(string(R.string.next)).assertIsEnabled()
     }
 }

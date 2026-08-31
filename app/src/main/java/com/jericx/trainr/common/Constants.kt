@@ -13,12 +13,26 @@ object Constants {
         const val BMI_NORMAL_THRESHOLD = 25f
         const val BMI_OVERWEIGHT_THRESHOLD = 30f
 
-        // What a person can plausibly be. Anything outside this is a typo, and
-        // it reaches the model as the body it plans around.
-        const val MIN_HEIGHT_CM = 100f
-        const val MAX_HEIGHT_CM = 250f
-        const val MIN_WEIGHT_KG = 30f
-        const val MAX_WEIGHT_KG = 300f
+        // 13 is a legal floor rather than a claim about who can train: it is the
+        // line COPPA and Play's Families policy draw around collecting personal
+        // data, and this app asks for an age, a height and a weight.
+        const val MIN_AGE = 13
+
+        // Above the oldest person ever verified, who reached 122.
+        const val MAX_AGE = 125
+
+        // Set outside every human on record, so the check refuses typos and
+        // never a person. The earlier bounds of 100-250 cm and 30-300 kg each
+        // excluded people who exist: adults with dwarfism, the tallest man
+        // alive at 251 cm, and anyone above 300 kg, who are exactly the people
+        // a fitness app should not be turning away.
+        //
+        // Verified extremes: tallest ever 272 cm, shortest ever measured
+        // 54.6 cm, heaviest ever 635 kg.
+        const val MIN_HEIGHT_CM = 50f
+        const val MAX_HEIGHT_CM = 275f
+        const val MIN_WEIGHT_KG = 20f
+        const val MAX_WEIGHT_KG = 650f
 
         // Metric/Imperial conversion factors
         const val CM_TO_INCHES = 2.54f

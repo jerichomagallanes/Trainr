@@ -6,6 +6,7 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
@@ -14,6 +15,7 @@ import androidx.compose.ui.test.hasProgressBarRangeInfo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.R
+import com.jericx.trainr.common.Constants
 import com.jericx.trainr.testing.notEllipsized
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.assert
@@ -155,5 +157,71 @@ class BasicInfoScreenTest {
         assertThat(capturedAge).isEqualTo(28)
         assertThat(capturedGender).isEqualTo(Gender.FEMALE)
         assertThat(capturedExperience).isEqualTo(ExperienceLevel.INTERMEDIATE)
+    }
+
+    // The range was already enforced, silently: an age of 5 left the button
+    // dead with nothing on screen to explain it.
+    @Test
+    fun anAgeOutsideTheRangeSaysWhatTheRangeIs() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                BasicInfoScreen(onNextClick = { _, _, _, _ -> }, onBackClick = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.enter_your_age)).performTextInput("5")
+
+        composeTestRule.onNodeWithText(
+            composeTestRule.activity.getString(
+                R.string.value_range_hint,
+                composeTestRule.activity.getString(R.string.age_label),
+                Constants.Workout.MIN_AGE.toString(),
+                Constants.Workout.MAX_AGE.toString()
+            )
+        ).assertIsDisplayed()
+    }
+
+    // A field nobody has touched must not open already complaining.
+    @Test
+    fun anUntouchedAgeFieldSaysNothing() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                BasicInfoScreen(onNextClick = { _, _, _, _ -> }, onBackClick = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText(
+            composeTestRule.activity.getString(
+                R.string.value_range_hint,
+                composeTestRule.activity.getString(R.string.age_label),
+                Constants.Workout.MIN_AGE.toString(),
+                Constants.Workout.MAX_AGE.toString()
+            )
+        ).assertDoesNotExist()
+    }
+
+    // A name is whatever its owner says it is, so the only rule is that there
+    // is one, and it is only asked for once the field has been left empty.
+    // Worded as an instruction rather than "Name is required", per the GOV.UK
+    // Design System: an empty field is told what to do.
+    //
+    // That wording is also the field's placeholder, which is why this counts
+    // nodes: one while the field is untouched, two once the error joins it.
+    @Test
+    fun leavingTheNameEmptyAsksForIt() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                BasicInfoScreen(onNextClick = { _, _, _, _ -> }, onBackClick = {})
+            }
+        }
+
+        val asked = string(R.string.error_enter_name)
+        composeTestRule.onAllNodesWithText(asked).assertCountEquals(1)
+
+        // Focus the name, then move to the age field to leave it.
+        composeTestRule.onNodeWithText(string(R.string.enter_your_first_name)).performClick()
+        composeTestRule.onNodeWithText(string(R.string.enter_your_age)).performClick()
+
+        composeTestRule.onAllNodesWithText(asked).assertCountEquals(2)
     }
 }
