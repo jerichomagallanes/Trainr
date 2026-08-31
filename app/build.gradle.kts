@@ -1,3 +1,4 @@
+import java.io.File
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -56,8 +57,30 @@ android {
         }
     }
 
+    // Signing details live in ~/.gradle/gradle.properties, never in the
+    // repository: the keystore itself is outside the project entirely. A
+    // machine without them, CI included, simply gets no release signing config
+    // rather than a build that fails to configure.
+    val uploadStoreFile = (findProperty("TRAINR_UPLOAD_STORE_FILE") as String?)
+        ?.let(::File)
+        ?.takeIf { it.exists() }
+
+    signingConfigs {
+        if (uploadStoreFile != null) {
+            create("upload") {
+                storeFile = uploadStoreFile
+                storePassword = findProperty("TRAINR_UPLOAD_STORE_PASSWORD") as String?
+                keyAlias = findProperty("TRAINR_UPLOAD_KEY_ALIAS") as String?
+                keyPassword = findProperty("TRAINR_UPLOAD_KEY_PASSWORD") as String?
+            }
+        }
+    }
+
     buildTypes {
         release {
+            // Absent on a machine without the keystore, which leaves an unsigned
+            // release build rather than a broken one.
+            signingConfig = signingConfigs.findByName("upload")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
