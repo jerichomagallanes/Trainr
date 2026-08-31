@@ -54,6 +54,11 @@ object BodyMetricsConverter {
         return if (cm > 0) cm.roundToInt().toString() else ""
     }
 
+    // A kilogram value that has been through a pounds round trip is a long
+    // float; the field it goes back into is one a client types into.
+    fun formatKilograms(kg: Float): String =
+        if (kg % 1f == 0f) kg.toInt().toString() else ((kg * 10).roundToInt() / 10f).toString()
+
     fun convertWeightToImperial(weightKg: String): String {
         val kg = weightKg.toFloatOrNull() ?: return ""
         val lbs = kg * Constants.Workout.KG_TO_LBS

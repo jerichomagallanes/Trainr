@@ -18,6 +18,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import com.jericx.trainr.domain.model.UnitSystem
+import com.jericx.trainr.domain.model.UserProfile
 
 @RunWith(AndroidJUnit4::class)
 class BodyMetricsScreenTest {
@@ -193,5 +194,50 @@ class BodyMetricsScreenTest {
         composeTestRule.onNodeWithText(string(R.string.metric)).performClick()
 
         composeTestRule.onNodeWithText("170").assertIsFocused()
+    }
+
+    // The profile is stored in centimetres and kilograms whichever units were
+    // typed. Seeding the fields with the stored numbers put 177 under a label
+    // reading ft'in" and an unrounded 69.85331 under one reading lbs.
+    @Test
+    fun reopeningInPoundsShowsTheStoredMeasurementsConverted() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                BodyMetricsScreen(
+                    initial = UserProfile(
+                        height = 177.8f,
+                        weight = 69.85331f,
+                        unitSystem = UnitSystem.IMPERIAL
+                    ),
+                    isEditing = true,
+                    onNextClick = { _, _, _ -> },
+                    onBackClick = {}
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText("5'10\"").assertIsDisplayed()
+        composeTestRule.onNodeWithText("154").assertIsDisplayed()
+    }
+
+    @Test
+    fun reopeningInKilogramsShowsThemAsTyped() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                BodyMetricsScreen(
+                    initial = UserProfile(
+                        height = 175f,
+                        weight = 70f,
+                        unitSystem = UnitSystem.METRIC
+                    ),
+                    isEditing = true,
+                    onNextClick = { _, _, _ -> },
+                    onBackClick = {}
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText("175").assertIsDisplayed()
+        composeTestRule.onNodeWithText("70").assertIsDisplayed()
     }
 }
