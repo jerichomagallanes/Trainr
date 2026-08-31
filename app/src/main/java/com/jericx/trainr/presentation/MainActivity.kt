@@ -212,8 +212,8 @@ fun AppContent(versionName: String) {
                     FitnessGoalScreen(
                         initial = if (editing) onboardingState.userProfile else null,
                         isEditing = editing,
-                        onNextClick = { goal ->
-                            onboardingViewModel.updateFitnessGoal(goal)
+                        onNextClick = { goal, workoutType ->
+                            onboardingViewModel.updateFitnessGoal(goal, workoutType)
                             if (editing) {
                                 navController.popBackStack()
                             } else {
@@ -252,8 +252,8 @@ fun AppContent(versionName: String) {
                     LimitationsScreen(
                         initial = if (editing) onboardingState.userProfile else null,
                         isEditing = editing,
-                        onNextClick = { injuries, workoutType ->
-                            onboardingViewModel.updateLimitations(injuries, workoutType)
+                        onNextClick = { injuries ->
+                            onboardingViewModel.updateLimitations(injuries)
                             if (editing) {
                                 navController.popBackStack()
                             } else {

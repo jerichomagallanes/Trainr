@@ -273,4 +273,14 @@ class ReviewScreenTest {
         composeTestRule.onNodeWithText(string(R.string.height_cm_format).format(175))
             .assertIsDisplayed()
     }
+
+    // Personal Information is the card whose Edit collects the name, so it has
+    // to show it: it was the one field you could type and never read back.
+    @Test
+    fun thePersonalCardShowsTheNameItCollects() {
+        setScreen(sampleProfile)
+
+        composeTestRule.onNodeWithText(string(R.string.name_label)).assertIsDisplayed()
+        composeTestRule.onNodeWithText("Jericho").assertIsDisplayed()
+    }
 }

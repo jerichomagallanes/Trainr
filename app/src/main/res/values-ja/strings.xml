@@ -49,7 +49,7 @@
     <string name="obese">肥満</string>
     
     <!-- Fitness Goal Screen -->
-    <string name="main_fitness_goal">メインのフィットネスゴールは何ですか？</string>
+    <string name="your_fitness_goals">あなたの目標</string>
     <string name="goal_description">これを達成するためにワークアウトをカスタマイズします</string>
     <string name="lose_weight">減量</string>
     <string name="lose_weight_description">脂肪を燃やしてスリムになる。</string>
@@ -225,6 +225,7 @@
     <string name="version_format">v%s</string>
     
     <!-- Review Screen Labels -->
+    <string name="name_label">名前</string>
     <string name="age_label">年齢</string>
     <string name="gender_label">性別</string>
     <string name="height_label">身長</string>

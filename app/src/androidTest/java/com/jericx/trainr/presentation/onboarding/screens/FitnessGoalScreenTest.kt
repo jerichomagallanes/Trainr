@@ -7,10 +7,12 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.R
 import com.jericx.trainr.domain.model.FitnessGoal
+import com.jericx.trainr.domain.model.WorkoutType
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 import org.junit.Rule
 import org.junit.Test
@@ -28,11 +30,11 @@ class FitnessGoalScreenTest {
     fun displaysScreenTitle() {
         composeTestRule.setContent {
             TrainrTheme {
-                FitnessGoalScreen(onNextClick = {}, onBackClick = {})
+                FitnessGoalScreen(onNextClick = { _, _ -> }, onBackClick = {})
             }
         }
 
-        composeTestRule.onNodeWithText(string(R.string.main_fitness_goal))
+        composeTestRule.onNodeWithText(string(R.string.your_fitness_goals))
             .assertIsDisplayed()
     }
 
@@ -40,7 +42,7 @@ class FitnessGoalScreenTest {
     fun nextDisabledUntilGoalSelected() {
         composeTestRule.setContent {
             TrainrTheme {
-                FitnessGoalScreen(onNextClick = {}, onBackClick = {})
+                FitnessGoalScreen(onNextClick = { _, _ -> }, onBackClick = {})
             }
         }
 
@@ -56,7 +58,7 @@ class FitnessGoalScreenTest {
         var captured: FitnessGoal? = null
         composeTestRule.setContent {
             TrainrTheme {
-                FitnessGoalScreen(onNextClick = { captured = it }, onBackClick = {})
+                FitnessGoalScreen(onNextClick = { goal, _ -> captured = goal }, onBackClick = {})
             }
         }
 
@@ -64,5 +66,47 @@ class FitnessGoalScreenTest {
         composeTestRule.onNodeWithText(string(R.string.next)).performClick()
 
         assertThat(captured).isEqualTo(FitnessGoal.MUSCLE_GAIN)
+    }
+
+    // The review shows workout style on the same card as the main goal, so the
+    // Edit beside it has to be able to change it. It used to open this screen
+    // while the field itself lived on the limitations step.
+    @Test
+    fun nextEmitsTheChosenWorkoutStyleBesideTheGoal() {
+        var capturedStyle: WorkoutType? = null
+        composeTestRule.setContent {
+            TrainrTheme {
+                FitnessGoalScreen(
+                    onNextClick = { _, style -> capturedStyle = style },
+                    onBackClick = {}
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.get_stronger)).performClick()
+        composeTestRule.onNodeWithText(string(R.string.hiit)).performScrollTo().performClick()
+        composeTestRule.onNodeWithText(string(R.string.next)).performClick()
+
+        assertThat(capturedStyle).isEqualTo(WorkoutType.HIIT)
+    }
+
+    // Left unanswered the profile falls back to mixed, so the list says so
+    // rather than looking untouched.
+    @Test
+    fun mixedIsOfferedAlreadyChosen() {
+        var capturedStyle: WorkoutType? = null
+        composeTestRule.setContent {
+            TrainrTheme {
+                FitnessGoalScreen(
+                    onNextClick = { _, style -> capturedStyle = style },
+                    onBackClick = {}
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.lose_weight)).performClick()
+        composeTestRule.onNodeWithText(string(R.string.next)).performClick()
+
+        assertThat(capturedStyle).isEqualTo(WorkoutType.MIXED)
     }
 }

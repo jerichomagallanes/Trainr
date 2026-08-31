@@ -49,7 +49,7 @@
     <string name="obese">Mataba</string>
     
     <!-- Fitness Goal Screen -->
-    <string name="main_fitness_goal">ANO ANG INYONG PANGUNAHING FITNESS GOAL?</string>
+    <string name="your_fitness_goals">ANG IYONG MGA LAYUNIN</string>
     <string name="goal_description">Iaangkop namin ang inyong mga workout para makamit ninyo ito</string>
     <string name="lose_weight">Magbawas ng Timbang</string>
     <string name="lose_weight_description">Magsunog ng taba at pumayat.</string>
@@ -231,6 +231,7 @@
     <string name="version_format">v%s</string>
     
     <!-- Review Screen Labels -->
+    <string name="name_label">Pangalan</string>
     <string name="age_label">Edad</string>
     <string name="gender_label">Kasarian</string>
     <string name="height_label">Taas</string>
