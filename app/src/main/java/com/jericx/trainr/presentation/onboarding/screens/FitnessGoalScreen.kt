@@ -41,10 +41,10 @@ fun FitnessGoalScreen(
 ) {
     var selectedGoal by remember { mutableStateOf(initial?.fitnessGoal) }
 
-    // Shown as chosen rather than left blank. The profile falls back to mixed
-    // either way, and a list with nothing selected that quietly means "mixed"
-    // decides for the client without telling them.
-    var selectedStyle by remember { mutableStateOf(initial?.workoutType ?: WorkoutType.MIXED) }
+    // Nothing is pre-chosen. The profile would fall back to mixed, but a list
+    // that opens already answered is the app deciding and the client agreeing
+    // by default, so the answer has to be given rather than accepted.
+    var selectedStyle by remember { mutableStateOf(initial?.workoutType) }
 
     TrainrScaffold(
         onBackClick = onBackClick,
@@ -53,11 +53,11 @@ fun FitnessGoalScreen(
             TrainrButton(
                 text = stringResource(if (isEditing) R.string.save else R.string.next),
                 onClick = {
-                    selectedGoal?.let { onNextClick(it, selectedStyle) }
+                    val goal = selectedGoal
+                    val style = selectedStyle
+                    if (goal != null && style != null) onNextClick(goal, style)
                 },
-                // Only the goal is required. Style arrives already answered, so
-                // gating on it would block a client who agrees with the default.
-                enabled = selectedGoal != null
+                enabled = selectedGoal != null && selectedStyle != null
             )
         }
     ) { paddingValues ->

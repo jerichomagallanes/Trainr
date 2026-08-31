@@ -37,7 +37,11 @@ fun TrainrDropdown(
     selectedValue: String,
     options: List<String>,
     onSelectionChange: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    // Shown, muted, when nothing has been chosen yet, the same way the text
+    // fields show theirs. A dropdown that opens on a real-looking value has
+    // answered the question on the client's behalf.
+    placeholder: String = ""
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -58,9 +62,13 @@ fun TrainrDropdown(
                 contentAlignment = Alignment.CenterStart
             ) {
                 Text(
-                    text = selectedValue,
+                    text = selectedValue.ifBlank { placeholder },
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = if (selectedValue.isBlank()) {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
+                    }
                 )
                 
                 Icon(

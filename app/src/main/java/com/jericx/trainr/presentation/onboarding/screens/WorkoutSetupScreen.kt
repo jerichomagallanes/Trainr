@@ -17,7 +17,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -70,13 +69,12 @@ fun WorkoutSetupScreen(
     var selectedEquipment by remember {
         mutableStateOf(initial?.availableEquipment?.toSet() ?: emptySet())
     }
-    var selectedDays by remember {
-        mutableIntStateOf(initial?.workoutDaysPerWeek ?: Constants.Workout.DEFAULT_WORKOUT_DAYS_PER_WEEK)
-    }
-    var selectedDuration by remember {
-        mutableIntStateOf(initial?.workoutDuration ?: Constants.Workout.DEFAULT_WORKOUT_DURATION)
-    }
-    var selectedTime by remember { mutableStateOf(initial?.preferredWorkoutTime ?: WorkoutTime.MORNING) }
+    // Nothing starts chosen. These used to open on three days, forty five
+    // minutes and the morning, which a client could walk past without ever
+    // deciding, and the plan would then be built around answers nobody gave.
+    var selectedDays by remember { mutableStateOf(initial?.workoutDaysPerWeek?.takeIf { it > 0 }) }
+    var selectedDuration by remember { mutableStateOf(initial?.workoutDuration?.takeIf { it > 0 }) }
+    var selectedTime by remember { mutableStateOf(initial?.preferredWorkoutTime) }
 
     TrainrScaffold(
         onBackClick = onBackClick,
@@ -91,16 +89,31 @@ fun WorkoutSetupScreen(
             TrainrButton(
                 text = stringResource(if (isEditing) R.string.save else R.string.next),
                 onClick = {
-                    selectedLocation?.let { location ->
-                        val equipment = if (selectedEquipment.isEmpty()) {
-                            listOf(Equipment.NONE)
-                        } else {
-                            selectedEquipment.toList()
-                        }
-                        onNextClick(location, equipment, selectedDays, selectedDuration, selectedTime)
+                    val location = selectedLocation
+                    val days = selectedDays
+                    val duration = selectedDuration
+                    val time = selectedTime
+                    // No stand-ins. An empty equipment set used to be sent on as
+                    // "bodyweight only", which answered the question for the
+                    // client instead of waiting for them to.
+                    if (location != null && days != null && duration != null && time != null) {
+                        onNextClick(
+                            location,
+                            selectedEquipment.toList(),
+                            days,
+                            duration,
+                            time
+                        )
                     }
                 },
-                enabled = selectedLocation != null
+                // Every question on this screen has to be answered. Equipment
+                // counts: "bodyweight only" is one of the choices, so an empty
+                // set means unanswered rather than "nothing available".
+                enabled = selectedLocation != null &&
+                    selectedEquipment.isNotEmpty() &&
+                    selectedDays != null &&
+                    selectedDuration != null &&
+                    selectedTime != null
             )
         }
     ) { paddingValues ->
@@ -239,15 +252,14 @@ fun WorkoutSetupScreen(
                         pluralStringResource(R.plurals.workout_days_option, it, it)
                     }
                     TrainrDropdown(
-                        selectedValue = dayLabels.getOrElse(dayOptions.indexOf(selectedDays)) {
-                            dayLabels.first()
-                        },
+                        selectedValue = selectedDays
+                            ?.let { dayLabels.getOrNull(dayOptions.indexOf(it)) }
+                            .orEmpty(),
                         options = dayLabels,
                         onSelectionChange = { selectedOption ->
-                            selectedDays = dayOptions.getOrElse(dayLabels.indexOf(selectedOption)) {
-                                Constants.Workout.DEFAULT_WORKOUT_DAYS_PER_WEEK
-                            }
-                        }
+                            selectedDays = dayOptions.getOrNull(dayLabels.indexOf(selectedOption))
+                        },
+                        placeholder = stringResource(R.string.select_days_placeholder)
                     )
                 }
 

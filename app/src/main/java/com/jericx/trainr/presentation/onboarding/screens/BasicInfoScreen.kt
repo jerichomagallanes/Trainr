@@ -18,12 +18,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import com.jericx.trainr.R
+import com.jericx.trainr.common.Constants
 import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.model.ExperienceLevel
 import com.jericx.trainr.domain.model.Gender
 import com.jericx.trainr.presentation.common.theme.ComponentHeight
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.components.core.TrainrButton
+import com.jericx.trainr.presentation.common.components.core.TrainrFieldError
 import com.jericx.trainr.presentation.common.components.core.TrainrProgress
 import com.jericx.trainr.presentation.common.components.layout.TrainrScaffold
 import com.jericx.trainr.presentation.common.components.cards.TrainrSelectionCard
@@ -46,9 +48,11 @@ fun BasicInfoScreen(
     var selectedGender by remember { mutableStateOf(initial?.gender) }
     var selectedExperience by remember { mutableStateOf(initial?.experienceLevel) }
 
+    val ageRange = Constants.Workout.MIN_AGE..Constants.Workout.MAX_AGE
+    val ageIsUsable = (age.toIntOrNull() ?: 0) in ageRange
+
     val isFormValid = firstName.isNotBlank() &&
-            age.isNotBlank() &&
-            (age.toIntOrNull() ?: 0) in 13..100 &&
+            ageIsUsable &&
             selectedGender != null &&
             selectedExperience != null
 
@@ -112,6 +116,16 @@ fun BasicInfoScreen(
                         },
                         placeholder = stringResource(R.string.enter_your_age),
                         keyboardType = KeyboardType.Number
+                    )
+
+                    // Only once something has been typed. An age of 5 used to
+                    // leave the button dead with nothing to explain it.
+                    TrainrFieldError(
+                        message = stringResource(
+                            R.string.age_range_hint,
+                            ageRange.first,
+                            ageRange.last
+                        ).takeIf { age.isNotBlank() && !ageIsUsable }
                     )
                 }
 

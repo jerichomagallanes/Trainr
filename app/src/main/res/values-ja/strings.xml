@@ -41,6 +41,9 @@
     <string name="height_placeholder_cm">170</string>
     <string name="height_placeholder_imperial">5\'10\"</string>
     <string name="height_format_hint">身長は %1$s のように入力してください</string>
+    <string name="age_range_hint">%1$d歳から%2$d歳の間で入力してください</string>
+    <string name="optional_label">%1$s（任意）</string>
+    <string name="select_days_placeholder">日数を選んでください</string>
     <string name="weight_format_hint">体重は %1$s のように入力してください</string>
     <string name="weight_placeholder_kg">70</string>
     <string name="weight_placeholder_lbs">155</string>

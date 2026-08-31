@@ -14,6 +14,7 @@ import androidx.compose.ui.test.hasProgressBarRangeInfo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.R
+import com.jericx.trainr.common.Constants
 import com.jericx.trainr.testing.notEllipsized
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.assert
@@ -155,5 +156,44 @@ class BasicInfoScreenTest {
         assertThat(capturedAge).isEqualTo(28)
         assertThat(capturedGender).isEqualTo(Gender.FEMALE)
         assertThat(capturedExperience).isEqualTo(ExperienceLevel.INTERMEDIATE)
+    }
+
+    // The range was already enforced, silently: an age of 5 left the button
+    // dead with nothing on screen to explain it.
+    @Test
+    fun anAgeOutsideTheRangeSaysWhatTheRangeIs() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                BasicInfoScreen(onNextClick = { _, _, _, _ -> }, onBackClick = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.enter_your_age)).performTextInput("5")
+
+        composeTestRule.onNodeWithText(
+            composeTestRule.activity.getString(
+                R.string.age_range_hint,
+                Constants.Workout.MIN_AGE,
+                Constants.Workout.MAX_AGE
+            )
+        ).assertIsDisplayed()
+    }
+
+    // A field nobody has touched must not open already complaining.
+    @Test
+    fun anUntouchedAgeFieldSaysNothing() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                BasicInfoScreen(onNextClick = { _, _, _, _ -> }, onBackClick = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText(
+            composeTestRule.activity.getString(
+                R.string.age_range_hint,
+                Constants.Workout.MIN_AGE,
+                Constants.Workout.MAX_AGE
+            )
+        ).assertDoesNotExist()
     }
 }
