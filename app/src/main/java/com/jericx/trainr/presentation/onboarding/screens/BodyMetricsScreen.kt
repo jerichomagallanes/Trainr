@@ -260,7 +260,9 @@ fun BodyMetricsScreen(
                     TrainrTextField(
                         value = weight,
                         onValueChange = {
-                            if (it.matches(Regex("^\\d{0,3}(\\.\\d{0,1})?$"))) {
+                            // Four digits: the upper bound is 650 kg, which is
+                            // 1433 lbs, and three digits could not reach it.
+                            if (it.matches(Regex("^\\d{0,4}(\\.\\d{0,1})?$"))) {
                                 weight = it
                             }
                         },
