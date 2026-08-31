@@ -201,6 +201,7 @@
     <string name="generate_next_week">次の週を生成</string>
     <string name="update_profile">プロフィールを更新</string>
     <string name="weight_column">kg</string>
+    <string name="weight_column_lbs">lbs</string>
     <string name="reps_column">回数</string>
     <string name="time_column">時間</string>
     <string name="add_set">セットを追加</string>
@@ -255,6 +256,7 @@
     </plurals>
     <string name="height_cm_format">%d cm</string>
     <string name="weight_kg_format">%.1f kg</string>
+    <string name="weight_lbs_format">%1$s lbs</string>
     
     <!-- Accessibility -->
     <string name="dropdown_content_description">ドロップダウンメニュー</string>

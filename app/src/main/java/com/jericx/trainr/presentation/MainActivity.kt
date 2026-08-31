@@ -192,8 +192,8 @@ fun AppContent(versionName: String) {
                     BodyMetricsScreen(
                         initial = if (editing) onboardingState.userProfile else null,
                         isEditing = editing,
-                        onNextClick = { height, weight ->
-                            onboardingViewModel.updateBodyMetrics(height, weight)
+                        onNextClick = { height, weight, units ->
+                            onboardingViewModel.updateBodyMetrics(height, weight, units)
                             if (editing) {
                                 navController.popBackStack()
                             } else {

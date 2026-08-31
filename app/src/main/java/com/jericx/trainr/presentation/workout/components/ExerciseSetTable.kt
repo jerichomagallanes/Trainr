@@ -39,6 +39,8 @@ import androidx.compose.ui.unit.dp
 import com.jericx.trainr.R
 import com.jericx.trainr.domain.model.ExerciseMeasure
 import com.jericx.trainr.domain.model.ExerciseSet
+import com.jericx.trainr.domain.model.UnitSystem
+import com.jericx.trainr.domain.model.WeightUnit
 import androidx.compose.ui.graphics.Color
 import com.jericx.trainr.presentation.common.components.core.TrainrSwipeToDelete
 import com.jericx.trainr.presentation.common.theme.OutlineGray
@@ -59,7 +61,8 @@ fun ExerciseSetTable(
     onAddSet: () -> Unit,
     modifier: Modifier = Modifier,
     onDeleteSet: (ExerciseSet) -> Unit = {},
-    previousSets: List<ExerciseSet> = emptyList()
+    previousSets: List<ExerciseSet> = emptyList(),
+    units: UnitSystem = UnitSystem.Default
 ) {
     // No column at all without history: a week-one card looks exactly like the
     // design, which has no PREVIOUS.
@@ -76,7 +79,13 @@ fun ExerciseSetTable(
                 ColumnLabel(stringResource(R.string.previous_column), Modifier.weight(1f))
             }
             if (measure == ExerciseMeasure.WEIGHT_AND_REPS) {
-                ColumnLabel(stringResource(R.string.weight_column), Modifier.weight(1f))
+                ColumnLabel(
+                    stringResource(
+                        if (units == UnitSystem.IMPERIAL) R.string.weight_column_lbs
+                        else R.string.weight_column
+                    ),
+                    Modifier.weight(1f)
+                )
             }
             ColumnLabel(
                 text = when (measure) {
@@ -98,12 +107,14 @@ fun ExerciseSetTable(
                         previousText = if (showPrevious) {
                             previousCellText(
                                 measure,
-                                previousSets.firstOrNull { it.setNumber == set.setNumber }
+                                previousSets.firstOrNull { it.setNumber == set.setNumber },
+                                units
                             )
                         } else {
                             null
                         },
-                        onSetChanged = onSetChanged
+                        onSetChanged = onSetChanged,
+                        units = units
                     )
                 }
 
@@ -131,7 +142,8 @@ private fun SetRow(
     measure: ExerciseMeasure,
     set: ExerciseSet,
     previousText: String?,
-    onSetChanged: (ExerciseSet) -> Unit
+    onSetChanged: (ExerciseSet) -> Unit,
+    units: UnitSystem
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -157,10 +169,17 @@ private fun SetRow(
 
         if (measure == ExerciseMeasure.WEIGHT_AND_REPS) {
             NumberCell(
-                value = set.actualWeightKg?.let { formatWeight(it) },
-                placeholder = set.targetWeightKg?.let { formatWeight(it) },
+                value = set.actualWeightKg?.let { formatWeight(it, units) },
+                placeholder = set.targetWeightKg?.let { formatWeight(it, units) },
                 decimal = true,
-                onValueChange = { onSetChanged(set.copy(actualWeightKg = it?.toFloatOrNull())) },
+                onValueChange = { entered ->
+                    onSetChanged(
+                        set.copy(
+                            actualWeightKg = entered?.toFloatOrNull()
+                                ?.let { WeightUnit.toKilograms(it, units) }
+                        )
+                    )
+                },
                 modifier = Modifier.weight(1f)
             )
         }
@@ -332,8 +351,10 @@ private fun DurationCell(
     }
 }
 
-private fun formatWeight(kg: Float): String =
-    if (kg % 1f == 0f) kg.toInt().toString() else kg.toString()
+private fun formatWeight(kg: Float, units: UnitSystem): String {
+    val shown = WeightUnit.forDisplay(kg, units)
+    return if (shown % 1f == 0f) shown.toInt().toString() else shown.toString()
+}
 
 internal fun formatSeconds(totalSeconds: Int): String =
     "${totalSeconds / 60}:" + (totalSeconds % 60).toString().padStart(2, '0')
@@ -357,14 +378,23 @@ private const val NO_PREVIOUS = "—"
 
 // What was actually done last time, in the shape of this row's own columns; a
 // set that was prescribed but never logged shows a dash, not its target.
-internal fun previousCellText(measure: ExerciseMeasure, previous: ExerciseSet?): String {
+internal fun previousCellText(
+    measure: ExerciseMeasure,
+    previous: ExerciseSet?,
+    units: UnitSystem = UnitSystem.Default
+): String {
     if (previous == null) return NO_PREVIOUS
 
     return when (measure) {
         ExerciseMeasure.WEIGHT_AND_REPS -> {
             val reps = previous.actualReps ?: return NO_PREVIOUS
             val weight = previous.actualWeightKg
-            if (weight == null) "$reps" else "${formatWeight(weight)}kg × $reps"
+            if (weight == null) {
+                "$reps"
+            } else {
+                val label = if (units == UnitSystem.IMPERIAL) "lbs" else "kg"
+                "${formatWeight(weight, units)}$label × $reps"
+            }
         }
 
         ExerciseMeasure.REPS -> previous.actualReps?.toString() ?: NO_PREVIOUS

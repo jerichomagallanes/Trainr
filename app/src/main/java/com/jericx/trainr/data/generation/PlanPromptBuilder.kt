@@ -5,6 +5,7 @@ import com.jericx.trainr.domain.model.Equipment
 import com.jericx.trainr.domain.model.ExerciseMeasure
 import com.jericx.trainr.domain.model.ExperienceLevel
 import com.jericx.trainr.domain.model.FitnessGoal
+import com.jericx.trainr.domain.model.UnitSystem
 import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
 import com.jericx.trainr.domain.model.WorkoutExercise
 import com.jericx.trainr.domain.model.WorkoutLocation
@@ -42,9 +43,12 @@ class PlanPromptBuilder(
           WEIGHT_AND_REPS, weightKg on every set) only for movements loaded by that
           equipment; bodyweight movements are REPS; timed work, holds and cardio
           are DURATION with seconds. Prescribe cardio by time, never by distance.
-        - Weights are kilograms. For a first week or a beginner, choose
-          conservative loads the client can complete with two reps in reserve;
-          progress comes later, technique comes first.
+        - Weights are kilograms, whatever the client reads them in. Every
+          weightKg must be a multiple of the client's smallest loadable
+          increment, given below, or the plan asks for a weight they cannot
+          make. For a first week or a beginner, choose conservative loads the
+          client can complete with two reps in reserve; progress comes later,
+          technique comes first.
         - Respect injuries strictly: avoid movements that load the injured area
           (e.g. lower back pain: no loaded spinal flexion or heavy hinging from the
           floor; knee problems: no jumps or deep loaded knee flexion; shoulder
@@ -56,8 +60,10 @@ class PlanPromptBuilder(
 
         Progression rules when a previous week is provided:
         - Reuse the same exerciseKey for the same movement so history carries over.
-        - If every set hit its target, add roughly 2.5-5% load, or 1-2 reps or
-          5-10 seconds where there is no load.
+        - If every set hit its target, add load: at least one increment, and
+          roughly 2.5-5% where that is more. Where there is no load, add 1-2
+          reps or 5-10 seconds instead. An increase smaller than one increment
+          is not an increase, because the client cannot load it.
         - If a set missed its target by 2 or more reps, keep or reduce the target
           by about 10%.
         - If an exercise was skipped, repeat its week unchanged.
@@ -98,6 +104,10 @@ class PlanPromptBuilder(
             appendLine("- Available equipment: ${user.availableEquipment.asText()}")
             appendLine("- Days per week: ${user.workoutDaysPerWeek} (plan EXACTLY this many days)")
             appendLine("- Session length: about ${user.workoutDuration} minutes")
+            appendLine(
+                "- Reads weights in ${user.unitSystem.asWeightWord()}; smallest loadable " +
+                    "increment ${incrementKg(user.unitSystem)} kg"
+            )
             if (user.injuries.isNotEmpty()) {
                 appendLine("- Injuries or areas to protect: ${user.injuries.joinToString()}")
             }
@@ -145,6 +155,19 @@ class PlanPromptBuilder(
         FitnessGoal.ENDURANCE -> "improve endurance"
         FitnessGoal.GENERAL_FITNESS -> "general fitness"
         FitnessGoal.FLEXIBILITY -> "flexibility and mobility"
+    }
+
+    private fun UnitSystem.asWeightWord() = when (this) {
+        UnitSystem.METRIC -> "kilograms"
+        UnitSystem.IMPERIAL -> "pounds"
+    }
+
+    // In kilograms, because that is the unit the contract speaks. Five pounds
+    // is 2.27 kg, so a client in pounds gets multiples that convert back onto
+    // the plates and dumbbells they actually own.
+    private fun incrementKg(units: UnitSystem): String = when (units) {
+        UnitSystem.METRIC -> "2.5"
+        UnitSystem.IMPERIAL -> "2.27"
     }
 
     private fun ExperienceLevel.asText() = name.lowercase()

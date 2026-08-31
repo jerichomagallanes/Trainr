@@ -17,6 +17,7 @@ import com.jericx.trainr.presentation.common.theme.TrainrTheme
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import com.jericx.trainr.domain.model.UnitSystem
 
 @RunWith(AndroidJUnit4::class)
 class BodyMetricsScreenTest {
@@ -26,11 +27,35 @@ class BodyMetricsScreenTest {
 
     private fun string(id: Int) = composeTestRule.activity.getString(id)
 
+    // The toggle used to be local state thrown away on Next, so a client who
+    // chose imperial was quietly handed kilograms everywhere else in the app.
+    @Test
+    fun theChosenUnitsTravelWithTheMeasurements() {
+        var captured: UnitSystem? = null
+        composeTestRule.setContent {
+            TrainrTheme {
+                BodyMetricsScreen(
+                    onNextClick = { _, _, units -> captured = units },
+                    onBackClick = {}
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.imperial)).performClick()
+        composeTestRule.onNodeWithText(string(R.string.height_placeholder_imperial))
+            .performTextInput("5'10\"")
+        composeTestRule.onNodeWithText(string(R.string.weight_placeholder_lbs))
+            .performTextInput("165")
+        composeTestRule.onNodeWithText(string(R.string.next)).performClick()
+
+        assertThat(captured).isEqualTo(UnitSystem.IMPERIAL)
+    }
+
     @Test
     fun displaysScreenTitle() {
         composeTestRule.setContent {
             TrainrTheme {
-                BodyMetricsScreen(onNextClick = { _, _ -> }, onBackClick = {})
+                BodyMetricsScreen(onNextClick = { _, _, _ -> }, onBackClick = {})
             }
         }
 
@@ -42,7 +67,7 @@ class BodyMetricsScreenTest {
     fun nextDisabledInitiallyAndEnabledAfterFillingHeightAndWeight() {
         composeTestRule.setContent {
             TrainrTheme {
-                BodyMetricsScreen(onNextClick = { _, _ -> }, onBackClick = {})
+                BodyMetricsScreen(onNextClick = { _, _, _ -> }, onBackClick = {})
             }
         }
 
@@ -64,7 +89,7 @@ class BodyMetricsScreenTest {
         composeTestRule.setContent {
             TrainrTheme {
                 BodyMetricsScreen(
-                    onNextClick = { h, w -> capturedHeight = h; capturedWeight = w },
+                    onNextClick = { h, w, _ -> capturedHeight = h; capturedWeight = w },
                     onBackClick = {}
                 )
             }
@@ -84,7 +109,7 @@ class BodyMetricsScreenTest {
     fun togglingToImperialChangesUnitLabels() {
         composeTestRule.setContent {
             TrainrTheme {
-                BodyMetricsScreen(onNextClick = { _, _ -> }, onBackClick = {})
+                BodyMetricsScreen(onNextClick = { _, _, _ -> }, onBackClick = {})
             }
         }
 
@@ -98,7 +123,7 @@ class BodyMetricsScreenTest {
     fun togglingUnitsConvertsAlreadyEnteredValues() {
         composeTestRule.setContent {
             TrainrTheme {
-                BodyMetricsScreen(onNextClick = { _, _ -> }, onBackClick = {})
+                BodyMetricsScreen(onNextClick = { _, _, _ -> }, onBackClick = {})
             }
         }
 
@@ -121,7 +146,7 @@ class BodyMetricsScreenTest {
     fun switchingUnitsClearsFocusFromTheFieldBeingEdited() {
         composeTestRule.setContent {
             TrainrTheme {
-                BodyMetricsScreen(onNextClick = { _, _ -> }, onBackClick = {})
+                BodyMetricsScreen(onNextClick = { _, _, _ -> }, onBackClick = {})
             }
         }
 
@@ -138,7 +163,7 @@ class BodyMetricsScreenTest {
     fun switchingUnitsClearsFocusFromTheWeightFieldToo() {
         composeTestRule.setContent {
             TrainrTheme {
-                BodyMetricsScreen(onNextClick = { _, _ -> }, onBackClick = {})
+                BodyMetricsScreen(onNextClick = { _, _, _ -> }, onBackClick = {})
             }
         }
 
@@ -157,7 +182,7 @@ class BodyMetricsScreenTest {
     fun reselectingTheCurrentUnitKeepsFocus() {
         composeTestRule.setContent {
             TrainrTheme {
-                BodyMetricsScreen(onNextClick = { _, _ -> }, onBackClick = {})
+                BodyMetricsScreen(onNextClick = { _, _, _ -> }, onBackClick = {})
             }
         }
 

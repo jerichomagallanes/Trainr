@@ -11,6 +11,7 @@ import com.jericx.trainr.domain.model.WorkoutLocation
 import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.domain.model.WorkoutTime
 import com.jericx.trainr.domain.model.WorkoutType
+import com.jericx.trainr.domain.model.UnitSystem
 import com.jericx.trainr.domain.generation.PlanGenerator
 import com.jericx.trainr.domain.generation.PlanGenerationResult
 import com.jericx.trainr.domain.generation.PlanRequest
@@ -102,7 +103,7 @@ class OnboardingViewModelTest {
         viewModel.updateBasicInfo("Ana", 25, Gender.FEMALE, ExperienceLevel.BEGINNER)
 
         // Act
-        viewModel.updateBodyMetrics(height = 165f, weight = 60f)
+        viewModel.updateBodyMetrics(height = 165f, weight = 60f, UnitSystem.METRIC)
 
         // Assert
         val profile = viewModel.onboardingState.value.userProfile

@@ -206,6 +206,7 @@
     <string name="generate_next_week">Generate next week</string>
     <string name="update_profile">Update profile</string>
     <string name="weight_column">kg</string>
+    <string name="weight_column_lbs">lbs</string>
     <string name="reps_column">Reps</string>
     <string name="time_column">Time</string>
     <string name="add_set">Add set</string>
@@ -263,6 +264,7 @@
     </plurals>
     <string name="height_cm_format">%d cm</string>
     <string name="weight_kg_format">%.1f kg</string>
+    <string name="weight_lbs_format">%1$s lbs</string>
     
     <!-- Accessibility -->
     <string name="dropdown_content_description">Dropdown menu</string>

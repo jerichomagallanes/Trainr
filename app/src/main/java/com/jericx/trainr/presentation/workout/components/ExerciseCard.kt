@@ -33,6 +33,7 @@ import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.StatusCompleted
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 import com.jericx.trainr.domain.model.ExerciseSet
+import com.jericx.trainr.domain.model.UnitSystem
 import com.jericx.trainr.presentation.workout.model.ExerciseUi
 import com.jericx.trainr.presentation.workout.model.toRoutineUi
 import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
@@ -45,6 +46,7 @@ fun ExerciseCard(
     onSetChanged: (ExerciseSet) -> Unit = {},
     onAddSet: () -> Unit = {},
     onDeleteSet: (ExerciseSet) -> Unit = {},
+    units: UnitSystem = UnitSystem.Default,
     content: @Composable ColumnScope.() -> Unit = {}
 ) {
     // A finished exercise turns green throughout: badge, name and rule.
@@ -154,7 +156,8 @@ fun ExerciseCard(
                     onSetChanged = onSetChanged,
                     onAddSet = onAddSet,
                     onDeleteSet = onDeleteSet,
-                    previousSets = exercise.previousSets
+                    previousSets = exercise.previousSets,
+                    units = units
                 )
             }
 

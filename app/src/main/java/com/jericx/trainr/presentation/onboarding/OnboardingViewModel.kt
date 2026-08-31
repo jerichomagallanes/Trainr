@@ -6,6 +6,7 @@ import com.jericx.trainr.domain.model.Equipment
 import com.jericx.trainr.domain.model.ExperienceLevel
 import com.jericx.trainr.domain.model.FitnessGoal
 import com.jericx.trainr.domain.model.Gender
+import com.jericx.trainr.domain.model.UnitSystem
 import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.model.WorkoutLocation
 import com.jericx.trainr.domain.model.WorkoutTime
@@ -54,11 +55,12 @@ class OnboardingViewModel @Inject constructor(
         )
     }
 
-    fun updateBodyMetrics(height: Float, weight: Float) {
+    fun updateBodyMetrics(height: Float, weight: Float, units: UnitSystem) {
         _onboardingState.value = _onboardingState.value.copy(
             userProfile = _onboardingState.value.userProfile.copy(
                 height = height,
-                weight = weight
+                weight = weight,
+                unitSystem = units
             )
         )
     }

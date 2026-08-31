@@ -15,6 +15,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.R
 import com.jericx.trainr.domain.model.FitnessGoal
+import com.jericx.trainr.domain.model.UnitSystem
 import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.model.WorkoutType
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
@@ -250,4 +251,26 @@ class ReviewScreenTest {
         assertThat(saved).isTrue()
     }
 
+
+    // The profile is stored in centimetres and kilograms whichever units were
+    // typed, so a client in pounds was shown their own weight as a number they
+    // had never entered.
+    @Test
+    fun measurementsReadBackInTheUnitsTheyWereEnteredIn() {
+        setScreen(sampleProfile.copy(unitSystem = UnitSystem.IMPERIAL))
+
+        composeTestRule.onNodeWithText("159 lbs").performScrollTo().assertIsDisplayed()
+        composeTestRule.onNodeWithText("5'9\"").assertIsDisplayed()
+    }
+
+    @Test
+    fun aMetricProfileStillReadsInCentimetresAndKilograms() {
+        setScreen(sampleProfile)
+
+        composeTestRule.onNodeWithText(string(R.string.weight_kg_format).format(72f))
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.height_cm_format).format(175))
+            .assertIsDisplayed()
+    }
 }
