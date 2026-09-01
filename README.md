@@ -4,8 +4,7 @@ Trainr is an Android fitness application that creates personalized workout routi
 
 App Demo
 
-<img src="https://github.com/user-attachments/assets/4cd6258d-f9b7-4db6-97d7-9d79c03b9902" width="300" alt="Trainr App Demo">
-
+<img src="https://github.com/user-attachments/assets/2a2a90be-b406-48df-9358-17700b164570" width="300" alt="Trainr App Demo">
 
 ## 📋 Features
 
@@ -21,11 +20,6 @@ App Demo
 - **Rescheduling**: Long-press a session to drag it onto another weekday
 - **Week by Week**: Generate the next week from what you actually lifted, run any past week again, or rebuild the week you are in
 - **Progress Tracking**: Every stored week with its dates, status and completion
-
-### Not yet
-
-- **Dark mode**: the app is pinned to light
-- **Japanese and Tagalog**: translated, but not yet enabled
 
 ## 🎯 Fitness Goals Supported
 
@@ -71,45 +65,6 @@ Plan generation sits behind a single `PlanGenerator` interface that answers
 `Generated`, `Offline` or `Failed`, never a plan the model did not write. Every
 answer is validated before it is stored, and re-asked with the specific errors when
 it does not hold.
-
-## 🚀 Getting Started
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/jerichomagallanes/Trainr.git
-   ```
-
-2. Open the project in Android Studio
-
-3. **Set up Firebase.** Every build needs a `google-services.json`, and the prod
-   build generates through Firebase AI Logic. This repository does not ship one,
-   so create your own free project:
-
-   - Create a project at [console.firebase.google.com](https://console.firebase.google.com)
-   - Add two Android apps, using the package names this project already builds:
-     `com.jericx.trainr` and `com.jericx.trainr.dev`
-   - Enable **AI Services → AI Logic**, choosing the **Gemini Developer API**
-   - Save the generated `google-services.json` to `app/google-services.json`
-
-   It is your own project and your own free quota. If you would rather use your
-   own package name, change `applicationId` in `app/build.gradle.kts` first.
-
-4. Build and run on a device or emulator. The **dev** flavour generates locally,
-   so it works offline and needs nothing further.
-
-   For the **prod** flavour, generation is guarded by App Check, which a debug
-   build cannot satisfy on its own. Run it once, then register the debug token it
-   prints to logcat under **App Check → Manage debug tokens**.
-
-## 🛠️ Build Variants
-
-The project includes multiple build variants for different environments:
-
-- **Dev**: Development build. Plans come from a canned generator, so it needs no
-  network, no quota and no API access, and produces the same week every time.
-- **Prod**: The shipped build. Plans come from Gemini through Firebase AI Logic.
-
-Each supports `debug` and `release` build types.
 
 ## 📱 Minimum Requirements
 
