@@ -88,7 +88,7 @@ class RoutineDetailViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             val user = userRepository.getCurrentUser()
-            val units = user?.unitSystem ?: UnitSystem.Default
+            val units = user?.weightUnits ?: UnitSystem.Default
             val plan = user
                 ?.let { profile ->
                     val plans = userRepository.getWeeklyWorkoutPlans(profile.id).first()

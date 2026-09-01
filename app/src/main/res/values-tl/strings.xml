@@ -79,6 +79,7 @@
     <string name="gym">Gym</string>
     <string name="both">Pareho</string>
     <string name="available_equipment">Available na Equipment</string>
+    <string name="weights_marked_in">Ano ang nakasulat sa mga timbang?</string>
     <string name="bodyweight_only">Bodyweight lang</string>
     <string name="dumbbells">Dumbbells</string>
     <string name="resistance_bands">Resistance bands</string>
@@ -253,6 +254,7 @@
     <string name="workout_setup_label">Workout Setup</string>
     <string name="location_label">Lugar</string>
     <string name="equipment_label_full">Equipment</string>
+    <string name="weights_in_label">Timbang na nakasulat</string>
     <string name="schedule_label">Schedule</string>
     <string name="duration_label">Tagal</string>
     <string name="preferred_time_label">Preferred na Oras</string>

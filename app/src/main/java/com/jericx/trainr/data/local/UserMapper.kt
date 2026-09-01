@@ -21,7 +21,8 @@ class UserMapper {
             preferredWorkoutTime = user.preferredWorkoutTime.name,
             injuries = user.injuries,
             workoutType = user.workoutType.name,
-            unitSystem = user.unitSystem.name,
+            bodyUnitSystem = user.bodyUnitSystem.name,
+            liftingUnitSystem = user.liftingUnitSystem?.name,
             createdAt = user.createdAt
         )
     }
@@ -45,9 +46,10 @@ class UserMapper {
             preferredWorkoutTime = WorkoutTime.valueOf(entity.preferredWorkoutTime),
             injuries = entity.injuries,
             workoutType = WorkoutType.valueOf(entity.workoutType),
-            // Rows written before the column existed default to metric.
-            unitSystem = runCatching { UnitSystem.valueOf(entity.unitSystem) }
+            bodyUnitSystem = runCatching { UnitSystem.valueOf(entity.bodyUnitSystem) }
                 .getOrDefault(UnitSystem.Default),
+            liftingUnitSystem = entity.liftingUnitSystem
+                ?.let { runCatching { UnitSystem.valueOf(it) }.getOrNull() },
             createdAt = entity.createdAt
         )
     }

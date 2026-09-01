@@ -64,7 +64,7 @@ fun BodyMetricsScreen(
     // typed, so the stored numbers have to be converted before they are put
     // back in front of a client who reads pounds. Seeding them raw showed a
     // kilogram weight under a label saying lbs.
-    val startsImperial = initial?.unitSystem == UnitSystem.IMPERIAL
+    val startsImperial = initial?.bodyUnitSystem == UnitSystem.IMPERIAL
     var height by remember {
         mutableStateOf(
             initial?.height?.takeIf { it > 0f }

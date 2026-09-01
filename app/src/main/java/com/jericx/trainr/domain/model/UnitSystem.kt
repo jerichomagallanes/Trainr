@@ -15,6 +15,16 @@ enum class UnitSystem {
     }
 }
 
+// Kit whose weight is written on it. A client with only these has plates to
+// read, and is therefore worth asking which units they are marked in; one
+// training on a pull-up bar and a mat has nothing to read.
+val LoadedEquipment = setOf(
+    Equipment.DUMBBELLS,
+    Equipment.BARBELL,
+    Equipment.KETTLEBELLS,
+    Equipment.CABLE_MACHINE
+)
+
 // Loads are stored in kilograms because that is what the model prescribes and
 // what history is compared in. These convert at the edges.
 object WeightUnit {

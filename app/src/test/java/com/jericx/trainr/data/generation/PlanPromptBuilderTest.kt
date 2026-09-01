@@ -33,7 +33,7 @@ class PlanPromptBuilderTest {
             workoutDaysPerWeek = 3,
             workoutDuration = 45,
             injuries = listOf("Lower Back Pain"),
-            unitSystem = units
+            bodyUnitSystem = units
         ),
         weekNumber = if (previousWeek == null) 1 else 2,
         startDateMillis = 0L,
