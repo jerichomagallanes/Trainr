@@ -55,6 +55,7 @@ fun ReviewScreen(
     // what it does and the subtitle explains when the change lands.
     isProfileUpdate: Boolean = false,
     onEditPersonal: () -> Unit = {},
+    onEditMeasurements: () -> Unit = {},
     onEditGoals: () -> Unit = {},
     onEditSetup: () -> Unit = {},
     onEditLimitations: () -> Unit = {}
@@ -150,6 +151,11 @@ fun ReviewScreen(
                     stringResource(R.string.weight_kg_format, userProfile.weight)
                 }
                 
+                // One card per step of the flow. These were one card whose Edit
+                // walked two screens, so changing a height meant tapping Edit on
+                // Personal Information, passing a screen about your name, and
+                // pressing Next. Onboarding already treats them as two
+                // questions, under two titles; the review now agrees with it.
                 ProfileSection(
                     title = stringResource(R.string.personal_information),
                     onEdit = onEditPersonal,
@@ -157,9 +163,18 @@ fun ReviewScreen(
                         stringResource(R.string.name_label) to userProfile.firstName,
                         stringResource(R.string.age_label) to pluralStringResource(R.plurals.years_old_format, userProfile.age, userProfile.age),
                         stringResource(R.string.gender_label) to genderText,
-                        stringResource(R.string.height_label) to heightText,
-                        stringResource(R.string.weight_label) to weightText,
                         stringResource(R.string.experience_label) to experienceText
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(Spacing.screen))
+
+                ProfileSection(
+                    title = stringResource(R.string.measurements_label),
+                    onEdit = onEditMeasurements,
+                    items = listOf(
+                        stringResource(R.string.height_label) to heightText,
+                        stringResource(R.string.weight_label) to weightText
                     )
                 )
 

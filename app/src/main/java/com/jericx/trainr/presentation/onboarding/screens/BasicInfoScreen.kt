@@ -67,7 +67,7 @@ fun BasicInfoScreen(
         closeInsteadOfBack = isEditing,
         bottomButton = {
             TrainrButton(
-                text = stringResource(R.string.next),
+                text = stringResource(if (isEditing) R.string.save else R.string.next),
                 onClick = {
                     val ageInt = age.toIntOrNull() ?: 0
                     selectedGender?.let { gender ->

@@ -180,14 +180,7 @@ fun AppContent(versionName: String) {
                         onNextClick = { firstName, age, gender, experience ->
                             onboardingViewModel.updateBasicInfo(firstName, age, gender, experience)
                             if (editing) {
-                                // The review's Personal card covers both steps, so
-                                // its edit walks basics then measurements before
-                                // dropping back onto the review.
-                                navController.navigate(
-                                    Screen.BodyMetrics.createRoute(edit = true)
-                                ) {
-                                    popUpTo(Screen.BasicInfo.route) { inclusive = true }
-                                }
+                                navController.popBackStack()
                             } else {
                                 navController.navigate(Screen.BodyMetrics.createRoute())
                             }
@@ -314,6 +307,9 @@ fun AppContent(versionName: String) {
                         onBackClick = { navController.popBackStack() },
                         onEditPersonal = {
                             navController.navigate(Screen.BasicInfo.createRoute(edit = true))
+                        },
+                        onEditMeasurements = {
+                            navController.navigate(Screen.BodyMetrics.createRoute(edit = true))
                         },
                         onEditGoals = {
                             navController.navigate(Screen.FitnessGoal.createRoute(edit = true))
