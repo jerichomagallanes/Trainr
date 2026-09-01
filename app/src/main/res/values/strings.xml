@@ -121,6 +121,7 @@
     <string name="your_fitness_profile">YOUR FITNESS PROFILE</string>
     <string name="review_description">Review your information before we create your workout plan</string>
     <string name="personal_information">Personal Information</string>
+    <string name="measurements_label">Measurements</string>
     <string name="generate_my_workout_plan">GENERATE MY WORKOUT PLAN</string>
     
     <!-- Generating Screen -->

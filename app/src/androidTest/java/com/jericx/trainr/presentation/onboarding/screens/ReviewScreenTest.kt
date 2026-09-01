@@ -147,10 +147,11 @@ class ReviewScreenTest {
             }
         }
 
+        // Five: one per onboarding step, measurements having become its own.
         composeTestRule.onAllNodesWithText(string(R.string.edit))
-            .assertCountEquals(4)
+            .assertCountEquals(5)
         composeTestRule.onAllNodesWithText(string(R.string.edit))[0].performClick()
-        composeTestRule.onAllNodesWithText(string(R.string.edit))[1].performClick()
+        composeTestRule.onAllNodesWithText(string(R.string.edit))[2].performClick()
         assertThat(personal).isTrue()
         assertThat(goals).isTrue()
     }
@@ -310,5 +311,47 @@ class ReviewScreenTest {
 
         composeTestRule.onNodeWithText(string(R.string.health_disclaimer))
             .assertDoesNotExist()
+    }
+
+    // Each card's Edit opens exactly the screen that answers it. Personal
+    // Information used to carry the measurements too, so its Edit walked two
+    // screens and changing a height began on a screen about your name.
+    @Test
+    fun measurementsAreTheirOwnCardWithTheirOwnEdit() {
+        var editedPersonal = false
+        var editedMeasurements = false
+        composeTestRule.setContent {
+            TrainrTheme {
+                ReviewScreen(
+                    userProfile = sampleProfile,
+                    onConfirmClick = {},
+                    onBackClick = {},
+                    onEditPersonal = { editedPersonal = true },
+                    onEditMeasurements = { editedMeasurements = true }
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.measurements_label))
+            .performScrollTo()
+            .assertIsDisplayed()
+
+        // The second Edit belongs to the measurements card.
+        composeTestRule.onAllNodesWithText(string(R.string.edit))[1].performClick()
+
+        assertThat(editedMeasurements).isTrue()
+        assertThat(editedPersonal).isFalse()
+    }
+
+    @Test
+    fun thePersonalCardNoLongerCarriesTheMeasurements() {
+        setScreen(sampleProfile)
+
+        composeTestRule.onNodeWithText(string(R.string.personal_information))
+            .assertIsDisplayed()
+        // Height and weight moved out, so the labels sit under their own card.
+        composeTestRule.onNodeWithText(string(R.string.height_label))
+            .performScrollTo()
+            .assertIsDisplayed()
     }
 }

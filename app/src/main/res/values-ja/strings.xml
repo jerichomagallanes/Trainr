@@ -121,6 +121,7 @@
     <string name="your_fitness_profile">あなたのフィットネスプロフィール</string>
     <string name="review_description">ワークアウトプランを作成する前に情報を確認してください</string>
     <string name="personal_information">個人情報</string>
+    <string name="measurements_label">身体データ</string>
     <string name="generate_my_workout_plan">ワークアウトプランを生成</string>
     
     <!-- Generating Screen -->

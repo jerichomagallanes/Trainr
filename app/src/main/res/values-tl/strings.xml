@@ -122,6 +122,7 @@
     <string name="your_fitness_profile">ANG INYONG FITNESS PROFILE</string>
     <string name="review_description">I-review ang iyong impormasyon bago namin gawin ang workout plan mo</string>
     <string name="personal_information">Personal na Impormasyon</string>
+    <string name="measurements_label">Mga sukat</string>
     <string name="generate_my_workout_plan">I-GENERATE ANG AKING WORKOUT PLAN</string>
     
     <!-- Generating Screen -->
