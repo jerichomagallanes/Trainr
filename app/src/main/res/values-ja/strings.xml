@@ -79,6 +79,7 @@
     <string name="gym">ジム</string>
     <string name="both">両方</string>
     <string name="available_equipment">利用可能な器具</string>
+    <string name="weights_marked_in">重りの単位はどちらですか？</string>
     <string name="bodyweight_only">自重のみ</string>
     <string name="dumbbells">ダンベル</string>
     <string name="resistance_bands">レジスタンスバンド</string>
@@ -247,6 +248,7 @@
     <string name="workout_setup_label">ワークアウトセットアップ</string>
     <string name="location_label">場所</string>
     <string name="equipment_label_full">器具</string>
+    <string name="weights_in_label">重りの単位</string>
     <string name="schedule_label">スケジュール</string>
     <string name="duration_label">時間</string>
     <string name="preferred_time_label">好みの時間</string>

@@ -62,7 +62,7 @@ class OnboardingViewModel @Inject constructor(
             userProfile = _onboardingState.value.userProfile.copy(
                 height = height,
                 weight = weight,
-                unitSystem = units
+                bodyUnitSystem = units
             )
         )
     }
@@ -80,6 +80,7 @@ class OnboardingViewModel @Inject constructor(
     fun updateWorkoutSetup(
         location: WorkoutLocation,
         equipment: List<Equipment>,
+        liftingUnits: UnitSystem?,
         daysPerWeek: Int,
         duration: Int,
         preferredTime: WorkoutTime
@@ -88,6 +89,7 @@ class OnboardingViewModel @Inject constructor(
             answeredSteps = answeredWith(OnboardingStep.SETUP),
             userProfile = _onboardingState.value.userProfile.copy(
                 workoutLocation = location,
+                liftingUnitSystem = liftingUnits,
                 availableEquipment = equipment,
                 workoutDaysPerWeek = daysPerWeek,
                 workoutDuration = duration,

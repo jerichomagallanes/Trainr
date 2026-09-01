@@ -258,7 +258,7 @@ class ReviewScreenTest {
     // had never entered.
     @Test
     fun measurementsReadBackInTheUnitsTheyWereEnteredIn() {
-        setScreen(sampleProfile.copy(unitSystem = UnitSystem.IMPERIAL))
+        setScreen(sampleProfile.copy(bodyUnitSystem = UnitSystem.IMPERIAL))
 
         composeTestRule.onNodeWithText("159 lbs").performScrollTo().assertIsDisplayed()
         composeTestRule.onNodeWithText("5'9\"").assertIsDisplayed()

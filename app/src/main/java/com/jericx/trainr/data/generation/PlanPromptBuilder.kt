@@ -105,8 +105,8 @@ class PlanPromptBuilder(
             appendLine("- Days per week: ${user.workoutDaysPerWeek} (plan EXACTLY this many days)")
             appendLine("- Session length: about ${user.workoutDuration} minutes")
             appendLine(
-                "- Reads weights in ${user.unitSystem.asWeightWord()}; smallest loadable " +
-                    "increment ${incrementKg(user.unitSystem)} kg"
+                "- Reads weights in ${user.weightUnits.asWeightWord()}; smallest loadable " +
+                    "increment ${incrementKg(user.weightUnits)} kg"
             )
             if (user.injuries.isNotEmpty()) {
                 appendLine("- Injuries or areas to protect: ${user.injuries.joinToString()}")

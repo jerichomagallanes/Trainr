@@ -134,7 +134,7 @@ fun ReviewScreen(
                 // stored in centimetres and kilograms whichever was typed, so
                 // a client in pounds was being shown their own weight
                 // converted into a number they had not used.
-                val imperial = userProfile.unitSystem == UnitSystem.IMPERIAL
+                val imperial = userProfile.bodyUnitSystem == UnitSystem.IMPERIAL
                 val heightText = if (imperial) {
                     BodyMetricsConverter.convertHeightToImperial(
                         userProfile.height.toInt().toString()
@@ -206,12 +206,24 @@ fun ReviewScreen(
                 }
                 val preferredTimeText = userProfile.preferredWorkoutTime.getLocalizedName()
                 
+                // Shown only when it was asked, so the card and the screen its
+                // Edit opens always agree on which questions exist.
+                val liftingUnitsText = userProfile.liftingUnitSystem?.let {
+                    stringResource(
+                        if (it == UnitSystem.IMPERIAL) R.string.weight_column_lbs
+                        else R.string.weight_column
+                    )
+                }
+
                 ProfileSection(
                     title = stringResource(R.string.workout_setup_label),
                     onEdit = onEditSetup,
-                    items = listOf(
+                    items = listOfNotNull(
                         stringResource(R.string.location_label) to locationText,
                         stringResource(R.string.equipment_label_full) to equipmentText,
+                        liftingUnitsText?.let {
+                            stringResource(R.string.weights_in_label) to it
+                        },
                         stringResource(R.string.schedule_label) to if (userProfile.workoutDaysPerWeek == 0)
                             stringResource(R.string.flexible_schedule)
                         else

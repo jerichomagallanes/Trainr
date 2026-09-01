@@ -134,6 +134,7 @@ class OnboardingViewModelTest {
         viewModel.updateWorkoutSetup(
             location = WorkoutLocation.HOME,
             equipment = equipment,
+            liftingUnits = UnitSystem.IMPERIAL,
             daysPerWeek = 4,
             duration = 45,
             preferredTime = WorkoutTime.EVENING
@@ -146,6 +147,50 @@ class OnboardingViewModelTest {
         assertThat(profile.workoutDaysPerWeek).isEqualTo(4)
         assertThat(profile.workoutDuration).isEqualTo(45)
         assertThat(profile.preferredWorkoutTime).isEqualTo(WorkoutTime.EVENING)
+        assertThat(profile.liftingUnitSystem).isEqualTo(UnitSystem.IMPERIAL)
+    }
+
+    // The two units are separate questions. Reading your own weight in pounds
+    // says nothing about what the plates in your gym are marked in.
+    @Test
+    fun `body units and lifting units are kept apart`() {
+        // Act
+        viewModel.updateBodyMetrics(178f, 75f, UnitSystem.IMPERIAL)
+        viewModel.updateWorkoutSetup(
+            location = WorkoutLocation.GYM,
+            equipment = listOf(Equipment.BARBELL),
+            liftingUnits = UnitSystem.METRIC,
+            daysPerWeek = 4,
+            duration = 45,
+            preferredTime = WorkoutTime.EVENING
+        )
+
+        // Assert
+        val profile = viewModel.onboardingState.value.userProfile
+        assertThat(profile.bodyUnitSystem).isEqualTo(UnitSystem.IMPERIAL)
+        assertThat(profile.liftingUnitSystem).isEqualTo(UnitSystem.METRIC)
+        assertThat(profile.weightUnits).isEqualTo(UnitSystem.METRIC)
+    }
+
+    // Never asked means never answered, and the sets then read in whatever the
+    // client reads their own body in.
+    @Test
+    fun `without loaded equipment the sets follow the body units`() {
+        // Act
+        viewModel.updateBodyMetrics(178f, 75f, UnitSystem.IMPERIAL)
+        viewModel.updateWorkoutSetup(
+            location = WorkoutLocation.HOME,
+            equipment = listOf(Equipment.NONE),
+            liftingUnits = null,
+            daysPerWeek = 3,
+            duration = 30,
+            preferredTime = WorkoutTime.MORNING
+        )
+
+        // Assert
+        val profile = viewModel.onboardingState.value.userProfile
+        assertThat(profile.liftingUnitSystem).isNull()
+        assertThat(profile.weightUnits).isEqualTo(UnitSystem.IMPERIAL)
     }
 
     @Test

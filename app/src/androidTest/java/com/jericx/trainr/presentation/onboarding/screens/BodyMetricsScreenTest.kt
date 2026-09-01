@@ -208,7 +208,7 @@ class BodyMetricsScreenTest {
                     initial = UserProfile(
                         height = 177.8f,
                         weight = 69.85331f,
-                        unitSystem = UnitSystem.IMPERIAL
+                        bodyUnitSystem = UnitSystem.IMPERIAL
                     ),
                     isEditing = true,
                     onNextClick = { _, _, _ -> },
@@ -229,7 +229,7 @@ class BodyMetricsScreenTest {
                     initial = UserProfile(
                         height = 175f,
                         weight = 70f,
-                        unitSystem = UnitSystem.METRIC
+                        bodyUnitSystem = UnitSystem.METRIC
                     ),
                     isEditing = true,
                     onNextClick = { _, _, _ -> },

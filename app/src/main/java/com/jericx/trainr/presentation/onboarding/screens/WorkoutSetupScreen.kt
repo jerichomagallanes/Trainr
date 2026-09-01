@@ -28,6 +28,8 @@ import com.jericx.trainr.R
 import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.common.Constants
 import com.jericx.trainr.domain.model.Equipment
+import com.jericx.trainr.domain.model.LoadedEquipment
+import com.jericx.trainr.domain.model.UnitSystem
 import com.jericx.trainr.domain.model.WorkoutLocation
 import com.jericx.trainr.domain.model.WorkoutTime
 import com.jericx.trainr.presentation.common.components.cards.TrainrLocationCard
@@ -59,6 +61,7 @@ fun WorkoutSetupScreen(
     onNextClick: (
         location: WorkoutLocation,
         equipment: List<Equipment>,
+        liftingUnits: UnitSystem?,
         daysPerWeek: Int,
         duration: Int,
         preferredTime: WorkoutTime
@@ -75,6 +78,12 @@ fun WorkoutSetupScreen(
     var selectedDays by remember { mutableStateOf(initial?.workoutDaysPerWeek?.takeIf { it > 0 }) }
     var selectedDuration by remember { mutableStateOf(initial?.workoutDuration?.takeIf { it > 0 }) }
     var selectedTime by remember { mutableStateOf(initial?.preferredWorkoutTime) }
+    var selectedLiftingUnits by remember { mutableStateOf(initial?.liftingUnitSystem) }
+
+    // Only worth asking when there is something with a number written on it.
+    // A bodyweight setup has no plates to read, so the question would be about
+    // nothing, and it stays unanswered rather than being given a value.
+    val hasLoadedEquipment = selectedEquipment.any { it in LoadedEquipment }
 
     TrainrScaffold(
         onBackClick = onBackClick,
@@ -100,6 +109,7 @@ fun WorkoutSetupScreen(
                         onNextClick(
                             location,
                             selectedEquipment.toList(),
+                            if (hasLoadedEquipment) selectedLiftingUnits else null,
                             days,
                             duration,
                             time
@@ -111,6 +121,7 @@ fun WorkoutSetupScreen(
                 // set means unanswered rather than "nothing available".
                 enabled = selectedLocation != null &&
                     selectedEquipment.isNotEmpty() &&
+                    (!hasLoadedEquipment || selectedLiftingUnits != null) &&
                     selectedDays != null &&
                     selectedDuration != null &&
                     selectedTime != null
@@ -232,6 +243,38 @@ fun WorkoutSetupScreen(
                                     }
                                 )
                             }
+                        }
+                    }
+                }
+
+                if (hasLoadedEquipment) {
+                    Spacer(modifier = Modifier.height(Spacing.sectionGap))
+
+                    TrainrFormSection(
+                        title = stringResource(R.string.weights_marked_in),
+                        verticalPadding = 0.dp,
+                        titleGap = Spacing.card
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(Spacing.card)
+                        ) {
+                            TrainrToggleChip(
+                                text = stringResource(R.string.weight_column),
+                                selected = selectedLiftingUnits == UnitSystem.METRIC,
+                                onClick = { selectedLiftingUnits = UnitSystem.METRIC },
+                                height = ComponentHeight.ChipTall,
+                                horizontalPadding = 0.dp,
+                                modifier = Modifier.weight(1f)
+                            )
+                            TrainrToggleChip(
+                                text = stringResource(R.string.weight_column_lbs),
+                                selected = selectedLiftingUnits == UnitSystem.IMPERIAL,
+                                onClick = { selectedLiftingUnits = UnitSystem.IMPERIAL },
+                                height = ComponentHeight.ChipTall,
+                                horizontalPadding = 0.dp,
+                                modifier = Modifier.weight(1f)
+                            )
                         }
                     }
                 }

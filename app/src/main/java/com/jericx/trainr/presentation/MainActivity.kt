@@ -237,8 +237,10 @@ fun AppContent(versionName: String) {
                     WorkoutSetupScreen(
                         initial = onboardingState.filledFor(OnboardingStep.SETUP, editing),
                         isEditing = editing,
-                        onNextClick = { location, equipment, days, duration, time ->
-                            onboardingViewModel.updateWorkoutSetup(location, equipment, days, duration, time)
+                        onNextClick = { location, equipment, liftingUnits, days, duration, time ->
+                            onboardingViewModel.updateWorkoutSetup(
+                                location, equipment, liftingUnits, days, duration, time
+                            )
                             if (editing) {
                                 navController.popBackStack()
                             } else {

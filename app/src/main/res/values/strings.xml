@@ -78,6 +78,7 @@
     <string name="gym">Gym</string>
     <string name="both">Both</string>
     <string name="available_equipment">Available Equipment</string>
+    <string name="weights_marked_in">What are the weights marked in?</string>
     <string name="bodyweight_only">Bodyweight only</string>
     <string name="dumbbells">Dumbbells</string>
     <string name="resistance_bands">Resistance bands</string>
@@ -252,6 +253,7 @@
     <string name="workout_setup_label">Workout Setup</string>
     <string name="location_label">Location</string>
     <string name="equipment_label_full">Equipment</string>
+    <string name="weights_in_label">Weights in</string>
     <string name="schedule_label">Schedule</string>
     <string name="duration_label">Duration</string>
     <string name="preferred_time_label">Preferred Time</string>

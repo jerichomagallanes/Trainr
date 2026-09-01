@@ -18,10 +18,21 @@ data class UserProfile(
     val preferredWorkoutTime: WorkoutTime = WorkoutTime.ANYTIME,
     val injuries: List<String> = emptyList(),
     val workoutType: WorkoutType = WorkoutType.MIXED,
-    // Which units the client reads and writes. Storage stays metric either way.
-    val unitSystem: UnitSystem = UnitSystem.Default,
+    // How the client reads their own body: centimetres and kilograms, or feet
+    // and pounds. Storage stays metric either way.
+    val bodyUnitSystem: UnitSystem = UnitSystem.Default,
+    // What the plates in their gym are marked in, which is a different question
+    // with a different answer: thinking of yourself in stones and pounds does
+    // not stop the bar being loaded in kilos. Null until there is loaded
+    // equipment to ask about.
+    val liftingUnitSystem: UnitSystem? = null,
     val createdAt: Long = System.currentTimeMillis()
-)
+) {
+    // What a weight on a set should be shown in. Falls back to the body units
+    // for a client who only ever trains with their own bodyweight and was
+    // therefore never asked.
+    val weightUnits: UnitSystem get() = liftingUnitSystem ?: bodyUnitSystem
+}
 
 enum class Gender {
     MALE,
