@@ -155,6 +155,10 @@
     <string name="week_completed_format">第%d週 完了</string>
     <string name="week_completed_message">今週のワークアウトをすべて終えました。素晴らしい継続力です。この調子で続けましょう！</string>
     <string name="slide_to_complete_routine">スライドしてこのワークアウトを完了</string>
+    <string name="start_workout_over">このワークアウトをやり直す</string>
+    <string name="start_workout_over_title">このワークアウトをやり直しますか？</string>
+    <string name="start_workout_over_message">記録したセットと回数が消去されます。ワークアウトの内容は計画されたまま残ります。</string>
+    <string name="start_over">やり直す</string>
     <plurals name="minutes">
         <item quantity="other">%d分</item>
     </plurals>
