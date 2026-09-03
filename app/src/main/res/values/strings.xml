@@ -156,6 +156,10 @@
     <string name="week_completed_format">WEEK %d COMPLETED</string>
     <string name="week_completed_message">You\'ve finished all your workouts this week. Amazing consistency. Keep it up!</string>
     <string name="slide_to_complete_routine">SLIDE TO FINISH THIS WORKOUT</string>
+    <string name="start_workout_over">Start this workout over</string>
+    <string name="start_workout_over_title">Start this workout over?</string>
+    <string name="start_workout_over_message">Your logged sets and reps will be cleared. The workout itself stays exactly as it was planned.</string>
+    <string name="start_over">Start over</string>
     <plurals name="minutes">
         <item quantity="one">%d min</item>
         <item quantity="other">%d mins</item>

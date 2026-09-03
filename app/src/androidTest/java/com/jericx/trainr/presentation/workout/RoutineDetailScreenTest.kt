@@ -221,4 +221,79 @@ class RoutineDetailScreenTest {
 
         assertThat(completed).isFalse()
     }
+
+    // The foot of the screen holds exactly one action. Slide to finish while
+    // there is something to finish; the way back once there is not.
+    @Test
+    fun aFinishedWorkoutOffersTheWayBackInstead() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                RoutineDetailScreen(state = state.copy(routine = state.routine.completeAll()))
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.slide_to_complete_routine))
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.start_workout_over))
+            .performScrollTo()
+            .assertIsDisplayed()
+    }
+
+    // An untouched session has nothing to undo, so it must not offer to.
+    @Test
+    fun anUntouchedWorkoutDoesNotOfferToStartOver() {
+        setScreen()
+
+        composeTestRule.onNodeWithText(string(R.string.start_workout_over))
+            .assertDoesNotExist()
+    }
+
+    // Clearing is destructive enough to ask first, and the dialog has to say
+    // what survives: "start over" alone reads as losing the plan itself.
+    @Test
+    fun startingOverAsksFirstAndSaysWhatSurvives() {
+        var cleared = false
+        composeTestRule.setContent {
+            TrainrTheme {
+                RoutineDetailScreen(
+                    state = state.copy(routine = state.routine.completeAll()),
+                    onClearProgress = { cleared = true }
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.start_workout_over))
+            .performScrollTo()
+            .performClick()
+
+        composeTestRule.onNodeWithText(string(R.string.start_workout_over_message))
+            .assertIsDisplayed()
+        assertThat(cleared).isFalse()
+
+        composeTestRule.onNodeWithText(string(R.string.start_over)).performClick()
+
+        assertThat(cleared).isTrue()
+    }
+
+    @Test
+    fun cancellingLeavesTheWorkoutFinished() {
+        var cleared = false
+        composeTestRule.setContent {
+            TrainrTheme {
+                RoutineDetailScreen(
+                    state = state.copy(routine = state.routine.completeAll()),
+                    onClearProgress = { cleared = true }
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.start_workout_over))
+            .performScrollTo()
+            .performClick()
+        composeTestRule.onNodeWithText(string(R.string.cancel)).performClick()
+
+        assertThat(cleared).isFalse()
+        composeTestRule.onNodeWithText(string(R.string.start_workout_over))
+            .assertIsDisplayed()
+    }
 }

@@ -211,6 +211,26 @@ class RoutineDetailViewModel @Inject constructor(
         }
     }
 
+    // Puts the session back to un-started. The mirror of completeRoutine: it
+    // clears the ticks and the logged numbers, and leaves the prescription
+    // alone, because the targets were never overwritten to begin with.
+    //
+    // The day's own status follows from its exercises, so persistDayStatus
+    // moves it back out of completed without being told to.
+    fun clearProgress() {
+        cancelTick()
+        _uiState.update { it.copy(routine = it.routine.clearProgress(), timer = null) }
+
+        val day = storedDay ?: return
+        val cleared = day.copy(exercises = day.exercises.map { it.copy(isCompleted = false) })
+        storedDay = cleared
+        viewModelScope.launch {
+            cleared.exercises.forEach { userRepository.updateWorkoutExercise(it, day.id) }
+            persistFilledSets(_uiState.value.routine.exercises.map { it.position })
+            persistDayStatus()
+        }
+    }
+
     // One timer at a time: starting an exercise replaces whatever was running.
     fun startTimer(exercise: ExerciseUi) {
         cancelTick()

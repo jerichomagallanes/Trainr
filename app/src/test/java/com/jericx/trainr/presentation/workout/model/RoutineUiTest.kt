@@ -278,4 +278,35 @@ class RoutineUiTest {
             .isEqualTo(ticked.exercises.first().sets.map { it.actualReps })
     }
 
+
+    // Slide to finish, then change your mind. The prescription has to survive,
+    // because logging only ever wrote to the actuals and the targets are what
+    // the plan actually said.
+    @Test
+    fun `clearing progress keeps the prescription and drops the log`() {
+        val done = routineWithSets().completeAll()
+        val before = done.exercises.first().sets.first()
+        assertThat(before.isCompleted).isTrue()
+        assertThat(before.actualReps).isNotNull()
+
+        val cleared = done.clearProgress()
+        val after = cleared.exercises.first().sets.first()
+
+        assertThat(after.isCompleted).isFalse()
+        assertThat(after.actualReps).isNull()
+        assertThat(after.actualWeightKg).isNull()
+        assertThat(after.actualSeconds).isNull()
+        assertThat(after.targetReps).isEqualTo(before.targetReps)
+        assertThat(after.targetWeightKg).isEqualTo(before.targetWeightKg)
+        assertThat(cleared.exercises.none { it.isCompleted }).isTrue()
+        assertThat(cleared.isComplete).isFalse()
+    }
+
+    // The button that offers this only appears when there is something to undo.
+    @Test
+    fun `an untouched routine has no progress to clear`() {
+        assertThat(routineWithSets().hasProgress).isFalse()
+        assertThat(routineWithSets().completeAll().hasProgress).isTrue()
+        assertThat(routineWithSets().completeAll().clearProgress().hasProgress).isFalse()
+    }
 }

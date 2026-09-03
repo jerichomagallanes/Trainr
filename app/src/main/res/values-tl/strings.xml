@@ -157,6 +157,10 @@
     <string name="week_completed_format">TAPOS NA ANG LINGGO %d</string>
     <string name="week_completed_message">Natapos mo na ang lahat ng workout mo ngayong linggo. Ang galing ng consistency mo. Ituloy mo lang!</string>
     <string name="slide_to_complete_routine">I-SLIDE PARA TAPUSIN ANG WORKOUT NA ITO</string>
+    <string name="start_workout_over">Simulan ulit ang workout</string>
+    <string name="start_workout_over_title">Simulan ulit ang workout na ito?</string>
+    <string name="start_workout_over_message">Mabubura ang mga na-log mong set at reps. Mananatili ang workout gaya ng pagkakaplano nito.</string>
+    <string name="start_over">Simulan ulit</string>
     <plurals name="minutes">
         <item quantity="one">%d min</item>
         <item quantity="other">%d mins</item>

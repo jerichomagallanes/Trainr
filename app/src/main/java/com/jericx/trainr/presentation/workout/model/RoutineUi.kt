@@ -86,6 +86,38 @@ data class RoutineUi(
     fun completeAll(): RoutineUi = copy(
         exercises = exercises.map { it.loggedAsPrescribed() }
     )
+
+    // Back to a session nobody has started. The logged numbers go and the
+    // prescription stays, which costs nothing to do because the two were never
+    // the same field: logging only ever wrote to the actuals.
+    //
+    // Sets added or deleted by hand are left as they are. Restoring those would
+    // be undo, which is a different promise than this one makes.
+    fun clearProgress(): RoutineUi = copy(
+        exercises = exercises.map { exercise ->
+            exercise.copy(
+                isCompleted = false,
+                sets = exercise.sets.map {
+                    it.copy(
+                        actualReps = null,
+                        actualWeightKg = null,
+                        actualSeconds = null,
+                        isCompleted = false
+                    )
+                }
+            )
+        }
+    )
+
+    // Whether there is anything to clear. A session nobody has touched must not
+    // offer to undo work that does not exist.
+    val hasProgress: Boolean
+        get() = exercises.any { exercise ->
+            exercise.isCompleted || exercise.sets.any {
+                it.isCompleted || it.actualReps != null ||
+                    it.actualWeightKg != null || it.actualSeconds != null
+            }
+        }
 }
 
 // Ticking an exercise off says its prescription was done, so a set left blank

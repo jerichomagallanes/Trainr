@@ -11,8 +11,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -37,6 +39,7 @@ import com.jericx.trainr.R
 import com.jericx.trainr.presentation.common.components.core.TrainrProgress
 import com.jericx.trainr.presentation.common.components.core.TrainrSlideToConfirm
 import com.jericx.trainr.presentation.common.components.layout.TrainrTopBar
+import com.jericx.trainr.presentation.common.theme.RedError
 import com.jericx.trainr.presentation.common.theme.Slate800
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
@@ -67,6 +70,7 @@ fun RoutineDetailRoute(
         onAddSet = viewModel::addSet,
         onDeleteSet = viewModel::deleteSet,
         onCompleteRoutine = viewModel::completeRoutine,
+        onClearProgress = viewModel::clearProgress,
         onStartTimer = viewModel::startTimer,
         onPauseTimer = viewModel::pauseTimer,
         onResumeTimer = viewModel::resumeTimer,
@@ -86,6 +90,7 @@ fun RoutineDetailScreen(
     onAddSet: (Int) -> Unit = {},
     onDeleteSet: (Int, Int) -> Unit = { _, _ -> },
     onCompleteRoutine: () -> Unit = {},
+    onClearProgress: () -> Unit = {},
     onStartTimer: (ExerciseUi) -> Unit = {},
     onPauseTimer: () -> Unit = {},
     onResumeTimer: () -> Unit = {},
@@ -102,6 +107,8 @@ fun RoutineDetailScreen(
     // routine is not finishing it, so only the transition counts: null means
     // nothing loaded has been seen yet, and the first loaded state only primes.
     var wasComplete by remember { mutableStateOf<Boolean?>(null) }
+
+    var showStartOver by remember { mutableStateOf(false) }
 
     LaunchedEffect(state.routine.isComplete, state.isLoaded) {
         if (!state.isLoaded) return@LaunchedEffect
@@ -234,18 +241,67 @@ fun RoutineDetailScreen(
                 }
             }
 
-            // Gone once there is nothing left to finish. Sliding a finished
-            // session again says nothing and does nothing; un-ticking any
-            // exercise brings it back with something to say.
+            // The foot of the screen holds exactly one action, and which one
+            // depends on whether there is anything left to finish. Sliding a
+            // finished session again says nothing; what a finished session
+            // needs is the way back, in the place the slider just was.
             if (!routine.isComplete) {
                 TrainrSlideToConfirm(
                     text = stringResource(R.string.slide_to_complete_routine),
                     onConfirm = onCompleteRoutine,
                     modifier = Modifier.padding(top = Spacing.section + Spacing.tight)
                 )
+            } else if (routine.hasProgress) {
+                TextButton(
+                    onClick = { showStartOver = true },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = Spacing.section + Spacing.tight)
+                ) {
+                    Text(
+                        text = stringResource(R.string.start_workout_over),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Slate800
+                    )
+                }
             }
         }
     }
+
+    if (showStartOver) {
+        StartWorkoutOverDialog(
+            onConfirm = {
+                showStartOver = false
+                onClearProgress()
+            },
+            onDismiss = { showStartOver = false }
+        )
+    }
+}
+
+// Same shape as the plan screen's destructive dialogs: what is lost in red,
+// the way out in the quieter colour. The second sentence is the whole point of
+// the dialog, because "start over" alone does not say what survives.
+@Composable
+private fun StartWorkoutOverDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = stringResource(R.string.start_workout_over_title)) },
+        text = { Text(text = stringResource(R.string.start_workout_over_message)) },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(text = stringResource(R.string.start_over), color = RedError)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = stringResource(R.string.cancel), color = Slate800)
+            }
+        }
+    )
 }
 
 @Preview(showBackground = true, heightDp = 2400)
