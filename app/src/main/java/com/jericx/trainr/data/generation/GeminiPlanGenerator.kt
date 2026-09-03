@@ -3,6 +3,7 @@ package com.jericx.trainr.data.generation
 import com.jericx.trainr.domain.generation.PlanGenerator
 import com.jericx.trainr.domain.generation.PlanGenerationResult
 import com.jericx.trainr.domain.generation.PlanRequest
+import com.jericx.trainr.domain.generation.SpentModels
 import kotlinx.coroutines.delay
 
 // Generation is a conversation with a deadline: ask, validate, and when the
@@ -12,7 +13,8 @@ import kotlinx.coroutines.delay
 class GeminiPlanGenerator(
     private val client: PlanModelClient,
     private val parser: GeneratedPlanParser,
-    private val promptBuilder: PlanPromptBuilder
+    private val promptBuilder: PlanPromptBuilder,
+    private val spentModels: SpentModels
 ) : PlanGenerator {
 
     override suspend fun generate(request: PlanRequest): PlanGenerationResult {
@@ -29,10 +31,22 @@ class GeminiPlanGenerator(
         // costs nothing from that budget: a model that will not answer has not
         // answered, and the free allowance is counted per model, so the next
         // one has its own.
+        // Models already known to be out of allowance today are not asked at
+        // all. Each one would cost a full round trip to be told what it told us
+        // this morning, and with five in the chain that is where a client's
+        // minutes of waiting went.
+        val spent = spentModels.spentToday()
+        val models = PlanModelClient.MODELS.filterNot { it in spent }
+            // Everything is spent, so there is nothing to skip to. Ask anyway
+            // rather than refusing offline: the reset may have just passed, or
+            // the record may be wrong, and one wasted call beats telling a
+            // client the app is broken.
+            .ifEmpty { PlanModelClient.MODELS }
+
         var modelIndex = 0
         var attemptsSpent = 0
 
-        while (modelIndex < PlanModelClient.MODELS.size && attemptsSpent < MAX_ATTEMPTS) {
+        while (modelIndex < models.size && attemptsSpent < MAX_ATTEMPTS) {
             if (attemptsSpent > 0) delay(RETRY_DELAY_MILLIS * attemptsSpent)
 
             val prompt =
@@ -40,7 +54,7 @@ class GeminiPlanGenerator(
 
             val json = when (
                 val answer = client.generate(
-                    model = PlanModelClient.MODELS[modelIndex],
+                    model = models[modelIndex],
                     systemInstruction = promptBuilder.systemInstruction(),
                     userPrompt = prompt
                 )
@@ -50,10 +64,19 @@ class GeminiPlanGenerator(
                 // Nothing is reachable, so no other model will be either.
                 GeminiResponse.Unreachable -> return PlanGenerationResult.Offline
 
-                // Spent, retired or overloaded. Ask the next model, and do not
-                // count it against the attempts: asking again is the one thing
-                // guaranteed not to help, and on a spent allowance every extra
-                // call is a request the client no longer has.
+                // Out of allowance for the day. Remembered, so the next
+                // generation skips it instead of learning this again.
+                GeminiResponse.QuotaSpent -> {
+                    spentModels.markSpent(models[modelIndex])
+                    failure = PlanGenerationResult.Failed
+                    modelIndex++
+                    continue
+                }
+
+                // Retired, overloaded or too slow. Ask the next model, and do
+                // not count it against the attempts: asking again is the one
+                // thing guaranteed not to help. Not remembered, because this
+                // one may answer perfectly well in a minute.
                 GeminiResponse.ModelUnavailable -> {
                     failure = PlanGenerationResult.Failed
                     modelIndex++

@@ -7,10 +7,14 @@ sealed interface GeminiResponse {
     data class Text(val value: String) : GeminiResponse
     data object Unreachable : GeminiResponse
 
-    // This model will not serve us, but another might: its free allowance for
-    // the day is spent, it has been retired, or it is overloaded right now.
-    // Asking it again is the one thing guaranteed not to help — and on a spent
-    // allowance each attempt costs a request we no longer have.
+    // This model's free allowance for the day is spent. Durable: it will say
+    // the same thing until the quota resets, which is why it is worth
+    // remembering rather than rediscovering on every generation.
+    data object QuotaSpent : GeminiResponse
+
+    // This model cannot answer right now — overloaded, retired, or too slow to
+    // wait for. Another might, and this one might again in a minute, so it is
+    // deliberately not remembered.
     data object ModelUnavailable : GeminiResponse
 
     data object Failed : GeminiResponse

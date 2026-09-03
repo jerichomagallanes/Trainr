@@ -8,6 +8,8 @@ import com.google.firebase.ai.type.RequestTimeoutException
 import com.google.firebase.ai.type.ServerException
 import com.google.firebase.ai.type.content
 import com.google.firebase.ai.type.generationConfig
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.withTimeout
 import java.io.IOException
 
 // Generation goes through Firebase AI Logic rather than straight to the Gemini
@@ -32,16 +34,27 @@ class FirebaseAiClient : PlanModelClient {
                 systemInstruction = content { text(systemInstruction) }
             )
 
-        generativeModel.generateContent(userPrompt).text
-            ?.let(GeminiResponse::Text)
-            ?: GeminiResponse.Failed
+        // Capped, because a model that has not answered in this long is not
+        // about to. Without it the SDK waits its own much longer timeout, and
+        // with five models in the chain a client can sit through five of those
+        // in a row before anything is asked that will actually answer.
+        withTimeout(CALL_TIMEOUT_MILLIS) {
+            generativeModel.generateContent(userPrompt).text
+                ?.let(GeminiResponse::Text)
+                ?: GeminiResponse.Failed
+        }
     } catch (_: QuotaExceededException) {
-        // Its allowance for the day is spent; the next model has its own.
-        GeminiResponse.ModelUnavailable
+        // Its allowance for the day is spent; the next model has its own, and
+        // this one will keep saying so until the quota resets.
+        GeminiResponse.QuotaSpent
     } catch (_: ServerException) {
         // Overloaded or retired: someone else may still answer.
         GeminiResponse.ModelUnavailable
     } catch (_: RequestTimeoutException) {
+        GeminiResponse.ModelUnavailable
+    } catch (_: TimeoutCancellationException) {
+        // Ours rather than the SDK's, and read the same way: too slow now, but
+        // no reason to think it will be tomorrow, so it is not remembered.
         GeminiResponse.ModelUnavailable
     } catch (e: Exception) {
         // No route to anything, rather than a quarrel with one model: no other
@@ -60,6 +73,9 @@ class FirebaseAiClient : PlanModelClient {
 
     private companion object {
         // Low enough for disciplined programming, high enough for varied plans.
+        // A whole week normally lands in twenty to thirty seconds.
+        const val CALL_TIMEOUT_MILLIS = 45_000L
+
         const val TEMPERATURE = 0.4f
     }
 }

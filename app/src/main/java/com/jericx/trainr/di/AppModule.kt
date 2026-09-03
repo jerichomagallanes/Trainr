@@ -11,6 +11,8 @@ import com.jericx.trainr.data.preferences.LanguagePreferences
 import com.jericx.trainr.data.repository.UserRepositoryImpl
 import com.jericx.trainr.data.generation.planGenerator
 import com.jericx.trainr.domain.generation.PlanGenerator
+import com.jericx.trainr.data.generation.DailySpentModels
+import com.jericx.trainr.domain.generation.SpentModels
 import com.jericx.trainr.domain.repository.UserRepository
 import dagger.Module
 import dagger.Provides
@@ -32,6 +34,11 @@ object AppModule {
             Constants.DATABASE_NAME
         ).build()
     }
+
+    @Provides
+    @Singleton
+    fun provideSpentModels(@ApplicationContext context: Context): SpentModels =
+        DailySpentModels(context)
 
     @Provides
     @Singleton
@@ -58,7 +65,8 @@ object AppModule {
     @Singleton
     // Which generator answers is a property of the build, not of a flag: see
     // planGenerator() in the dev and prod source sets.
-    fun providePlanGenerator(): PlanGenerator = planGenerator()
+    fun providePlanGenerator(spentModels: SpentModels): PlanGenerator =
+        planGenerator(spentModels)
 
     @Provides
     @Singleton
