@@ -3,6 +3,7 @@ package com.jericx.trainr.data.generation
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.domain.generation.PlanGenerationResult
 import com.jericx.trainr.domain.generation.PlanRequest
+import com.jericx.trainr.domain.generation.SpentModels
 import com.jericx.trainr.domain.model.UserProfile
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
@@ -32,10 +33,21 @@ class GeminiPlanGeneratorTest {
 
     private fun text(body: String) = GeminiResponse.Text(body)
 
-    private fun generator(client: PlanModelClient) = GeminiPlanGenerator(
+    // Remembers in memory what the real one remembers on disk.
+    private class FakeSpentModels(initial: Set<String> = emptySet()) : SpentModels {
+        private val spent = initial.toMutableSet()
+        override fun spentToday(): Set<String> = spent
+        override fun markSpent(model: String) { spent += model }
+    }
+
+    private fun generator(
+        client: PlanModelClient,
+        spentModels: SpentModels = FakeSpentModels()
+    ) = GeminiPlanGenerator(
         client = client,
         parser = GeneratedPlanParser(),
-        promptBuilder = PlanPromptBuilder()
+        promptBuilder = PlanPromptBuilder(),
+        spentModels = spentModels
     )
 
     private fun request(daysPerWeek: Int = 1) = PlanRequest(
@@ -186,5 +198,50 @@ class GeminiPlanGeneratorTest {
         assertThat(PlanModelClient.MODELS).isNotEmpty()
         assertThat(PlanModelClient.MODELS.filter { it.endsWith("-latest") }).isEmpty()
         assertThat(PlanModelClient.MODELS).containsNoDuplicates()
+    }
+
+    // The whole point of the change: a model that said it was out of allowance
+    // this morning is not asked again this afternoon. Each pointless ask costs
+    // a full round trip, and with five models that is where the minutes went.
+    @Test
+    fun `a model that is out of allowance is not asked again`() = runTest {
+        val spent = FakeSpentModels()
+        val first = answering(GeminiResponse.QuotaSpent, text(validPlanJson))
+
+        generator(first, spent).generate(request())
+
+        assertThat(spent.spentToday()).containsExactly(PlanModelClient.MODELS.first())
+
+        val second = answering(text(validPlanJson))
+        generator(second, spent).generate(request())
+
+        assertThat(second.modelsAsked).doesNotContain(PlanModelClient.MODELS.first())
+        assertThat(second.modelsAsked.first()).isEqualTo(PlanModelClient.MODELS[1])
+    }
+
+    // Overloaded or slow is not the same as out of allowance. It may answer
+    // perfectly well a minute later, so remembering it would strike a healthy
+    // model off the list for the rest of the day.
+    @Test
+    fun `a model that is merely unavailable is not remembered`() = runTest {
+        val spent = FakeSpentModels()
+
+        generator(answering(GeminiResponse.ModelUnavailable, text(validPlanJson)), spent)
+            .generate(request())
+
+        assertThat(spent.spentToday()).isEmpty()
+    }
+
+    // Everything is spent, so there is nothing to skip to. Asking anyway beats
+    // refusing: the reset may have just passed, or the record may be stale.
+    @Test
+    fun `with every model spent it still asks rather than giving up`() = runTest {
+        val spent = FakeSpentModels(PlanModelClient.MODELS.toSet())
+        val client = answering(text(validPlanJson))
+
+        val result = generator(client, spent).generate(request())
+
+        assertThat(client.modelsAsked).isNotEmpty()
+        assertThat(result).isInstanceOf(PlanGenerationResult.Generated::class.java)
     }
 }
