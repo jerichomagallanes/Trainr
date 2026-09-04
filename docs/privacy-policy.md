@@ -40,8 +40,25 @@ API**, through Firebase AI Logic. What is sent:
 
 **Your name and your gender are never sent.** They stay on the device.
 
-Google processes this to generate the plan and returns it to the app. Google's
-handling of it is governed by their own terms:
+Google processes this to generate the plan and returns it to the app.
+
+**Trainr currently uses the free tier of the Gemini API, and you should know what
+that means.** Google's own terms for the unpaid service say that Google uses the
+content submitted to it "to provide, improve, and develop Google products and
+services", and that "human reviewers may read, annotate, and process" what is
+sent and what comes back. Google says it disconnects that content from your
+account before any human sees it.
+
+So the answers listed above are not only used to write your plan. They may also
+be used by Google to improve its own services, and a person at Google may read
+them. That is why your name and gender are deliberately never sent, and why
+nothing you type is attached to an account.
+
+If Trainr moves to the paid tier of the API, that changes: Google's terms for the
+paid service say it does not use prompts or responses to improve its products.
+This policy will be updated if and when that happens.
+
+Google's handling of this data is governed by their own terms:
 
 - Gemini API terms: https://ai.google.dev/gemini-api/terms
 - Google Privacy Policy: https://policies.google.com/privacy
@@ -74,6 +91,11 @@ Your height, weight and any injuries you list are health-related. They are used
 for one thing: writing a workout plan that suits you and avoids what you asked it
 to avoid. They are not sold, shared with advertisers, or used to build a profile
 of you.
+
+They are, however, sent to the Gemini API, so the section above about the free
+tier applies to them as well. If you would rather not send health details, you
+can leave the injuries question blank: it is the one optional question in
+onboarding, and the plan is written without it.
 
 ## What Trainr does not do
 
