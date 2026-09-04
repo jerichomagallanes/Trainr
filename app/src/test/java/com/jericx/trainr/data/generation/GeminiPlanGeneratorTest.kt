@@ -2,6 +2,8 @@ package com.jericx.trainr.data.generation
 
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.domain.generation.PlanGenerationResult
+import com.jericx.trainr.domain.diagnostics.Breadcrumbs
+import com.jericx.trainr.domain.diagnostics.NoBreadcrumbs
 import com.jericx.trainr.domain.generation.PlanRequest
 import com.jericx.trainr.domain.generation.SpentModels
 import com.jericx.trainr.domain.model.UserProfile
@@ -40,14 +42,25 @@ class GeminiPlanGeneratorTest {
         override fun markSpent(model: String) { spent += model }
     }
 
+    // Keeps everything it was told, so a test can read the whole trail.
+    private class FakeBreadcrumbs : Breadcrumbs {
+        val events = mutableListOf<String>()
+        val state = mutableMapOf<String, String>()
+        override fun record(event: String) { events += event }
+        override fun state(key: String, value: String) { state[key] = value }
+        fun everything() = events + state.keys + state.values
+    }
+
     private fun generator(
         client: PlanModelClient,
-        spentModels: SpentModels = FakeSpentModels()
+        spentModels: SpentModels = FakeSpentModels(),
+        breadcrumbs: Breadcrumbs = NoBreadcrumbs
     ) = GeminiPlanGenerator(
         client = client,
         parser = GeneratedPlanParser(),
         promptBuilder = PlanPromptBuilder(),
-        spentModels = spentModels
+        spentModels = spentModels,
+        breadcrumbs = breadcrumbs
     )
 
     private fun request(daysPerWeek: Int = 1) = PlanRequest(
@@ -295,5 +308,61 @@ class GeminiPlanGeneratorTest {
         val result = generator(client, spent).generate(request())
 
         assertThat(result).isEqualTo(PlanGenerationResult.DailyLimitReached)
+    }
+
+    // The trail is what makes a crash report worth reading: it says which model
+    // was asked, in what order, and what each one said.
+    @Test
+    fun `the trail records the walk through the models`() = runTest {
+        val trail = FakeBreadcrumbs()
+        val client = answering(
+            GeminiResponse.QuotaSpent,
+            GeminiResponse.ModelUnavailable,
+            text(validPlanJson)
+        )
+
+        generator(client, breadcrumbs = trail).generate(request())
+
+        assertThat(trail.events.any { it.contains("out of allowance") }).isTrue()
+        assertThat(trail.events.any { it.contains("unavailable") }).isTrue()
+        assertThat(trail.events).contains("generation: plan accepted")
+        assertThat(trail.state["week"]).isEqualTo("1")
+    }
+
+    // The policy promises a crash report says what broke, not who the client is.
+    // A breadcrumb is stored by Google and outlives the session, so no answer
+    // the client gave may appear in one — and a validation message can quote the
+    // model's own text, which was written from the profile.
+    @Test
+    fun `no answer the client gave reaches the trail`() = runTest {
+        val trail = FakeBreadcrumbs()
+        val profile = UserProfile(
+            id = 1,
+            firstName = "Jericho",
+            age = 31,
+            height = 178f,
+            weight = 75f,
+            injuries = listOf("Left rotator cuff"),
+            workoutDaysPerWeek = 1
+        )
+        val client = answering(
+            GeminiResponse.Failed,
+            text("""{ "title": " ", "days": [] }"""),
+            text(validPlanJson)
+        )
+
+        generator(client, breadcrumbs = trail).generate(
+            PlanRequest(
+                user = profile,
+                weekNumber = 1,
+                startDateMillis = 0L,
+                languageCode = "en"
+            )
+        )
+
+        val trailText = trail.everything().joinToString(" ")
+        for (secret in listOf("Jericho", "31", "178", "75", "rotator cuff")) {
+            assertThat(trailText).doesNotContain(secret)
+        }
     }
 }

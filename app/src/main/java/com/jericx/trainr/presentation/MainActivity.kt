@@ -28,6 +28,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import androidx.navigation.compose.rememberNavController
 import com.jericx.trainr.BuildConfig
+import com.jericx.trainr.data.diagnostics.CrashlyticsBreadcrumbs
+import com.jericx.trainr.domain.diagnostics.Breadcrumbs
 import com.jericx.trainr.data.preferences.NavigationStateManager
 import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.model.WorkoutDay
@@ -70,6 +72,11 @@ private fun OnboardingState.filledFor(
     editing: Boolean
 ): UserProfile? = if (editing || step in answeredSteps) userProfile else null
 
+// Stateless, so it is built where it is used rather than threaded through every
+// composable that might one day want to leave a note.
+@Composable
+private fun rememberBreadcrumbs(): Breadcrumbs = remember { CrashlyticsBreadcrumbs() }
+
 private val NavBackStackEntry.isEditing: Boolean
     get() = arguments?.getBoolean(Screen.EditableStep.ARG_EDIT) ?: false
 
@@ -106,6 +113,18 @@ class MainActivity : ComponentActivity() {
 fun AppContent(versionName: String) {
     val context = LocalContext.current
     val navController = rememberNavController()
+
+    // The route taken, so a crash report says which screen the client was on
+    // rather than only which line failed. Route patterns, never their filled-in
+    // arguments: a week number is harmless but the pattern is what identifies
+    // the screen, and taking the pattern keeps it that way by construction.
+    val breadcrumbs = rememberBreadcrumbs()
+    LaunchedEffect(navController) {
+        navController.currentBackStackEntryFlow.collect { entry ->
+            entry.destination.route?.let { breadcrumbs.record("screen: ${it.substringBefore('?')}") }
+        }
+    }
+
     val onboardingViewModel: OnboardingViewModel = hiltViewModel()
     val onboardingState by onboardingViewModel.onboardingState.collectAsStateWithLifecycle()
 
