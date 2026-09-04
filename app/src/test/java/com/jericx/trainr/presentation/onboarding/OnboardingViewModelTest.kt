@@ -261,7 +261,7 @@ class OnboardingViewModelTest {
     // by the built-in week, which told the client their coach had written them
     // a plan when it had not.
     @Test
-    fun `a failed generation writes nothing and reports why`() = runTest(testDispatcher) {
+    fun `a failed generation writes no plan and reports why`() = runTest(testDispatcher) {
         coEvery { planGenerator.generate(any()) } returns PlanGenerationResult.Offline
         var done = false
 
@@ -275,7 +275,22 @@ class OnboardingViewModelTest {
         }
         assertThat(done).isFalse()
         coVerify(exactly = 0) { userRepository.saveWeeklyWorkoutPlan(any()) }
-        coVerify(exactly = 0) { userRepository.saveUser(any()) }
+    }
+
+    // The answers survive a failure nobody caused. Thirteen questions is a lot
+    // to type again, and typing them again is the price of retrying the very
+    // thing that just failed. Saved without a plan, the app opens on the empty
+    // state that says the profile is safe and offers to create one.
+    @Test
+    fun `a first profile is kept when generation fails`() = runTest(testDispatcher) {
+        coEvery { planGenerator.generate(any()) } returns
+            PlanGenerationResult.DailyLimitReached
+
+        viewModel.saveUserProfile()
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { userRepository.saveUser(any()) }
+        coVerify(exactly = 0) { userRepository.saveWeeklyWorkoutPlan(any()) }
     }
 
     // Saving the user first would replace the stored one, and that REPLACE

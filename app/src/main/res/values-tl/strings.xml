@@ -204,6 +204,9 @@
     <string name="generation_failed_title">Hindi nagawa ang workout plan mo</string>
     <string name="generation_failed_offline">Offline ang Trainr. Tingnan ang koneksyon at subukan ulit.</string>
     <string name="generation_failed_message">May nangyaring mali habang ginagawa ang workout plan mo. Subukan ulit.</string>
+    <string name="generation_limit_title">Naabot na ang limitasyon ngayong araw</string>
+    <string name="generation_limit_message">May limitasyon sa dami ng planong kayang gawin ng Trainr sa isang araw sa ngayon. Nire-reset ito araw-araw, kaya hindi makakatulong ang pag-ulit ngayon.\n\nNaka-save ang mga sagot mo. Bumalik mamaya at isang tap lang ang plano mo.</string>
+    <string name="got_it">Sige</string>
     <string name="try_again">Subukan ulit</string>
     <string name="back_to_profile">Bumalik sa profile</string>
     <string name="missed">Hindi nagawa</string>

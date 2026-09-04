@@ -203,6 +203,9 @@
     <string name="generation_failed_title">Could not create your workout plan</string>
     <string name="generation_failed_offline">Trainr is offline. Check your connection and try again.</string>
     <string name="generation_failed_message">Something went wrong while writing your workout plan. Please try again.</string>
+    <string name="generation_limit_title">Daily limit reached</string>
+    <string name="generation_limit_message">Trainr can only write a few plans a day at the moment. The limit resets each day, so trying again now will not help.\n\nYour answers are saved. Come back later and create your plan in one tap.</string>
+    <string name="got_it">Got it</string>
     <string name="try_again">Try again</string>
     <string name="back_to_profile">Back to profile</string>
     <string name="missed">Missed</string>

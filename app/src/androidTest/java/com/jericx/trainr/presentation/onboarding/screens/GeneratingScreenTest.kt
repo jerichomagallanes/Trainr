@@ -162,4 +162,66 @@ class GeneratingScreenTest {
         assertThat(wentBack).isTrue()
     }
 
+
+    // A spent allowance is its own kind of failure, and the client needs the
+    // opposite advice: wait, rather than try again.
+    @Test
+    fun theDailyLimitGetsItsOwnTitleAndReason() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                GeneratingScreen(
+                    isReady = false,
+                    onStart = {},
+                    onDone = {},
+                    failure = PlanGenerationResult.DailyLimitReached
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.generation_limit_title))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.generation_limit_message))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.generation_failed_title))
+            .assertDoesNotExist()
+    }
+
+    // Retrying a spent allowance cannot work. A button the app knows will fail
+    // invites the client to keep tapping and keep failing.
+    @Test
+    fun theDailyLimitOffersNoRetry() {
+        var retried = false
+        composeTestRule.setContent {
+            TrainrTheme {
+                GeneratingScreen(
+                    isReady = false,
+                    onStart = {},
+                    onDone = {},
+                    failure = PlanGenerationResult.DailyLimitReached,
+                    onRetry = { retried = true }
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.try_again)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.got_it)).assertIsDisplayed()
+        assertThat(retried).isFalse()
+    }
+
+    // An ordinary failure still does, because a retry there may well work.
+    @Test
+    fun anOrdinaryFailureStillOffersRetry() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                GeneratingScreen(
+                    isReady = false,
+                    onStart = {},
+                    onDone = {},
+                    failure = PlanGenerationResult.Failed
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.try_again)).assertIsDisplayed()
+    }
 }

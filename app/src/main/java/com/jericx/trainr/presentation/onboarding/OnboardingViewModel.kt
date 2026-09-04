@@ -170,6 +170,21 @@ class OnboardingViewModel @Inject constructor(
                 )
 
                 if (result !is PlanGenerationResult.Generated) {
+                    // Keep what they typed. Thirteen answers is a lot to lose
+                    // to a failure they did not cause, and losing them means
+                    // typing it all again to try the very thing that just
+                    // failed. Saved without a plan, the app opens on the empty
+                    // state that already says the profile is safe and offers to
+                    // create a plan — so coming back later costs one tap.
+                    //
+                    // Only for a first profile. An existing one is already
+                    // stored, and saveUser REPLACEs: doing this to a client who
+                    // has been training would cascade their weeks away, which
+                    // is the whole reason nothing is written before the plan.
+                    if (existing == null) {
+                        runCatching { userRepository.saveUser(profile) }
+                    }
+
                     _onboardingState.value = _onboardingState.value.copy(
                         isLoading = false,
                         generationFailure = result as PlanGenerationResult.Failure
