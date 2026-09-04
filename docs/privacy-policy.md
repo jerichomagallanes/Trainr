@@ -1,6 +1,6 @@
 # Privacy Policy for Trainr
 
-**Last updated: 1 September 2026**
+**Last updated: 5 September 2026**
 
 Trainr is a workout planning app. This policy explains what it collects, where
 that goes, and what you can do about it. It is written to be read, not to cover
@@ -40,8 +40,25 @@ API**, through Firebase AI Logic. What is sent:
 
 **Your name and your gender are never sent.** They stay on the device.
 
-Google processes this to generate the plan and returns it to the app. Google's
-handling of it is governed by their own terms:
+Google processes this to generate the plan and returns it to the app.
+
+**Trainr currently uses the free tier of the Gemini API, and you should know what
+that means.** Google's own terms for the unpaid service say that Google uses the
+content submitted to it "to provide, improve, and develop Google products and
+services", and that "human reviewers may read, annotate, and process" what is
+sent and what comes back. Google says it disconnects that content from your
+account before any human sees it.
+
+So the answers listed above are not only used to write your plan. They may also
+be used by Google to improve its own services, and a person at Google may read
+them. That is why your name and gender are deliberately never sent, and why
+nothing you type is attached to an account.
+
+If Trainr moves to the paid tier of the API, that changes: Google's terms for the
+paid service say it does not use prompts or responses to improve its products.
+This policy will be updated if and when that happens.
+
+Google's handling of this data is governed by their own terms:
 
 - Gemini API terms: https://ai.google.dev/gemini-api/terms
 - Google Privacy Policy: https://policies.google.com/privacy
@@ -51,6 +68,23 @@ request is coming from a genuine install of this app rather than something
 pretending to be it. This involves your device and app being attested by Google
 Play. It is a security measure and carries no profile data.
 
+## Crash reports
+
+Trainr uses **Firebase Crashlytics** so that when the app crashes, the developer
+finds out and can fix it. If a crash happens, the following is sent to Google:
+
+- The stack trace: which part of the code failed
+- What the app was doing at the time
+- Basic details about the device and the version of Android on it
+- A random identifier Crashlytics generates for your installation, used to tell
+  one crash from the same crash happening twice
+
+**No part of your fitness profile is included in a crash report.** Not your name,
+age, measurements, injuries, or anything you have logged. Crash reports say what
+broke, not who you are.
+
+Development builds of the app do not send crash reports at all.
+
 ## Health information
 
 Your height, weight and any injuries you list are health-related. They are used
@@ -58,11 +92,16 @@ for one thing: writing a workout plan that suits you and avoids what you asked i
 to avoid. They are not sold, shared with advertisers, or used to build a profile
 of you.
 
+They are, however, sent to the Gemini API, so the section above about the free
+tier applies to them as well. If you would rather not send health details, you
+can leave the injuries question blank: it is the one optional question in
+onboarding, and the plan is written without it.
+
 ## What Trainr does not do
 
 - No accounts, no sign-in, no email address collected
 - No advertising, and no advertising identifiers
-- No analytics or crash reporting SDKs
+- No analytics: nothing tracks which screens you open or what you tap
 - No location, contacts, photos, microphone or camera access
 - Nothing is sold or shared with third parties beyond the plan generation described above
 

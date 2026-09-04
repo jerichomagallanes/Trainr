@@ -1,5 +1,7 @@
 package com.jericx.trainr.data.generation
 
+import com.jericx.trainr.domain.diagnostics.Breadcrumbs
+import com.jericx.trainr.domain.diagnostics.NoBreadcrumbs
 import com.jericx.trainr.domain.generation.PlanGenerator
 import com.jericx.trainr.domain.generation.PlanGenerationResult
 import com.jericx.trainr.domain.generation.PlanRequest
@@ -14,7 +16,9 @@ class GeminiPlanGenerator(
     private val client: PlanModelClient,
     private val parser: GeneratedPlanParser,
     private val promptBuilder: PlanPromptBuilder,
-    private val spentModels: SpentModels
+    private val spentModels: SpentModels,
+    // Nothing from the profile goes in here. See Breadcrumbs.
+    private val breadcrumbs: Breadcrumbs = NoBreadcrumbs
 ) : PlanGenerator {
 
     override suspend fun generate(request: PlanRequest): PlanGenerationResult {
@@ -36,6 +40,8 @@ class GeminiPlanGenerator(
         // this morning, and with five in the chain that is where a client's
         // minutes of waiting went.
         val spent = spentModels.spentToday()
+        breadcrumbs.state("week", request.weekNumber.toString())
+        breadcrumbs.state("models_spent_today", spent.size.toString())
         val models = PlanModelClient.MODELS.filterNot { it in spent }
             // Everything is spent, so there is nothing to skip to. Ask anyway
             // rather than refusing offline: the reset may have just passed, or
@@ -58,6 +64,8 @@ class GeminiPlanGenerator(
             val prompt =
                 if (feedback.isEmpty()) basePrompt else withFeedback(basePrompt, feedback)
 
+            breadcrumbs.record("generation: asking ${models[modelIndex]}, attempt ${attemptsSpent + 1}")
+
             val json = when (
                 val answer = client.generate(
                     model = models[modelIndex],
@@ -68,11 +76,15 @@ class GeminiPlanGenerator(
                 is GeminiResponse.Text -> answer.value
 
                 // Nothing is reachable, so no other model will be either.
-                GeminiResponse.Unreachable -> return PlanGenerationResult.Offline
+                GeminiResponse.Unreachable -> {
+                    breadcrumbs.record("generation: nothing reachable")
+                    return PlanGenerationResult.Offline
+                }
 
                 // Out of allowance for the day. Remembered, so the next
                 // generation skips it instead of learning this again.
                 GeminiResponse.QuotaSpent -> {
+                    breadcrumbs.record("generation: ${models[modelIndex]} out of allowance")
                     spentModels.markSpent(models[modelIndex])
                     refusedOnQuota++
                     failure = PlanGenerationResult.Failed
@@ -85,6 +97,7 @@ class GeminiPlanGenerator(
                 // thing guaranteed not to help. Not remembered, because this
                 // one may answer perfectly well in a minute.
                 GeminiResponse.ModelUnavailable -> {
+                    breadcrumbs.record("generation: ${models[modelIndex]} unavailable")
                     failure = PlanGenerationResult.Failed
                     modelIndex++
                     continue
@@ -94,6 +107,7 @@ class GeminiPlanGenerator(
                 // connection) as often as it is fatal, so it spends an attempt,
                 // not all of them.
                 GeminiResponse.Failed -> {
+                    breadcrumbs.record("generation: ${models[modelIndex]} gave no usable answer")
                     failure = PlanGenerationResult.Failed
                     attemptsSpent++
                     continue
@@ -110,8 +124,13 @@ class GeminiPlanGenerator(
                 is PlanParseResult.Parsed -> {
                     val plan = result.plan
                     if (plan.workoutDays.size == request.user.workoutDaysPerWeek) {
+                        breadcrumbs.record("generation: plan accepted")
                         return PlanGenerationResult.Generated(plan)
                     }
+                    // The count, not the client's schedule: how many days came
+                    // back is the model's answer, and comparing it to what was
+                    // asked is the whole point of the check.
+                    breadcrumbs.record("generation: wrong number of days back")
                     feedback = listOf(
                         "plan: has ${plan.workoutDays.size} days but the client " +
                             "asked for exactly ${request.user.workoutDaysPerWeek}"
@@ -120,6 +139,10 @@ class GeminiPlanGenerator(
                 }
 
                 is PlanParseResult.Invalid -> {
+                    // How many problems, never what they were: a validation
+                    // message can quote the model's own text back, and that text
+                    // was written from the profile.
+                    breadcrumbs.record("generation: answer rejected, ${result.errors.size} problems")
                     feedback = result.errors
                     failure = PlanGenerationResult.Failed
                 }
@@ -129,8 +152,12 @@ class GeminiPlanGenerator(
         // Every model that was asked refused on allowance, and nothing else
         // went wrong: the day's budget is the reason, and saying so is worth
         // more to the client than a retry that cannot succeed.
-        if (refusedOnQuota == models.size) return PlanGenerationResult.DailyLimitReached
+        if (refusedOnQuota == models.size) {
+            breadcrumbs.record("generation: every model out of allowance")
+            return PlanGenerationResult.DailyLimitReached
+        }
 
+        breadcrumbs.record("generation: gave up after $attemptsSpent attempts")
         return failure
     }
 

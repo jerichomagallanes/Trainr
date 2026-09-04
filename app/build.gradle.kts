@@ -9,6 +9,7 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
     alias(libs.plugins.google.services)
+    alias(libs.plugins.firebase.crashlytics)
 }
 
 // Play refuses an upload whose versionCode is not above the last one, and a
@@ -215,6 +216,7 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.ai)
     implementation(libs.firebase.appcheck.playintegrity)
+    implementation(libs.firebase.crashlytics)
     // Debug and minified-smoke builds cannot pass Play Integrity: nothing there
     // was installed from Play. They attest with a token registered in the
     // console instead, which is what makes local development possible at all.

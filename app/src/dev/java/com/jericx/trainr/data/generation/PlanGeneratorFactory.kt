@@ -1,6 +1,7 @@
 package com.jericx.trainr.data.generation
 
 import com.jericx.trainr.domain.generation.PlanGenerator
+import com.jericx.trainr.domain.diagnostics.Breadcrumbs
 import com.jericx.trainr.domain.generation.SpentModels
 
 // Development answers from a canned week. Chosen in the source set rather than
@@ -10,4 +11,7 @@ import com.jericx.trainr.domain.generation.SpentModels
 // day's allowance.
 // The store is accepted and ignored: a canned week asks no model, so it has no
 // allowance to spend and nothing to remember.
-internal fun planGenerator(spentModels: SpentModels): PlanGenerator = CannedPlanGenerator()
+internal fun planGenerator(
+    spentModels: SpentModels,
+    breadcrumbs: Breadcrumbs
+): PlanGenerator = CannedPlanGenerator()

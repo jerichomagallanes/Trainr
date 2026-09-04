@@ -10,6 +10,8 @@ import com.jericx.trainr.data.preferences.LanguageCodeProvider
 import com.jericx.trainr.data.preferences.LanguagePreferences
 import com.jericx.trainr.data.repository.UserRepositoryImpl
 import com.jericx.trainr.data.generation.planGenerator
+import com.jericx.trainr.domain.diagnostics.Breadcrumbs
+import com.jericx.trainr.data.diagnostics.CrashlyticsBreadcrumbs
 import com.jericx.trainr.domain.generation.PlanGenerator
 import com.jericx.trainr.data.generation.DailySpentModels
 import com.jericx.trainr.domain.generation.SpentModels
@@ -34,6 +36,10 @@ object AppModule {
             Constants.DATABASE_NAME
         ).build()
     }
+
+    @Provides
+    @Singleton
+    fun provideBreadcrumbs(): Breadcrumbs = CrashlyticsBreadcrumbs()
 
     @Provides
     @Singleton
@@ -65,8 +71,10 @@ object AppModule {
     @Singleton
     // Which generator answers is a property of the build, not of a flag: see
     // planGenerator() in the dev and prod source sets.
-    fun providePlanGenerator(spentModels: SpentModels): PlanGenerator =
-        planGenerator(spentModels)
+    fun providePlanGenerator(
+        spentModels: SpentModels,
+        breadcrumbs: Breadcrumbs
+    ): PlanGenerator = planGenerator(spentModels, breadcrumbs)
 
     @Provides
     @Singleton

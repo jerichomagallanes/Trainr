@@ -30,35 +30,77 @@ the same without uninstalling. Nothing is held off the device to delete.
 
 ### Data types
 
-Declare these three. For every one: **collected = yes, shared = yes, processed
-ephemerally = no, required = yes, purpose = App functionality**.
+Five rows. For every one: **collected = yes, processed ephemerally = no,
+required = yes**. Sharing and purpose differ per row, so they are in the table.
 
-| Category | Type | Why |
-| --- | --- | --- |
-| Personal info | **Name** | Asked for in onboarding. Collected, **not shared** — it never leaves the device. |
-| Health and fitness | **Health info** | Height, weight and injuries. Sent to Gemini to write the plan. |
-| Health and fitness | **Fitness info** | Goal, experience, equipment, schedule, and the sets and reps you log. Sent to Gemini so the next week progresses from the last. |
+| Category | Type | Shared | Purpose | Why |
+| --- | --- | --- | --- | --- |
+| Personal info | **Name** | **No** | App functionality | Asked for in onboarding, never leaves the device. |
+| Health and fitness | **Health info** | **Yes** | App functionality | Height, weight and injuries. Sent to Gemini to write the plan. |
+| Health and fitness | **Fitness info** | **Yes** | App functionality | Goal, experience, equipment, schedule, and the sets and reps you log. Sent to Gemini so the next week progresses from the last. |
+| App info and performance | **Crash logs** | **No** | Analytics | Stack traces, device state and the hand-written trail. Play defines the Analytics purpose as "monitoring app health, diagnose and fix bugs or crashes", which is exactly this and is not App functionality. |
+| Device or other IDs | **Device or other IDs** | **No** | Analytics | The Crashlytics installation UUID, which tells one crash apart from the same crash twice. Play's definition of this type names Firebase installation IDs, so it is declarable. |
 
 Gender is also collected. Play has no separate gender type; it falls under
 **Personal info → Other personal info** if you want to be exhaustive. Like the
 name, it is collected but **not shared** — the prompt never includes it.
 
-### Why "shared" is Yes
+### Why the Gemini rows are shared and the Crashlytics rows are not
 
-Play counts a transfer to a third party as sharing. The profile goes to Google's
-Gemini API, which is a third party even though it is also Google. Answering No
-here would be the kind of thing that gets an app pulled later.
+Play defines sharing as "transferring user data collected from your app to a
+third party", and exempts transfers to a **service provider**: "an entity that
+processes user data on behalf of the developer and based on the developer's
+instructions". The distinction Google draws is whether the recipient uses the
+data for its own purposes.
+
+**Crashlytics is a service provider.** It processes crash reports on our behalf
+and for no purpose of its own, so those rows are collected but not shared.
+
+**The free Gemini API is not**, and its own terms say so plainly. For the Unpaid
+Services: "Google uses the content you submit to the Services and any generated
+responses to provide, improve, and develop Google products and services", and
+"Human reviewers may read, annotate, and process your API input and output."
+That is use for Google's own purposes, which is the definition of a third party
+rather than a service provider. So those rows are shared, and answering No would
+be wrong.
+
+**On the paid tier this reverses**: "Google doesn't use your prompts ... or
+responses to improve our products". Moving to paid would make Gemini a service
+provider, and those two rows would become collected-but-not-shared.
 
 ### What to say it is not
 
 - No advertising or marketing purpose
-- No analytics purpose (there is no Analytics or Crashlytics SDK in the build)
+- **No Google Analytics.** Crashlytics is in the build; the Analytics SDK is
+  deliberately not, which is why the app still declares **no** advertising ID.
+  Adding Analytics would pull in `play-services-measurement`, which declares
+  `com.google.android.gms.permission.AD_ID` in its own library manifest and
+  would make that declaration false. Nothing is given up: breadcrumbs are
+  written by hand instead, which Firebase lists as a separate capability from
+  Analytics-provided ones.
 - No account management (there are no accounts)
 - No location, contacts, photos, files, messages, calendar, audio or camera data
-- No device or other identifiers collected by the app itself
 
 App Check with Play Integrity attests the app and device to Google, but carries
 no profile data and is a security measure rather than data collection.
+
+### Crash reports carry no profile data
+
+Crashlytics is set up with **no user ID**. It does carry custom keys and logs —
+a hand-written trail of screens visited and the walk through the Gemini models —
+but nothing the client typed goes into it, and a test enforces that by running a
+full profile through a failing generation and asserting none of its values
+appear. Rejected answers record how many problems there were, never what they
+said, because a validation message can quote the model's own text and that text
+was written from the profile.
+
+Dev builds do not report at all
+(`firebase_crashlytics_collection_enabled` is false in the dev manifest).
+
+Verify the AD_ID claim at any time:
+
+    ./gradlew :app:processProdReleaseManifestForPackage
+    grep -c AD_ID app/build/intermediates/packaged_manifests/prodRelease/*/AndroidManifest.xml
 
 ## Privacy policy URL
 
