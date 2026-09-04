@@ -244,4 +244,56 @@ class GeminiPlanGeneratorTest {
         assertThat(client.modelsAsked).isNotEmpty()
         assertThat(result).isInstanceOf(PlanGenerationResult.Generated::class.java)
     }
+
+    // Every model out of allowance is a different thing from a failed run, and
+    // the client needs opposite advice for each: wait, or try again.
+    @Test
+    fun `every model out of allowance reports the daily limit`() = runTest {
+        val client = answering(
+            *Array(PlanModelClient.MODELS.size) { GeminiResponse.QuotaSpent }
+        )
+
+        val result = generator(client).generate(request())
+
+        assertThat(result).isEqualTo(PlanGenerationResult.DailyLimitReached)
+    }
+
+    // A run that also hit a bad answer has an ordinary failure to report.
+    // Telling this client to come back tomorrow would send them away from
+    // something a retry would have fixed.
+    @Test
+    fun `a mixed failure is not reported as the daily limit`() = runTest {
+        val client = answering(
+            GeminiResponse.QuotaSpent,
+            GeminiResponse.Failed,
+            GeminiResponse.Failed,
+            GeminiResponse.Failed
+        )
+
+        val result = generator(client).generate(request())
+
+        assertThat(result).isEqualTo(PlanGenerationResult.Failed)
+    }
+
+    // Nothing reached the model at all, which says nothing about allowance.
+    @Test
+    fun `being offline is not reported as the daily limit`() = runTest {
+        val result = generator(answering(GeminiResponse.Unreachable)).generate(request())
+
+        assertThat(result).isEqualTo(PlanGenerationResult.Offline)
+    }
+
+    // Models already known to be spent are skipped, so a client whose whole
+    // chain was recorded this morning is told the truth without a single call.
+    @Test
+    fun `an already exhausted chain reports the limit`() = runTest {
+        val spent = FakeSpentModels(PlanModelClient.MODELS.toSet())
+        val client = answering(
+            *Array(PlanModelClient.MODELS.size) { GeminiResponse.QuotaSpent }
+        )
+
+        val result = generator(client, spent).generate(request())
+
+        assertThat(result).isEqualTo(PlanGenerationResult.DailyLimitReached)
+    }
 }

@@ -167,29 +167,56 @@ private fun GenerationFailedDialog(
     onRetry: () -> Unit,
     onGiveUp: () -> Unit
 ) {
+    // Retrying a spent allowance cannot work, so that dialog does not offer it.
+    // A button the app already knows will fail is worse than no button: it
+    // invites the client to keep tapping and keep failing.
+    val canRetry = failure != PlanGenerationResult.DailyLimitReached
+
     AlertDialog(
         // Dismissing is the way out, not a way to go on waiting for a plan that
         // is not coming.
         onDismissRequest = onGiveUp,
-        title = { Text(text = stringResource(R.string.generation_failed_title)) },
+        title = {
+            Text(
+                text = stringResource(
+                    when (failure) {
+                        PlanGenerationResult.DailyLimitReached ->
+                            R.string.generation_limit_title
+                        else -> R.string.generation_failed_title
+                    }
+                )
+            )
+        },
         text = {
             Text(
                 text = stringResource(
                     when (failure) {
                         PlanGenerationResult.Offline -> R.string.generation_failed_offline
                         PlanGenerationResult.Failed -> R.string.generation_failed_message
+                        PlanGenerationResult.DailyLimitReached ->
+                            R.string.generation_limit_message
                     }
                 )
             )
         },
         confirmButton = {
-            TextButton(onClick = onRetry) {
-                Text(text = stringResource(R.string.try_again), color = Orange500)
+            if (canRetry) {
+                TextButton(onClick = onRetry) {
+                    Text(text = stringResource(R.string.try_again), color = Orange500)
+                }
+            } else {
+                // The only thing left to do is leave, so it reads as an
+                // acknowledgement rather than as giving up on something.
+                TextButton(onClick = onGiveUp) {
+                    Text(text = stringResource(R.string.got_it), color = Orange500)
+                }
             }
         },
         dismissButton = {
-            TextButton(onClick = onGiveUp) {
-                Text(text = stringResource(giveUpLabel), color = Slate800)
+            if (canRetry) {
+                TextButton(onClick = onGiveUp) {
+                    Text(text = stringResource(giveUpLabel), color = Slate800)
+                }
             }
         }
     )

@@ -43,6 +43,12 @@ class GeminiPlanGenerator(
             // client the app is broken.
             .ifEmpty { PlanModelClient.MODELS }
 
+        // Only worth reporting when the allowance is the whole story. A run
+        // that also hit a bad answer or an overloaded model has an ordinary
+        // failure to report, and telling that client to come back tomorrow
+        // would send them away from something a retry would fix.
+        var refusedOnQuota = 0
+
         var modelIndex = 0
         var attemptsSpent = 0
 
@@ -68,6 +74,7 @@ class GeminiPlanGenerator(
                 // generation skips it instead of learning this again.
                 GeminiResponse.QuotaSpent -> {
                     spentModels.markSpent(models[modelIndex])
+                    refusedOnQuota++
                     failure = PlanGenerationResult.Failed
                     modelIndex++
                     continue
@@ -118,6 +125,12 @@ class GeminiPlanGenerator(
                 }
             }
         }
+
+        // Every model that was asked refused on allowance, and nothing else
+        // went wrong: the day's budget is the reason, and saying so is worth
+        // more to the client than a retry that cannot succeed.
+        if (refusedOnQuota == models.size) return PlanGenerationResult.DailyLimitReached
+
         return failure
     }
 

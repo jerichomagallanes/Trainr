@@ -24,6 +24,12 @@ sealed interface PlanGenerationResult {
 
     // The model answered, but never with a plan that held up.
     data object Failed : Failure
+
+    // Every model has spent its allowance for the day. Told apart from Failed
+    // because the two need opposite things from the client: one is worth
+    // retrying and the other cannot be, so offering a retry here would be a
+    // button the app already knows will fail.
+    data object DailyLimitReached : Failure
 }
 
 interface PlanGenerator {
