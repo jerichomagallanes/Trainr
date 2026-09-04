@@ -38,6 +38,8 @@ ephemerally = no, required = yes, purpose = App functionality**.
 | Personal info | **Name** | Asked for in onboarding. Collected, **not shared** — it never leaves the device. |
 | Health and fitness | **Health info** | Height, weight and injuries. Sent to Gemini to write the plan. |
 | Health and fitness | **Fitness info** | Goal, experience, equipment, schedule, and the sets and reps you log. Sent to Gemini so the next week progresses from the last. |
+| App info and performance | **Crash logs** | Stack traces and device state when the app crashes. Purpose is **Analytics**, not App functionality: Play defines that purpose as "monitoring app health, diagnose and fix bugs or crashes". |
+| Device or other IDs | **Device or other IDs** | The Crashlytics installation UUID, which tells one crash apart from the same crash twice. Play's own definition of this type names Firebase installation IDs, so it is declarable. Purpose **Analytics**. |
 
 Gender is also collected. Play has no separate gender type; it falls under
 **Personal info → Other personal info** if you want to be exhaustive. Like the
@@ -52,13 +54,29 @@ here would be the kind of thing that gets an app pulled later.
 ### What to say it is not
 
 - No advertising or marketing purpose
-- No analytics purpose (there is no Analytics or Crashlytics SDK in the build)
+- **No Google Analytics.** Crashlytics is in the build; the Analytics SDK is
+  deliberately not, which is why the app still declares **no** advertising ID.
+  Adding Analytics would pull in `play-services-measurement`, which declares
+  `com.google.android.gms.permission.AD_ID` in its own library manifest and
+  would make that declaration false. The only thing given up is Crashlytics
+  breadcrumb logs.
 - No account management (there are no accounts)
 - No location, contacts, photos, files, messages, calendar, audio or camera data
-- No device or other identifiers collected by the app itself
 
 App Check with Play Integrity attests the app and device to Google, but carries
 no profile data and is a security measure rather than data collection.
+
+### Crash reports carry no profile data
+
+Crashlytics is set up with no custom keys, no custom logs and no user IDs, so a
+crash report contains a stack trace, device state and the installation UUID, and
+nothing about the client. Dev builds do not report at all
+(`firebase_crashlytics_collection_enabled` is false in the dev manifest).
+
+Verify the AD_ID claim at any time:
+
+    ./gradlew :app:processProdReleaseManifestForPackage
+    grep -c AD_ID app/build/intermediates/packaged_manifests/prodRelease/*/AndroidManifest.xml
 
 ## Privacy policy URL
 

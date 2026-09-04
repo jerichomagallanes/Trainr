@@ -1,6 +1,6 @@
 # Privacy Policy for Trainr
 
-**Last updated: 1 September 2026**
+**Last updated: 5 September 2026**
 
 Trainr is a workout planning app. This policy explains what it collects, where
 that goes, and what you can do about it. It is written to be read, not to cover
@@ -51,6 +51,23 @@ request is coming from a genuine install of this app rather than something
 pretending to be it. This involves your device and app being attested by Google
 Play. It is a security measure and carries no profile data.
 
+## Crash reports
+
+Trainr uses **Firebase Crashlytics** so that when the app crashes, the developer
+finds out and can fix it. If a crash happens, the following is sent to Google:
+
+- The stack trace: which part of the code failed
+- What the app was doing at the time
+- Basic details about the device and the version of Android on it
+- A random identifier Crashlytics generates for your installation, used to tell
+  one crash from the same crash happening twice
+
+**No part of your fitness profile is included in a crash report.** Not your name,
+age, measurements, injuries, or anything you have logged. Crash reports say what
+broke, not who you are.
+
+Development builds of the app do not send crash reports at all.
+
 ## Health information
 
 Your height, weight and any injuries you list are health-related. They are used
@@ -62,7 +79,7 @@ of you.
 
 - No accounts, no sign-in, no email address collected
 - No advertising, and no advertising identifiers
-- No analytics or crash reporting SDKs
+- No analytics: nothing tracks which screens you open or what you tap
 - No location, contacts, photos, microphone or camera access
 - Nothing is sold or shared with third parties beyond the plan generation described above
 

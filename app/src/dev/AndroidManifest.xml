@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Development builds do not report crashes. A day of building this app
+    produces crashes nobody needs to read, and a dashboard full of our own
+    tinkering hides the one report that came from a real client.
+
+    Collection is off rather than the SDK being absent, so the wiring itself is
+    still exercised by every dev build: if Crashlytics were broken here, that is
+    worth finding out before it ships rather than after.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <meta-data
+            android:name="firebase_crashlytics_collection_enabled"
+            android:value="false" />
+    </application>
+</manifest>
