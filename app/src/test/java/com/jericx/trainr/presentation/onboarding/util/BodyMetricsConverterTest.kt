@@ -6,6 +6,43 @@ import org.junit.Test
 class BodyMetricsConverterTest {
 
     @Test
+    fun `acceptedHeight straightens the quotes a keyboard or a paste may carry`() {
+        assertThat(BodyMetricsConverter.acceptedHeight("5\u2019", false)).isEqualTo("5'")
+        assertThat(BodyMetricsConverter.acceptedHeight("5\u201910\u201D", false)).isEqualTo("5'10\"")
+        assertThat(BodyMetricsConverter.acceptedHeight("5\u203210\u2033", false)).isEqualTo("5'10\"")
+    }
+
+    @Test
+    fun `parseImperialHeight reads a measurement written with prime marks`() {
+        assertThat(BodyMetricsConverter.parseImperialHeight("5\u201910\u201D"))
+            .isWithin(0.01f).of(177.8f)
+    }
+
+    @Test
+    fun `acceptedHeight lets a part-typed imperial measurement through`() {
+        for (typed in listOf("", "5", "5'", "5'1", "5'10", "5'10\"")) {
+            assertThat(BodyMetricsConverter.acceptedHeight(typed, false)).isEqualTo(typed)
+        }
+    }
+
+    @Test
+    fun `acceptedHeight refuses imperial text it cannot parse`() {
+        for (typed in listOf("a", "5'10\"x", "55'10\"", "5'100\"", "5.10", "-5")) {
+            assertThat(BodyMetricsConverter.acceptedHeight(typed, false)).isNull()
+        }
+    }
+
+    @Test
+    fun `acceptedHeight takes metric centimetres to one decimal and nothing else`() {
+        for (typed in listOf("", "1", "175", "175.5")) {
+            assertThat(BodyMetricsConverter.acceptedHeight(typed, true)).isEqualTo(typed)
+        }
+        for (typed in listOf("1755", "175.55", "5'10\"", "abc")) {
+            assertThat(BodyMetricsConverter.acceptedHeight(typed, true)).isNull()
+        }
+    }
+
+    @Test
     fun `parseImperialHeight returns cm for feet and inches`() {
         val input = "5'10\""
 

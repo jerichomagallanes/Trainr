@@ -214,14 +214,8 @@ fun BodyMetricsScreen(
                     TrainrTextField(
                         value = height,
                         onValueChange = {
-                            if (useMetric) {
-                                if (it.matches(Regex("^\\d{0,3}(\\.\\d{0,1})?$"))) {
-                                    height = it
-                                }
-                            } else {
-                                if (it.matches(Regex("^\\d{0,1}'?\\d{0,2}\"?$"))) {
-                                    height = it
-                                }
+                            BodyMetricsConverter.acceptedHeight(it, useMetric)?.let { accepted ->
+                                height = accepted
                             }
                         },
                         placeholder = if (useMetric) stringResource(R.string.height_placeholder_cm) else stringResource(R.string.height_placeholder_imperial),

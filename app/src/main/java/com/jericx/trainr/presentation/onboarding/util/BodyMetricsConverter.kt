@@ -17,8 +17,32 @@ object BodyMetricsConverter {
         }
     }
 
+    // A pasted measurement often carries the prime marks, and iOS substitutes curly
+    // quotes as they are typed. The filter and the parser both speak straight quotes,
+    // and both apps accept the same input.
+    fun straightenQuotes(text: String): String {
+        var straightened = text
+        for (curly in listOf('\u2018', '\u2019', '\u2032')) {
+            straightened = straightened.replace(curly, '\'')
+        }
+        for (curly in listOf('\u201C', '\u201D', '\u2033')) {
+            straightened = straightened.replace(curly, '"')
+        }
+        return straightened
+    }
+
+    // The accepted text, or null when the field should keep what it had. Imperial
+    // allows a part-typed measurement, so "5" and "5'" pass on the way to "5'10"".
+    fun acceptedHeight(text: String, useMetric: Boolean): String? {
+        if (useMetric) {
+            return if (text.matches(Regex("^\\d{0,3}(\\.\\d{0,1})?$"))) text else null
+        }
+        val straightened = straightenQuotes(text)
+        return if (straightened.matches(Regex("^\\d{0,1}'?\\d{0,2}\"?$"))) straightened else null
+    }
+
     fun parseImperialHeight(height: String): Float {
-        val parts = height.replace("\"", "").split("'")
+        val parts = straightenQuotes(height).replace("\"", "").split("'")
         return if (parts.size == 2) {
             val feet = parts[0].toIntOrNull() ?: 0
             val inches = parts[1].toIntOrNull() ?: 0
