@@ -119,6 +119,23 @@ class BodyMetricsScreenTest {
         composeTestRule.onNodeWithText(string(R.string.weight_lbs)).assertIsDisplayed()
     }
 
+    // iOS substitutes curly quotes as they are typed, so both apps accept them and
+    // store the straight form. Typed here as the characters, not the keys.
+    @Test
+    fun imperialHeightAcceptsCurlyQuotesAndStoresThemStraight() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                BodyMetricsScreen(onNextClick = { _, _, _ -> }, onBackClick = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.imperial)).performClick()
+        composeTestRule.onNodeWithText(string(R.string.height_placeholder_imperial))
+            .performTextInput("5\u201910\u201D")
+
+        composeTestRule.onNodeWithText("5'10\"").assertIsDisplayed()
+    }
+
     @Test
     fun togglingUnitsConvertsAlreadyEnteredValues() {
         composeTestRule.setContent {
