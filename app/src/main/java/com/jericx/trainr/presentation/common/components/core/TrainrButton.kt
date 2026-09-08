@@ -52,7 +52,7 @@ fun TrainrButton(
     val buttonColor by animateColorAsState(
         targetValue = when {
             !isPrimary -> colors.surfacePage
-            enabled -> colors.brandStrong
+            enabled -> colors.brandLarge
             else -> colors.brandDisabled
         },
         animationSpec = tween(
@@ -67,7 +67,7 @@ fun TrainrButton(
             !enabled && isPrimary -> colors.onBrandDisabled
             !enabled && !isPrimary -> colors.brandStrongDisabled
             isPrimary -> colors.onBrand
-            else -> colors.brandStrong
+            else -> colors.brandLarge
         },
         animationSpec = tween(
             durationMillis = Animation.DurationShort,

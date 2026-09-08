@@ -104,7 +104,7 @@ fun TrainrSlideToConfirm(
         Text(
             text = text,
             style = labelStyle,
-            color = colors.brandStrong,
+            color = colors.brandLarge,
             modifier = Modifier.padding(start = labelPadding)
         )
 
@@ -118,7 +118,7 @@ fun TrainrSlideToConfirm(
                 .drawWithContent {
                     clipRect(right = fillEnd) { this@drawWithContent.drawContent() }
                 }
-                .background(colors.brandStrong),
+                .background(colors.brandLarge),
             contentAlignment = Alignment.CenterStart
         ) {
             Text(
