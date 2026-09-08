@@ -14,9 +14,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.tooling.preview.Preview
-import com.jericx.trainr.presentation.common.theme.RedError
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
+import com.jericx.trainr.presentation.common.theme.trainrColors
 
 // Why a value was not accepted, under the field it belongs to. Null draws
 // nothing, so a caller can pass its check straight in and an untouched field
@@ -30,7 +30,7 @@ fun TrainrFieldError(message: String?, modifier: Modifier = Modifier) {
     Text(
         text = message,
         style = MaterialTheme.typography.bodySmall,
-        color = RedError,
+        color = MaterialTheme.trainrColors.dangerInk,
         modifier = modifier
     )
 }

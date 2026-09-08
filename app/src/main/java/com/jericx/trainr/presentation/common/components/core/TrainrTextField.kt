@@ -25,9 +25,9 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.jericx.trainr.presentation.common.theme.ComponentHeight
-import com.jericx.trainr.presentation.common.theme.Orange500
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
+import com.jericx.trainr.presentation.common.theme.trainrColors
 
 // Built on BasicTextField rather than OutlinedTextField: the designs want a 42dp
 // field, and OutlinedTextField enforces a 56dp minimum with fixed internal
@@ -42,12 +42,12 @@ fun TrainrTextField(
     keyboardType: KeyboardType = KeyboardType.Text
 ) {
     val interactionSource = remember { MutableInteractionSource() }
+    val trainrColors = MaterialTheme.trainrColors
     val colors = OutlinedTextFieldDefaults.colors(
-        focusedBorderColor = Orange500,
-        unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-        focusedContainerColor = MaterialTheme.colorScheme.background,
-        unfocusedContainerColor = MaterialTheme.colorScheme.background,
-        cursorColor = Orange500
+        focusedBorderColor = trainrColors.focus,
+        unfocusedBorderColor = trainrColors.outlineControl,
+        focusedContainerColor = trainrColors.surfaceCard,
+        unfocusedContainerColor = trainrColors.surfaceCard
     )
 
     BasicTextField(
@@ -59,9 +59,9 @@ fun TrainrTextField(
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
         textStyle = MaterialTheme.typography.bodyLarge.copy(
-            color = MaterialTheme.colorScheme.onSurface
+            color = trainrColors.onSurface
         ),
-        cursorBrush = SolidColor(Orange500),
+        cursorBrush = SolidColor(trainrColors.focus),
         interactionSource = interactionSource
     ) { innerTextField ->
         OutlinedTextFieldDefaults.DecorationBox(
@@ -75,7 +75,7 @@ fun TrainrTextField(
                 Text(
                     text = placeholder,
                     style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                    color = trainrColors.placeholder
                 )
             },
             colors = colors,

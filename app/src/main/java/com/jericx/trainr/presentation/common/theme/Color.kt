@@ -1,5 +1,7 @@
 package com.jericx.trainr.presentation.common.theme
 
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
 // Values taken from the Figma mockups. The design has no Figma variables, so
@@ -35,9 +37,175 @@ val YellowWarning = Color(0xFFF39C12)
 
 // Workout status
 val StatusCompleted = Color(0xFF5F8C32)
+
+@Deprecated(
+    "Status colours are per-theme now.",
+    ReplaceWith("MaterialTheme.trainrColors.statusActive")
+)
 val StatusInProgress = Orange500
+
+@Deprecated(
+    "Status colours are per-theme now.",
+    ReplaceWith("MaterialTheme.trainrColors.statusIdle")
+)
 val StatusNotStarted = TextMuted
 
 // Surfaces
 val SurfaceLight = Color(0xFFFAFAFA)
 val SurfaceDark = Color(0xFF121212)
+
+// Semantic tokens. Light values are the constants above, unchanged; dark values
+// are tuned against the four dark grounds (page/card/raised/sunken).
+
+@Immutable
+data class TrainrColors(
+    val surfacePage: Color,
+    val surfaceCard: Color,
+    val surfaceRaised: Color,
+    val surfaceSunken: Color,
+    // Light keeps the #FAFAFA the ReviewScreen panel composited to; alpha over
+    // an assumed white page turns a dark panel darker than its own card.
+    val surfacePanel: Color,
+    val surfaceSelected: Color,
+    val onSurfaceSelected: Color,
+    val surfaceEmphasis: Color,
+    val onSurfaceEmphasis: Color,
+    val onSurface: Color,
+    // The one figure the design draws in pure black. Folding it into onSurface
+    // moves light to #243036.
+    val onSurfaceStrong: Color,
+    val onSurfaceMuted: Color,
+    // Light is the composite the field rendered (#626262 at 60% on white); dark
+    // needs the muted ink at full strength to clear 4.5 on a card.
+    val placeholder: Color,
+    val outlineControl: Color,
+    val outlineDivider: Color,
+    // Edge and internal rule of a card that has no fill, so the hairline is the
+    // card. Ink-weight in light by design; the outline tiers in dark.
+    val cardEdge: Color,
+    val cardRule: Color,
+    val raisedEdge: Color,
+    val accentRule: Color,
+    val focus: Color,
+    val trackEmpty: Color,
+    val brand: Color,
+    // Brand tint on the selected slab, which inverts in dark: #D37200 is 2.80 there.
+    val brandOnSelected: Color,
+    // Brand is never a fill under text; text-bearing brand fills use brandStrong.
+    val brandStrong: Color,
+    val onBrand: Color,
+    val brandDisabled: Color,
+    val onBrandDisabled: Color,
+    val brandStrongDisabled: Color,
+    val statusDone: Color,
+    val statusDoneInk: Color,
+    // The completed card's edge and rule. Dimmer than statusDoneInk in dark:
+    // as a hairline that ink reads at 7.12 on a card where the neutral edge is
+    // 4.90, so it shouted rather than marked.
+    val statusDoneEdge: Color,
+    val statusActive: Color,
+    val statusIdle: Color,
+    // Pure white, never the themed off-white ink: E8EDEF on statusDone is 4.12.
+    val onStatus: Color,
+    val danger: Color,
+    val dangerInk: Color,
+    val onDanger: Color,
+    val dotInactive: Color,
+    val shadowSpot: Color,
+    // The 5% black the secondary button draws; shadowSpot is the platform default.
+    val shadowSpotSoft: Color,
+    val shadowSpotBrand: Color,
+    val scrim: Color
+)
+
+val LightTrainrColors = TrainrColors(
+    surfacePage = Color.White,
+    surfaceCard = Color.White,
+    surfaceRaised = Color.White,
+    surfaceSunken = Gray100,
+    surfacePanel = SurfaceLight,
+    surfaceSelected = Slate800,
+    onSurfaceSelected = Color.White,
+    surfaceEmphasis = Slate800,
+    onSurfaceEmphasis = Color.White,
+    onSurface = Slate800,
+    onSurfaceStrong = Color.Black,
+    onSurfaceMuted = TextMuted,
+    placeholder = Color(0xFFA1A1A1),
+    outlineControl = OutlineGray,
+    outlineDivider = DividerGray,
+    cardEdge = Slate800,
+    cardRule = Slate800,
+    raisedEdge = Color.Transparent,
+    accentRule = Color.Transparent,
+    focus = Orange500,
+    trackEmpty = OutlineGray,
+    brand = Orange500,
+    brandOnSelected = Orange500,
+    brandStrong = Orange500,
+    onBrand = Color.White,
+    brandDisabled = Color(0xFFE9B880),
+    onBrandDisabled = Color(0xFFF8EAD9),
+    brandStrongDisabled = Color(0xFFE09C4D),
+    statusDone = StatusCompleted,
+    statusDoneInk = StatusCompleted,
+    statusDoneEdge = StatusCompleted,
+    statusActive = Orange500,
+    statusIdle = TextMuted,
+    onStatus = Color.White,
+    danger = RedError,
+    dangerInk = RedError,
+    onDanger = Color.White,
+    dotInactive = Color(0xFFBDC1C3),
+    shadowSpot = Color.Black,
+    shadowSpotSoft = Color.Black.copy(alpha = 0.05f),
+    shadowSpotBrand = Orange500.copy(alpha = 0.15f),
+    scrim = Color.Black.copy(alpha = 0.3f)
+)
+
+val DarkTrainrColors = TrainrColors(
+    surfacePage = Color(0xFF101519),
+    surfaceCard = Color(0xFF20282E),
+    surfaceRaised = Color(0xFF323D44),
+    surfaceSunken = Color(0xFF2C363D),
+    surfacePanel = Color(0xFF2C363D),
+    surfaceSelected = Color(0xFFE4EAEC),
+    onSurfaceSelected = Color(0xFF101519),
+    surfaceEmphasis = Color(0xFF34515F),
+    onSurfaceEmphasis = Color.White,
+    onSurface = Color(0xFFE8EDEF),
+    onSurfaceStrong = Color(0xFFE8EDEF),
+    onSurfaceMuted = Color(0xFFA8B5BF),
+    placeholder = Color(0xFFA8B5BF),
+    outlineControl = Color(0xFF82979F),
+    outlineDivider = Color(0xFF414E57),
+    cardEdge = Color(0xFF82979F),
+    cardRule = Color(0xFF414E57),
+    raisedEdge = Color(0xFF414E57),
+    accentRule = Color(0xFFE8963A),
+    focus = Color(0xFFFFA23C),
+    trackEmpty = Color(0xFF414E57),
+    brand = Orange500,
+    brandOnSelected = Color(0xFFAB5C00),
+    brandStrong = Color(0xFFE8963A),
+    onBrand = Color(0xFF101519),
+    brandDisabled = Color(0xFF485259),
+    onBrandDisabled = Color(0xFF858D92),
+    brandStrongDisabled = Color(0xFF778085),
+    statusDone = Color(0xFF567C2C),
+    statusDoneInk = Color(0xFF8BC34A),
+    statusDoneEdge = Color(0xFF6E9E3A),
+    statusActive = Color(0xFFB36000),
+    statusIdle = Color(0xFF687279),
+    onStatus = Color.White,
+    danger = RedError,
+    dangerInk = Color(0xFFFF8573),
+    onDanger = Color.White,
+    dotInactive = Color(0xFF515659),
+    shadowSpot = Color.Transparent,
+    shadowSpotSoft = Color.Transparent,
+    shadowSpotBrand = Color.Transparent,
+    scrim = Color.Black.copy(alpha = 0.7f)
+)
+
+val LocalTrainrColors = staticCompositionLocalOf { LightTrainrColors }

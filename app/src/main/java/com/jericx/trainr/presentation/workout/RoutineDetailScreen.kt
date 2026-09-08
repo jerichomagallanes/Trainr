@@ -1,6 +1,5 @@
 package com.jericx.trainr.presentation.workout
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,6 +11,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -39,10 +39,9 @@ import com.jericx.trainr.R
 import com.jericx.trainr.presentation.common.components.core.TrainrProgress
 import com.jericx.trainr.presentation.common.components.core.TrainrSlideToConfirm
 import com.jericx.trainr.presentation.common.components.layout.TrainrTopBar
-import com.jericx.trainr.presentation.common.theme.RedError
-import com.jericx.trainr.presentation.common.theme.Slate800
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
+import com.jericx.trainr.presentation.common.theme.trainrColors
 import com.jericx.trainr.presentation.workout.components.ExerciseCard
 import com.jericx.trainr.presentation.workout.components.ExerciseTimer
 import com.jericx.trainr.presentation.workout.components.VideoTutorial
@@ -140,16 +139,17 @@ fun RoutineDetailScreen(
                 .padding(horizontal = Spacing.screen, vertical = Spacing.screen)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Image(
+                Icon(
                     painter = painterResource(R.drawable.ic_calendar_today),
                     contentDescription = null,
+                    tint = MaterialTheme.trainrColors.onSurface,
                     modifier = Modifier.size(16.dp)
                 )
                 Spacer(modifier = Modifier.size(Spacing.small))
                 Text(
                     text = WorkoutDateFormatter.formatFullDate(state.dateMillis, locale),
                     style = MaterialTheme.typography.bodyLarge,
-                    color = Slate800
+                    color = MaterialTheme.trainrColors.onSurface
                 )
             }
 
@@ -163,16 +163,17 @@ fun RoutineDetailScreen(
                 Text(
                     text = routine.title.uppercase(),
                     style = MaterialTheme.typography.titleLarge,
-                    color = Slate800,
+                    color = MaterialTheme.trainrColors.onSurface,
                     modifier = Modifier
                         .weight(1f)
                         .padding(end = Spacing.small)
                 )
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Image(
+                    Icon(
                         painter = painterResource(R.drawable.ic_schedule),
                         contentDescription = null,
+                        tint = MaterialTheme.trainrColors.onSurface,
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.size(Spacing.extraSmall))
@@ -183,7 +184,7 @@ fun RoutineDetailScreen(
                             routine.totalMinutes
                         ),
                         style = MaterialTheme.typography.labelLarge,
-                        color = Slate800
+                        color = MaterialTheme.trainrColors.onSurface
                     )
                 }
             }
@@ -202,7 +203,7 @@ fun RoutineDetailScreen(
                     append(state.equipment.joinToString(", "))
                 },
                 style = MaterialTheme.typography.bodyLarge,
-                color = Slate800,
+                color = MaterialTheme.trainrColors.onSurface,
                 modifier = Modifier.padding(top = Spacing.section)
             )
 
@@ -261,7 +262,7 @@ fun RoutineDetailScreen(
                     Text(
                         text = stringResource(R.string.start_workout_over),
                         style = MaterialTheme.typography.titleMedium,
-                        color = Slate800
+                        color = MaterialTheme.trainrColors.onSurface
                     )
                 }
             }
@@ -293,12 +294,12 @@ private fun StartWorkoutOverDialog(
         text = { Text(text = stringResource(R.string.start_workout_over_message)) },
         confirmButton = {
             TextButton(onClick = onConfirm) {
-                Text(text = stringResource(R.string.start_over), color = RedError)
+                Text(text = stringResource(R.string.start_over), color = MaterialTheme.trainrColors.dangerInk)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(text = stringResource(R.string.cancel), color = Slate800)
+                Text(text = stringResource(R.string.cancel), color = MaterialTheme.trainrColors.onSurface)
             }
         }
     )

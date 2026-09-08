@@ -27,7 +27,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -39,9 +38,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.jericx.trainr.R
-import com.jericx.trainr.presentation.common.theme.Orange500
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
+import com.jericx.trainr.presentation.common.theme.trainrColors
 import kotlin.math.roundToInt
 
 private val TrackHeight = 55.dp
@@ -60,14 +59,15 @@ fun TrainrSlideToConfirm(
     // at a time: a snap queued behind the finger could land after the release
     // began animating and cancel it, stranding the thumb mid-track.
     var offsetPx by remember { mutableFloatStateOf(0f) }
+    val colors = MaterialTheme.trainrColors
 
     BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
             .height(TrackHeight)
             .clip(MaterialTheme.shapes.medium)
-            .background(Color.White)
-            .border(3.dp, Orange500, MaterialTheme.shapes.medium)
+            .background(colors.surfaceRaised)
+            .border(3.dp, colors.brand, MaterialTheme.shapes.medium)
             .semantics(mergeDescendants = true) {
                 onClick(label = text) {
                     onConfirm()
@@ -100,11 +100,11 @@ fun TrainrSlideToConfirm(
         val fillInset = with(density) { Spacing.tight.toPx() }
         val fillEnd = offsetPx + offsetPx.coerceAtMost(fillInset)
 
-        // Untouched track: an orange label on white.
+        // Untouched track: an orange label on the unpainted ground.
         Text(
             text = text,
             style = labelStyle,
-            color = Orange500,
+            color = colors.brandStrong,
             modifier = Modifier.padding(start = labelPadding)
         )
 
@@ -118,13 +118,13 @@ fun TrainrSlideToConfirm(
                 .drawWithContent {
                     clipRect(right = fillEnd) { this@drawWithContent.drawContent() }
                 }
-                .background(Orange500),
+                .background(colors.brandStrong),
             contentAlignment = Alignment.CenterStart
         ) {
             Text(
                 text = text,
                 style = labelStyle,
-                color = Color.White,
+                color = colors.onBrand,
                 modifier = Modifier.padding(start = labelPadding)
             )
         }

@@ -1,7 +1,6 @@
 package com.jericx.trainr.presentation.workout.components
 
 import android.view.ViewGroup
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -13,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,10 +28,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.jericx.trainr.R
-import com.jericx.trainr.presentation.common.theme.Gray100
-import com.jericx.trainr.presentation.common.theme.Slate800
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
+import com.jericx.trainr.presentation.common.theme.trainrColors
 import com.jericx.trainr.presentation.workout.model.YouTubeVideo
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.YouTubePlayer
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.listeners.AbstractYouTubePlayerListener
@@ -52,6 +51,8 @@ fun VideoTutorial(
     onToggle: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val colors = MaterialTheme.trainrColors
+
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(Spacing.card)
@@ -59,7 +60,7 @@ fun VideoTutorial(
         Row(
             modifier = Modifier
                 .clip(MaterialTheme.shapes.medium)
-                .background(Gray100)
+                .background(colors.surfaceSunken)
                 .clickable(role = Role.Button, onClick = onToggle)
                 .height(ToggleHeight)
                 .padding(horizontal = Spacing.tight),
@@ -71,11 +72,12 @@ fun VideoTutorial(
                     else R.string.show_video_tutorial
                 ),
                 style = MaterialTheme.typography.labelLarge,
-                color = Slate800
+                color = colors.onSurface
             )
-            Image(
+            Icon(
                 painter = painterResource(R.drawable.ic_keyboard_arrow_up),
                 contentDescription = null,
+                tint = colors.onSurface,
                 modifier = Modifier
                     .padding(start = 5.dp)
                     .size(20.dp)

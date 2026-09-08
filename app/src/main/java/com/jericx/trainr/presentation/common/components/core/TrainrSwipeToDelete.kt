@@ -30,11 +30,10 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
-import com.jericx.trainr.presentation.common.theme.RedError
 import com.jericx.trainr.presentation.common.theme.Spacing
+import com.jericx.trainr.presentation.common.theme.trainrColors
 import kotlin.math.roundToInt
 
 // Deleting asks for a deliberate swipe, decided when the finger lifts, the way
@@ -71,6 +70,7 @@ fun TrainrSwipeToDelete(
     // began animating and cancel it, leaving the row parked open.
     var offsetPx by remember { mutableFloatStateOf(0f) }
     val currentOnDelete by rememberUpdatedState(onDelete)
+    val colors = MaterialTheme.trainrColors
 
     BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
         val travel = with(density) { maxWidth.toPx() }.coerceAtLeast(1f)
@@ -82,13 +82,13 @@ fun TrainrSwipeToDelete(
                 modifier = Modifier
                     .matchParentSize()
                     .clip(MaterialTheme.shapes.medium)
-                    .background(RedError),
+                    .background(colors.danger),
                 contentAlignment = Alignment.CenterEnd
             ) {
                 Icon(
                     imageVector = Icons.Default.Delete,
                     contentDescription = contentDescription,
-                    tint = Color.White,
+                    tint = colors.onDanger,
                     modifier = Modifier.padding(end = Spacing.medium)
                 )
             }
@@ -97,7 +97,7 @@ fun TrainrSwipeToDelete(
         Box(
             modifier = Modifier
                 .offset { IntOffset(offsetPx.roundToInt(), 0) }
-                .background(MaterialTheme.colorScheme.background)
+                .background(colors.surfaceCard)
                 .then(
                     if (enabled) {
                         Modifier.draggable(

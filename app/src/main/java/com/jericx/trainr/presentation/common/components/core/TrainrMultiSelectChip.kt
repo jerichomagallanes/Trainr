@@ -14,6 +14,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
+import com.jericx.trainr.presentation.common.theme.trainrColors
 
 @Composable
 fun TrainrMultiSelectChip(
@@ -23,6 +24,8 @@ fun TrainrMultiSelectChip(
     modifier: Modifier = Modifier,
     enabled: Boolean = true
 ) {
+    val colors = MaterialTheme.trainrColors
+
     FilterChip(
         selected = selected,
         onClick = onClick,
@@ -30,17 +33,17 @@ fun TrainrMultiSelectChip(
         modifier = modifier,
         enabled = enabled,
         colors = FilterChipDefaults.filterChipColors(
-            selectedContainerColor = MaterialTheme.colorScheme.onBackground,
-            containerColor = MaterialTheme.colorScheme.surface,
-            selectedLabelColor = MaterialTheme.colorScheme.background,
-            labelColor = MaterialTheme.colorScheme.onSurface,
-            selectedLeadingIconColor = MaterialTheme.colorScheme.background,
-            iconColor = MaterialTheme.colorScheme.onSurfaceVariant
+            selectedContainerColor = colors.surfaceSelected,
+            containerColor = colors.surfaceCard,
+            selectedLabelColor = colors.onSurfaceSelected,
+            labelColor = colors.onSurface,
+            selectedLeadingIconColor = colors.onSurfaceSelected,
+            iconColor = colors.onSurfaceMuted
         ),
         border = FilterChipDefaults.filterChipBorder(
             enabled = enabled,
             selected = selected,
-            borderColor = MaterialTheme.colorScheme.outline,
+            borderColor = colors.outlineControl,
             selectedBorderColor = Color.Transparent,
             borderWidth = 1.dp,
             selectedBorderWidth = 0.dp

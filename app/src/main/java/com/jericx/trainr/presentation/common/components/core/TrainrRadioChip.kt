@@ -23,8 +23,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.jericx.trainr.presentation.common.theme.ComponentHeight
 import com.jericx.trainr.presentation.common.theme.Spacing
-import com.jericx.trainr.presentation.common.theme.TextMuted
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
+import com.jericx.trainr.presentation.common.theme.trainrColors
 
 @Composable
 fun TrainrRadioChip(
@@ -35,18 +35,17 @@ fun TrainrRadioChip(
     height: Dp = ComponentHeight.Option,
     mutedWhenUnselected: Boolean = false
 ) {
+    val colors = MaterialTheme.trainrColors
+
     Surface(
         onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
             .height(height),
         shape = MaterialTheme.shapes.medium,
-        color = if (selected)
-            MaterialTheme.colorScheme.onBackground
-        else
-            MaterialTheme.colorScheme.surface,
+        color = if (selected) colors.surfaceSelected else colors.surfaceCard,
         // The frames keep the outline on the selected row too.
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+        border = BorderStroke(1.dp, colors.outlineControl)
     ) {
         Row(
             modifier = Modifier
@@ -60,9 +59,9 @@ fun TrainrRadioChip(
                 style = MaterialTheme.typography.bodyLarge.copy(
                     fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
                     color = when {
-                        selected -> MaterialTheme.colorScheme.background
-                        mutedWhenUnselected -> TextMuted
-                        else -> MaterialTheme.colorScheme.onSurface
+                        selected -> colors.onSurfaceSelected
+                        mutedWhenUnselected -> colors.onSurfaceMuted
+                        else -> colors.onSurface
                     }
                 ),
                 maxLines = 1,

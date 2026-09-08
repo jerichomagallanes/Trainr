@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import com.jericx.trainr.R
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
+import com.jericx.trainr.presentation.common.theme.trainrColors
 
 @Composable
 fun TrainrCheckboxChip(
@@ -41,18 +42,17 @@ fun TrainrCheckboxChip(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
 ) {
+    val colors = MaterialTheme.trainrColors
+
     Card(
         modifier = modifier
             .fillMaxWidth()
             .clickable(enabled = enabled) { onCheckedChange(!checked) },
         shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(
-            containerColor = if (checked)
-                MaterialTheme.colorScheme.onBackground
-            else
-                MaterialTheme.colorScheme.surface
+            containerColor = if (checked) colors.surfaceSelected else colors.surfaceCard
         ),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        border = BorderStroke(1.dp, colors.outlineControl),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
@@ -67,10 +67,7 @@ fun TrainrCheckboxChip(
                 style = MaterialTheme.typography.bodyLarge.copy(
                     fontWeight = FontWeight.Medium
                 ),
-                color = if (checked)
-                    MaterialTheme.colorScheme.background
-                else
-                    MaterialTheme.colorScheme.onSurface
+                color = if (checked) colors.onSurfaceSelected else colors.onSurface
             )
 
             Image(
@@ -79,10 +76,7 @@ fun TrainrCheckboxChip(
                 ),
                 contentDescription = null,
                 colorFilter = ColorFilter.tint(
-                    if (checked)
-                        MaterialTheme.colorScheme.background
-                    else
-                        MaterialTheme.colorScheme.outline
+                    if (checked) colors.onSurfaceSelected else colors.outlineControl
                 ),
                 modifier = Modifier.size(24.dp)
             )

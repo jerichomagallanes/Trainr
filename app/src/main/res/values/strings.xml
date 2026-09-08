@@ -188,6 +188,10 @@
     <string name="app_version_format">Version %1$s</string>
     <string name="about_the_app">About Trainr</string>
     <string name="profile_and_app">Profile and app</string>
+    <string name="appearance">Appearance</string>
+    <string name="appearance_system">System</string>
+    <string name="appearance_light">Light</string>
+    <string name="appearance_dark">Dark</string>
     <string name="regenerate_plan">Start a new workout plan</string>
     <string name="no_plan_title">No workout plan</string>
     <string name="no_plan_message">Your fitness profile is saved. You can create a new workout plan whenever you are ready.</string>

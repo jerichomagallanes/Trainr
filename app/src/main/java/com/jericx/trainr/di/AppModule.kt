@@ -8,6 +8,7 @@ import com.jericx.trainr.data.local.UserDao
 import com.jericx.trainr.data.local.UserMapper
 import com.jericx.trainr.data.preferences.LanguageCodeProvider
 import com.jericx.trainr.data.preferences.LanguagePreferences
+import com.jericx.trainr.data.preferences.ThemePreferences
 import com.jericx.trainr.data.repository.UserRepositoryImpl
 import com.jericx.trainr.data.generation.planGenerator
 import com.jericx.trainr.domain.diagnostics.Breadcrumbs
@@ -75,6 +76,12 @@ object AppModule {
         spentModels: SpentModels,
         breadcrumbs: Breadcrumbs
     ): PlanGenerator = planGenerator(spentModels, breadcrumbs)
+
+    @Provides
+    @Singleton
+    fun provideThemePreferences(@ApplicationContext context: Context): ThemePreferences {
+        return ThemePreferences(context)
+    }
 
     @Provides
     @Singleton

@@ -16,18 +16,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.jericx.trainr.R
 import com.jericx.trainr.presentation.common.theme.ComponentHeight
-import com.jericx.trainr.presentation.common.theme.Orange500
-import com.jericx.trainr.presentation.common.theme.OutlineGray
-import com.jericx.trainr.presentation.common.theme.Slate800
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
+import com.jericx.trainr.presentation.common.theme.trainrColors
 
 @Composable
 fun TrainrPillButton(
@@ -37,16 +34,17 @@ fun TrainrPillButton(
     modifier: Modifier = Modifier,
     filled: Boolean = true
 ) {
-    val contentColor = if (filled) Color.White else Slate800
+    val colors = MaterialTheme.trainrColors
+    val contentColor = if (filled) colors.onBrand else colors.onSurface
 
     Row(
         modifier = modifier
             .height(ComponentHeight.Pill)
             .clip(MaterialTheme.shapes.medium)
-            .background(if (filled) Orange500 else Color.White)
+            .background(if (filled) colors.brandStrong else colors.surfaceRaised)
             .then(
                 if (filled) Modifier
-                else Modifier.border(1.5.dp, OutlineGray, MaterialTheme.shapes.medium)
+                else Modifier.border(1.5.dp, colors.outlineControl, MaterialTheme.shapes.medium)
             )
             .clickable(role = Role.Button, onClick = onClick)
             .padding(start = 5.dp, end = Spacing.card),

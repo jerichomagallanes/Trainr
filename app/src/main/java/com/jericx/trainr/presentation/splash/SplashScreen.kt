@@ -11,12 +11,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.jericx.trainr.R
-import com.jericx.trainr.presentation.common.theme.Slate800
 import com.jericx.trainr.presentation.common.theme.Spacing
+import com.jericx.trainr.presentation.common.theme.themedPainter
+import com.jericx.trainr.presentation.common.theme.trainrColors
 
 private val LogoWidth = 180.dp
 
@@ -31,14 +31,14 @@ fun SplashScreen(versionName: String) {
             // mark the top bar carries, so the first screen and every screen
             // after it agree about what this app looks like.
             Image(
-                painter = painterResource(id = R.drawable.img_trainr),
+                painter = themedPainter(R.drawable.img_trainr, R.drawable.img_trainr_night),
                 contentDescription = stringResource(R.string.app_name),
                 modifier = Modifier.width(LogoWidth)
             )
             Text(
                 text = stringResource(R.string.version_format, versionName),
                 style = MaterialTheme.typography.bodyMedium,
-                color = Slate800,
+                color = MaterialTheme.trainrColors.onSurface,
                 modifier = Modifier.padding(top = Spacing.medium)
             )
         }

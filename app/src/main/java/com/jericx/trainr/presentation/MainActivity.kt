@@ -1,10 +1,15 @@
 package com.jericx.trainr.presentation
 
+import android.app.UiModeManager
 import android.content.Context
+import android.content.res.Configuration
+import android.graphics.drawable.ColorDrawable
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material3.MaterialTheme
@@ -18,6 +23,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -30,11 +36,16 @@ import androidx.navigation.compose.rememberNavController
 import com.jericx.trainr.BuildConfig
 import com.jericx.trainr.data.diagnostics.CrashlyticsBreadcrumbs
 import com.jericx.trainr.domain.diagnostics.Breadcrumbs
+import com.jericx.trainr.data.preferences.AppearanceMode
 import com.jericx.trainr.data.preferences.NavigationStateManager
+import com.jericx.trainr.data.preferences.ThemePreferences
 import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.presentation.common.LocaleManager
+import com.jericx.trainr.presentation.common.theme.DarkTrainrColors
+import com.jericx.trainr.presentation.common.theme.LightTrainrColors
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
+import com.jericx.trainr.presentation.common.theme.trainrColors
 import com.jericx.trainr.presentation.onboarding.OnboardingState
 import com.jericx.trainr.presentation.onboarding.OnboardingStep
 import com.jericx.trainr.presentation.onboarding.OnboardingViewModel
@@ -55,6 +66,7 @@ import com.jericx.trainr.presentation.workout.WeekCompletedScreen
 import com.jericx.trainr.presentation.workout.WeeklyProgressRoute
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
+import javax.inject.Inject
 
 private val editArguments = listOf(
     navArgument(Screen.EditableStep.ARG_EDIT) {
@@ -82,8 +94,39 @@ private val NavBackStackEntry.isEditing: Boolean
 
 private const val FORCED_LANGUAGE = "en"
 
+// The one place the preference meets a system that may disagree with it.
+private fun AppearanceMode.isDark(systemInDarkTheme: Boolean): Boolean = when (this) {
+    AppearanceMode.SYSTEM -> systemInDarkTheme
+    AppearanceMode.LIGHT -> false
+    AppearanceMode.DARK -> true
+}
+
+@Composable
+private fun AppearanceMode.resolvedToDark(): Boolean = isDark(isSystemInDarkTheme())
+
+// The starting window is drawn from the theme before any of this app is
+// running, so res/values-night can only follow the preference if the platform
+// is told what it is. This persists it per-app, which is what makes the night
+// qualifier answer to the preference instead of the phone; MODE_NIGHT_AUTO is
+// how the override is dropped again. Below API 31 there is no such mechanism
+// and the repaint in onCreate is the whole cure.
+private fun Context.persistAppNightMode(appearance: AppearanceMode) {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
+    val uiModeManager = getSystemService(UiModeManager::class.java) ?: return
+    uiModeManager.setApplicationNightMode(
+        when (appearance) {
+            AppearanceMode.SYSTEM -> UiModeManager.MODE_NIGHT_AUTO
+            AppearanceMode.LIGHT -> UiModeManager.MODE_NIGHT_NO
+            AppearanceMode.DARK -> UiModeManager.MODE_NIGHT_YES
+        }
+    )
+}
+
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject
+    lateinit var themePreferences: ThemePreferences
 
     // English-only for now, whatever the device says. The context this returns
     // is the whole point of the call: it carries the English configuration, and
@@ -101,16 +144,39 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
 
+        // The window is painted before Compose runs, so it is painted here:
+        // the theme's own background is a resource, and on this launch it can
+        // still disagree with the preference.
+        // Only when the choice disagrees with the qualifier the starting window
+        // was drawn from. Painting it either way replaced the platform theme's
+        // own light background and shifted the strip behind the navigation bar.
+        startupOverride()?.let { window.setBackgroundDrawable(ColorDrawable(it)) }
+
         val versionName = BuildConfig.VERSION_NAME
 
         setContent {
-            AppContent(versionName = versionName)
+            AppContent(
+                versionName = versionName,
+                themePreferences = themePreferences
+            )
+        }
+    }
+
+    private fun startupOverride(): Int? {
+        val uiMode = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
+        val qualifierIsNight = uiMode == Configuration.UI_MODE_NIGHT_YES
+        val dark = themePreferences.appearance.value.isDark(qualifierIsNight)
+        if (dark == qualifierIsNight) return null
+        return if (dark) {
+            DarkTrainrColors.surfacePage.toArgb()
+        } else {
+            LightTrainrColors.surfacePage.toArgb()
         }
     }
 }
 
 @Composable
-fun AppContent(versionName: String) {
+fun AppContent(versionName: String, themePreferences: ThemePreferences) {
     val context = LocalContext.current
     val navController = rememberNavController()
 
@@ -162,12 +228,16 @@ fun AppContent(versionName: String) {
         }
     }
 
-    TrainrTheme {
+    val appearance by themePreferences.appearance.collectAsStateWithLifecycle()
+
+    LaunchedEffect(appearance) { context.persistAppNightMode(appearance) }
+
+    TrainrTheme(darkTheme = appearance.resolvedToDark()) {
         Surface(
             modifier = Modifier
                 .fillMaxSize()
                 .systemBarsPadding(),
-            color = MaterialTheme.colorScheme.background
+            color = MaterialTheme.trainrColors.surfacePage
         ) {
             NavHost(navController = navController, startDestination = Screen.SplashScreen.route) {
                 composable(route = Screen.SplashScreen.route) {
@@ -588,7 +658,9 @@ fun AppContent(versionName: String) {
                         onCreatePlanClick = {
                             navController.navigate(Screen.Review.createRoute(fromPlan = true))
                         },
-                        versionName = versionName
+                        versionName = versionName,
+                        appearance = appearance,
+                        onAppearanceChange = themePreferences::setAppearance
                     )
                 }
             }

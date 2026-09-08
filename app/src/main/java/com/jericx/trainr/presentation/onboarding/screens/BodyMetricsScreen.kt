@@ -35,11 +35,10 @@ import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.common.Constants
 import com.jericx.trainr.presentation.common.components.core.touchedOnBlur
 import com.jericx.trainr.presentation.common.components.core.TrainrFieldError
-import com.jericx.trainr.presentation.common.theme.RedError
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.jericx.trainr.presentation.common.theme.ComponentHeight
-import com.jericx.trainr.presentation.common.theme.TextMuted
+import com.jericx.trainr.presentation.common.theme.trainrColors
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.components.core.TrainrButton
 import com.jericx.trainr.presentation.common.components.core.TrainrProgress
@@ -322,10 +321,10 @@ private fun UnitTab(
         modifier = modifier.height(ComponentHeight.ChipTall),
         shape = shape,
         color = if (selected)
-            MaterialTheme.colorScheme.onBackground
+            MaterialTheme.trainrColors.surfaceSelected
         else
-            MaterialTheme.colorScheme.surface,
-        border = if (selected) null else BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+            MaterialTheme.trainrColors.surfaceCard,
+        border = if (selected) null else BorderStroke(1.dp, MaterialTheme.trainrColors.outlineControl)
     ) {
         Box(contentAlignment = Alignment.Center) {
             Text(
@@ -334,9 +333,9 @@ private fun UnitTab(
                     fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
                 ),
                 color = if (selected)
-                    MaterialTheme.colorScheme.background
+                    MaterialTheme.trainrColors.onSurfaceSelected
                 else
-                    TextMuted
+                    MaterialTheme.trainrColors.onSurfaceMuted
             )
         }
     }
@@ -350,7 +349,7 @@ private fun BMICard(bmi: Float) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surfaceVariant
+        color = MaterialTheme.trainrColors.surfaceSunken
     ) {
         Column(
             modifier = Modifier.padding(Spacing.medium)
@@ -360,7 +359,7 @@ private fun BMICard(bmi: Float) {
                     withStyle(
                         style = SpanStyle(
                             fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onBackground
+                            color = MaterialTheme.trainrColors.onSurface
                         )
                     ) {
                         append(stringResource(R.string.bmi_label) + " ")
@@ -368,7 +367,7 @@ private fun BMICard(bmi: Float) {
                     withStyle(
                         style = SpanStyle(
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
+                            color = MaterialTheme.trainrColors.brandStrong
                         )
                     ) {
                         append(String.format(locale, "%.1f", bmi))
@@ -380,7 +379,7 @@ private fun BMICard(bmi: Float) {
             Text(
                 text = getBMICategory(bmi),
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.trainrColors.brandStrong
             )
         }
     }

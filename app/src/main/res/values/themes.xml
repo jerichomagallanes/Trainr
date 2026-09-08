@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.Trainr" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:statusBarColor">@color/purple_700</item>
-    </style>
+    <!--
+        Only the night variant sets a windowBackground: light inherits the
+        platform's, which is what the app rendered before dark mode existed.
+    -->
+    <style name="Theme.Trainr" parent="android:Theme.Material.Light.NoActionBar" />
 </resources>

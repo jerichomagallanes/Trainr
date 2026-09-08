@@ -15,9 +15,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.jericx.trainr.presentation.common.theme.OutlineGray
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
+import com.jericx.trainr.presentation.common.theme.trainrColors
 
 @Composable
 fun TrainrProgress(
@@ -36,13 +36,13 @@ fun TrainrProgress(
             .fillMaxWidth()
             .height(8.dp)
             .clip(MaterialTheme.shapes.large)
-            .background(OutlineGray)
+            .background(MaterialTheme.trainrColors.trackEmpty)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxHeight()
                 .fillMaxWidth(currentStep.toFloat() / totalSteps)
-                .background(MaterialTheme.colorScheme.onBackground)
+                .background(MaterialTheme.trainrColors.surfaceSelected)
         )
     }
 }

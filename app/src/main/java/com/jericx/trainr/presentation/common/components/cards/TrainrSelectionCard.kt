@@ -21,8 +21,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.jericx.trainr.presentation.common.components.core.TrainrRadioDot
 import com.jericx.trainr.presentation.common.theme.Spacing
-import com.jericx.trainr.presentation.common.theme.TextMuted
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
+import com.jericx.trainr.presentation.common.theme.trainrColors
 
 @Composable
 fun TrainrSelectionCard(
@@ -32,6 +32,8 @@ fun TrainrSelectionCard(
     isSelected: Boolean,
     onClick: () -> Unit,
 ) {
+    val colors = MaterialTheme.trainrColors
+
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -39,11 +41,11 @@ fun TrainrSelectionCard(
         shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected)
-                MaterialTheme.colorScheme.onBackground
+                colors.surfaceSelected
             else
-                MaterialTheme.colorScheme.surface
+                colors.surfaceCard
         ),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        border = BorderStroke(1.dp, colors.outlineControl),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Box(
@@ -70,9 +72,9 @@ fun TrainrSelectionCard(
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                     ),
                     color = if (isSelected)
-                        MaterialTheme.colorScheme.background
+                        colors.onSurfaceSelected
                     else
-                        MaterialTheme.colorScheme.onSurface
+                        colors.onSurface
                 )
                 if (description != null) {
                     Spacer(modifier = Modifier.height(Spacing.small))
@@ -80,9 +82,9 @@ fun TrainrSelectionCard(
                         text = description,
                         style = MaterialTheme.typography.bodyMedium,
                         color = if (isSelected)
-                            MaterialTheme.colorScheme.background
+                            colors.onSurfaceSelected
                         else
-                            TextMuted
+                            colors.onSurfaceMuted
                     )
                 }
             }

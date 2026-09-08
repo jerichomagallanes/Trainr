@@ -21,13 +21,14 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.jericx.trainr.R
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
+import com.jericx.trainr.presentation.common.theme.themedPainter
+import com.jericx.trainr.presentation.common.theme.trainrColors
 
 private val EmptyActions: @Composable RowScope.() -> Unit = {}
 
@@ -60,7 +61,7 @@ fun TrainrTopBar(
                         contentDescription = stringResource(
                             if (closeInsteadOfBack) R.string.close else R.string.back
                         ),
-                        tint = MaterialTheme.colorScheme.onBackground
+                        tint = MaterialTheme.trainrColors.onSurface
                     )
                 }
             }
@@ -80,7 +81,7 @@ fun TrainrTopBar(
                         else -> 0.dp
                     }
                     Image(
-                        painter = painterResource(id = R.drawable.img_trainr),
+                        painter = themedPainter(R.drawable.img_trainr, R.drawable.img_trainr_night),
                         contentDescription = stringResource(R.string.trainr),
                         modifier = Modifier
                             .height(32.dp)
@@ -92,8 +93,8 @@ fun TrainrTopBar(
         },
         actions = actions,
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.background,
-            navigationIconContentColor = MaterialTheme.colorScheme.onBackground
+            containerColor = MaterialTheme.trainrColors.surfacePage,
+            navigationIconContentColor = MaterialTheme.trainrColors.onSurface
         ),
         modifier = modifier
     )
