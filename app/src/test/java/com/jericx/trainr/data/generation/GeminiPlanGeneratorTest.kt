@@ -12,9 +12,6 @@ import org.junit.Test
 
 class GeminiPlanGeneratorTest {
 
-    // The model is asked through an interface, so these tests are about what
-    // the generator does with an answer — retrying, walking the model list,
-    // giving up — rather than about how the answer got here.
     private class FakeModelClient(answers: List<GeminiResponse>) : PlanModelClient {
         private val remaining = ArrayDeque(answers)
         val modelsAsked = mutableListOf<String>()
@@ -35,14 +32,12 @@ class GeminiPlanGeneratorTest {
 
     private fun text(body: String) = GeminiResponse.Text(body)
 
-    // Remembers in memory what the real one remembers on disk.
     private class FakeSpentModels(initial: Set<String> = emptySet()) : SpentModels {
         private val spent = initial.toMutableSet()
         override fun spentToday(): Set<String> = spent
         override fun markSpent(model: String) { spent += model }
     }
 
-    // Keeps everything it was told, so a test can read the whole trail.
     private class FakeBreadcrumbs : Breadcrumbs {
         val events = mutableListOf<String>()
         val state = mutableMapOf<String, String>()
@@ -109,7 +104,6 @@ class GeminiPlanGeneratorTest {
         assertThat(plan.startDateMillis).isEqualTo(1_000L)
         assertThat(plan.workoutDays.single().exercises.single().exerciseKey)
             .isEqualTo("goblet_squat")
-        // The strongest model is asked first and, answering, is the only one asked.
         assertThat(client.modelsAsked).containsExactly(PlanModelClient.MODELS.first())
     }
 
@@ -144,8 +138,6 @@ class GeminiPlanGeneratorTest {
         assertThat(client.prompts).hasSize(3)
     }
 
-    // An answer that cannot be used is worth another go; a model that will not
-    // answer is worth someone else.
     @Test
     fun aModelThatWillNotAnswerHandsOverToTheNextOne() = runTest {
         val client = answering(GeminiResponse.ModelUnavailable, text(validPlanJson))
@@ -168,10 +160,6 @@ class GeminiPlanGeneratorTest {
         assertThat(client.modelsAsked).containsExactlyElementsIn(PlanModelClient.MODELS).inOrder()
     }
 
-    // Asking a model that has run out is the one thing guaranteed not to help,
-    // and every extra call is a request the client no longer has. So a refusal
-    // moves along the list rather than spending an attempt — refusals still
-    // leave the attempts intact for a model that will answer.
     @Test
     fun refusalsDoNotSpendTheAttemptsMeantForUnusableAnswers() = runTest {
         val client = answering(
@@ -183,14 +171,11 @@ class GeminiPlanGeneratorTest {
 
         val result = generator(client).generate(request())
 
-        // Two refusals, then a genuine answer that was unusable, then one that
-        // was not: four calls, of which only the last two were attempts.
+        // Two refusals, an unusable answer, then a good one: four calls, only the last two attempts
         assertThat(result).isInstanceOf(PlanGenerationResult.Generated::class.java)
         assertThat(client.prompts).hasSize(4)
     }
 
-    // Nothing is reachable, so no other model will be either: the list stops
-    // rather than working through five models that cannot be called.
     @Test
     fun beingOfflineStopsTheListAtOnce() = runTest {
         val client = answering(GeminiResponse.Unreachable, text(validPlanJson))
@@ -201,11 +186,8 @@ class GeminiPlanGeneratorTest {
         assertThat(client.modelsAsked).hasSize(1)
     }
 
-    // An alias resolves onto a model that is already in the list and shares its
-    // allowance, so it would add waiting rather than capacity: driving
-    // gemini-3.5-flash-lite to its per-minute limit refuses
-    // gemini-flash-lite-latest in the same breath. Checked here because the
-    // list looks like somewhere you would helpfully add more names.
+    // An alias resolves onto a model already in the list and shares its allowance, so it adds
+    // waiting rather than capacity: gemini-flash-lite-latest is gemini-3.5-flash-lite
     @Test
     fun theModelListHoldsRealNamesRatherThanAliases() {
         assertThat(PlanModelClient.MODELS).isNotEmpty()
@@ -213,9 +195,6 @@ class GeminiPlanGeneratorTest {
         assertThat(PlanModelClient.MODELS).containsNoDuplicates()
     }
 
-    // The whole point of the change: a model that said it was out of allowance
-    // this morning is not asked again this afternoon. Each pointless ask costs
-    // a full round trip, and with five models that is where the minutes went.
     @Test
     fun `a model that is out of allowance is not asked again`() = runTest {
         val spent = FakeSpentModels()
@@ -232,9 +211,7 @@ class GeminiPlanGeneratorTest {
         assertThat(second.modelsAsked.first()).isEqualTo(PlanModelClient.MODELS[1])
     }
 
-    // Overloaded or slow is not the same as out of allowance. It may answer
-    // perfectly well a minute later, so remembering it would strike a healthy
-    // model off the list for the rest of the day.
+    // Unavailable may answer a minute later; remembering it would strike a healthy model off for the day
     @Test
     fun `a model that is merely unavailable is not remembered`() = runTest {
         val spent = FakeSpentModels()
@@ -245,8 +222,7 @@ class GeminiPlanGeneratorTest {
         assertThat(spent.spentToday()).isEmpty()
     }
 
-    // Everything is spent, so there is nothing to skip to. Asking anyway beats
-    // refusing: the reset may have just passed, or the record may be stale.
+    // With nothing left to skip to, asking beats refusing: the reset may have passed or the record be stale
     @Test
     fun `with every model spent it still asks rather than giving up`() = runTest {
         val spent = FakeSpentModels(PlanModelClient.MODELS.toSet())
@@ -258,8 +234,6 @@ class GeminiPlanGeneratorTest {
         assertThat(result).isInstanceOf(PlanGenerationResult.Generated::class.java)
     }
 
-    // Every model out of allowance is a different thing from a failed run, and
-    // the client needs opposite advice for each: wait, or try again.
     @Test
     fun `every model out of allowance reports the daily limit`() = runTest {
         val client = answering(
@@ -271,9 +245,6 @@ class GeminiPlanGeneratorTest {
         assertThat(result).isEqualTo(PlanGenerationResult.DailyLimitReached)
     }
 
-    // A run that also hit a bad answer has an ordinary failure to report.
-    // Telling this client to come back tomorrow would send them away from
-    // something a retry would have fixed.
     @Test
     fun `a mixed failure is not reported as the daily limit`() = runTest {
         val client = answering(
@@ -288,7 +259,6 @@ class GeminiPlanGeneratorTest {
         assertThat(result).isEqualTo(PlanGenerationResult.Failed)
     }
 
-    // Nothing reached the model at all, which says nothing about allowance.
     @Test
     fun `being offline is not reported as the daily limit`() = runTest {
         val result = generator(answering(GeminiResponse.Unreachable)).generate(request())
@@ -296,8 +266,6 @@ class GeminiPlanGeneratorTest {
         assertThat(result).isEqualTo(PlanGenerationResult.Offline)
     }
 
-    // Models already known to be spent are skipped, so a client whose whole
-    // chain was recorded this morning is told the truth without a single call.
     @Test
     fun `an already exhausted chain reports the limit`() = runTest {
         val spent = FakeSpentModels(PlanModelClient.MODELS.toSet())
@@ -310,8 +278,6 @@ class GeminiPlanGeneratorTest {
         assertThat(result).isEqualTo(PlanGenerationResult.DailyLimitReached)
     }
 
-    // The trail is what makes a crash report worth reading: it says which model
-    // was asked, in what order, and what each one said.
     @Test
     fun `the trail records the walk through the models`() = runTest {
         val trail = FakeBreadcrumbs()
@@ -329,10 +295,8 @@ class GeminiPlanGeneratorTest {
         assertThat(trail.state["week"]).isEqualTo("1")
     }
 
-    // The policy promises a crash report says what broke, not who the client is.
-    // A breadcrumb is stored by Google and outlives the session, so no answer
-    // the client gave may appear in one — and a validation message can quote the
-    // model's own text, which was written from the profile.
+    // Breadcrumbs are stored by Google and outlive the session, so no answer the client gave may
+    // appear in one, including by way of a validation message quoting the model's own text
     @Test
     fun `no answer the client gave reaches the trail`() = runTest {
         val trail = FakeBreadcrumbs()

@@ -53,7 +53,6 @@ fun WorkoutDayCard(
     modifier: Modifier = Modifier,
     isMissed: Boolean = false
 ) {
-    // A started workout gets the emphasis header; one not begun stays on the card fill.
     val started = day.status != WorkoutStatus.NOT_STARTED
     val colors = MaterialTheme.trainrColors
 
@@ -89,8 +88,7 @@ fun WorkoutDayCard(
                     color = if (started) colors.onSurfaceEmphasis else colors.onSurface
                 )
             }
-            // A day whose date has passed with nothing logged reads in the same
-            // grey as "not started": the app says where you stand without scolding.
+            // Missed deliberately reads in the same grey as "not started".
             if (isMissed) {
                 StatusChip(labelRes = R.string.missed, tone = StatusTone.IDLE)
             } else {

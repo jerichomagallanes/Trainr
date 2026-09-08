@@ -70,8 +70,8 @@ object AppModule {
 
     @Provides
     @Singleton
-    // Which generator answers is a property of the build, not of a flag: see
-    // planGenerator() in the dev and prod source sets.
+    // Which generator answers is a property of the build: see planGenerator()
+    // in the dev and prod source sets.
     fun providePlanGenerator(
         spentModels: SpentModels,
         breadcrumbs: Breadcrumbs

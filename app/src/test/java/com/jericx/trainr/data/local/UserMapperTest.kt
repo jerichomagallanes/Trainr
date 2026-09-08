@@ -36,13 +36,10 @@ class UserMapperTest {
 
     @Test
     fun `mapToEntity serializes enums by name and preserves scalar fields`() {
-        // Arrange
         val profile = sampleProfile()
 
-        // Act
         val entity = mapper.mapToEntity(profile)
 
-        // Assert
         assertThat(entity.id).isEqualTo(7L)
         assertThat(entity.firstName).isEqualTo("Jericho")
         assertThat(entity.gender).isEqualTo("MALE")
@@ -58,27 +55,21 @@ class UserMapperTest {
 
     @Test
     fun `UserProfile round-trip through entity preserves all fields`() {
-        // Arrange
         val original = sampleProfile()
 
-        // Act
         val restored = mapper.mapToDomain(mapper.mapToEntity(original))
 
-        // Assert
         assertThat(restored).isEqualTo(original)
     }
 
     @Test
     fun `mapToDomain drops unknown equipment names instead of throwing`() {
-        // Arrange: simulate an entity with a stale enum name no longer in the codebase
         val entity = mapper.mapToEntity(sampleProfile()).copy(
             availableEquipment = listOf("DUMBBELLS", "OBSOLETE_GADGET")
         )
 
-        // Act
         val domain = mapper.mapToDomain(entity)
 
-        // Assert
         assertThat(domain.availableEquipment).containsExactly(Equipment.DUMBBELLS)
     }
 }

@@ -32,8 +32,6 @@ class YouTubeVideoTest {
         assertThat(idOf("https://m.youtube.com/watch?v=kDPxFoCmb-w")).isEqualTo("kDPxFoCmb-w")
     }
 
-    // The model rarely returns a bare link: expect timestamps, playlists and
-    // share tracking hung off the end.
     @Test
     fun ignoresTrailingParameters() {
         assertThat(idOf("https://www.youtube.com/watch?v=kDPxFoCmb-w&t=42s")).isEqualTo("kDPxFoCmb-w")
@@ -57,7 +55,6 @@ class YouTubeVideoTest {
         assertThat(idOf("https://www.youtube.com/@somechannel")).isNull()
     }
 
-    // A truncated or padded id is not an id; better no video than the wrong one.
     @Test
     fun rejectsAnIdOfTheWrongLength() {
         assertThat(idOf("https://www.youtube.com/watch?v=tooShort")).isNull()

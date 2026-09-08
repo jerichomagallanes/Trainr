@@ -5,7 +5,7 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.text.TextLayoutResult
 
-// Truncated labels have shipped twice; laid-out text is the only honest witness.
+// Laid-out text is the only honest witness to a truncated label.
 fun notEllipsized(): SemanticsMatcher =
     SemanticsMatcher("label is not ellipsized") { node ->
         val results = mutableListOf<TextLayoutResult>()

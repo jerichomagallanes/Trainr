@@ -62,8 +62,7 @@ class WeeklyProgressScreenTest {
         composeTestRule.onNodeWithText(string(R.string.week_number_format, 1), substring = true)
             .assertIsDisplayed()
 
-        // Weeks 1, 5 and 7 are all fully completed, so this row repeats; the
-        // skipped and upcoming weeks share an untouched 0/3.
+        // Weeks 1, 5 and 7 are fully completed; the skipped and upcoming weeks share 0/3.
         val fullyCompleted = composeTestRule
             .onAllNodesWithText(daysCompleted(3, 3, 100))
             .fetchSemanticsNodes()
@@ -75,7 +74,6 @@ class WeeklyProgressScreenTest {
         assertThat(untouched).hasSize(2)
     }
 
-    // Five statuses across eight weeks; every one should be on screen somewhere.
     @Test
     fun showsEveryWeekStatus() {
         setScreen()
@@ -104,7 +102,6 @@ class WeeklyProgressScreenTest {
         assertThat(tapped?.weekNumber).isEqualTo(3)
     }
 
-    // A one-day-per-week plan must not read "0/1 days completed".
     @Test
     fun aSingleScheduledDayUsesTheSingular() {
         val oneDayWeek = WeekProgressUi(
@@ -123,7 +120,6 @@ class WeeklyProgressScreenTest {
         composeTestRule.onNodeWithText(daysCompleted(1, 1, 100)).assertIsDisplayed()
         composeTestRule.onNodeWithText("1/1 day completed (100%)").assertIsDisplayed()
     }
-    // A week is a good deal more than a set, so the swipe asks first.
     @Test
     fun swipingAnUpcomingWeekAsksBeforeDeleting() {
         var deleted: WeekProgressUi? = null
@@ -151,8 +147,6 @@ class WeeklyProgressScreenTest {
         assertThat(deleted?.weekNumber).isEqualTo(upcoming.weekNumber)
     }
 
-    // Training already done is still the client's to drop — but the dialog
-    // says what it costs before it goes.
     @Test
     fun deletingATrainedWeekNamesWhatItCosts() {
         val trained = SampleWeeklyProgress.weeks.first { it.hasTraining }
@@ -176,12 +170,10 @@ class WeeklyProgressScreenTest {
         ).assertIsDisplayed()
     }
 
-    // A swipe that cannot delete must not fall through as a tap and navigate.
     @Test
     fun aRefusedSwipeDoesNotOpenTheWeek() {
         var opened: WeekProgressUi? = null
-        // A lone week cannot be deleted, so its swipe has nothing to do — and
-        // must not quietly become a tap that opens it.
+        // A lone week cannot be deleted, so its swipe has nothing to do.
         val only = SampleWeeklyProgress.weeks.first()
         composeTestRule.setContent {
             TrainrTheme {

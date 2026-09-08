@@ -6,10 +6,6 @@ import androidx.compose.ui.res.stringResource
 import com.jericx.trainr.R
 import com.jericx.trainr.domain.model.*
 
-/**
- * Extension functions to get localized strings for enums
- */
-
 @Composable
 fun Gender.getLocalizedName(): String = when (this) {
     Gender.MALE -> stringResource(R.string.male_gender)
@@ -35,9 +31,8 @@ fun FitnessGoal.getLocalizedName(): String = when (this) {
     FitnessGoal.FLEXIBILITY -> stringResource(R.string.flexibility_mobility_goal)
 }
 
-// The routine sentence reads "...a 3-day strength program focused on building
-// muscle", so the goal needs a gerund and the style a bare noun; neither of the
-// display labels fits that shape.
+// The routine sentence needs a gerund for the goal and a bare noun for the
+// style; neither display label fits that shape.
 @Composable
 fun FitnessGoal.getFocusPhrase(): String = when (this) {
     FitnessGoal.WEIGHT_LOSS -> stringResource(R.string.goal_focus_lose_weight)

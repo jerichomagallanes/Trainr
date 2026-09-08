@@ -158,9 +158,8 @@ private fun OnboardingPageContent(page: OnboardingPage) {
     }
 }
 
-// Frame 325:2 measures the title 151dp from the physical screen top with the
-// status bar floating inside that margin, but the host already consumes the
-// status bar inset, so it is subtracted back out here.
+// Measured from the physical screen top, so the status bar inset the host
+// already consumes is subtracted back out.
 private val HeaderTopMargin = 151.dp
 
 @Composable

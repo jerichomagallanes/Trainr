@@ -20,8 +20,7 @@ class SplashScreenTest {
 
     private fun string(id: Int) = composeTestRule.activity.getString(id)
 
-    // The name is the wordmark's accessible label now, not a line of text, so a
-    // screen reader still announces the app while the eye sees the logo.
+    // The app name is the wordmark's accessible label, not a line of text.
     @Test
     fun displaysTheWordmarkUnderTheAppName() {
         composeTestRule.setContent {

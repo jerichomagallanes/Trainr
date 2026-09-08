@@ -45,8 +45,6 @@ data class RoutineUi(
         }
     )
 
-    // A new set repeats the last one's target: the most likely next thing to do
-    // is what you just did.
     fun addSet(position: Int): RoutineUi = copy(
         exercises = exercises.map { exercise ->
             if (exercise.position != position) {
@@ -65,10 +63,8 @@ data class RoutineUi(
         }
     )
 
-    // The remaining sets renumber so the table never shows 1, 3. Matching is by
-    // set number rather than instance: a reload replaces every instance with an
-    // equal-looking one, and the row that reports the swipe may be holding the
-    // old one.
+    // Matched by set number, not instance: a reload replaces instances with
+    // equal-looking copies, so the row reporting the swipe may hold the old one.
     fun removeSet(position: Int, setNumber: Int): RoutineUi = copy(
         exercises = exercises.map { exercise ->
             if (exercise.position != position) {
@@ -87,12 +83,8 @@ data class RoutineUi(
         exercises = exercises.map { it.loggedAsPrescribed() }
     )
 
-    // Back to a session nobody has started. The logged numbers go and the
-    // prescription stays, which costs nothing to do because the two were never
-    // the same field: logging only ever wrote to the actuals.
-    //
-    // Sets added or deleted by hand are left as they are. Restoring those would
-    // be undo, which is a different promise than this one makes.
+    // Clears the actuals only — logging never wrote to the prescription — and
+    // leaves hand-added or deleted sets alone, which would be undo instead.
     fun clearProgress(): RoutineUi = copy(
         exercises = exercises.map { exercise ->
             exercise.copy(
@@ -109,8 +101,6 @@ data class RoutineUi(
         }
     )
 
-    // Whether there is anything to clear. A session nobody has touched must not
-    // offer to undo work that does not exist.
     val hasProgress: Boolean
         get() = exercises.any { exercise ->
             exercise.isCompleted || exercise.sets.any {
@@ -120,14 +110,9 @@ data class RoutineUi(
         }
 }
 
-// Ticking an exercise off says its prescription was done, so a set left blank
-// records what was asked for. Without this a finished day is stored with
-// nothing on its sets: the PREVIOUS column has nothing to show, and next
-// week's prompt reads the whole session back as "did: skipped".
-// An exercise is done when its sets are: ticking off the last one finishes it
-// there and then, and adding a set that has not been done reopens it. Kept
-// beside the edits themselves so no later one can leave the two disagreeing —
-// which is what left a finished exercise looking untouched.
+// An exercise is done when its sets are, applied beside every set edit so the
+// two cannot disagree; a blank set logs its prescription below, or PREVIOUS and
+// next week's prompt read a finished day back as skipped.
 private fun ExerciseUi.tickedFromItsSets(): ExerciseUi =
     copy(isCompleted = sets.isNotEmpty() && sets.all { it.isCompleted })
 
@@ -143,8 +128,7 @@ private fun ExerciseUi.loggedAsPrescribed(): ExerciseUi = copy(
     }
 )
 
-// Un-ticking clears the marks and leaves the numbers: they are logs, and
-// hand-typed ones would be thrown away with them.
+// Un-ticking clears the marks and leaves the numbers: hand-typed logs stay.
 private fun ExerciseUi.notLogged(): ExerciseUi = copy(
     isCompleted = false,
     sets = sets.map { it.copy(isCompleted = false) }

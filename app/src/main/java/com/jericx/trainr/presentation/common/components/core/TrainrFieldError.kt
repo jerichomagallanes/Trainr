@@ -18,10 +18,8 @@ import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 import com.jericx.trainr.presentation.common.theme.trainrColors
 
-// Why a value was not accepted, under the field it belongs to. Null draws
-// nothing, so a caller can pass its check straight in and an untouched field
-// stays quiet: a form that opens already complaining has told the client they
-// are wrong before they have done anything.
+// Null draws nothing, so an untouched field stays quiet rather than opening
+// the form already complaining.
 @Composable
 fun TrainrFieldError(message: String?, modifier: Modifier = Modifier) {
     if (message == null) return
@@ -35,9 +33,8 @@ fun TrainrFieldError(message: String?, modifier: Modifier = Modifier) {
     )
 }
 
-// A field has been "touched" once it has been left, not while it is being
-// filled in. Complaining that something is required while the client is still
-// on their way to typing it is the form arguing with them mid-sentence.
+// Touched means the field has been left, not that it is being filled in, so
+// nothing complains mid-typing.
 @Composable
 fun Modifier.touchedOnBlur(onTouched: () -> Unit): Modifier {
     var everFocused by remember { mutableStateOf(false) }

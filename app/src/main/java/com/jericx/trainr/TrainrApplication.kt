@@ -12,14 +12,11 @@ class TrainrApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        // Generation is refused without this. App Check attests that the
-        // request came from this app on a genuine device, which is what makes
-        // the key's absence from the APK worth something: there is no longer a
-        // secret to steal, and the thing that replaced it cannot be copied.
+        // Generation is refused without App Check: it attests the request came
+        // from this app on a genuine device, so no key has to ship.
         Firebase.initialize(this)
-        // How the app proves itself differs by build type, so the choice lives
-        // in the source sets: only the debug build can see the provider that
-        // accepts a hand-registered token.
+        // The provider differs by build type, so it lives in the source sets:
+        // only debug can see the one accepting a hand-registered token.
         Firebase.appCheck.installAppCheckProviderFactory(appCheckProviderFactory())
     }
 }

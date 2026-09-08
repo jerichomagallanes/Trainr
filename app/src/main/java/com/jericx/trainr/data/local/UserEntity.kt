@@ -39,10 +39,8 @@ data class UserEntity(
             onDelete = ForeignKey.CASCADE
         )
     ],
-    // A client has one week three. Enforced here because the check that used to
-    // stand for it — read, then generate for half a minute, then write — leaves
-    // room for a second generation to pass the same check before the first one
-    // saves.
+    // A client has one week three: the unique index closes the window that a
+    // read, a half-minute of generating, then a write leaves open.
     indices = [
         Index("userId"),
         Index(value = ["userId", "weekNumber"], unique = true)

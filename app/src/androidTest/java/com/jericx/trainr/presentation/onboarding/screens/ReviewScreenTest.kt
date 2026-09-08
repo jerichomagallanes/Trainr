@@ -74,8 +74,6 @@ class ReviewScreenTest {
             )
         )
 
-    // The screen used to name "general fitness" whatever the user picked, which
-    // made the last screen before generation identical for everybody.
     @Test
     fun theRoutinePreviewNamesTheGoalTheUserChose() {
         val profile = sampleProfile.copy(
@@ -106,7 +104,6 @@ class ReviewScreenTest {
             .assertIsDisplayed()
     }
 
-    // Two profiles that differ only in goal must not read the same.
     @Test
     fun twoDifferentGoalsProduceTwoDifferentSentences() {
         val endurance = sampleProfile.copy(fitnessGoal = FitnessGoal.ENDURANCE)
@@ -147,7 +144,7 @@ class ReviewScreenTest {
             }
         }
 
-        // Five: one per onboarding step, measurements having become its own.
+        // Five: one Edit per onboarding step.
         composeTestRule.onAllNodesWithText(string(R.string.edit))
             .assertCountEquals(5)
         composeTestRule.onAllNodesWithText(string(R.string.edit))[0].performClick()
@@ -156,8 +153,6 @@ class ReviewScreenTest {
         assertThat(goals).isTrue()
     }
 
-    // Entered from the plan, the review is a detour: it closes, it does not
-    // promise a step back through a flow that is not there.
     @Test
     fun regeneratingShowsACloseInsteadOfABack() {
         composeTestRule.setContent {
@@ -208,7 +203,6 @@ class ReviewScreenTest {
         setupProgress().assertCountEquals(1)
     }
 
-    // Reached from the plan there is no seven-step run to be six sevenths of.
     @Test
     fun reviewingFromThePlanCountsNothing() {
         composeTestRule.setContent {
@@ -225,7 +219,6 @@ class ReviewScreenTest {
         setupProgress().assertCountEquals(0)
     }
 
-    // Saving the profile writes no routine, so the screen must not promise one.
     @Test
     fun theProfileUpdateSavesInsteadOfGenerating() {
         var saved = false
@@ -253,9 +246,7 @@ class ReviewScreenTest {
     }
 
 
-    // The profile is stored in centimetres and kilograms whichever units were
-    // typed, so a client in pounds was shown their own weight as a number they
-    // had never entered.
+    // Stored in centimetres and kilograms whatever units were typed.
     @Test
     fun measurementsReadBackInTheUnitsTheyWereEnteredIn() {
         setScreen(sampleProfile.copy(bodyUnitSystem = UnitSystem.IMPERIAL))
@@ -275,8 +266,6 @@ class ReviewScreenTest {
             .assertIsDisplayed()
     }
 
-    // Personal Information is the card whose Edit collects the name, so it has
-    // to show it: it was the one field you could type and never read back.
     @Test
     fun thePersonalCardShowsTheNameItCollects() {
         setScreen(sampleProfile)
@@ -285,8 +274,7 @@ class ReviewScreenTest {
         composeTestRule.onNodeWithText("Jericho").assertIsDisplayed()
     }
 
-    // The app prescribes loads and works around injuries the client declared,
-    // so the caveat has to be in front of them at the moment a plan is made.
+    // The plan prescribes loads around declared injuries, so the caveat comes first.
     @Test
     fun theHealthDisclaimerIsShownBeforeAPlanIsGenerated() {
         setScreen(sampleProfile)
@@ -313,9 +301,6 @@ class ReviewScreenTest {
             .assertDoesNotExist()
     }
 
-    // Each card's Edit opens exactly the screen that answers it. Personal
-    // Information used to carry the measurements too, so its Edit walked two
-    // screens and changing a height began on a screen about your name.
     @Test
     fun measurementsAreTheirOwnCardWithTheirOwnEdit() {
         var editedPersonal = false
@@ -349,7 +334,6 @@ class ReviewScreenTest {
 
         composeTestRule.onNodeWithText(string(R.string.personal_information))
             .assertIsDisplayed()
-        // Height and weight moved out, so the labels sit under their own card.
         composeTestRule.onNodeWithText(string(R.string.height_label))
             .performScrollTo()
             .assertIsDisplayed()

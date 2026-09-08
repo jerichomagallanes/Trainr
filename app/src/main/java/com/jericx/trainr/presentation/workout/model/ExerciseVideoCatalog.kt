@@ -1,8 +1,7 @@
 package com.jericx.trainr.presentation.workout.model
 
-// Hand-verified tutorials keyed by exerciseKey. The generator never writes
-// video URLs — a model can only invent ID-shaped strings — so the app owns
-// this lookup, and an exercise with no entry simply renders no tutorial.
+// Hand-verified tutorials keyed by exerciseKey; the generator never writes video
+// URLs because a model can only invent ID-shaped strings.
 object ExerciseVideoCatalog {
 
     fun urlFor(exerciseKey: String): String? =

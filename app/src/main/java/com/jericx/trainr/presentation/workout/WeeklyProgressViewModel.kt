@@ -17,13 +17,9 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class WeeklyProgressUiState(
-    // No stand-in weeks: the screen lists what is stored, and nothing when
-    // nothing is. Showing a built-in set here would read as a training history
-    // that never happened.
     val weeks: List<WeekProgressUi> = emptyList(),
-    // An empty list means "none stored" only once the reading is done. Before
-    // that it means "not looked yet", and the two must not be confused: one of
-    // them sends the screen away.
+    // An empty list means "none stored" only once the reading is done, and an
+    // empty list sends the screen away.
     val hasLoaded: Boolean = false
 )
 
@@ -53,9 +49,6 @@ class WeeklyProgressViewModel @Inject constructor(
         }
     }
 
-    // Any week can go, trained or not, down to the last one: it is the client's
-    // record to keep or drop, and a plan emptied out says so and offers to
-    // build another rather than pretending one is still there.
     fun deleteWeek(weekNumber: Int) {
         viewModelScope.launch {
             val user = userRepository.getCurrentUser() ?: return@launch
@@ -68,11 +61,8 @@ class WeeklyProgressViewModel @Inject constructor(
         }
     }
 
-    // Deleting from the middle would otherwise leave week two missing between
-    // one and three. The numbers are the plan's running order, not a record of
-    // anything — each week's dates say when it was, and those never move — so
-    // closing the gap tells the truth and reads as it should. Renumbered in
-    // ascending order, since two of the same number cannot exist at once.
+    // Week numbers are the plan's running order, not a record: the dates are.
+    // Ascending, since two weeks cannot hold the same number at once.
     private suspend fun renumber(remaining: List<WeeklyWorkoutPlan>) {
         remaining
             .sortedBy { it.weekNumber }
@@ -94,15 +84,13 @@ class WeeklyProgressViewModel @Inject constructor(
             val start = plan.startDateMillis ?: WorkoutWeek.startOfDay(plan.createdAt)
             val completed = plan.workoutDays.count { it.status == WorkoutStatus.COMPLETED }
             val total = plan.workoutDays.size
-            // The week is over once the Monday after it has arrived; until then
-            // an unfinished week is still in play, however little got done.
+            // Over once the day after the week has arrived, not before.
             val over = nowMillis >= WorkoutWeek.dateOfDay(start, LAST_ISO_DAY + 1)
             val status = when {
                 total > 0 && completed == total -> WeekStatus.COMPLETED
                 over && completed == 0 -> WeekStatus.SKIPPED
                 over -> WeekStatus.NOT_COMPLETED
-                // Training ahead of schedule still counts as started: a week
-                // with work logged in it is not "upcoming" any more.
+                // Checked before UPCOMING: work logged early is not "upcoming".
                 completed > 0 -> WeekStatus.IN_PROGRESS
                 nowMillis < start -> WeekStatus.UPCOMING
                 else -> WeekStatus.IN_PROGRESS

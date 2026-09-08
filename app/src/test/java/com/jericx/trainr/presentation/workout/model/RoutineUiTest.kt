@@ -99,8 +99,6 @@ class RoutineUiTest {
         exercises.first { it.position == position }.sets
             .fold(this) { routine, set -> routine.updateSet(position, set.copy(isCompleted = true)) }
 
-    // The exercise is its sets: the last one ticked finishes it, with no second
-    // tap on the card's own box.
     @Test
     fun tickingEverySetFinishesTheExercise() {
         val routine = routineWithSets()
@@ -120,8 +118,6 @@ class RoutineUiTest {
         assertThat(reopened.exercises.first().isCompleted).isFalse()
     }
 
-    // A set you have not done yet is work outstanding, whatever the card said a
-    // moment ago.
     @Test
     fun addingASetReopensAFinishedExercise() {
         val done = routineWithSets().tickEverySetOf(1)
@@ -138,8 +134,6 @@ class RoutineUiTest {
         assertThat(trimmed.exercises.first().isCompleted).isTrue()
     }
 
-    // Un-ticking the card clears the marks but keeps what was typed: those are
-    // logs, including hand-typed ones.
     @Test
     fun unTickingAnExerciseClearsItsMarksAndKeepsItsNumbers() {
         val logged = routineWithSets()
@@ -167,7 +161,6 @@ class RoutineUiTest {
         assertThat(logged.exercises[1].sets.single().actualReps).isNull()
     }
 
-    // A new set repeats the last target: the likeliest next thing is what you just did.
     @Test
     fun addingASetContinuesTheLastTarget() {
         val grown = routineWithSets().addSet(1).exercises.first()
@@ -211,8 +204,7 @@ class RoutineUiTest {
         assertThat(sets.last().actualReps).isEqualTo(9)
     }
 
-    // Deletion is keyed by set number so a reload that replaced every set
-    // instance cannot strand a swipe; a number nothing holds removes nothing.
+    // Deletion is keyed by set number, so a reload that replaced every set instance cannot strand a swipe
     @Test
     fun deletingAMissingNumberRemovesNothing() {
         val routine = routineWithSets()
@@ -222,8 +214,6 @@ class RoutineUiTest {
         assertThat(once.exercises.first().sets).hasSize(2)
     }
 
-    // The last set can go, the same way the last week can: Add set is the way
-    // back, so an exercise left with none is a state the client can undo.
     @Test
     fun theLastSetCanBeDeletedToo() {
         val routine = routineWithSets()
@@ -241,8 +231,7 @@ class RoutineUiTest {
         assertThat(completed.completionPercentage).isEqualTo(100)
         assertThat(completed.isComplete).isTrue()
     }
-    // Sliding a routine complete says the prescription was done; leaving the
-    // sets blank would reach next week's prompt as "did: skipped".
+    // Completing says the prescription was done; blank sets would reach next week's prompt as skipped
     @Test
     fun completingRecordsThePrescriptionOnBlankSets() {
         val completed = routineWithSets().completeAll()
@@ -253,7 +242,6 @@ class RoutineUiTest {
         assertThat(sets.all { it.isCompleted }).isTrue()
     }
 
-    // What the user actually typed always wins over the prescription.
     @Test
     fun completingKeepsTheNumbersThatWereLogged() {
         val routine = routineWithSets()
@@ -267,7 +255,6 @@ class RoutineUiTest {
         }
     }
 
-    // Un-ticking must not throw away numbers, hand-typed or filled in.
     @Test
     fun unTickingAnExerciseLeavesItsNumbersAlone() {
         val ticked = routineWithSets().toggleCompleted(1)
@@ -279,9 +266,7 @@ class RoutineUiTest {
     }
 
 
-    // Slide to finish, then change your mind. The prescription has to survive,
-    // because logging only ever wrote to the actuals and the targets are what
-    // the plan actually said.
+    // Logging only ever writes actuals, so clearing must leave the targets the plan set
     @Test
     fun `clearing progress keeps the prescription and drops the log`() {
         val done = routineWithSets().completeAll()
@@ -302,7 +287,6 @@ class RoutineUiTest {
         assertThat(cleared.isComplete).isFalse()
     }
 
-    // The button that offers this only appears when there is something to undo.
     @Test
     fun `an untouched routine has no progress to clear`() {
         assertThat(routineWithSets().hasProgress).isFalse()

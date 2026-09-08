@@ -46,8 +46,6 @@ class WorkoutPersistenceTest {
         return userId
     }
 
-    // The whole path the generated routines will travel: plan -> days ->
-    // exercises -> sets, and back again.
     @Test
     fun aPlanSurvivesTheRoundTripWithItsSets() = runTest {
         val userId = seedSamplePlan()
@@ -84,7 +82,6 @@ class WorkoutPersistenceTest {
         assertThat(plank.sets.map { it.targetSeconds }).containsExactly(45, 45, 45)
     }
 
-    // Sets come back in order, and a logged set keeps what was written on it.
     @Test
     fun aLoggedSetIsStoredAndReadBackInOrder() = runTest {
         val userId = seedSamplePlan()
@@ -215,8 +212,7 @@ class WorkoutPersistenceTest {
         assertThat(previous.single().actualReps).isEqualTo(10)
     }
 
-    // Sliding a routine complete logs nothing; that day must not shadow the
-    // older day whose numbers the PREVIOUS column exists to show.
+    // A day slid complete logs nothing, so it must not shadow older logged numbers.
     @Test
     fun aCompletedDayWithNothingLoggedDoesNotHideOlderLogs() = runTest {
         val userId = seedSamplePlan()
@@ -265,8 +261,7 @@ class WorkoutPersistenceTest {
         assertThat(reread.sets.map { it.id }).doesNotContain(exercise.sets[1].id)
     }
 
-    // Redoing onboarding REPLACEs the user row, which must cascade the old plan
-    // away so the reseed starts clean instead of leaving two week ones.
+    // Redoing onboarding REPLACEs the user row, which must cascade the old plan away.
     @Test
     fun replacingAUserCascadesAwayTheirOldPlan() = runTest {
         val userId = seedSamplePlan()
@@ -275,9 +270,7 @@ class WorkoutPersistenceTest {
 
         assertThat(repository.getWeeklyWorkoutPlan(userId, 1)).isNull()
     }
-    // Generating runs for the better part of a minute, so two runs could both
-    // pass a "does this week exist yet" check before either saved. The database
-    // holds the line whatever the callers do.
+    // Two slow generations can both pass an existence check, so the database holds the line.
     @Test
     fun aClientCannotEndUpWithTwoOfTheSameWeek() = runTest {
         val userId = seedSamplePlan()

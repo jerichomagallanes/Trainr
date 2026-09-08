@@ -38,10 +38,8 @@ import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.themedPainter
 import kotlinx.coroutines.delay
 
-// The animation covers the wait; it must not create one. Generating starts
-// with the screen rather than after a timer, and the screen stays only long
-// enough to be read when the answer comes back at once — which it does when
-// the built-in week stands in for a generation that could not run.
+// A floor on how long the screen shows, not a delay before generating starts:
+// the answer can come back at once.
 private const val MINIMUM_VISIBLE_MILLIS = 1_500L
 
 @Composable
@@ -49,9 +47,6 @@ fun GeneratingScreen(
     isReady: Boolean,
     onStart: () -> Unit,
     onDone: () -> Unit,
-    // Non-null when there is no plan and there will not be one until something
-    // changes. The animation stays behind the dialog rather than pretending to
-    // still be working.
     failure: PlanGenerationResult.Failure? = null,
     onRetry: () -> Unit = {},
     onGiveUp: () -> Unit = {},
@@ -169,14 +164,10 @@ private fun GenerationFailedDialog(
     onRetry: () -> Unit,
     onGiveUp: () -> Unit
 ) {
-    // Retrying a spent allowance cannot work, so that dialog does not offer it.
-    // A button the app already knows will fail is worse than no button: it
-    // invites the client to keep tapping and keep failing.
+    // Retrying a spent allowance cannot work, so it is not offered.
     val canRetry = failure != PlanGenerationResult.DailyLimitReached
 
     AlertDialog(
-        // Dismissing is the way out, not a way to go on waiting for a plan that
-        // is not coming.
         onDismissRequest = onGiveUp,
         title = {
             Text(
@@ -210,8 +201,6 @@ private fun GenerationFailedDialog(
                     )
                 }
             } else {
-                // The only thing left to do is leave, so it reads as an
-                // acknowledgement rather than as giving up on something.
                 TextButton(onClick = onGiveUp) {
                     Text(
                         text = stringResource(R.string.got_it),

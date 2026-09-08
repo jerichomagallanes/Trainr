@@ -38,9 +38,6 @@ fun TrainrDropdown(
     options: List<String>,
     onSelectionChange: (String) -> Unit,
     modifier: Modifier = Modifier,
-    // Shown, muted, when nothing has been chosen yet, the same way the text
-    // fields show theirs. A dropdown that opens on a real-looking value has
-    // answered the question on the client's behalf.
     placeholder: String = ""
 ) {
     var expanded by remember { mutableStateOf(false) }

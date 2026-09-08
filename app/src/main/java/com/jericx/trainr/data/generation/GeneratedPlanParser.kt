@@ -13,10 +13,8 @@ sealed interface PlanParseResult {
     data class Invalid(val errors: List<String>) : PlanParseResult
 }
 
-// Turns generator output into a WeeklyWorkoutPlan, or a list of everything
-// wrong with it. The generator never writes ids, dates, week numbers or
-// completion state: the app knows those, the model has no clock, so they
-// arrive as parameters instead of JSON.
+// The generator never writes ids, dates, week numbers or completion state, so
+// those arrive as parameters rather than JSON.
 class GeneratedPlanParser {
 
     private val decoder = Json { ignoreUnknownKeys = true }

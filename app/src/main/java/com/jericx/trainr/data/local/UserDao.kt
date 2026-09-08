@@ -87,9 +87,8 @@ interface UserDao {
     suspend fun deleteExerciseSet(setId: Long)
 
     // The most recent completed performance of the same movement, matched on
-    // exerciseKey — never on the display name, which is free to drift. A day
-    // finished without logging anything (slide-to-complete) is not a
-    // performance, so it must not shadow an older day that has real numbers.
+    // exerciseKey because display names drift. The EXISTS guard stops a day
+    // finished without logging from shadowing an older day with real numbers.
     @Query(
         """
         SELECT es.* FROM exercise_sets es

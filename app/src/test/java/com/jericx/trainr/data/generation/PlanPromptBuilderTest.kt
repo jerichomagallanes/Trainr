@@ -118,8 +118,7 @@ class PlanPromptBuilderTest {
         assertThat(prompt).contains("Skipped Day (skipped)")
     }
 
-    // A near-duplicate key (dumbbell_goblet_squat next to goblet_squat) splits
-    // history and loses the tutorial, so the vocabulary must reach the brief.
+    // A near-duplicate key (dumbbell_goblet_squat beside goblet_squat) splits history and loses the tutorial
     @Test
     fun theCanonicalVocabularyIsPinnedInTheBrief() {
         val brief = PlanPromptBuilder(canonicalKeys = setOf("goblet_squat", "plank"))
@@ -130,11 +129,7 @@ class PlanPromptBuilderTest {
         assertThat(PlanPromptBuilder().systemInstruction()).doesNotContain("near-duplicate")
     }
 
-    // Anchors of the coaching brief the plans' quality hangs on; if one of
-    // these leaves the system prompt it should be a deliberate decision.
-    // A client lifting in pounds owns 5 lb steps, so a 2.5% rise on 20 kg lands
-    // back on the same 45 lb and the progression vanishes where it is read. The
-    // brief has to name the increment for the model to avoid that.
+    // In pounds the gym's step is 5 lb, so a 2.5% rise on 20 kg reads back as the same 45 lb
     @Test
     fun theBriefNamesTheIncrementTheClientCanActuallyLoad() {
         val metric = PlanPromptBuilder().userPrompt(request(units = UnitSystem.METRIC))

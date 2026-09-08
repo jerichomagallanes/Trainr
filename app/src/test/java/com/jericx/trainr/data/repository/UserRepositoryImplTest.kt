@@ -80,54 +80,42 @@ class UserRepositoryImplTest {
 
     @Test
     fun `saveUser returns dao-generated id`() = runTest {
-        // Arrange
         coEvery { userDao.insertUser(any()) } returns 99L
 
-        // Act
         val id = repository.saveUser(sampleProfile())
 
-        // Assert
         assertThat(id).isEqualTo(99L)
         coVerify { userDao.insertUser(any()) }
     }
 
     @Test
     fun `getUser returns null when dao returns null`() = runTest {
-        // Arrange
         coEvery { userDao.getUserById(5L) } returns null
 
-        // Act
         val result = repository.getUser(5L)
 
-        // Assert
         assertThat(result).isNull()
     }
 
     @Test
     fun `getUser maps entity to domain when dao returns one`() = runTest {
-        // Arrange
         val profile = sampleProfile().copy(id = 5L)
         coEvery { userDao.getUserById(5L) } returns mapper.mapToEntity(profile)
 
-        // Act
         val result = repository.getUser(5L)
 
-        // Assert
         assertThat(result).isEqualTo(profile)
     }
 
     @Test
     fun `hasUsers delegates to dao`() = runTest {
-        // Arrange
         coEvery { userDao.hasUsers() } returns true
 
-        // Act / Assert
         assertThat(repository.hasUsers()).isTrue()
     }
 
     @Test
     fun `getWeeklyProgress computes 50 percent when half of days are completed`() = runTest {
-        // Arrange: 4 days, 2 completed
         coEvery { userDao.getWeeklyWorkoutPlan(1L, 1) } returns planEntity()
         val days = listOf(
             dayEntity(10L, 1, WorkoutStatus.COMPLETED),
@@ -140,10 +128,8 @@ class UserRepositoryImplTest {
         coEvery { userDao.getTotalExercisesForDay(any()) } returns 0
         coEvery { userDao.getCompletedExercisesForDay(any()) } returns 0
 
-        // Act
         val progress = repository.getWeeklyProgress(userId = 1L, weekNumber = 1)
 
-        // Assert
         assertThat(progress).isNotNull()
         assertThat(progress!!.completedWorkouts).isEqualTo(2)
         assertThat(progress.totalWorkouts).isEqualTo(4)
@@ -152,29 +138,23 @@ class UserRepositoryImplTest {
 
     @Test
     fun `getWeeklyProgress returns null when plan is missing`() = runTest {
-        // Arrange
         coEvery { userDao.getWeeklyWorkoutPlan(1L, 99) } returns null
 
-        // Act
         val progress = repository.getWeeklyProgress(userId = 1L, weekNumber = 99)
 
-        // Assert
         assertThat(progress).isNull()
     }
 
     @Test
     fun `getWorkoutDayProgress reports zero percent when day has no exercises`() = runTest {
-        // Arrange
         coEvery { userDao.getWorkoutDaysForPlan(1L) } returns listOf(
             dayEntity(20L, 1, WorkoutStatus.NOT_STARTED)
         )
         coEvery { userDao.getTotalExercisesForDay(20L) } returns 0
         coEvery { userDao.getCompletedExercisesForDay(20L) } returns 0
 
-        // Act
         val progress = repository.getWorkoutDayProgress(weeklyPlanId = 1L)
 
-        // Assert
         assertThat(progress).hasSize(1)
         assertThat(progress[0].completionPercentage).isEqualTo(0f)
         assertThat(progress[0].totalExercises).isEqualTo(0)
@@ -182,17 +162,14 @@ class UserRepositoryImplTest {
 
     @Test
     fun `getWorkoutDayProgress computes percent from completed over total`() = runTest {
-        // Arrange: 3 of 4 exercises completed -> 75%
         coEvery { userDao.getWorkoutDaysForPlan(1L) } returns listOf(
             dayEntity(30L, 1, WorkoutStatus.IN_PROGRESS)
         )
         coEvery { userDao.getTotalExercisesForDay(30L) } returns 4
         coEvery { userDao.getCompletedExercisesForDay(30L) } returns 3
 
-        // Act
         val progress = repository.getWorkoutDayProgress(weeklyPlanId = 1L)
 
-        // Assert
         assertThat(progress[0].completionPercentage).isEqualTo(75f)
         assertThat(progress[0].completedExercises).isEqualTo(3)
         assertThat(progress[0].totalExercises).isEqualTo(4)

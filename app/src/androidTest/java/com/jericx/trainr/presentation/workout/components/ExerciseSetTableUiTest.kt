@@ -62,8 +62,6 @@ class ExerciseSetTableUiTest {
         composeTestRule.onNodeWithText("—").assertIsDisplayed()
     }
 
-    // Week one has no history anywhere, and its card must look exactly like
-    // the design, which has no PREVIOUS column.
     @Test
     fun noHistoryMeansNoColumn() {
         setTable(previousSets = emptyList())
@@ -71,9 +69,6 @@ class ExerciseSetTableUiTest {
         composeTestRule.onNodeWithText(string(R.string.previous_column)).assertDoesNotExist()
     }
 
-    // Deleting every set used to take the Add set button with it, because the
-    // card only drew the table when there were rows to put in it. That left an
-    // exercise you could empty and never refill.
     @Test
     fun addSetSurvivesAnEmptiedTable() {
         composeTestRule.setContent {
@@ -90,7 +85,6 @@ class ExerciseSetTableUiTest {
         composeTestRule.onNodeWithText(string(R.string.add_set)).assertIsDisplayed()
     }
 
-    // Headings over nothing are noise.
     @Test
     fun anEmptiedTableDropsItsColumnHeadings() {
         composeTestRule.setContent {

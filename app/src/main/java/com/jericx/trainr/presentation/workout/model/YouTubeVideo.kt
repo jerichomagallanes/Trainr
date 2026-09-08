@@ -4,8 +4,6 @@ package com.jericx.trainr.presentation.workout.model
 value class YouTubeVideo(val id: String) {
 
     companion object {
-        // Whatever shape the model hands back: watch links, short links, embeds,
-        // Shorts, with or without trailing timestamps and tracking parameters.
         private val PATTERNS = listOf(
             Regex("""[?&]v=([A-Za-z0-9_-]{11})"""),
             Regex("""youtu\.be/([A-Za-z0-9_-]{11})"""),

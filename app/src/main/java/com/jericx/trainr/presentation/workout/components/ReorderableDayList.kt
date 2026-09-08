@@ -54,8 +54,6 @@ private val LIFTED_RULE = 2.dp
 private val AUTO_SCROLL_STEP = 12.dp
 private const val EDGE_FRACTION = 0.15f
 
-// Scrolls faster the deeper the finger sits into the edge band, and not at all
-// while it stays in the middle of the screen.
 internal fun autoScrollStep(pointerY: Float, viewportHeight: Float, maxStep: Float): Float {
     if (viewportHeight <= 0f) return 0f
     val edge = viewportHeight * EDGE_FRACTION
@@ -67,11 +65,8 @@ internal fun autoScrollStep(pointerY: Float, viewportHeight: Float, maxStep: Flo
     }
 }
 
-// Long-press lifts a session and drags it onto another weekday. The weekday
-// belongs to the SLOT rather than the session, so the cards relabel themselves
-// the moment they settle into a new one — the move is legible before the
-// finger comes up. A finished session is the record of a date it was actually
-// trained on, so it neither lifts nor lets anything cross it.
+// The weekday belongs to the slot rather than the session, so cards relabel as
+// they settle. A finished session neither lifts nor lets anything cross it.
 @Composable
 fun ReorderableDayList(
     days: List<WeeklyPlanDay>,
@@ -79,10 +74,8 @@ fun ReorderableDayList(
     onDayClick: (WorkoutDay) -> Unit,
     onMove: (from: Int, to: Int) -> Unit,
     modifier: Modifier = Modifier,
-    // A week being read back is a record: its cards do not lift at all.
     canReorder: Boolean = true,
-    // The plan scrolls, and a week is taller than the screen: without this a
-    // card cannot be dragged past the fold in one gesture.
+    // Without it a card cannot be dragged past the fold in one gesture.
     scrollState: ScrollState? = null
 ) {
     val haptics = LocalHapticFeedback.current
@@ -92,23 +85,19 @@ fun ReorderableDayList(
     val moveLater = stringResource(R.string.move_later)
     val colors = MaterialTheme.trainrColors
 
-    // The draft permutation lives here while a card is in the air; the plan is
-    // only told once the finger lifts.
+    // Draft permutation while a card is in the air; the plan is told on lift.
     var order by remember(days) { mutableStateOf(days.indices.toList()) }
     var dragStartPosition by remember(days) { mutableIntStateOf(0) }
     var rawOffset by remember(days) { mutableFloatStateOf(0f) }
     val heights = remember(days) { mutableStateMapOf<Int, Float>() }
 
-    // Kept across the reordered list that a drop produces, so the card can
-    // spring into its new slot instead of appearing there.
+    // Outlives the reordered list a drop produces, so the card springs into its
+    // new slot instead of appearing there.
     var draggedId by remember { mutableStateOf<Long?>(null) }
     val liftOffset = remember { Animatable(0f) }
 
-    // Where the finger is on screen, so the list can scroll itself when the
-    // drag reaches an edge.
     val cardTops = remember(days) { mutableStateMapOf<Int, Float>() }
-    // Null until the finger's position is known: a default of zero reads as
-    // the top edge and scrolls the list away the moment a card is lifted.
+    // Null, not 0f: zero reads as the top edge and scrolls the list away on lift.
     var pointerY by remember { mutableStateOf<Float?>(null) }
     val viewportHeight = LocalWindowInfo.current.containerSize.height.toFloat()
     val maxScrollStep = with(LocalDensity.current) { AUTO_SCROLL_STEP.toPx() }
@@ -148,8 +137,6 @@ fun ReorderableDayList(
     ) {
         order.forEachIndexed { position, source ->
             val planDay = days[source]
-            // The past is a record and a finished session is a record: neither
-            // lifts, and nothing may be dropped onto a date that has gone.
             val movable = canReorder && !planDay.isFrozen
             val isDragged = draggedId == planDay.day.id
 
@@ -171,8 +158,8 @@ fun ReorderableDayList(
                                 ambientShadowColor = colors.shadowSpot
                             }
                         }
-                        // The drop shadow is transparent in dark, where the rule
-                        // is the only thing left saying the card is in the air.
+                        // The drop shadow is transparent in dark, so the rule is
+                        // the only cue left that the card is in the air.
                         .then(
                             if (isDragged) {
                                 Modifier.border(
@@ -210,10 +197,6 @@ fun ReorderableDayList(
                                             draggedId = planDay.day.id
                                             dragStartPosition = order.indexOf(source)
                                             rawOffset = 0f
-                                            // Seed the finger position before the
-                                            // auto-scroll loop starts: left at
-                                            // zero it reads as the top edge and
-                                            // scrolls the list away on lift.
                                             pointerY = (cardTops[source] ?: 0f) + start.y
                                             scope.launch { liftOffset.snapTo(0f) }
                                             haptics.performHapticFeedback(
@@ -243,10 +226,8 @@ fun ReorderableDayList(
                                         },
                                         onDragEnd = {
                                             val to = order.indexOf(source)
-                                            // The plan owns the order; the draft
-                                            // only existed for the drag. Letting
-                                            // it stand would show a move that was
-                                            // refused as though it had been made.
+                                            // The plan owns the order: a refused
+                                            // move must not linger as a draft.
                                             order = days.indices.toList()
                                             pointerY = null
                                             if (to != dragStartPosition) onMove(dragStartPosition, to)
@@ -279,9 +260,8 @@ fun ReorderableDayList(
     }
 }
 
-// Swaps the lifted card with each neighbour it has travelled half of, and
-// returns the offset left over so the card stays under the finger. Runs in a
-// loop because one drag event can cross more than one card.
+// Loops because one drag event can cross more than one card; returns the
+// leftover offset so the card stays under the finger.
 private fun settleIntoSlots(
     source: Int,
     days: List<WeeklyPlanDay>,

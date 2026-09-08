@@ -43,7 +43,6 @@ class WorkoutDayCardTest {
         composeTestRule.onNodeWithText("6 Exercises").assertIsDisplayed()
     }
 
-    // A one-minute, one-exercise day must not read "1 mins" / "1 Exercises".
     @Test
     fun oneMinuteAndOneExerciseReadAsSingulars() {
         setCard(duration = 1, exerciseCount = 1)

@@ -6,11 +6,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
-// The scale used by the Figma mockups. Roboto is FontFamily.Default on Android,
-// which is what the designs specify for everything except the wordmark and
-// screen titles. Letter spacing is 0 throughout; the designs use none.
 val Typography = Typography(
-    // Wordmark
     headlineLarge = TextStyle(
         fontFamily = FugazOne,
         fontWeight = FontWeight.Normal,
@@ -26,7 +22,6 @@ val Typography = Typography(
         letterSpacing = 0.sp
     ),
 
-    // Screen title
     titleLarge = TextStyle(
         fontFamily = Rubik,
         fontWeight = FontWeight.Bold,
@@ -34,7 +29,6 @@ val Typography = Typography(
         lineHeight = 24.sp,
         letterSpacing = 0.sp
     ),
-    // Field and section labels
     titleMedium = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Bold,
@@ -42,7 +36,6 @@ val Typography = Typography(
         lineHeight = 24.sp,
         letterSpacing = 0.sp
     ),
-    // Selected chips, card weekday
     titleSmall = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.SemiBold,
@@ -73,7 +66,6 @@ val Typography = Typography(
         letterSpacing = 0.sp
     ),
 
-    // Emphasised small text: links, chips, primary actions
     labelLarge = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.SemiBold,

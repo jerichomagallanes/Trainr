@@ -107,7 +107,6 @@ class WeeklyPlanViewModelTest {
         assertThat(viewModel.uiState.value.hasPlan).isTrue()
     }
 
-    // A week opened from Weekly Progress shows that week, not the newest.
     @Test
     fun showsTheWeekThatWasAskedFor() = runTest {
         val weekTwo = storedPlan.copy(id = 10, weekNumber = 2, title = "Second week")
@@ -121,8 +120,6 @@ class WeeklyPlanViewModelTest {
         assertThat(viewModel.uiState.value.plan).isEqualTo(storedPlan)
     }
 
-    // After a regeneration there are several stored weeks; home shows the
-    // newest one.
     @Test
     fun showsTheLatestWeekWhenSeveralAreStored() = runTest {
         val weekTwo = storedPlan.copy(id = 10, weekNumber = 2, title = "Second week")
@@ -136,8 +133,6 @@ class WeeklyPlanViewModelTest {
         assertThat(viewModel.uiState.value.plan).isEqualTo(weekTwo)
     }
 
-    // The known gap this closes: a stored plan used to render the sample
-    // week's hardcoded July dates whatever week it actually was.
     @Test
     fun aStoredPlanRendersItsOwnDates() = runTest {
         val start = 1_755_000_000_000L
@@ -183,7 +178,6 @@ class WeeklyPlanViewModelTest {
         }
     )
 
-    // Next week is offered once the week is done...
     @Test
     fun aFinishedWeekCanStartTheNextOne() {
         val start = WorkoutWeek.mondayOf(1_755_000_000_000L)
@@ -196,7 +190,7 @@ class WeeklyPlanViewModelTest {
         assertThat(state.canStartNextWeek).isTrue()
     }
 
-    // ...or once its dates have run out, so a missed day cannot strand the plan.
+    // A missed day must not strand the plan, so a week whose dates have run out also leads on
     @Test
     fun anExpiredWeekCanStartTheNextOneEvenUnfinished() {
         val start = WorkoutWeek.mondayOf(1_755_000_000_000L)
@@ -251,7 +245,6 @@ class WeeklyPlanViewModelTest {
         assertThat(moved.map { it.dayNumber }).containsExactly(1, 3, 5).inOrder()
     }
 
-    // A finished session is the record of a date it was trained on.
     @Test
     fun aFinishedSessionCannotBeMoved() {
         val days = sessions(WorkoutStatus.COMPLETED)
@@ -314,9 +307,7 @@ class WeeklyPlanViewModelTest {
         }
     )
 
-    // Missed is derived from the calendar, never stored: an unfinished day whose
-    // date has gone is missed, and the same day moved later stops being missed
-    // with no flag to correct.
+    // Missed is derived from the calendar, never stored, so moving a day later un-misses it
     @Test
     fun anUnfinishedDayThatHasPassedReadsAsMissed() {
         val start = WorkoutWeek.mondayOf(1_755_000_000_000L)
@@ -342,8 +333,7 @@ class WeeklyPlanViewModelTest {
         assertThat(state.days[0].isMissed).isFalse()
     }
 
-    // The past holds its place: neither a missed nor a finished day can be
-    // dragged, and nothing can be dropped onto a date that has gone.
+    // Frozen means a day whose date has gone: it can be neither dragged nor dropped onto
     @Test
     fun everyDayThatHasPassedIsFrozen() {
         val start = WorkoutWeek.mondayOf(1_755_000_000_000L)
@@ -357,7 +347,6 @@ class WeeklyPlanViewModelTest {
         assertThat(state.days[1].isFrozen).isFalse()
     }
 
-    // The button must not open last Monday while calling it today's workout.
     @Test
     fun theStartButtonSkipsDaysThatHavePassed() {
         val start = WorkoutWeek.mondayOf(1_755_000_000_000L)
@@ -395,8 +384,6 @@ class WeeklyPlanViewModelTest {
         assertThat(state.nextWorkoutIsToday).isFalse()
     }
 
-    // Everything behind you and nothing ahead: the button still has a target
-    // rather than doing nothing.
     @Test
     fun theStartButtonFallsBackToAMissedDayWhenNothingIsLeft() {
         val start = WorkoutWeek.mondayOf(1_755_000_000_000L)
@@ -410,8 +397,6 @@ class WeeklyPlanViewModelTest {
         assertThat(state.nextWorkoutIsToday).isFalse()
     }
 
-    // A plan not read yet and a plan that is empty are different things, and
-    // the screen has to be able to tell them apart.
     @Test
     fun nothingIsClaimedBeforeThePlanHasBeenRead() = runTest {
         coEvery { userRepository.getCurrentUser() } returns null
@@ -426,8 +411,6 @@ class WeeklyPlanViewModelTest {
         }
     }
 
-    // Found on screen: a week with every session done still offered to start
-    // one, because the target fell back to the first day — already finished.
     @Test
     fun aFinishedWeekHasNoNextWorkoutToStart() {
         val start = WorkoutWeek.mondayOf(1_755_000_000_000L)
@@ -437,7 +420,6 @@ class WeeklyPlanViewModelTest {
         )
 
         assertThat(state.nextWorkout).isNull()
-        // ...and the week behind you is what leads on.
         assertThat(state.canStartNextWeek).isTrue()
     }
 

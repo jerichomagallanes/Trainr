@@ -112,7 +112,6 @@ class WeeklyProgressViewModelTest {
         assertThat(progress.status).isEqualTo(WeekStatus.SKIPPED)
     }
 
-    // A week generated from the completion screen before its Monday arrives.
     @Test
     fun aWeekGeneratedAheadOfItsStartIsUpcoming() {
         val progress = WeeklyProgressViewModel.weekProgressOf(
@@ -151,8 +150,6 @@ class WeeklyProgressViewModelTest {
             .containsExactly(1, 2).inOrder()
     }
 
-    // A built-in set of weeks here would read as a training history that never
-    // happened, so with nothing stored the screen lists nothing.
     @Test
     fun withNothingStoredThereAreNoWeeksToShow() = runTest {
         coEvery { userRepository.getCurrentUser() } returns null
@@ -162,8 +159,6 @@ class WeeklyProgressViewModelTest {
 
         assertThat(viewModel.uiState.value.weeks).isEmpty()
     }
-    // A week that was trained is still the client's to drop; the app asks
-    // first and names what goes, rather than refusing on their behalf.
     @Test
     fun aTrainedWeekCanBeDeleted() = runTest {
         val trained = plan(weekNumber = 1, statuses = arrayOf(WorkoutStatus.COMPLETED))
@@ -179,9 +174,7 @@ class WeeklyProgressViewModelTest {
         coVerify { userRepository.deleteWeeklyWorkoutPlan(trained.id) }
     }
 
-    // Deleting from the middle would leave week two missing between one and
-    // three. The numbers are a running order, not a record — the dates say when
-    // each week was, and those do not move.
+    // Week numbers are a running order, not a record: the dates say when each week was and do not move
     @Test
     fun theWeeksAfterADeletedOneCloseTheGap() = runTest {
         val one = plan(weekNumber = 1, statuses = arrayOf(WorkoutStatus.COMPLETED))
@@ -200,8 +193,6 @@ class WeeklyProgressViewModelTest {
         coVerify(exactly = 0) { userRepository.updateWeeklyWorkoutPlan(match { it.id == one.id }) }
     }
 
-    // Deleting down to nothing is allowed: the plan screen says there is none
-    // and offers to build another, which beats keeping a week nobody wanted.
     @Test
     fun theLastWeekCanBeDeletedToo() = runTest {
         val only = plan(weekNumber = 1, statuses = arrayOf(WorkoutStatus.NOT_STARTED))
@@ -216,8 +207,6 @@ class WeeklyProgressViewModelTest {
         coVerify { userRepository.deleteWeeklyWorkoutPlan(only.id) }
     }
 
-    // Found by hand: a week dated in the future but already trained in showed
-    // as Upcoming, which also made it swipe-deletable along with its logs.
     @Test
     fun aFutureWeekAlreadyTrainedInHasStarted() {
         val progress = WeeklyProgressViewModel.weekProgressOf(

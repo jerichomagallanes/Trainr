@@ -5,10 +5,6 @@ import android.content.SharedPreferences
 import androidx.core.content.edit
 import com.jericx.trainr.R
 
-/**
- * Language preferences manager using SharedPreferences.
- * Handles language selection and persistence across app sessions.
- */
 class LanguagePreferences(context: Context) {
 
     private val sharedPreferences: SharedPreferences = context.getSharedPreferences(
@@ -18,9 +14,6 @@ class LanguagePreferences(context: Context) {
     var currentLanguage: String = getStoredLanguage()
         private set
 
-    /**
-     * Available languages with their codes and display names
-     */
     data class Language(
         val code: String,
         val displayName: String,
@@ -33,16 +26,10 @@ class LanguagePreferences(context: Context) {
         private const val DEFAULT_LANGUAGE = "en"
     }
 
-    /**
-     * Get the current language code from SharedPreferences
-     */
     private fun getStoredLanguage(): String {
         return sharedPreferences.getString(KEY_LANGUAGE_CODE, DEFAULT_LANGUAGE) ?: DEFAULT_LANGUAGE
     }
 
-    /**
-     * Set the current language and persist it
-     */
     fun setLanguage(context: Context, languageCode: String) {
         val availableLanguages = getAvailableLanguages(context)
         if (availableLanguages.any { it.code == languageCode }) {
@@ -53,9 +40,6 @@ class LanguagePreferences(context: Context) {
         }
     }
 
-    /**
-     * Get available languages from resources
-     */
     fun getAvailableLanguages(context: Context): List<Language> {
         val codes = context.resources.getStringArray(R.array.language_codes)
         val displayNames = context.resources.getStringArray(R.array.language_display_names)
@@ -70,9 +54,6 @@ class LanguagePreferences(context: Context) {
         }
     }
 
-    /**
-     * Get the current language object
-     */
     fun getCurrentLanguageObject(context: Context): Language {
         val availableLanguages = getAvailableLanguages(context)
         return availableLanguages.find { it.code == currentLanguage }

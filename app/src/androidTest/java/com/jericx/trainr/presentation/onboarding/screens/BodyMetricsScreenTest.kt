@@ -29,8 +29,6 @@ class BodyMetricsScreenTest {
 
     private fun string(id: Int) = composeTestRule.activity.getString(id)
 
-    // The toggle used to be local state thrown away on Next, so a client who
-    // chose imperial was quietly handed kilograms everywhere else in the app.
     @Test
     fun theChosenUnitsTravelWithTheMeasurements() {
         var captured: UnitSystem? = null
@@ -140,10 +138,7 @@ class BodyMetricsScreenTest {
         composeTestRule.onNodeWithText("154").assertIsDisplayed()
     }
 
-    // Switching units rewrites the field's contents, swaps its keyboard and
-    // changes what it will accept, so the field the user was editing is
-    // effectively a different field afterwards. Leaving focus behind stranded
-    // the caret in a value the user never typed.
+    // Switching units rewrites the field, its keyboard and its filter, so focus must not stay behind.
     @Test
     fun switchingUnitsClearsFocusFromTheFieldBeingEdited() {
         composeTestRule.setContent {
@@ -178,8 +173,6 @@ class BodyMetricsScreenTest {
         composeTestRule.onNodeWithText("154").assertIsNotFocused()
     }
 
-    // Re-tapping the unit that is already active changes nothing, so it must
-    // not interrupt whatever the user is typing.
     @Test
     fun reselectingTheCurrentUnitKeepsFocus() {
         composeTestRule.setContent {
@@ -197,9 +190,7 @@ class BodyMetricsScreenTest {
         composeTestRule.onNodeWithText("170").assertIsFocused()
     }
 
-    // The profile is stored in centimetres and kilograms whichever units were
-    // typed. Seeding the fields with the stored numbers put 177 under a label
-    // reading ft'in" and an unrounded 69.85331 under one reading lbs.
+    // The profile is stored in centimetres and kilograms whichever units were typed.
     @Test
     fun reopeningInPoundsShowsTheStoredMeasurementsConverted() {
         composeTestRule.setContent {
@@ -242,8 +233,7 @@ class BodyMetricsScreenTest {
         composeTestRule.onNodeWithText("70").assertIsDisplayed()
     }
 
-    // The imperial field's own filter makes the apostrophe optional, so "595"
-    // was accepted and parsed to a height of zero.
+    // The imperial filter makes the apostrophe optional, so "595" must not parse as a height.
     @Test
     fun aHeightThatIsNotFeetAndInchesCannotBeSubmitted() {
         composeTestRule.setContent {
@@ -261,9 +251,7 @@ class BodyMetricsScreenTest {
         composeTestRule.onNodeWithText(string(R.string.next)).assertIsNotEnabled()
     }
 
-    // The message names the limits rather than an example height. An example
-    // in an error reads as the answer that was expected, which is the last
-    // thing to put in front of somebody about their own body.
+    // Name the limits, not an example: an example reads as the answer expected of the body.
     @Test
     fun aHeightOutsideTheLimitsNamesTheLimits() {
         composeTestRule.setContent {
@@ -303,7 +291,6 @@ class BodyMetricsScreenTest {
         composeTestRule.onNodeWithText(string(R.string.next)).assertIsEnabled()
     }
 
-    // A weight of zero reaches the model as the body it plans around.
     @Test
     fun anImplausibleWeightCannotBeSubmitted() {
         composeTestRule.setContent {
@@ -320,8 +307,6 @@ class BodyMetricsScreenTest {
         composeTestRule.onNodeWithText(string(R.string.next)).assertIsNotEnabled()
     }
 
-    // A BMI computed from measurements the screen has refused is a verdict on
-    // a body drawn from numbers nobody accepted.
     @Test
     fun noBmiIsShownForMeasurementsThatWereRefused() {
         composeTestRule.setContent {

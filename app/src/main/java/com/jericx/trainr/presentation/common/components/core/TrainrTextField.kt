@@ -29,9 +29,8 @@ import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 import com.jericx.trainr.presentation.common.theme.trainrColors
 
-// Built on BasicTextField rather than OutlinedTextField: the designs want a 42dp
-// field, and OutlinedTextField enforces a 56dp minimum with fixed internal
-// padding, so constraining its height clips the text instead of tightening it.
+// BasicTextField because OutlinedTextField enforces a 56dp minimum with fixed
+// internal padding, so height-constraining it to the designs' 42dp clips text.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TrainrTextField(

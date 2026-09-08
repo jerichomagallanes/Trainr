@@ -12,9 +12,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.jericx.trainr.presentation.common.theme.trainrColors
 
-// The design's 20px radio, drawn rather than Material's RadioButton: the M3
-// widget carries a 48dp touch target that shoves the visible dot away from
-// the corner the frames pin it to.
+// Drawn rather than M3's RadioButton, whose 48dp touch target shoves the
+// visible dot away from the corner the frames pin it to.
 @Composable
 fun TrainrRadioDot(
     selected: Boolean,

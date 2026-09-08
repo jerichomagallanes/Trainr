@@ -2,9 +2,8 @@ package com.jericx.trainr.data.generation
 
 import com.google.firebase.ai.type.Schema
 
-// docs/generation-contract.md, in the shape the SDK asks for. Everything is
-// required unless named in optionalProperties; the parser still enforces the
-// rules a schema cannot express (bounds, key vocabulary, day counts).
+// docs/generation-contract.md in the shape the SDK asks for. The parser still
+// enforces what a schema cannot express: bounds, key vocabulary, day counts.
 val GENERATED_PLAN_SCHEMA: Schema = Schema.obj(
     properties = mapOf(
         "title" to Schema.string(),

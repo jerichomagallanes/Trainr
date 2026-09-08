@@ -31,15 +31,13 @@ data class WorkoutExercise(
     // name may vary between weeks and locales; this must not.
     val exerciseKey: String = "",
     val name: String,
-    // How this exercise is measured, and so which columns its sets show.
     val measure: ExerciseMeasure = ExerciseMeasure.REPS,
     val sets: List<ExerciseSet> = emptyList(),
     val setCount: Int? = null,
     val reps: String? = null,
     val duration: String? = null,
-    // What the card shows: how long the exercise is allotted, and the
-    // prescription beside it. The two are independent — ten minutes of "5 sets
-    // of 1 minute" is not five minutes — so neither can be derived.
+    // Independent: ten minutes of "5 sets of 1 minute" is not five minutes, so
+    // neither can be derived from the other.
     val durationMinutes: Int = 0,
     val prescription: String = "",
     val restTime: Int? = null,
@@ -50,8 +48,6 @@ data class WorkoutExercise(
     val notes: String = ""
 )
 
-// A prescription is what the plan asks for; a log is what you did. Both live on
-// the same row so the card can show the target and record the result beside it.
 data class ExerciseSet(
     val id: Long = 0,
     val setNumber: Int,

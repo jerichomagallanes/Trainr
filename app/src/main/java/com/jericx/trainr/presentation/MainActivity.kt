@@ -75,17 +75,13 @@ private val editArguments = listOf(
     }
 )
 
-// An onboarding step is seeded with what the client typed once they have
-// answered it, so stepping back to a screen shows their answers instead of an
-// empty form. Before that it stays blank: the profile's defaults are real
-// values and would read as choices nobody made.
+// Seed a step only once answered: the profile's defaults are real values and
+// would read as choices nobody made.
 private fun OnboardingState.filledFor(
     step: OnboardingStep,
     editing: Boolean
 ): UserProfile? = if (editing || step in answeredSteps) userProfile else null
 
-// Stateless, so it is built where it is used rather than threaded through every
-// composable that might one day want to leave a note.
 @Composable
 private fun rememberBreadcrumbs(): Breadcrumbs = remember { CrashlyticsBreadcrumbs() }
 
@@ -94,7 +90,6 @@ private val NavBackStackEntry.isEditing: Boolean
 
 private const val FORCED_LANGUAGE = "en"
 
-// The one place the preference meets a system that may disagree with it.
 private fun AppearanceMode.isDark(systemInDarkTheme: Boolean): Boolean = when (this) {
     AppearanceMode.SYSTEM -> systemInDarkTheme
     AppearanceMode.LIGHT -> false
@@ -104,12 +99,9 @@ private fun AppearanceMode.isDark(systemInDarkTheme: Boolean): Boolean = when (t
 @Composable
 private fun AppearanceMode.resolvedToDark(): Boolean = isDark(isSystemInDarkTheme())
 
-// The starting window is drawn from the theme before any of this app is
-// running, so res/values-night can only follow the preference if the platform
-// is told what it is. This persists it per-app, which is what makes the night
-// qualifier answer to the preference instead of the phone; MODE_NIGHT_AUTO is
-// how the override is dropped again. Below API 31 there is no such mechanism
-// and the repaint in onCreate is the whole cure.
+// The starting window is drawn from res/values-night before this app runs, so
+// the night qualifier only follows the preference if the platform is told it.
+// Below API 31 there is no such mechanism; the repaint in onCreate is the cure.
 private fun Context.persistAppNightMode(appearance: AppearanceMode) {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
     val uiModeManager = getSystemService(UiModeManager::class.java) ?: return
@@ -128,13 +120,9 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var themePreferences: ThemePreferences
 
-    // English-only for now, whatever the device says. The context this returns
-    // is the whole point of the call: it carries the English configuration, and
-    // it has to become the activity's base before any resources are read, which
-    // is why it happens here rather than in onCreate. Dropping it left the
-    // activity on the phone's locale, so the words came from the build (which
-    // ships English alone) while every date and weekday came from the device —
-    // 月曜日 under an English heading on a Japanese phone.
+    // English-only for now, whatever the device says. The returned context
+    // carries that configuration and must become the activity's base before any
+    // resources are read, so it cannot move to onCreate.
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(LocaleManager.updateAppLocale(newBase, FORCED_LANGUAGE))
     }
@@ -144,12 +132,9 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
 
-        // The window is painted before Compose runs, so it is painted here:
-        // the theme's own background is a resource, and on this launch it can
-        // still disagree with the preference.
-        // Only when the choice disagrees with the qualifier the starting window
-        // was drawn from. Painting it either way replaced the platform theme's
-        // own light background and shifted the strip behind the navigation bar.
+        // Repaint only when the preference disagrees with the qualifier the
+        // starting window was drawn from: painting it either way replaces the
+        // platform theme's background and shifts the navigation bar strip.
         startupOverride()?.let { window.setBackgroundDrawable(ColorDrawable(it)) }
 
         val versionName = BuildConfig.VERSION_NAME
@@ -180,10 +165,8 @@ fun AppContent(versionName: String, themePreferences: ThemePreferences) {
     val context = LocalContext.current
     val navController = rememberNavController()
 
-    // The route taken, so a crash report says which screen the client was on
-    // rather than only which line failed. Route patterns, never their filled-in
-    // arguments: a week number is harmless but the pattern is what identifies
-    // the screen, and taking the pattern keeps it that way by construction.
+    // Route patterns only, never their filled-in arguments, so a crash report
+    // carries no client data.
     val breadcrumbs = rememberBreadcrumbs()
     LaunchedEffect(navController) {
         navController.currentBackStackEntryFlow.collect { entry ->
@@ -213,9 +196,8 @@ fun AppContent(versionName: String, themePreferences: ThemePreferences) {
     LaunchedEffect(showSplashScreen) {
         if (showSplashScreen) {
             delay(splashScreenDuration)
-            // A returning user lands on their plan; onboarding is for the first
-            // run. Resolved before showSplashScreen flips: that flip restarts
-            // this effect, which would cancel a suspend call sitting after it.
+            // Resolved before showSplashScreen flips: that flip restarts this
+            // effect and would cancel a suspend call sitting after it.
             val destination = if (onboardingViewModel.hasCompletedOnboarding()) {
                 Screen.Home.route
             } else {
@@ -383,8 +365,6 @@ fun AppContent(versionName: String, themePreferences: ThemePreferences) {
                         isProfileUpdate = profileOnly,
                         onConfirmClick = {
                             if (profileOnly) {
-                                // The plan and its history stay exactly as they
-                                // are; the edited profile shapes the next week.
                                 onboardingViewModel.updateProfileOnly {
                                     navController.popBackStack(
                                         Screen.Home.route,
@@ -419,16 +399,12 @@ fun AppContent(versionName: String, themePreferences: ThemePreferences) {
                         isReady = onboardingState.isCompleted,
                         onStart = { onboardingViewModel.saveUserProfile() },
                         onDone = {
-                            // The new plan is a fresh start whichever door led
-                            // here, so the whole back stack goes.
                             navController.navigate(Screen.Home.route) {
                                 popUpTo(0) { inclusive = true }
                             }
                         },
                         failure = onboardingState.generationFailure,
                         onRetry = { onboardingViewModel.saveUserProfile() },
-                        // Nothing was written, so the way out is back to the
-                        // profile the plan would have been built from.
                         onGiveUp = { navController.popBackStack() },
                         giveUpLabel = R.string.back_to_profile
                     )
@@ -448,8 +424,6 @@ fun AppContent(versionName: String, themePreferences: ThemePreferences) {
                     )
                 }
 
-                // The same plan surface as home, read as a record: its days open
-                // that week's routines rather than the newest week's.
                 composable(
                     route = Screen.WeekPlan.route,
                     arguments = listOf(
@@ -458,11 +432,6 @@ fun AppContent(versionName: String, themePreferences: ThemePreferences) {
                 ) { entry ->
                     val weekNumber = entry.arguments
                         ?.getInt(Screen.WeekPlan.ARG_WEEK_NUMBER) ?: 1
-                    // A week opened from the list carries only what belongs to
-                    // the week: its days, the session still to train when this
-                    // is the week being trained, and the offer to run this week
-                    // again. Anything that rebuilds the plan stays on home,
-                    // where it has somewhere to go afterwards.
                     val openDay = { day: WorkoutDay ->
                         navController.navigate(
                             Screen.RoutineDetail.createRoute(day.dayNumber, weekNumber)
@@ -472,9 +441,6 @@ fun AppContent(versionName: String, themePreferences: ThemePreferences) {
                     val weekWasRepeated by nextWeekViewModel.isReady
                         .collectAsStateWithLifecycle()
 
-                    // The copy joins the plan at the end, which makes it the
-                    // week being trained — so the way on from here is home,
-                    // where that week now lives.
                     LaunchedEffect(weekWasRepeated) {
                         if (weekWasRepeated) {
                             navController.navigate(Screen.Home.route) {
@@ -506,12 +472,9 @@ fun AppContent(versionName: String, themePreferences: ThemePreferences) {
                 ) {
                     RoutineDetailRoute(
                         onBackClick = { navController.popBackStack() },
-                        // The session stays behind the congratulations, so
-                        // back out of it returns to the workout that was just
-                        // finished — where a mistyped number gets corrected.
-                        // Tearing it down made the completion screen's back
-                        // arrow a second way to reach home wearing the icon for
-                        // the one place it could not go.
+                        // The session stays on the stack behind the
+                        // congratulations, so back returns to the finished
+                        // workout where a mistyped number gets corrected.
                         onDayCompleted = { dayNumber ->
                             navController.navigate(Screen.DayCompleted.createRoute(dayNumber))
                         },
@@ -561,8 +524,6 @@ fun AppContent(versionName: String, themePreferences: ThemePreferences) {
                     )
                 }
 
-                // The same wait, a different job: this one replaces the week
-                // being trained instead of adding the one after it.
                 composable(Screen.RegeneratingWeek.route) {
                     val nextWeekViewModel: NextWeekViewModel = hiltViewModel()
                     val failure by nextWeekViewModel.failure.collectAsStateWithLifecycle()
@@ -577,8 +538,6 @@ fun AppContent(versionName: String, themePreferences: ThemePreferences) {
                         },
                         failure = failure,
                         onRetry = { nextWeekViewModel.regenerateThisWeek() },
-                        // The week they already have is untouched, so there is
-                        // something to go back to.
                         onGiveUp = { navController.popBackStack() }
                     )
                 }
@@ -597,7 +556,6 @@ fun AppContent(versionName: String, themePreferences: ThemePreferences) {
                         },
                         failure = nextWeekFailure,
                         onRetry = { nextWeekViewModel.generateNextWeek() },
-                        // The plan they already have is still there to go back to.
                         onGiveUp = { navController.popBackStack() }
                     )
                 }
@@ -607,9 +565,8 @@ fun AppContent(versionName: String, themePreferences: ThemePreferences) {
                     val weekWasRepeated by nextWeekViewModel.isReady
                         .collectAsStateWithLifecycle()
 
-                    // The copy lands in storage, so home is entered again to
-                    // read it. The entry is rebuilt, and with it the view model
-                    // that reported the copy, so this cannot come round twice.
+                    // Re-entering home rebuilds this entry and its view model,
+                    // so the repeat cannot come round twice.
                     LaunchedEffect(weekWasRepeated) {
                         if (weekWasRepeated) {
                             navController.navigate(Screen.Home.route) {
@@ -622,8 +579,6 @@ fun AppContent(versionName: String, themePreferences: ThemePreferences) {
                         onTrackProgressClick = {
                             navController.navigate(Screen.WeeklyProgress.route)
                         },
-                        // Any day opens its routine — a finished one to look back
-                        // at, a future one to read ahead or start early.
                         onDayClick = { day ->
                             navController.navigate(
                                 Screen.RoutineDetail.createRoute(day.dayNumber)
@@ -634,8 +589,6 @@ fun AppContent(versionName: String, themePreferences: ThemePreferences) {
                                 Screen.RoutineDetail.createRoute(day.dayNumber)
                             )
                         },
-                        // The plan stays underneath so the close button on the
-                        // review is a real way back out of regenerating.
                         onLeavePlanConfirmed = {
                             navController.navigate(Screen.Review.createRoute(fromPlan = true))
                         },
@@ -647,14 +600,10 @@ fun AppContent(versionName: String, themePreferences: ThemePreferences) {
                         onStartNextWeekClick = {
                             navController.navigate(Screen.GeneratingNextWeek.route)
                         },
-                        // Copying a week needs nothing from the model, so there
-                        // is no waiting to show: it lands and home reloads.
                         onRepeatWeekClick = { nextWeekViewModel.repeatWeek() },
                         onRegenerateWeekClick = {
                             navController.navigate(Screen.RegeneratingWeek.route)
                         },
-                        // With every week deleted there is a profile but no
-                        // plan: the review is where a new one is built from.
                         onCreatePlanClick = {
                             navController.navigate(Screen.Review.createRoute(fromPlan = true))
                         },

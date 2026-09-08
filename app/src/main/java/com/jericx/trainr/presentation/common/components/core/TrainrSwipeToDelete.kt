@@ -36,23 +36,10 @@ import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.trainrColors
 import kotlin.math.roundToInt
 
-// Deleting asks for a deliberate swipe, decided when the finger lifts, the way
-// the slide-to-complete control decides. Three quarters rather than its nine
-// tenths because a row can only travel as far as the finger has room to carry
-// it: a swipe begins where it lands, not at the far edge, so asking for nine
-// tenths of the width would leave the delete unreachable for anyone starting an
-// inch in. Half a swipe reveals the delete without doing it.
-
-// Dragging a row aside to reveal a delete behind it. What the delete means is
-// the caller's business — a set goes at once, a week is asked about first — so
-// only the gesture and the reveal live here.
-//
-// Built on a plain draggable rather than SwipeToDismissBox: that settles on
-// velocity as well as distance, so a quick flick deleted from halfway across
-// however far the positional threshold was pushed out. Reading the offset on
-// release is the same rule the slide-to-complete control uses, and it fires
-// exactly once per gesture, so nothing can report a delete twice or strand a
-// row half open.
+// Three quarters, not the slide control's nine tenths: a swipe begins where the
+// finger lands, so a wider threshold puts the delete out of reach. Measured on
+// release by a plain draggable rather than SwipeToDismissBox, which also settles
+// on velocity and so deleted on a quick flick from halfway across.
 private const val DELETE_FRACTION = 0.75f
 
 @Composable
@@ -64,10 +51,9 @@ fun TrainrSwipeToDelete(
     content: @Composable () -> Unit
 ) {
     val density = LocalDensity.current
-    // A plain value, moved straight from the drag. It used to be an Animatable
-    // fed by a coroutine launched per delta, and an Animatable takes one mutator
-    // at a time: a snap queued behind the finger could land after the release
-    // began animating and cancel it, leaving the row parked open.
+    // A plain value, not an Animatable: an Animatable takes one mutator at a
+    // time, so a snap queued behind the finger cancels the release and parks
+    // the row open.
     var offsetPx by remember { mutableFloatStateOf(0f) }
     val currentOnDelete by rememberUpdatedState(onDelete)
     val colors = MaterialTheme.trainrColors
@@ -75,8 +61,8 @@ fun TrainrSwipeToDelete(
     BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
         val travel = with(density) { maxWidth.toPx() }.coerceAtLeast(1f)
 
-        // Behind the row for exactly as long as the row is held aside, so an
-        // idle row has nothing red underneath to show through it.
+        // Only while the row is held aside, so an idle row has nothing red
+        // underneath to show through it.
         if (offsetPx < 0f) {
             Box(
                 modifier = Modifier
@@ -113,10 +99,8 @@ fun TrainrSwipeToDelete(
                             }
                         )
                     } else {
-                        // Where nothing can be deleted the swipe still has to be
-                        // swallowed: a horizontal drag nothing consumes ends as a
-                        // tap, and a refused swipe would open the very row it was
-                        // trying to dismiss.
+                        // A horizontal drag nothing consumes ends as a tap, so a
+                        // refused swipe would open the row it was dismissing.
                         Modifier.swallowHorizontalDrags()
                     }
                 )

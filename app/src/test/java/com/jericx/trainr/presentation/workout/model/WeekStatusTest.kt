@@ -40,7 +40,6 @@ class WeekStatusTest {
         assertThat(labels.toSet()).hasSize(WeekStatus.entries.size)
     }
 
-    // A missed week and a part-done week read the same in the design.
     @Test
     fun missedAndPartDoneWeeksShareATone() {
         assertThat(WeekStatus.NOT_COMPLETED.chipTone).isEqualTo(StatusTone.IDLE)
@@ -73,15 +72,12 @@ class WeekStatusTest {
         assertThat(WeekProgressUi(1, 0, 3, WeekStatus.SKIPPED, startDateMillis = 0L, endDateMillis = 0L).completionPercentage).isEqualTo(0)
     }
 
-    // A plan with no scheduled days must not divide by zero.
     @Test
     fun percentageIsZeroWhenNoDaysAreScheduled() {
         assertThat(WeekProgressUi(1, 0, 0, WeekStatus.SKIPPED, startDateMillis = 0L, endDateMillis = 0L).completionPercentage).isEqualTo(0)
     }
 
-    // The mockups label week 1 "Jul 22 – 28", but 22 July 2025 is a Tuesday, and
-    // the plan lists Monday first. A Tuesday-aligned week would put Monday's
-    // workout at the end of the week, so the weeks are Monday-aligned here.
+    // The mockups label week 1 "Jul 22 – 28", but that is a Tuesday, which would put Monday's workout last
     @Test
     fun everyWeekRunsMondayToSunday() {
         SampleWeeklyProgress.weeks.forEach { week ->

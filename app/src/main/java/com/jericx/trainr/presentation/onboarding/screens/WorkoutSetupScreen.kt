@@ -72,17 +72,15 @@ fun WorkoutSetupScreen(
     var selectedEquipment by remember {
         mutableStateOf(initial?.availableEquipment?.toSet() ?: emptySet())
     }
-    // Nothing starts chosen. These used to open on three days, forty five
-    // minutes and the morning, which a client could walk past without ever
-    // deciding, and the plan would then be built around answers nobody gave.
+    // Nothing starts chosen: a default the client walks past would become an
+    // answer the plan is built around.
     var selectedDays by remember { mutableStateOf(initial?.workoutDaysPerWeek?.takeIf { it > 0 }) }
     var selectedDuration by remember { mutableStateOf(initial?.workoutDuration?.takeIf { it > 0 }) }
     var selectedTime by remember { mutableStateOf(initial?.preferredWorkoutTime) }
     var selectedLiftingUnits by remember { mutableStateOf(initial?.liftingUnitSystem) }
 
-    // Only worth asking when there is something with a number written on it.
-    // A bodyweight setup has no plates to read, so the question would be about
-    // nothing, and it stays unanswered rather than being given a value.
+    // A bodyweight setup has no plates to read, so lifting units stay unasked
+    // and null rather than taking a value.
     val hasLoadedEquipment = selectedEquipment.any { it in LoadedEquipment }
 
     TrainrScaffold(
@@ -102,9 +100,6 @@ fun WorkoutSetupScreen(
                     val days = selectedDays
                     val duration = selectedDuration
                     val time = selectedTime
-                    // No stand-ins. An empty equipment set used to be sent on as
-                    // "bodyweight only", which answered the question for the
-                    // client instead of waiting for them to.
                     if (location != null && days != null && duration != null && time != null) {
                         onNextClick(
                             location,
@@ -116,9 +111,8 @@ fun WorkoutSetupScreen(
                         )
                     }
                 },
-                // Every question on this screen has to be answered. Equipment
-                // counts: "bodyweight only" is one of the choices, so an empty
-                // set means unanswered rather than "nothing available".
+                // An empty equipment set means unanswered, not "nothing
+                // available": "bodyweight only" is itself one of the choices.
                 enabled = selectedLocation != null &&
                     selectedEquipment.isNotEmpty() &&
                     (!hasLoadedEquipment || selectedLiftingUnits != null) &&
@@ -286,10 +280,8 @@ fun WorkoutSetupScreen(
                     verticalPadding = 0.dp,
                     titleGap = Spacing.card
                 ) {
-                    // Matched by position rather than by reading the number back
-                    // out of the label: the label is prose, and prose in another
-                    // language need not put a space after the digit — or a digit
-                    // where English puts one.
+                    // Matched by position, never by parsing the number back out
+                    // of the label: another language need not carry a digit.
                     val dayOptions = Constants.Workout.DAYS_PER_WEEK_OPTIONS
                     val dayLabels = dayOptions.map {
                         pluralStringResource(R.plurals.workout_days_option, it, it)
@@ -323,9 +315,8 @@ fun WorkoutSetupScreen(
                                 selected = selectedDuration == duration,
                                 onClick = { selectedDuration = duration },
                                 height = ComponentHeight.ChipTall,
-                                // Equal shares rather than the frame's fixed 80dp:
-                                // four fixed chips overflow narrower phones, and
-                                // any padding turns "90 mins" into "90...".
+                                // Equal shares, no padding: four fixed-width
+                                // chips overflow narrow phones and ellipsise.
                                 horizontalPadding = 0.dp,
                                 modifier = Modifier.weight(1f)
                             )

@@ -60,8 +60,7 @@ class ExerciseSetTableTest {
         }
     }
 
-    // A set that was prescribed but never logged must show a dash, not its
-    // target — the column reports what happened, not what was asked.
+    // The column reports what happened, not what was asked, so an unlogged set shows a dash
     @Test
     fun anUnloggedSetShowsADash() {
         assertThat(previousCellText(ExerciseMeasure.WEIGHT_AND_REPS, null)).isEqualTo("—")

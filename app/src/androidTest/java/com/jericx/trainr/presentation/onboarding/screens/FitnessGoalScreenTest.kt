@@ -70,9 +70,6 @@ class FitnessGoalScreenTest {
         assertThat(captured).isEqualTo(FitnessGoal.MUSCLE_GAIN)
     }
 
-    // The review shows workout style on the same card as the main goal, so the
-    // Edit beside it has to be able to change it. It used to open this screen
-    // while the field itself lived on the limitations step.
     @Test
     fun nextEmitsTheChosenWorkoutStyleBesideTheGoal() {
         var capturedStyle: WorkoutType? = null
@@ -92,8 +89,6 @@ class FitnessGoalScreenTest {
         assertThat(capturedStyle).isEqualTo(WorkoutType.HIIT)
     }
 
-    // Mixed used to arrive pre-selected, so a client could reach the end of
-    // onboarding having agreed to a training style they were never asked about.
     @Test
     fun noStyleIsChosenUntilTheClientChoosesOne() {
         var emitted = false

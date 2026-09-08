@@ -27,9 +27,6 @@ fun SplashScreen(versionName: String) {
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            // The wordmark rather than the app's name in text: it is the same
-            // mark the top bar carries, so the first screen and every screen
-            // after it agree about what this app looks like.
             Image(
                 painter = themedPainter(R.drawable.img_trainr, R.drawable.img_trainr_night),
                 contentDescription = stringResource(R.string.app_name),

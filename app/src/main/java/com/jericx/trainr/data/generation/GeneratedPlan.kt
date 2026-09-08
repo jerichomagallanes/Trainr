@@ -2,9 +2,8 @@ package com.jericx.trainr.data.generation
 
 import kotlinx.serialization.Serializable
 
-// The shape a generated weekly plan arrives in. The generator writes only
-// these fields; everything else on the domain model is app state or derived.
-// docs/generation-contract.md is the annotated version of this file.
+// The generator writes only these fields; everything else on the domain model
+// is app state or derived. docs/generation-contract.md annotates them.
 @Serializable
 data class GeneratedPlan(
     val title: String,

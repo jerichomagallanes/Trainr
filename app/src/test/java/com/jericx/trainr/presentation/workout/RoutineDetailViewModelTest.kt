@@ -64,10 +64,7 @@ class RoutineDetailViewModelTest {
         repository
     )
 
-    // The routine screen holds nothing until the stored week has been read, so
-    // a test that acts on exercises has to let the read happen first. It used
-    // to open on the built-in sample week, which made every one of these tests
-    // an assertion about a placeholder.
+    // The routine screen holds nothing until the stored week has been read, so tests must let that happen first
     private fun TestScope.loadedViewModel(
         dayNumber: Int = SampleWorkoutData.DEFAULT_DAY_NUMBER,
         repository: UserRepository = repositoryWith(SampleWorkoutData.weekOne),
@@ -79,8 +76,7 @@ class RoutineDetailViewModelTest {
 
     private fun RoutineDetailViewModel.isCompleted(position: Int) = exercise(position).isCompleted
 
-    // The design's completion screen reads "Day 2": Cardio & Core is the second
-    // workout day of the week, even though its dayNumber is 3 (Wednesday).
+    // Cardio & Core is the week's second workout day even though its dayNumber is 3 (Wednesday)
     @Test
     fun theRoutineKnowsWhichWorkoutDayOfTheWeekItIs() = runTest {
         assertThat(loadedViewModel().uiState.value.dayNumber).isEqualTo(2)
@@ -117,7 +113,6 @@ class RoutineDetailViewModelTest {
         assertThat(RoutineDetailViewModel.completesTheWeek(days, dayNumber = 2)).isFalse()
     }
 
-    // A started-but-unfinished day is still outstanding.
     @Test
     fun aDayInProgressAlsoLeavesTheWeekOpen() {
         val days = listOf(
@@ -211,7 +206,6 @@ class RoutineDetailViewModelTest {
         assertThat(viewModel.uiState.value.timer?.isRunning).isFalse()
     }
 
-    // Reset prepares another go; it does not start one.
     @Test
     fun aResetTimerDoesNotTickUntilItIsResumed() = runTest {
         val viewModel = loadedViewModel()
@@ -254,7 +248,6 @@ class RoutineDetailViewModelTest {
         assertThat(viewModel.isCompleted(2)).isFalse()
     }
 
-    // Running out of time is what finishes an exercise.
     @Test
     fun theCountdownReachingZeroCompletesTheExercise() = runTest {
         val viewModel = loadedViewModel()
@@ -279,7 +272,6 @@ class RoutineDetailViewModelTest {
         assertThat(viewModel.isCompleted(4)).isFalse()
     }
 
-    // Two countdowns racing would be nonsense, so a new one replaces the old.
     @Test
     fun startingAnotherExerciseReplacesTheRunningTimer() = runTest {
         val viewModel = loadedViewModel()
@@ -335,8 +327,7 @@ class RoutineDetailViewModelTest {
         assertThat(viewModel.uiState.value.expandedVideo).isNull()
     }
 
-    // The player is a WebView and it now lives for as long as the section is
-    // open, so two open at once would be two of them on one screen.
+    // The player is a WebView living as long as the section is open, so two open at once means two of them
     @Test
     fun openingATutorialClosesWhicheverWasOpen() = runTest {
         val viewModel = loadedViewModel()
@@ -418,8 +409,7 @@ class RoutineDetailViewModelTest {
             every { it.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(plan))
         }
 
-    // Opening a day from an earlier week must load that week's routine; the
-    // weekday exists in both, so only the requested week tells them apart.
+    // The weekday exists in every week, so only the requested week number tells the routines apart
     @Test
     fun loadsTheDayOfTheRequestedWeek() = runTest {
         val laterWeek = storedPlan.copy(
@@ -444,7 +434,6 @@ class RoutineDetailViewModelTest {
         }
     }
 
-    // With no week asked for — every day opened from home — the newest wins.
     @Test
     fun loadsTheNewestWeekWhenNoneWasRequested() = runTest {
         val laterWeek = storedPlan.copy(
@@ -482,8 +471,7 @@ class RoutineDetailViewModelTest {
         }
     }
 
-    // Nothing is drawn until the stored routine arrives, and the completion
-    // guard must be able to tell its arrival from the user finishing the day.
+    // The completion guard has to tell the routine's arrival from the client finishing the day
     @Test
     fun theStateIsNotLoadedUntilTheRepositoryAnswers() = runTest {
         val viewModel = viewModel(dayNumber = 3, repository = repositoryWith(storedPlan))
@@ -561,8 +549,7 @@ class RoutineDetailViewModelTest {
         }
     }
 
-    // Every set can be deleted, down to none: Add set brings one back, so no
-    // row has to be kept just to leave the client a way out.
+    // Deleting down to no sets at all is allowed, because Add set brings one back
     @Test
     fun everySetOfAnExerciseCanBeDeleted() = runTest {
         val repository = repositoryWith(storedPlan)
@@ -613,8 +600,7 @@ class RoutineDetailViewModelTest {
         assertThat(viewModel.exercise(2).previousSets).isEmpty()
     }
 
-    // Reviewing a finished day must show the history it had back then, not
-    // performances logged since.
+    // A finished day shows the history it had at its own completion, not performances logged since
     @Test
     fun aFinishedDaysHistoryStopsAtItsOwnCompletion() = runTest {
         val repository = repositoryWith(storedPlan)
@@ -644,8 +630,7 @@ class RoutineDetailViewModelTest {
         coVerify(exactly = 0) { repository.addExerciseSet(any(), any()) }
         coVerify(exactly = 0) { repository.deleteExerciseSet(any()) }
     }
-    // The day is stored the way it will be read back: by the PREVIOUS column
-    // and by the prompt that builds next week.
+    // The day is stored the way it is read back: by the PREVIOUS column and by next week's prompt
     @Test
     fun completingTheRoutineStoresThePrescribedNumbers() = runTest {
         val repository = repositoryWith(storedPlan)

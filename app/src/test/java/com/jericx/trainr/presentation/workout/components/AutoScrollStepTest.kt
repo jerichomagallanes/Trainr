@@ -24,7 +24,6 @@ class AutoScrollStepTest {
         assertThat(autoScrollStep(1900f, viewport, maxStep)).isGreaterThan(0f)
     }
 
-    // The further into the edge the finger sits, the faster it goes.
     @Test
     fun theEdgeBandAcceleratesTowardsTheRim() {
         val shallow = autoScrollStep(1800f, viewport, maxStep)

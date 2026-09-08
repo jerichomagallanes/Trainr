@@ -47,7 +47,6 @@ fun ExerciseCard(
     units: UnitSystem = UnitSystem.Default,
     content: @Composable ColumnScope.() -> Unit = {}
 ) {
-    // A finished exercise turns green throughout: badge, name and rule.
     val colors = MaterialTheme.trainrColors
     val accentInk = if (exercise.isCompleted) colors.statusDoneInk else colors.onSurface
     val accentOutline = if (exercise.isCompleted) colors.statusDoneEdge else colors.cardEdge
@@ -154,9 +153,8 @@ fun ExerciseCard(
                 )
             }
 
-            // Drawn even with nothing in it. Gating the table on having sets
-            // took the Add set button away with the last row, so deleting every
-            // set left an exercise no way to get one back.
+            // Drawn even when empty: gating it on sets takes away the only
+            // Add set button.
             ExerciseSetTable(
                 measure = exercise.measure,
                 sets = exercise.sets,
