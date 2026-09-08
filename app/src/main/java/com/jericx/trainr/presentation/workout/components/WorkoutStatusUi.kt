@@ -1,12 +1,9 @@
 package com.jericx.trainr.presentation.workout.components
 
 import androidx.annotation.StringRes
-import androidx.compose.ui.graphics.Color
 import com.jericx.trainr.R
 import com.jericx.trainr.domain.model.WorkoutStatus
-import com.jericx.trainr.presentation.common.theme.StatusCompleted
-import com.jericx.trainr.presentation.common.theme.StatusInProgress
-import com.jericx.trainr.presentation.common.theme.StatusNotStarted
+import com.jericx.trainr.presentation.workout.model.StatusTone
 
 @get:StringRes
 val WorkoutStatus.labelRes: Int
@@ -16,9 +13,9 @@ val WorkoutStatus.labelRes: Int
         WorkoutStatus.NOT_STARTED -> R.string.not_started
     }
 
-val WorkoutStatus.chipColor: Color
+val WorkoutStatus.chipTone: StatusTone
     get() = when (this) {
-        WorkoutStatus.COMPLETED -> StatusCompleted
-        WorkoutStatus.IN_PROGRESS -> StatusInProgress
-        WorkoutStatus.NOT_STARTED -> StatusNotStarted
+        WorkoutStatus.COMPLETED -> StatusTone.DONE
+        WorkoutStatus.IN_PROGRESS -> StatusTone.ACTIVE
+        WorkoutStatus.NOT_STARTED -> StatusTone.IDLE
     }

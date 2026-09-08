@@ -23,6 +23,7 @@ import androidx.compose.foundation.text.BasicText
 import com.jericx.trainr.presentation.common.theme.ComponentHeight
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
+import com.jericx.trainr.presentation.common.theme.trainrColors
 
 @Composable
 fun TrainrToggleChip(
@@ -33,16 +34,15 @@ fun TrainrToggleChip(
     height: Dp = ComponentHeight.Chip,
     horizontalPadding: Dp = Spacing.large
 ) {
+    val colors = MaterialTheme.trainrColors
+
     Surface(
         onClick = onClick,
         modifier = modifier.height(height),
         shape = MaterialTheme.shapes.medium,
-        color = if (selected)
-            MaterialTheme.colorScheme.onBackground
-        else
-            MaterialTheme.colorScheme.surface,
+        color = if (selected) colors.surfaceSelected else colors.surfaceCard,
         // The frames keep the outline on selected chips too.
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+        border = BorderStroke(1.dp, colors.outlineControl)
     ) {
         Box(
             modifier = Modifier.padding(horizontal = horizontalPadding),
@@ -52,10 +52,7 @@ fun TrainrToggleChip(
                 text = text,
                 style = MaterialTheme.typography.bodyLarge.copy(
                     fontWeight = FontWeight.Medium,
-                    color = if (selected)
-                        MaterialTheme.colorScheme.background
-                    else
-                        MaterialTheme.colorScheme.onSurface
+                    color = if (selected) colors.onSurfaceSelected else colors.onSurface
                 ),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,

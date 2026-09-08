@@ -9,8 +9,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.jericx.trainr.presentation.common.theme.trainrColors
 
 // The design's 20px radio, drawn rather than Material's RadioButton: the M3
 // widget carries a 48dp touch target that shoves the visible dot away from
@@ -18,13 +18,11 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun TrainrRadioDot(
     selected: Boolean,
-    modifier: Modifier = Modifier,
-    color: Color = if (selected) {
-        MaterialTheme.colorScheme.background
-    } else {
-        MaterialTheme.colorScheme.outline
-    }
+    modifier: Modifier = Modifier
 ) {
+    val colors = MaterialTheme.trainrColors
+    val color = if (selected) colors.onSurfaceSelected else colors.outlineControl
+
     Box(
         modifier = modifier
             .size(20.dp)

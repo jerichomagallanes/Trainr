@@ -1,6 +1,6 @@
 package com.jericx.trainr.presentation.workout
 
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -22,6 +23,7 @@ import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -33,25 +35,27 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLocale
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jericx.trainr.R
+import com.jericx.trainr.data.preferences.AppearanceMode
 import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.presentation.common.components.layout.TrainrTopBar
 import com.jericx.trainr.presentation.common.components.core.TrainrButton
-import com.jericx.trainr.presentation.common.theme.Orange500
+import com.jericx.trainr.presentation.common.components.core.TrainrRadioDot
 import androidx.compose.ui.text.style.TextAlign
-import com.jericx.trainr.presentation.common.theme.TextMuted
-import com.jericx.trainr.presentation.common.theme.RedError
-import com.jericx.trainr.presentation.common.theme.Slate800
+import com.jericx.trainr.presentation.common.theme.ComponentHeight
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
+import com.jericx.trainr.presentation.common.theme.trainrColors
 import com.jericx.trainr.presentation.workout.components.ReorderableDayList
 import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
 import com.jericx.trainr.presentation.workout.util.WorkoutDateFormatter
@@ -69,6 +73,8 @@ fun WeeklyPlanRoute(
     onCreatePlanClick: () -> Unit = {},
     onBackClick: (() -> Unit)? = null,
     versionName: String = "",
+    appearance: AppearanceMode = AppearanceMode.SYSTEM,
+    onAppearanceChange: (AppearanceMode) -> Unit = {},
     viewModel: WeeklyPlanViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -89,6 +95,8 @@ fun WeeklyPlanRoute(
         onRegenerateWeekClick = onRegenerateWeekClick,
         onCreatePlanClick = onCreatePlanClick,
         versionName = versionName,
+        appearance = appearance,
+        onAppearanceChange = onAppearanceChange,
         onMoveDay = viewModel::moveDay,
         onBackClick = onBackClick
     )
@@ -108,6 +116,8 @@ fun WeeklyPlanScreen(
     onRegenerateWeekClick: () -> Unit = {},
     onCreatePlanClick: () -> Unit = {},
     versionName: String = "",
+    appearance: AppearanceMode = AppearanceMode.SYSTEM,
+    onAppearanceChange: (AppearanceMode) -> Unit = {},
     onMoveDay: (Int, Int) -> Unit = { _, _ -> },
     // Set only when a week was opened from Weekly Progress.
     onBackClick: (() -> Unit)? = null
@@ -173,7 +183,9 @@ fun WeeklyPlanScreen(
                 if (onBackClick == null) {
                     ProfileMenu(
                         versionName = versionName,
-                        onUpdateProfileClick = onUpdateProfileClick
+                        onUpdateProfileClick = onUpdateProfileClick,
+                        appearance = appearance,
+                        onAppearanceChange = onAppearanceChange
                     )
                 }
             }
@@ -202,7 +214,7 @@ fun WeeklyPlanScreen(
                 Text(
                     text = stringResource(R.string.your_weekly_workout_plan),
                     style = MaterialTheme.typography.titleLarge,
-                    color = Slate800,
+                    color = MaterialTheme.trainrColors.onSurface,
                     modifier = Modifier.weight(1f)
                 )
                 // Repeating is the one action a week can offer about itself:
@@ -212,16 +224,22 @@ fun WeeklyPlanScreen(
                 // home, which is where they have somewhere to go afterwards.
                 if (state.hasPlan && (isHome || state.canAddWeek || !isBrowsedWeek)) {
                     Box {
-                        Image(
+                        Icon(
                             painter = painterResource(R.drawable.ic_more_horiz),
                             contentDescription = stringResource(R.string.plan_options),
+                            tint = MaterialTheme.trainrColors.onSurface,
                             modifier = Modifier
                                 .size(24.dp)
                                 .clickable { showMenu = true }
                         )
                         DropdownMenu(
                             expanded = showMenu,
-                            onDismissRequest = { showMenu = false }
+                            onDismissRequest = { showMenu = false },
+                            containerColor = MaterialTheme.trainrColors.surfaceRaised,
+                            border = BorderStroke(
+                                1.dp,
+                                MaterialTheme.trainrColors.raisedEdge
+                            )
                         ) {
                             // With the week behind you there are two sound
                             // ways on: progress from what you lifted, or run
@@ -286,9 +304,10 @@ fun WeeklyPlanScreen(
             HorizontalDivider()
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Image(
+                Icon(
                     painter = painterResource(R.drawable.ic_calendar_today),
                     contentDescription = null,
+                    tint = MaterialTheme.trainrColors.onSurface,
                     modifier = Modifier.size(16.dp)
                 )
                 Spacer(modifier = Modifier.size(Spacing.small))
@@ -303,7 +322,7 @@ fun WeeklyPlanScreen(
                         )
                     ),
                     style = MaterialTheme.typography.bodyLarge,
-                    color = Slate800
+                    color = MaterialTheme.trainrColors.onSurface
                 )
             }
 
@@ -312,16 +331,17 @@ fun WeeklyPlanScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.clickable(onClick = onTrackProgressClick)
                 ) {
-                    Image(
+                    Icon(
                         painter = painterResource(R.drawable.ic_moving),
                         contentDescription = null,
+                        tint = MaterialTheme.trainrColors.brandStrong,
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.size(Spacing.small))
                     Text(
                         text = stringResource(R.string.track_weekly_progress) + " →",
                         style = MaterialTheme.typography.labelLarge,
-                        color = Orange500
+                        color = MaterialTheme.trainrColors.brandStrong
                     )
                 }
             }
@@ -369,13 +389,24 @@ fun WeeklyPlanScreen(
 @Composable
 private fun ProfileMenu(
     versionName: String,
-    onUpdateProfileClick: () -> Unit
+    onUpdateProfileClick: () -> Unit,
+    appearance: AppearanceMode,
+    onAppearanceChange: (AppearanceMode) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
     var showAbout by remember { mutableStateOf(false) }
+    var showAppearance by remember { mutableStateOf(false) }
 
     if (showAbout) {
         AboutDialog(versionName = versionName, onDismiss = { showAbout = false })
+    }
+
+    if (showAppearance) {
+        AppearanceDialog(
+            appearance = appearance,
+            onSelect = onAppearanceChange,
+            onDismiss = { showAppearance = false }
+        )
     }
 
     Box {
@@ -383,15 +414,27 @@ private fun ProfileMenu(
             Icon(
                 imageVector = Icons.Default.AccountCircle,
                 contentDescription = stringResource(R.string.profile_and_app),
-                tint = Slate800
+                tint = MaterialTheme.trainrColors.onSurface
             )
         }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            containerColor = MaterialTheme.trainrColors.surfaceRaised,
+            border = BorderStroke(1.dp, MaterialTheme.trainrColors.raisedEdge)
+        ) {
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.update_profile)) },
                 onClick = {
                     expanded = false
                     onUpdateProfileClick()
+                }
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.appearance)) },
+                onClick = {
+                    expanded = false
+                    showAppearance = true
                 }
             )
             DropdownMenuItem(
@@ -401,6 +444,90 @@ private fun ProfileMenu(
                     showAbout = true
                 }
             )
+        }
+    }
+}
+
+// The chosen appearance is applied as it is tapped rather than on closing, so
+// the dialog itself is the preview of what was picked.
+@Composable
+private fun AppearanceDialog(
+    appearance: AppearanceMode,
+    onSelect: (AppearanceMode) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = stringResource(R.string.appearance)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
+                AppearanceOption(
+                    icon = painterResource(R.drawable.ic_phone_android),
+                    text = stringResource(R.string.appearance_system),
+                    selected = appearance == AppearanceMode.SYSTEM,
+                    onClick = { onSelect(AppearanceMode.SYSTEM) }
+                )
+                AppearanceOption(
+                    icon = painterResource(R.drawable.ic_light_mode),
+                    text = stringResource(R.string.appearance_light),
+                    selected = appearance == AppearanceMode.LIGHT,
+                    onClick = { onSelect(AppearanceMode.LIGHT) }
+                )
+                AppearanceOption(
+                    icon = painterResource(R.drawable.ic_dark_mode),
+                    text = stringResource(R.string.appearance_dark),
+                    selected = appearance == AppearanceMode.DARK,
+                    onClick = { onSelect(AppearanceMode.DARK) }
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = stringResource(R.string.close), color = MaterialTheme.trainrColors.brandStrong)
+            }
+        }
+    )
+}
+
+@Composable
+private fun AppearanceOption(
+    icon: Painter,
+    text: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    val colors = MaterialTheme.trainrColors
+
+    Surface(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(ComponentHeight.Option),
+        shape = MaterialTheme.shapes.medium,
+        color = if (selected) colors.surfaceSelected else colors.surfaceCard,
+        border = BorderStroke(1.dp, colors.outlineControl)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = Spacing.card),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Spacing.tight)
+        ) {
+            Icon(
+                painter = icon,
+                contentDescription = null,
+                tint = if (selected) colors.onSurfaceSelected else colors.brand
+            )
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
+                ),
+                color = if (selected) colors.onSurfaceSelected else colors.onSurface,
+                modifier = Modifier.weight(1f)
+            )
+            TrainrRadioDot(selected = selected)
         }
     }
 }
@@ -421,7 +548,7 @@ private fun AboutDialog(versionName: String, onDismiss: () -> Unit) {
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text(text = stringResource(R.string.close), color = Orange500)
+                Text(text = stringResource(R.string.close), color = MaterialTheme.trainrColors.brandStrong)
             }
         }
     )
@@ -444,7 +571,7 @@ private fun NoPlanYet(
         Text(
             text = stringResource(R.string.no_plan_title),
             style = MaterialTheme.typography.titleLarge,
-            color = Slate800,
+            color = MaterialTheme.trainrColors.onSurface,
             textAlign = TextAlign.Center
         )
 
@@ -453,7 +580,7 @@ private fun NoPlanYet(
         Text(
             text = stringResource(R.string.no_plan_message),
             style = MaterialTheme.typography.bodyLarge,
-            color = TextMuted,
+            color = MaterialTheme.trainrColors.onSurfaceMuted,
             textAlign = TextAlign.Center
         )
 
@@ -491,12 +618,15 @@ private fun RegenerateWeekDialog(
         },
         confirmButton = {
             TextButton(onClick = onConfirm) {
-                Text(text = stringResource(R.string.regenerate_week_confirm), color = RedError)
+                Text(
+                    text = stringResource(R.string.regenerate_week_confirm),
+                    color = MaterialTheme.trainrColors.dangerInk
+                )
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(text = stringResource(R.string.cancel), color = Slate800)
+                Text(text = stringResource(R.string.cancel), color = MaterialTheme.trainrColors.onSurface)
             }
         }
     )
@@ -513,12 +643,12 @@ private fun LeavePlanDialog(
         text = { Text(text = stringResource(R.string.leave_plan_message)) },
         confirmButton = {
             TextButton(onClick = onConfirm) {
-                Text(text = stringResource(R.string.leave_plan_confirm), color = Orange500)
+                Text(text = stringResource(R.string.leave_plan_confirm), color = MaterialTheme.trainrColors.brandStrong)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(text = stringResource(R.string.cancel), color = Slate800)
+                Text(text = stringResource(R.string.cancel), color = MaterialTheme.trainrColors.onSurface)
             }
         }
     )

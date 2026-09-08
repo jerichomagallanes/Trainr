@@ -1,6 +1,5 @@
 package com.jericx.trainr.presentation.workout.components
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -14,13 +13,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -28,10 +27,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jericx.trainr.R
-import com.jericx.trainr.presentation.common.theme.Slate800
 import com.jericx.trainr.presentation.common.theme.Spacing
-import com.jericx.trainr.presentation.common.theme.StatusCompleted
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
+import com.jericx.trainr.presentation.common.theme.trainrColors
 import com.jericx.trainr.domain.model.ExerciseSet
 import com.jericx.trainr.domain.model.UnitSystem
 import com.jericx.trainr.presentation.workout.model.ExerciseUi
@@ -50,13 +48,18 @@ fun ExerciseCard(
     content: @Composable ColumnScope.() -> Unit = {}
 ) {
     // A finished exercise turns green throughout: badge, name and rule.
-    val accent = if (exercise.isCompleted) StatusCompleted else Slate800
+    val colors = MaterialTheme.trainrColors
+    val accentInk = if (exercise.isCompleted) colors.statusDoneInk else colors.onSurface
+    val accentOutline = if (exercise.isCompleted) colors.statusDoneEdge else colors.cardEdge
+    val accentDivider = if (exercise.isCompleted) colors.statusDoneEdge else colors.cardRule
+    val accentFill = if (exercise.isCompleted) colors.statusDone else colors.surfaceEmphasis
+    val onAccentFill = if (exercise.isCompleted) colors.onStatus else colors.onSurfaceEmphasis
 
     Column(
         modifier = modifier
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.medium)
-            .border(1.dp, accent, MaterialTheme.shapes.medium)
+            .border(1.dp, accentOutline, MaterialTheme.shapes.medium)
     ) {
         Row(
             modifier = Modifier
@@ -67,26 +70,26 @@ fun ExerciseCard(
             Box(
                 modifier = Modifier
                     .size(20.dp)
-                    .background(accent, CircleShape),
+                    .background(accentFill, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = exercise.position.toString(),
                     style = MaterialTheme.typography.labelLarge,
-                    color = Color.White
+                    color = onAccentFill
                 )
             }
 
             Text(
                 text = exercise.name,
                 style = MaterialTheme.typography.titleSmall,
-                color = accent,
+                color = accentInk,
                 modifier = Modifier
                     .weight(1f)
                     .padding(start = Spacing.small)
             )
 
-            Image(
+            Icon(
                 painter = painterResource(
                     if (exercise.isCompleted) R.drawable.ic_check_box
                     else R.drawable.ic_check_box_blank
@@ -95,6 +98,7 @@ fun ExerciseCard(
                     if (exercise.isCompleted) R.string.mark_exercise_incomplete
                     else R.string.mark_exercise_complete
                 ),
+                tint = if (exercise.isCompleted) colors.statusDoneInk else colors.outlineControl,
                 modifier = Modifier
                     .size(30.dp)
                     .clickable(onClick = onToggleCompleted)
@@ -102,7 +106,7 @@ fun ExerciseCard(
         }
 
         HorizontalDivider(
-            color = accent,
+            color = accentDivider,
             modifier = Modifier.padding(top = Spacing.card)
         )
 
@@ -118,13 +122,14 @@ fun ExerciseCard(
             Text(
                 text = exercise.description,
                 style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 18.sp),
-                color = Slate800
+                color = colors.onSurface
             )
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Image(
+                Icon(
                     painter = painterResource(R.drawable.ic_schedule),
                     contentDescription = null,
+                    tint = colors.onSurface,
                     modifier = Modifier.size(18.dp)
                 )
                 Text(
@@ -134,17 +139,17 @@ fun ExerciseCard(
                         exercise.minutes
                     ),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Slate800,
+                    color = colors.onSurface,
                     modifier = Modifier.padding(start = Spacing.extraSmall)
                 )
                 Text(
                     text = exercise.detail,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White,
+                    color = colors.onSurfaceEmphasis,
                     modifier = Modifier
                         .weight(1f, fill = false)
                         .padding(start = Spacing.small)
-                        .background(Slate800, MaterialTheme.shapes.medium)
+                        .background(colors.surfaceEmphasis, MaterialTheme.shapes.medium)
                         .padding(horizontal = Spacing.tight, vertical = 3.dp)
                 )
             }

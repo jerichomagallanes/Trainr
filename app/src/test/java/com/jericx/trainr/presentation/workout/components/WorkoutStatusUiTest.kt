@@ -3,9 +3,7 @@ package com.jericx.trainr.presentation.workout.components
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.R
 import com.jericx.trainr.domain.model.WorkoutStatus
-import com.jericx.trainr.presentation.common.theme.StatusCompleted
-import com.jericx.trainr.presentation.common.theme.StatusInProgress
-import com.jericx.trainr.presentation.common.theme.StatusNotStarted
+import com.jericx.trainr.presentation.workout.model.StatusTone
 import org.junit.Test
 
 class WorkoutStatusUiTest {
@@ -18,17 +16,17 @@ class WorkoutStatusUiTest {
     }
 
     @Test
-    fun eachStatusMapsToItsOwnColour() {
-        assertThat(WorkoutStatus.COMPLETED.chipColor).isEqualTo(StatusCompleted)
-        assertThat(WorkoutStatus.IN_PROGRESS.chipColor).isEqualTo(StatusInProgress)
-        assertThat(WorkoutStatus.NOT_STARTED.chipColor).isEqualTo(StatusNotStarted)
+    fun eachStatusMapsToItsOwnTone() {
+        assertThat(WorkoutStatus.COMPLETED.chipTone).isEqualTo(StatusTone.DONE)
+        assertThat(WorkoutStatus.IN_PROGRESS.chipTone).isEqualTo(StatusTone.ACTIVE)
+        assertThat(WorkoutStatus.NOT_STARTED.chipTone).isEqualTo(StatusTone.IDLE)
     }
 
     @Test
-    fun noTwoStatusesShareALabelOrColour() {
+    fun noTwoStatusesShareALabelOrTone() {
         val statuses = WorkoutStatus.entries
 
         assertThat(statuses.map { it.labelRes }.toSet()).hasSize(statuses.size)
-        assertThat(statuses.map { it.chipColor }.toSet()).hasSize(statuses.size)
+        assertThat(statuses.map { it.chipTone }.toSet()).hasSize(statuses.size)
     }
 }

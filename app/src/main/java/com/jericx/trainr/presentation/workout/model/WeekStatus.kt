@@ -1,11 +1,7 @@
 package com.jericx.trainr.presentation.workout.model
 
 import androidx.annotation.StringRes
-import androidx.compose.ui.graphics.Color
 import com.jericx.trainr.R
-import com.jericx.trainr.presentation.common.theme.StatusCompleted
-import com.jericx.trainr.presentation.common.theme.StatusInProgress
-import com.jericx.trainr.presentation.common.theme.StatusNotStarted
 
 // A week is coarser than a workout: it can also be missed entirely (SKIPPED),
 // ended part-done (NOT_COMPLETED), or generated ahead of its start date
@@ -28,10 +24,10 @@ val WeekStatus.labelRes: Int
         WeekStatus.UPCOMING -> R.string.upcoming
     }
 
-// Four labels, three colours: the design shows missed and part-done weeks alike.
-val WeekStatus.chipColor: Color
+// Five labels, three tones: the design shows missed and part-done weeks alike.
+val WeekStatus.chipTone: StatusTone
     get() = when (this) {
-        WeekStatus.COMPLETED -> StatusCompleted
-        WeekStatus.IN_PROGRESS -> StatusInProgress
-        WeekStatus.NOT_COMPLETED, WeekStatus.SKIPPED, WeekStatus.UPCOMING -> StatusNotStarted
+        WeekStatus.COMPLETED -> StatusTone.DONE
+        WeekStatus.IN_PROGRESS -> StatusTone.ACTIVE
+        WeekStatus.NOT_COMPLETED, WeekStatus.SKIPPED, WeekStatus.UPCOMING -> StatusTone.IDLE
     }

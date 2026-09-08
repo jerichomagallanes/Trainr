@@ -13,7 +13,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-class WorkoutStatusChipTest {
+class StatusChipTest {
 
     @get:Rule
     val composeTestRule = createAndroidComposeRule<ComponentActivity>()
@@ -22,7 +22,7 @@ class WorkoutStatusChipTest {
 
     private fun setChip(status: WorkoutStatus) {
         composeTestRule.setContent {
-            TrainrTheme { WorkoutStatusChip(status = status) }
+            TrainrTheme { StatusChip(labelRes = status.labelRes, tone = status.chipTone) }
         }
     }
 

@@ -183,6 +183,10 @@
     <string name="app_about_message">ワークアウトプランは、設定したフィットネスプロフィールをもとにAIが作成します。</string>
     <string name="health_disclaimer">プランはAIが作成したものであり、医学的助言ではありません。始める前に医師に相談し、痛みがあれば中止してください。</string>
     <string name="app_version_format">バージョン %1$s</string>
+    <string name="appearance">外観</string>
+    <string name="appearance_system">システムに合わせる</string>
+    <string name="appearance_light">ライト</string>
+    <string name="appearance_dark">ダーク</string>
     <string name="about_the_app">Trainrについて</string>
     <string name="profile_and_app">プロフィールとアプリ</string>
     <string name="regenerate_plan">新しいワークアウトプランを作成</string>

@@ -21,8 +21,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
 import com.jericx.trainr.presentation.common.components.core.TrainrButton
 import com.jericx.trainr.presentation.common.components.layout.TrainrTopBar
-import com.jericx.trainr.presentation.common.theme.Slate800
 import com.jericx.trainr.presentation.common.theme.Spacing
+import com.jericx.trainr.presentation.common.theme.trainrColors
 
 @Composable
 fun CompletionScreen(
@@ -61,7 +61,7 @@ fun CompletionScreen(
                     lineHeight = 22.sp,
                     fontWeight = FontWeight.SemiBold
                 ),
-                color = Slate800,
+                color = MaterialTheme.trainrColors.onSurface,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(top = Spacing.screen)
             )
@@ -69,7 +69,7 @@ fun CompletionScreen(
             Text(
                 text = message,
                 style = MaterialTheme.typography.bodyLarge.copy(lineHeight = 22.sp),
-                color = Slate800,
+                color = MaterialTheme.trainrColors.onSurface,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(top = Spacing.card)
             )

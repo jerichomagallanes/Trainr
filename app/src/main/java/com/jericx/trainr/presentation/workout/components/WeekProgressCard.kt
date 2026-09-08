@@ -21,8 +21,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
@@ -33,13 +31,12 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.jericx.trainr.R
-import com.jericx.trainr.presentation.common.theme.Gray100
-import com.jericx.trainr.presentation.common.theme.OutlineGray
-import com.jericx.trainr.presentation.common.theme.Slate800
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
+import com.jericx.trainr.presentation.common.theme.themedPainter
+import com.jericx.trainr.presentation.common.theme.trainrColors
 import com.jericx.trainr.presentation.workout.model.WeekStatus
-import com.jericx.trainr.presentation.workout.model.chipColor
+import com.jericx.trainr.presentation.workout.model.chipTone
 import com.jericx.trainr.presentation.workout.model.labelRes
 import com.jericx.trainr.presentation.workout.sample.SampleWeeklyProgress
 
@@ -54,13 +51,14 @@ fun WeekProgressCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val colors = MaterialTheme.trainrColors
     Row(
         modifier = modifier
             .fillMaxWidth()
             .height(IntrinsicSize.Min)
             .heightIn(min = 89.dp)
             .clip(MaterialTheme.shapes.medium)
-            .border(1.dp, OutlineGray, MaterialTheme.shapes.medium)
+            .border(1.dp, colors.outlineControl, MaterialTheme.shapes.medium)
             .clickable(onClick = onClick),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -68,7 +66,7 @@ fun WeekProgressCard(
             modifier = Modifier
                 .width(12.dp)
                 .fillMaxHeight()
-                .background(Slate800)
+                .background(colors.surfaceEmphasis)
         ) {}
 
         Column(
@@ -106,9 +104,9 @@ fun WeekProgressCard(
                     style = MaterialTheme.typography.bodyLarge.copy(
                         fontWeight = FontWeight.Medium
                     ),
-                    color = Slate800
+                    color = colors.onSurface
                 )
-                WeekStatusChip(status = status)
+                StatusChip(labelRes = status.labelRes, tone = status.chipTone, singleLine = true)
             }
 
             Row(
@@ -125,34 +123,23 @@ fun WeekProgressCard(
                         completionPercentage
                     ),
                     style = MaterialTheme.typography.labelMedium,
-                    color = Slate800,
+                    color = colors.onSurface,
                     modifier = Modifier
-                        .background(Gray100, MaterialTheme.shapes.medium)
+                        .background(colors.surfaceSunken, MaterialTheme.shapes.medium)
                         .padding(horizontal = Spacing.card, vertical = 5.dp)
                 )
 
                 Image(
-                    painter = painterResource(R.drawable.ic_arrow_forward_circle),
+                    painter = themedPainter(
+                        R.drawable.ic_arrow_forward_circle,
+                        R.drawable.ic_arrow_forward_circle_night
+                    ),
                     contentDescription = null,
                     modifier = Modifier.size(30.dp)
                 )
             }
         }
     }
-}
-
-@Composable
-private fun WeekStatusChip(status: WeekStatus, modifier: Modifier = Modifier) {
-    Text(
-        text = stringResource(status.labelRes),
-        style = MaterialTheme.typography.labelSmall,
-        color = Color.White,
-        maxLines = 1,
-        softWrap = false,
-        modifier = modifier
-            .background(status.chipColor, MaterialTheme.shapes.small)
-            .padding(horizontal = Spacing.small, vertical = 3.dp)
-    )
 }
 
 @Preview(showBackground = true)

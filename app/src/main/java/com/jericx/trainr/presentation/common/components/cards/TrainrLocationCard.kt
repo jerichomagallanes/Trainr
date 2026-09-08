@@ -28,6 +28,7 @@ import com.jericx.trainr.R
 import com.jericx.trainr.presentation.common.components.core.TrainrRadioDot
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
+import com.jericx.trainr.presentation.common.theme.trainrColors
 
 private val CardHeight = 124.dp
 private val IconSize = 35.dp
@@ -40,11 +41,8 @@ fun TrainrLocationCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val contentColor = if (isSelected) {
-        MaterialTheme.colorScheme.background
-    } else {
-        MaterialTheme.colorScheme.onBackground
-    }
+    val colors = MaterialTheme.trainrColors
+    val contentColor = if (isSelected) colors.onSurfaceSelected else colors.onSurface
 
     Card(
         modifier = modifier
@@ -52,13 +50,9 @@ fun TrainrLocationCard(
             .clickable { onClick() },
         shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) {
-                MaterialTheme.colorScheme.onBackground
-            } else {
-                MaterialTheme.colorScheme.surface
-            }
+            containerColor = if (isSelected) colors.surfaceSelected else colors.surfaceCard
         ),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        border = BorderStroke(1.dp, colors.outlineControl),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Box(
@@ -79,9 +73,9 @@ fun TrainrLocationCard(
                     painter = painterResource(id = iconRes),
                     contentDescription = null,
                     modifier = Modifier.size(IconSize),
-                    // Orange on both card states: the frames export every
-                    // location icon as #D37200, the selected dark one included.
-                    tint = MaterialTheme.colorScheme.primary
+                    // The frames export every location icon as #D37200, but the
+                    // selected slab inverts in dark, where #D37200 on it is 2.80.
+                    tint = if (isSelected) colors.brandOnSelected else colors.brand
                 )
                 Spacer(modifier = Modifier.height(5.dp))
                 Text(

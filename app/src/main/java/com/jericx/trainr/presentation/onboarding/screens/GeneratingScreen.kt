@@ -15,8 +15,7 @@ import androidx.annotation.StringRes
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
 import com.jericx.trainr.domain.generation.PlanGenerationResult
-import com.jericx.trainr.presentation.common.theme.Orange500
-import com.jericx.trainr.presentation.common.theme.Slate800
+import com.jericx.trainr.presentation.common.theme.trainrColors
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,6 +35,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.jericx.trainr.R
 import com.jericx.trainr.presentation.common.theme.Spacing
+import com.jericx.trainr.presentation.common.theme.themedPainter
 import kotlinx.coroutines.delay
 
 // The animation covers the wait; it must not create one. Generating starts
@@ -92,7 +92,7 @@ fun GeneratingScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(MaterialTheme.trainrColors.surfacePage)
     ) {
         Column(
             modifier = Modifier
@@ -102,7 +102,7 @@ fun GeneratingScreen(
             verticalArrangement = Arrangement.Center
         ) {
             Image(
-                painter = painterResource(id = R.drawable.img_trainr),
+                painter = themedPainter(R.drawable.img_trainr, R.drawable.img_trainr_night),
                 contentDescription = stringResource(R.string.trainr),
                 modifier = Modifier
                     .height(48.dp),
@@ -114,7 +114,7 @@ fun GeneratingScreen(
             Text(
                 text = stringResource(R.string.generating_your_workout_routine),
                 style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onBackground,
+                color = MaterialTheme.trainrColors.onSurface,
                 textAlign = TextAlign.Center
             )
             
@@ -148,9 +148,11 @@ private fun LoadingIndicator(
             }
             
             Image(
-                painter = painterResource(
-                    id = if (isActive) R.drawable.img_rectangle_27 else R.drawable.img_rectangle_37
-                ),
+                painter = if (isActive) {
+                    painterResource(R.drawable.img_rectangle_27)
+                } else {
+                    themedPainter(R.drawable.img_rectangle_37, R.drawable.img_rectangle_37_night)
+                },
                 contentDescription = null,
                 modifier = Modifier
                     .size(width = 12.dp, height = 24.dp)
@@ -202,20 +204,29 @@ private fun GenerationFailedDialog(
         confirmButton = {
             if (canRetry) {
                 TextButton(onClick = onRetry) {
-                    Text(text = stringResource(R.string.try_again), color = Orange500)
+                    Text(
+                        text = stringResource(R.string.try_again),
+                        color = MaterialTheme.trainrColors.brandStrong
+                    )
                 }
             } else {
                 // The only thing left to do is leave, so it reads as an
                 // acknowledgement rather than as giving up on something.
                 TextButton(onClick = onGiveUp) {
-                    Text(text = stringResource(R.string.got_it), color = Orange500)
+                    Text(
+                        text = stringResource(R.string.got_it),
+                        color = MaterialTheme.trainrColors.brandStrong
+                    )
                 }
             }
         },
         dismissButton = {
             if (canRetry) {
                 TextButton(onClick = onGiveUp) {
-                    Text(text = stringResource(giveUpLabel), color = Slate800)
+                    Text(
+                        text = stringResource(giveUpLabel),
+                        color = MaterialTheme.trainrColors.onSurface
+                    )
                 }
             }
         }

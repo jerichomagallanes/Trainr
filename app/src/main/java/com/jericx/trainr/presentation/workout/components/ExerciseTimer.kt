@@ -18,10 +18,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.jericx.trainr.R
 import com.jericx.trainr.presentation.common.components.core.TrainrPillButton
-import com.jericx.trainr.presentation.common.theme.Orange500
 import com.jericx.trainr.presentation.common.theme.Spacing
-import com.jericx.trainr.presentation.common.theme.TextMuted
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
+import com.jericx.trainr.presentation.common.theme.trainrColors
 import com.jericx.trainr.presentation.workout.model.ExerciseTimerUi
 
 @Composable
@@ -44,6 +43,8 @@ fun ExerciseTimer(
         return
     }
 
+    val colors = MaterialTheme.trainrColors
+
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(Spacing.card)
@@ -52,7 +53,7 @@ fun ExerciseTimer(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(MaterialTheme.shapes.medium)
-                .border(2.dp, Orange500, MaterialTheme.shapes.medium)
+                .border(2.dp, colors.brand, MaterialTheme.shapes.medium)
                 .padding(vertical = Spacing.card),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(Spacing.tight)
@@ -62,7 +63,7 @@ fun ExerciseTimer(
                 style = MaterialTheme.typography.headlineSmall.copy(
                     fontWeight = FontWeight.SemiBold
                 ),
-                color = Orange500
+                color = colors.brandStrong
             )
             Text(
                 text = stringResource(
@@ -70,7 +71,7 @@ fun ExerciseTimer(
                     else R.string.timer_paused
                 ),
                 style = MaterialTheme.typography.bodySmall,
-                color = TextMuted
+                color = colors.onSurfaceMuted
             )
         }
 

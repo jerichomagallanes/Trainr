@@ -12,8 +12,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -39,6 +41,7 @@ import androidx.compose.ui.zIndex
 import com.jericx.trainr.R
 import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.presentation.common.theme.Spacing
+import com.jericx.trainr.presentation.common.theme.trainrColors
 import com.jericx.trainr.presentation.workout.WeeklyPlanDay
 import com.jericx.trainr.presentation.workout.util.WorkoutDateFormatter
 import kotlinx.coroutines.launch
@@ -47,6 +50,7 @@ import kotlin.math.abs
 
 private const val LIFTED_SCALE = 1.02f
 private const val LIFTED_ELEVATION = 12f
+private val LIFTED_RULE = 2.dp
 private val AUTO_SCROLL_STEP = 12.dp
 private const val EDGE_FRACTION = 0.15f
 
@@ -86,6 +90,7 @@ fun ReorderableDayList(
     val spacingPx = with(LocalDensity.current) { Spacing.medium.toPx() }
     val moveEarlier = stringResource(R.string.move_earlier)
     val moveLater = stringResource(R.string.move_later)
+    val colors = MaterialTheme.trainrColors
 
     // The draft permutation lives here while a card is in the air; the plan is
     // only told once the finger lifts.
@@ -162,8 +167,23 @@ fun ReorderableDayList(
                                 scaleX = LIFTED_SCALE
                                 scaleY = LIFTED_SCALE
                                 shadowElevation = LIFTED_ELEVATION
+                                spotShadowColor = colors.shadowSpot
+                                ambientShadowColor = colors.shadowSpot
                             }
                         }
+                        // The drop shadow is transparent in dark, where the rule
+                        // is the only thing left saying the card is in the air.
+                        .then(
+                            if (isDragged) {
+                                Modifier.border(
+                                    LIFTED_RULE,
+                                    colors.accentRule,
+                                    MaterialTheme.shapes.medium
+                                )
+                            } else {
+                                Modifier
+                            }
+                        )
                         .onGloballyPositioned { cardTops[source] = it.positionInRoot().y }
                         .onSizeChanged { heights[source] = it.height.toFloat() }
                         .semantics {

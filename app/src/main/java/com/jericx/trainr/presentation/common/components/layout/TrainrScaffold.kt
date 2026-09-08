@@ -11,11 +11,14 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.jericx.trainr.presentation.common.components.layout.TrainrTopBar
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
+import com.jericx.trainr.presentation.common.theme.trainrColors
 import com.jericx.trainr.presentation.common.components.core.TrainrButton
 import com.jericx.trainr.presentation.common.components.typography.TrainrScreenTitle
 
@@ -32,12 +35,25 @@ fun TrainrScaffold(
     bottomButton: @Composable () -> Unit,
     content: @Composable (PaddingValues) -> Unit
 ) {
+    val raisedEdge = MaterialTheme.trainrColors.raisedEdge
+
     Scaffold(
         topBar = topBar,
         bottomBar = {
             Surface(
-                color = MaterialTheme.colorScheme.background,
-                modifier = Modifier.navigationBarsPadding(),
+                color = MaterialTheme.trainrColors.surfaceRaised,
+                modifier = Modifier
+                    .navigationBarsPadding()
+                    .drawWithContent {
+                        drawContent()
+                        val stroke = 1.dp.toPx()
+                        drawLine(
+                            color = raisedEdge,
+                            start = Offset(0f, stroke / 2f),
+                            end = Offset(size.width, stroke / 2f),
+                            strokeWidth = stroke
+                        )
+                    },
                 shadowElevation = 8.dp
             ) {
                 Box(modifier = Modifier.padding(Spacing.large)) {
@@ -45,7 +61,7 @@ fun TrainrScaffold(
                 }
             }
         },
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = MaterialTheme.trainrColors.surfacePage,
         modifier = Modifier.statusBarsPadding()
     ) { paddingValues ->
         content(paddingValues)

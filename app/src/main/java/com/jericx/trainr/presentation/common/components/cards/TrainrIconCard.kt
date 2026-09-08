@@ -28,8 +28,8 @@ import androidx.compose.ui.unit.dp
 import com.jericx.trainr.R
 import com.jericx.trainr.presentation.common.components.core.TrainrRadioDot
 import com.jericx.trainr.presentation.common.theme.Spacing
-import com.jericx.trainr.presentation.common.theme.TextMuted
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
+import com.jericx.trainr.presentation.common.theme.trainrColors
 
 private val IconSize = 35.dp
 
@@ -42,6 +42,8 @@ fun TrainrIconCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val colors = MaterialTheme.trainrColors
+
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -49,11 +51,11 @@ fun TrainrIconCard(
         shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected)
-                MaterialTheme.colorScheme.onBackground
+                colors.surfaceSelected
             else
-                MaterialTheme.colorScheme.surface
+                colors.surfaceCard
         ),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        border = BorderStroke(1.dp, colors.outlineControl),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Box(
@@ -76,8 +78,9 @@ fun TrainrIconCard(
                     painter = painterResource(id = iconRes),
                     contentDescription = null,
                     modifier = Modifier.size(IconSize),
-                    // The frames export every option icon as #D37200.
-                    tint = MaterialTheme.colorScheme.primary
+                    // The frames export every option icon as #D37200, but the
+                    // selected slab inverts in dark, where #D37200 on it is 2.80.
+                    tint = if (isSelected) colors.brandOnSelected else colors.brand
                 )
                 Spacer(modifier = Modifier.width(Spacing.tight))
                 Column {
@@ -87,18 +90,18 @@ fun TrainrIconCard(
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                         ),
                         color = if (isSelected)
-                            MaterialTheme.colorScheme.background
+                            colors.onSurfaceSelected
                         else
-                            MaterialTheme.colorScheme.onSurface
+                            colors.onSurface
                     )
                     Spacer(modifier = Modifier.height(Spacing.small))
                     Text(
                         text = description,
                         style = MaterialTheme.typography.bodyMedium,
                         color = if (isSelected)
-                            MaterialTheme.colorScheme.background
+                            colors.onSurfaceSelected
                         else
-                            TextMuted
+                            colors.onSurfaceMuted
                     )
                 }
             }

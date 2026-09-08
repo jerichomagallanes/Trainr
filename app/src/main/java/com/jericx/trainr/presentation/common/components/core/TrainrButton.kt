@@ -21,7 +21,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -29,6 +28,7 @@ import com.jericx.trainr.presentation.common.theme.Animation
 import com.jericx.trainr.presentation.common.theme.ComponentHeight
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
+import com.jericx.trainr.presentation.common.theme.trainrColors
 
 @Composable
 fun TrainrButton(
@@ -38,6 +38,8 @@ fun TrainrButton(
     enabled: Boolean = true,
     isPrimary: Boolean = true
 ) {
+    val colors = MaterialTheme.trainrColors
+
     val buttonScale by animateFloatAsState(
         targetValue = if (enabled) 1f else 0.97f,
         animationSpec = tween(
@@ -49,10 +51,9 @@ fun TrainrButton(
 
     val buttonColor by animateColorAsState(
         targetValue = when {
-            !enabled && isPrimary -> MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
-            !enabled && !isPrimary -> MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)
-            isPrimary -> MaterialTheme.colorScheme.primary
-            else -> MaterialTheme.colorScheme.surface
+            !isPrimary -> colors.surfacePage
+            enabled -> colors.brandStrong
+            else -> colors.brandDisabled
         },
         animationSpec = tween(
             durationMillis = Animation.DurationShort,
@@ -63,10 +64,10 @@ fun TrainrButton(
 
     val textColor by animateColorAsState(
         targetValue = when {
-            !enabled && isPrimary -> MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
-            !enabled && !isPrimary -> MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
-            isPrimary -> MaterialTheme.colorScheme.onPrimary
-            else -> MaterialTheme.colorScheme.primary
+            !enabled && isPrimary -> colors.onBrandDisabled
+            !enabled && !isPrimary -> colors.brandStrongDisabled
+            isPrimary -> colors.onBrand
+            else -> colors.brandStrong
         },
         animationSpec = tween(
             durationMillis = Animation.DurationShort,
@@ -96,10 +97,7 @@ fun TrainrButton(
                 .shadow(
                     elevation = shadowElevation,
                     shape = MaterialTheme.shapes.medium,
-                    spotColor = if (isPrimary)
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
-                    else
-                        Color.Black.copy(alpha = 0.05f)
+                    spotColor = if (isPrimary) colors.shadowSpotBrand else colors.shadowSpotSoft
                 ),
             enabled = enabled,
             colors = ButtonDefaults.buttonColors(
@@ -109,7 +107,7 @@ fun TrainrButton(
             border = if (isPrimary) {
                 null
             } else {
-                BorderStroke(2.dp, MaterialTheme.colorScheme.onBackground)
+                BorderStroke(2.dp, colors.onSurface)
             },
             shape = MaterialTheme.shapes.medium
         ) {

@@ -2,9 +2,6 @@ package com.jericx.trainr.presentation.workout.model
 
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.R
-import com.jericx.trainr.presentation.common.theme.StatusCompleted
-import com.jericx.trainr.presentation.common.theme.StatusInProgress
-import com.jericx.trainr.presentation.common.theme.StatusNotStarted
 import com.jericx.trainr.presentation.workout.sample.SampleWeeklyProgress
 import com.jericx.trainr.presentation.workout.util.WorkoutDateFormatter
 import java.util.Locale
@@ -45,12 +42,12 @@ class WeekStatusTest {
 
     // A missed week and a part-done week read the same in the design.
     @Test
-    fun missedAndPartDoneWeeksShareAColour() {
-        assertThat(WeekStatus.NOT_COMPLETED.chipColor).isEqualTo(StatusNotStarted)
-        assertThat(WeekStatus.SKIPPED.chipColor).isEqualTo(StatusNotStarted)
-        assertThat(WeekStatus.UPCOMING.chipColor).isEqualTo(StatusNotStarted)
-        assertThat(WeekStatus.COMPLETED.chipColor).isEqualTo(StatusCompleted)
-        assertThat(WeekStatus.IN_PROGRESS.chipColor).isEqualTo(StatusInProgress)
+    fun missedAndPartDoneWeeksShareATone() {
+        assertThat(WeekStatus.NOT_COMPLETED.chipTone).isEqualTo(StatusTone.IDLE)
+        assertThat(WeekStatus.SKIPPED.chipTone).isEqualTo(StatusTone.IDLE)
+        assertThat(WeekStatus.UPCOMING.chipTone).isEqualTo(StatusTone.IDLE)
+        assertThat(WeekStatus.COMPLETED.chipTone).isEqualTo(StatusTone.DONE)
+        assertThat(WeekStatus.IN_PROGRESS.chipTone).isEqualTo(StatusTone.ACTIVE)
     }
 
     @Test

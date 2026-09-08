@@ -14,13 +14,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -34,12 +36,14 @@ import androidx.compose.ui.unit.sp
 import com.jericx.trainr.R
 import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.model.WorkoutStatus
-import com.jericx.trainr.presentation.common.theme.Gray100
-import com.jericx.trainr.presentation.common.theme.OutlineGray
-import com.jericx.trainr.presentation.common.theme.Slate800
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
+import com.jericx.trainr.presentation.common.theme.themedPainter
+import com.jericx.trainr.presentation.common.theme.trainrColors
+import com.jericx.trainr.presentation.workout.model.StatusTone
 import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
+
+private val AccentRuleHeight = 3.dp
 
 @Composable
 fun WorkoutDayCard(
@@ -49,20 +53,27 @@ fun WorkoutDayCard(
     modifier: Modifier = Modifier,
     isMissed: Boolean = false
 ) {
-    // A started workout gets the dark header; one not begun stays light.
-    val headerIsDark = day.status != WorkoutStatus.NOT_STARTED
+    // A started workout gets the emphasis header; one not begun stays on the card fill.
+    val started = day.status != WorkoutStatus.NOT_STARTED
+    val colors = MaterialTheme.trainrColors
 
     Column(
         modifier = modifier
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.medium)
-            .border(1.dp, OutlineGray, MaterialTheme.shapes.medium)
+            .border(1.dp, colors.outlineControl, MaterialTheme.shapes.medium)
             .clickable(onClick = onClick)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(if (headerIsDark) Slate800 else Color.White)
+                .background(if (started) colors.surfaceEmphasis else colors.surfaceCard)
+                // Transparent in light: the top rule is the dark theme's started cue.
+                .drawBehind {
+                    if (started) {
+                        drawRect(colors.accentRule, size = Size(size.width, AccentRuleHeight.toPx()))
+                    }
+                }
                 .padding(Spacing.card),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -70,23 +81,29 @@ fun WorkoutDayCard(
                 Text(
                     text = weekday,
                     style = MaterialTheme.typography.titleSmall,
-                    color = if (headerIsDark) Color.White else Slate800
+                    color = if (started) colors.onSurfaceEmphasis else colors.onSurface
                 )
                 Text(
                     text = day.title,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = if (headerIsDark) Color.White else Slate800
+                    color = if (started) colors.onSurfaceEmphasis else colors.onSurface
                 )
             }
-            WorkoutStatusChip(status = day.status, isMissed = isMissed)
+            // A day whose date has passed with nothing logged reads in the same
+            // grey as "not started": the app says where you stand without scolding.
+            if (isMissed) {
+                StatusChip(labelRes = R.string.missed, tone = StatusTone.IDLE)
+            } else {
+                StatusChip(labelRes = day.status.labelRes, tone = day.status.chipTone)
+            }
         }
 
-        HorizontalDivider(color = OutlineGray)
+        HorizontalDivider(color = colors.outlineControl)
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color.White)
+                .background(colors.surfaceCard)
                 .padding(Spacing.card),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -95,25 +112,27 @@ fun WorkoutDayCard(
                 verticalArrangement = Arrangement.spacedBy(Spacing.small)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Image(
+                    Icon(
                         painter = painterResource(R.drawable.ic_schedule),
                         contentDescription = null,
+                        tint = colors.onSurface,
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.size(Spacing.extraSmall))
                     Text(
                         text = pluralStringResource(R.plurals.minutes, day.duration, day.duration),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.Black
+                        // Pure black here, not onSurface: light must stay #000000.
+                        color = colors.onSurfaceStrong
                     )
                 }
 
                 Text(
                     text = pluralStringResource(R.plurals.exercises_count, day.exerciseCount, day.exerciseCount),
                     style = MaterialTheme.typography.labelLarge,
-                    color = Slate800,
+                    color = colors.onSurface,
                     modifier = Modifier
-                        .background(Gray100, MaterialTheme.shapes.small)
+                        .background(colors.surfaceSunken, MaterialTheme.shapes.small)
                         .padding(horizontal = Spacing.small, vertical = 3.dp)
                 )
 
@@ -126,13 +145,16 @@ fun WorkoutDayCard(
                             append(day.equipment.joinToString(", "))
                         },
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Slate800
+                        color = colors.onSurface
                     )
                 }
             }
 
             Image(
-                painter = painterResource(R.drawable.ic_arrow_forward_circle),
+                painter = themedPainter(
+                    R.drawable.ic_arrow_forward_circle,
+                    R.drawable.ic_arrow_forward_circle_night
+                ),
                 contentDescription = null,
                 modifier = Modifier.size(30.dp)
             )

@@ -30,7 +30,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -44,12 +43,14 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.shape.CircleShape
 import com.jericx.trainr.R
 import com.jericx.trainr.presentation.common.components.layout.InfiniteHorizontalPager
-import com.jericx.trainr.presentation.common.theme.Orange500
 import com.jericx.trainr.presentation.common.theme.Spacing
+import com.jericx.trainr.presentation.common.theme.themedPainter
+import com.jericx.trainr.presentation.common.theme.trainrColors
 import com.jericx.trainr.presentation.common.components.core.TrainrButton
 
 data class OnboardingPage(
     val imageRes: Int,
+    val nightImageRes: Int,
     val title: String
 )
 
@@ -58,9 +59,21 @@ fun WelcomeScreen(
     onGetStartedClick: () -> Unit
 ) {
     val pages = listOf(
-        OnboardingPage(R.drawable.img_skipping, stringResource(R.string.personalized_workout_plans)),
-        OnboardingPage(R.drawable.img_exercising, stringResource(R.string.ai_generated_routines)),
-        OnboardingPage(R.drawable.img_task_done, stringResource(R.string.track_your_progress))
+        OnboardingPage(
+            R.drawable.img_skipping,
+            R.drawable.img_skipping_night,
+            stringResource(R.string.personalized_workout_plans)
+        ),
+        OnboardingPage(
+            R.drawable.img_exercising,
+            R.drawable.img_exercising_night,
+            stringResource(R.string.ai_generated_routines)
+        ),
+        OnboardingPage(
+            R.drawable.img_task_done,
+            R.drawable.img_task_done_night,
+            stringResource(R.string.track_your_progress)
+        )
     )
 
     var currentPage by remember { mutableIntStateOf(0) }
@@ -126,7 +139,7 @@ private fun OnboardingPageContent(page: OnboardingPage) {
                 .clip(MaterialTheme.shapes.large)
         ) {
             Image(
-                painter = painterResource(id = page.imageRes),
+                painter = themedPainter(page.imageRes, page.nightImageRes),
                 contentDescription = page.title,
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Fit
@@ -138,7 +151,7 @@ private fun OnboardingPageContent(page: OnboardingPage) {
         Text(
             text = page.title,
             style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onBackground,
+            color = MaterialTheme.trainrColors.onSurface,
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth(0.9f)
         )
@@ -167,11 +180,11 @@ private fun WelcomeHeader() {
             Text(
                 text = stringResource(R.string.welcome_to) + " ",
                 style = MaterialTheme.typography.headlineLarge.copy(fontSize = 30.sp),
-                color = MaterialTheme.colorScheme.onBackground
+                color = MaterialTheme.trainrColors.onSurface
             )
 
             Image(
-                painter = painterResource(id = R.drawable.img_trainr),
+                painter = themedPainter(R.drawable.img_trainr, R.drawable.img_trainr_night),
                 contentDescription = stringResource(R.string.trainr),
                 modifier = Modifier.height(52.dp),
                 contentScale = ContentScale.FillHeight
@@ -183,13 +196,18 @@ private fun WelcomeHeader() {
         Text(
             text = buildAnnotatedString {
                 append(stringResource(R.string.your) + " ")
-                withStyle(style = SpanStyle(color = Orange500, fontWeight = FontWeight.Bold)) {
+                withStyle(
+                    style = SpanStyle(
+                        color = MaterialTheme.trainrColors.brandStrong,
+                        fontWeight = FontWeight.Bold
+                    )
+                ) {
                     append(stringResource(R.string.ai_powered))
                 }
                 append(" " + stringResource(R.string.personal_trainer))
             },
             style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
-            color = MaterialTheme.colorScheme.onBackground,
+            color = MaterialTheme.trainrColors.onSurface,
             textAlign = TextAlign.Center
         )
     }
@@ -211,9 +229,9 @@ private fun PageIndicator(
                     .size(10.dp)
                     .background(
                         if (index == currentPage)
-                            MaterialTheme.colorScheme.onBackground
+                            MaterialTheme.trainrColors.onSurface
                         else
-                            MaterialTheme.colorScheme.onBackground.copy(alpha = 0.3f),
+                            MaterialTheme.trainrColors.dotInactive,
                         shape = CircleShape
                     )
             )

@@ -10,7 +10,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import com.jericx.trainr.presentation.common.theme.RedError
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -32,9 +31,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.jericx.trainr.R
 import com.jericx.trainr.presentation.common.components.core.TrainrSwipeToDelete
 import com.jericx.trainr.presentation.common.components.layout.TrainrTopBar
-import com.jericx.trainr.presentation.common.theme.Slate800
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
+import com.jericx.trainr.presentation.common.theme.trainrColors
 import com.jericx.trainr.presentation.workout.components.WeekProgressCard
 import com.jericx.trainr.presentation.workout.model.WeekProgressUi
 import com.jericx.trainr.presentation.workout.sample.SampleWeeklyProgress
@@ -104,7 +103,7 @@ fun WeeklyProgressScreen(
             Text(
                 text = stringResource(R.string.weekly_progress),
                 style = MaterialTheme.typography.titleLarge,
-                color = Slate800
+                color = MaterialTheme.trainrColors.onSurface
             )
 
             HorizontalDivider()
@@ -183,12 +182,12 @@ private fun DeleteWeekDialog(
         },
         confirmButton = {
             TextButton(onClick = onConfirm) {
-                Text(text = stringResource(R.string.delete_week_confirm), color = RedError)
+                Text(text = stringResource(R.string.delete_week_confirm), color = MaterialTheme.trainrColors.dangerInk)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(text = stringResource(R.string.cancel), color = Slate800)
+                Text(text = stringResource(R.string.cancel), color = MaterialTheme.trainrColors.onSurface)
             }
         }
     )

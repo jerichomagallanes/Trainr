@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!--
+        The starting window is drawn from this theme, so the qualifier is the
+        only way a cold start can be dark at all. MainActivity persists the
+        appearance preference as the app's own night mode, which is what makes
+        this answer to the preference rather than to the phone on API 31 and
+        above. Below that it still follows the system, so a Light preference on
+        a dark phone flashes this colour once at cold start.
+    -->
+    <style name="Theme.Trainr" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#FF101519</item>
+    </style>
+</resources>

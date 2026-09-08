@@ -1,6 +1,5 @@
 package com.jericx.trainr.presentation.workout.components
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -15,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,11 +43,9 @@ import com.jericx.trainr.domain.model.UnitSystem
 import com.jericx.trainr.domain.model.WeightUnit
 import androidx.compose.ui.graphics.Color
 import com.jericx.trainr.presentation.common.components.core.TrainrSwipeToDelete
-import com.jericx.trainr.presentation.common.theme.OutlineGray
-import com.jericx.trainr.presentation.common.theme.Slate800
 import com.jericx.trainr.presentation.common.theme.Spacing
-import com.jericx.trainr.presentation.common.theme.TextMuted
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
+import com.jericx.trainr.presentation.common.theme.trainrColors
 
 private val RowHeight = 34.dp
 private val CheckSize = 24.dp
@@ -67,6 +65,7 @@ fun ExerciseSetTable(
     // No column at all without history: a week-one card looks exactly like the
     // design, which has no PREVIOUS.
     val showPrevious = previousSets.isNotEmpty()
+    val colors = MaterialTheme.trainrColors
 
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -130,12 +129,12 @@ fun ExerciseSetTable(
         Text(
             text = stringResource(R.string.add_set),
             style = MaterialTheme.typography.labelLarge,
-            color = Slate800,
+            color = colors.onSurface,
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(MaterialTheme.shapes.medium)
-                .border(1.dp, OutlineGray, MaterialTheme.shapes.medium)
+                .border(1.dp, colors.outlineControl, MaterialTheme.shapes.medium)
                 .clickable(role = Role.Button, onClick = onAddSet)
                 .padding(vertical = Spacing.small)
         )
@@ -150,6 +149,7 @@ private fun SetRow(
     onSetChanged: (ExerciseSet) -> Unit,
     units: UnitSystem
 ) {
+    val colors = MaterialTheme.trainrColors
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
@@ -157,7 +157,7 @@ private fun SetRow(
         Text(
             text = set.setNumber.toString(),
             style = MaterialTheme.typography.labelLarge,
-            color = Slate800,
+            color = colors.onSurface,
             textAlign = TextAlign.Center,
             modifier = Modifier.width(SetColumnWidth)
         )
@@ -166,7 +166,7 @@ private fun SetRow(
             Text(
                 text = previousText,
                 style = MaterialTheme.typography.bodySmall,
-                color = TextMuted,
+                color = colors.onSurfaceMuted,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.weight(1f)
             )
@@ -206,13 +206,14 @@ private fun SetRow(
             )
         }
 
-        Image(
+        Icon(
             painter = painterResource(
                 if (set.isCompleted) R.drawable.ic_check_box else R.drawable.ic_check_box_blank
             ),
             contentDescription = stringResource(
                 if (set.isCompleted) R.string.mark_set_incomplete else R.string.mark_set_complete
             ),
+            tint = if (set.isCompleted) colors.statusDoneInk else colors.outlineControl,
             modifier = Modifier
                 .size(CheckSize)
                 .clickable { onSetChanged(set.copy(isCompleted = !set.isCompleted)) }
@@ -225,7 +226,7 @@ private fun ColumnLabel(text: String, modifier: Modifier = Modifier) {
     Text(
         text = text,
         style = MaterialTheme.typography.labelSmall,
-        color = TextMuted,
+        color = MaterialTheme.trainrColors.onSurfaceMuted,
         textAlign = TextAlign.Center,
         modifier = modifier
     )
@@ -241,6 +242,7 @@ private fun NumberCell(
     onValueChange: (String?) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val colors = MaterialTheme.trainrColors
     Box(
         modifier = modifier.padding(horizontal = Spacing.extraSmall),
         contentAlignment = Alignment.Center
@@ -250,10 +252,10 @@ private fun NumberCell(
             onValueChange = { onValueChange(it.take(6).ifBlank { null }) },
             singleLine = true,
             textStyle = MaterialTheme.typography.bodyMedium.copy(
-                color = Slate800,
+                color = colors.onSurface,
                 textAlign = TextAlign.Center
             ),
-            cursorBrush = SolidColor(Slate800),
+            cursorBrush = SolidColor(colors.onSurface),
             keyboardOptions = KeyboardOptions(
                 keyboardType = if (decimal) KeyboardType.Decimal else KeyboardType.Number
             ),
@@ -261,7 +263,7 @@ private fun NumberCell(
                 .fillMaxWidth()
                 .height(RowHeight)
                 .clip(MaterialTheme.shapes.small)
-                .border(1.dp, OutlineGray, MaterialTheme.shapes.small),
+                .border(1.dp, colors.outlineControl, MaterialTheme.shapes.small),
             decorationBox = { field ->
                 Box(
                     modifier = Modifier.fillMaxWidth(),
@@ -271,7 +273,7 @@ private fun NumberCell(
                         Text(
                             text = placeholder.orEmpty(),
                             style = MaterialTheme.typography.bodyMedium,
-                            color = TextMuted,
+                            color = colors.onSurfaceMuted,
                             textAlign = TextAlign.Center
                         )
                     }
@@ -313,6 +315,7 @@ private fun DurationCell(
         mutableStateOf(seconds?.let(::durationDigits) ?: "")
     }
     val shown = secondsFromDigits(digits)?.let(::formatSeconds).orEmpty()
+    val colors = MaterialTheme.trainrColors
 
     Box(
         modifier = modifier.padding(horizontal = Spacing.extraSmall),
@@ -326,16 +329,16 @@ private fun DurationCell(
             },
             singleLine = true,
             textStyle = MaterialTheme.typography.bodyMedium.copy(
-                color = Slate800,
+                color = colors.onSurface,
                 textAlign = TextAlign.Center
             ),
-            cursorBrush = SolidColor(Slate800),
+            cursorBrush = SolidColor(colors.onSurface),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             modifier = Modifier
                 .fillMaxWidth()
                 .height(RowHeight)
                 .clip(MaterialTheme.shapes.small)
-                .border(1.dp, OutlineGray, MaterialTheme.shapes.small),
+                .border(1.dp, colors.outlineControl, MaterialTheme.shapes.small),
             decorationBox = { field ->
                 Box(
                     modifier = Modifier.fillMaxWidth(),
@@ -345,7 +348,7 @@ private fun DurationCell(
                         Text(
                             text = placeholderSeconds?.let(::formatSeconds).orEmpty(),
                             style = MaterialTheme.typography.bodyMedium,
-                            color = TextMuted,
+                            color = colors.onSurfaceMuted,
                             textAlign = TextAlign.Center
                         )
                     }

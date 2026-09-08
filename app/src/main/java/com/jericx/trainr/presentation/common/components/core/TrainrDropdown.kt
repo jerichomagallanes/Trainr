@@ -1,7 +1,6 @@
 package com.jericx.trainr.presentation.common.components.core
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -31,6 +30,7 @@ import com.jericx.trainr.R
 import com.jericx.trainr.presentation.common.theme.ComponentHeight
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
+import com.jericx.trainr.presentation.common.theme.trainrColors
 
 @Composable
 fun TrainrDropdown(
@@ -44,6 +44,7 @@ fun TrainrDropdown(
     placeholder: String = ""
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val colors = MaterialTheme.trainrColors
 
     Box(modifier = modifier) {
         Surface(
@@ -52,8 +53,8 @@ fun TrainrDropdown(
                 .height(ComponentHeight.Medium)
                 .clickable { expanded = true },
             shape = MaterialTheme.shapes.medium,
-            color = MaterialTheme.colorScheme.surface,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+            color = colors.surfaceCard,
+            border = BorderStroke(1.dp, colors.outlineControl)
         ) {
             Box(
                 modifier = Modifier
@@ -65,9 +66,9 @@ fun TrainrDropdown(
                     text = selectedValue.ifBlank { placeholder },
                     style = MaterialTheme.typography.labelMedium,
                     color = if (selectedValue.isBlank()) {
-                        MaterialTheme.colorScheme.onSurfaceVariant
+                        colors.onSurfaceMuted
                     } else {
-                        MaterialTheme.colorScheme.onSurface
+                        colors.onSurface
                     }
                 )
                 
@@ -75,7 +76,7 @@ fun TrainrDropdown(
                     imageVector = Icons.Default.ArrowDropDown,
                     contentDescription = stringResource(R.string.dropdown_content_description),
                     modifier = Modifier.align(Alignment.CenterEnd),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = colors.onSurfaceMuted
                 )
             }
         }
@@ -83,9 +84,9 @@ fun TrainrDropdown(
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
-            modifier = Modifier
-                .fillMaxWidth(0.9f)
-                .background(MaterialTheme.colorScheme.surface)
+            modifier = Modifier.fillMaxWidth(0.9f),
+            containerColor = colors.surfaceRaised,
+            border = BorderStroke(1.dp, colors.raisedEdge)
         ) {
             options.forEach { option ->
                 DropdownMenuItem(
@@ -93,7 +94,7 @@ fun TrainrDropdown(
                         Text(
                             text = option,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = colors.onSurface
                         )
                     },
                     onClick = {

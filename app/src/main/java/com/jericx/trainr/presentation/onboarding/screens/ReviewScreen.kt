@@ -41,7 +41,7 @@ import com.jericx.trainr.presentation.common.getFocusPhrase
 import com.jericx.trainr.presentation.common.getLocalizedName
 import com.jericx.trainr.presentation.common.getProgramPhrase
 import com.jericx.trainr.presentation.common.theme.Spacing
-import com.jericx.trainr.presentation.common.theme.TextMuted
+import com.jericx.trainr.presentation.common.theme.trainrColors
 import com.jericx.trainr.presentation.onboarding.util.BodyMetricsConverter
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -82,7 +82,7 @@ fun ReviewScreen(
                     Text(
                         text = stringResource(R.string.health_disclaimer),
                         style = MaterialTheme.typography.bodySmall,
-                        color = TextMuted
+                        color = MaterialTheme.trainrColors.onSurfaceMuted
                     )
                 }
 
@@ -280,7 +280,7 @@ private fun ProfileSection(
         modifier = Modifier
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.medium)
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+            .background(MaterialTheme.trainrColors.surfacePanel)
             .padding(Spacing.card),
         verticalArrangement = Arrangement.spacedBy(Spacing.card)
     ) {
@@ -292,14 +292,14 @@ private fun ProfileSection(
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onBackground
+                color = MaterialTheme.trainrColors.onSurface
             )
             Text(
                 text = stringResource(R.string.edit),
                 style = MaterialTheme.typography.labelLarge.copy(
                     fontWeight = FontWeight.SemiBold
                 ),
-                color = MaterialTheme.colorScheme.primary,
+                color = MaterialTheme.trainrColors.brandStrong,
                 modifier = Modifier.clickable(onClick = onEdit)
             )
         }
@@ -323,13 +323,13 @@ private fun ProfileItem(
         Text(
             text = label,
             style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
-            color = TextMuted,
+            color = MaterialTheme.trainrColors.onSurfaceMuted,
             modifier = Modifier.weight(1f)
         )
         Text(
             text = value,
             style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onBackground,
+            color = MaterialTheme.trainrColors.onSurface,
             modifier = Modifier.weight(1f)
         )
     }
@@ -345,7 +345,7 @@ private fun AIPreviewCard(userProfile: UserProfile) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.onBackground)
+                .background(MaterialTheme.trainrColors.surfaceEmphasis)
         ) {
             Row(
                 modifier = Modifier.padding(Spacing.medium),
@@ -355,7 +355,7 @@ private fun AIPreviewCard(userProfile: UserProfile) {
                     painter = painterResource(id = R.drawable.ic_smart_toy),
                     contentDescription = null,
                     modifier = Modifier.size(24.dp),
-                    tint = MaterialTheme.colorScheme.background
+                    tint = MaterialTheme.trainrColors.onSurfaceEmphasis
                 )
                 Spacer(modifier = Modifier.width(Spacing.small))
                 Column(
@@ -364,7 +364,7 @@ private fun AIPreviewCard(userProfile: UserProfile) {
                     Text(
                         text = stringResource(R.string.ai_routine_preview_label),
                         style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.background
+                        color = MaterialTheme.trainrColors.onSurfaceEmphasis
                     )
                     Spacer(modifier = Modifier.height(Spacing.extraSmall))
                     Text(
@@ -382,7 +382,7 @@ private fun AIPreviewCard(userProfile: UserProfile) {
                             userProfile.fitnessGoal.getFocusPhrase()
                         ),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.background.copy(alpha = 0.9f)
+                        color = MaterialTheme.trainrColors.onSurfaceEmphasis.copy(alpha = 0.9f)
                     )
                 }
             }
@@ -392,7 +392,7 @@ private fun AIPreviewCard(userProfile: UserProfile) {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(4.dp)
-                .background(MaterialTheme.colorScheme.primary)
+                .background(MaterialTheme.trainrColors.brand)
         )
     }
 }
