@@ -20,8 +20,8 @@ class DesignTokensTest {
 
     @Test
     fun statusColoursMatchTheFigmaValues() {
-        assertThat(LightTrainrColors.statusDone).isEqualTo(Color(0xFF5F8C32))
-        assertThat(LightTrainrColors.statusActive).isEqualTo(Color(0xFFD37200))
+        assertThat(LightTrainrColors.statusDone).isEqualTo(Color(0xFF567C2C))
+        assertThat(LightTrainrColors.statusActive).isEqualTo(Color(0xFFB36000))
         assertThat(LightTrainrColors.statusIdle).isEqualTo(Color(0xFF626262))
     }
 
@@ -55,7 +55,7 @@ class DesignTokensTest {
             assertThat(onSurfaceEmphasis).isEqualTo(Color.White)
             assertThat(onSurface).isEqualTo(Slate800)
             assertThat(onSurfaceMuted).isEqualTo(TextMuted)
-            assertThat(outlineControl).isEqualTo(OutlineGray)
+            assertThat(outlineControl).isEqualTo(Color(0xFF808E95))
             assertThat(statusDoneEdge).isEqualTo(StatusCompleted)
             assertThat(outlineDivider).isEqualTo(DividerGray)
             assertThat(raisedEdge).isEqualTo(Color.Transparent)
@@ -63,14 +63,15 @@ class DesignTokensTest {
             assertThat(focus).isEqualTo(Orange500)
             assertThat(trackEmpty).isEqualTo(OutlineGray)
             assertThat(brand).isEqualTo(Orange500)
-            assertThat(brandStrong).isEqualTo(Orange500)
+            assertThat(brandStrong).isEqualTo(Color(0xFFAB5C00))
+            assertThat(brandLarge).isEqualTo(Orange500)
             assertThat(onBrand).isEqualTo(Color.White)
-            assertThat(dangerInk).isEqualTo(RedError)
+            assertThat(dangerInk).isEqualTo(Color(0xFFC0392B))
             assertThat(danger).isEqualTo(RedError)
             assertThat(onDanger).isEqualTo(Color.White)
-            assertThat(statusDone).isEqualTo(StatusCompleted)
-            assertThat(statusDoneInk).isEqualTo(StatusCompleted)
-            assertThat(statusActive).isEqualTo(Orange500)
+            assertThat(statusDone).isEqualTo(Color(0xFF567C2C))
+            assertThat(statusDoneInk).isEqualTo(Color(0xFF4F7429))
+            assertThat(statusActive).isEqualTo(Color(0xFFB36000))
             assertThat(statusIdle).isEqualTo(TextMuted)
             assertThat(onStatus).isEqualTo(Color.White)
             assertThat(shadowSpotBrand).isEqualTo(Orange500.copy(alpha = 0.15f))
@@ -97,7 +98,7 @@ class DesignTokensTest {
     @Test
     fun addedTokensKeepTheLightValuesTheirSitesRendered() {
         with(LightTrainrColors) {
-            assertThat(placeholder).isEqualTo(Color(0xFFA1A1A1))
+            assertThat(placeholder).isEqualTo(Color(0xFF707070))
             assertThat(surfacePanel).isEqualTo(SurfaceLight)
             assertThat(onSurfaceStrong).isEqualTo(Color.Black)
             assertThat(cardEdge).isEqualTo(Slate800)
@@ -240,5 +241,34 @@ class DesignTokensTest {
         val hi = maxOf(a.luminance(), b.luminance()).toDouble()
         val lo = minOf(a.luminance(), b.luminance()).toDouble()
         return (hi + 0.05) / (lo + 0.05)
+    }
+
+    // The seven values that failed WCAG at the Figma originals. Body text needs
+    // 4.5:1, non-text 3:1, and the two grounds light actually uses are white and
+    // the sunken panel.
+    @Test
+    fun everyLightTokenClearsItsFloorOnBothGrounds() {
+        with(LightTrainrColors) {
+            listOf(surfacePage, surfaceSunken).forEach { ground ->
+                assertThat(contrast(brandStrong, ground)).isAtLeast(4.5)
+                assertThat(contrast(dangerInk, ground)).isAtLeast(4.5)
+                assertThat(contrast(placeholder, ground)).isAtLeast(4.5)
+                assertThat(contrast(statusDoneInk, ground)).isAtLeast(4.5)
+                assertThat(contrast(outlineControl, ground)).isAtLeast(3.0)
+            }
+            assertThat(contrast(onStatus, statusDone)).isAtLeast(4.5)
+            assertThat(contrast(onStatus, statusActive)).isAtLeast(4.5)
+            assertThat(contrast(onBrand, brandStrong)).isAtLeast(4.5)
+        }
+    }
+
+    // brandLarge keeps the Figma orange because its only callers label it at
+    // 16sp Black, which WCAG counts as large text.
+    @Test
+    fun brandLargeKeepsTheFigmaOrangeAtTheLargeTextFloor() {
+        with(LightTrainrColors) {
+            assertThat(brandLarge).isEqualTo(Orange500)
+            assertThat(contrast(onBrand, brandLarge)).isAtLeast(3.0)
+        }
     }
 }
