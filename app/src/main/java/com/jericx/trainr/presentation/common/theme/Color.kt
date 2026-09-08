@@ -65,8 +65,9 @@ data class TrainrColors(
     // moves light to #243036.
     val onSurfaceStrong: Color,
     val onSurfaceMuted: Color,
-    // Light is the composite the field rendered (#626262 at 60% on white); dark
-    // needs the muted ink at full strength to clear 4.5 on a card.
+    // Light replaces the composite the field used to render (#626262 at 60% on
+    // white, which reads 2.65 and fails AA); dark needs the muted ink at full
+    // strength.
     val placeholder: Color,
     val outlineControl: Color,
     val outlineDivider: Color,
