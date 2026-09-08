@@ -39,8 +39,7 @@ class WorkoutWeekTest {
             .isEqualTo(millisOf(2026, Calendar.AUGUST, 24))
     }
 
-    // Sunday closes the ISO week, so it must not roll forward to the next
-    // Monday whatever the locale calls the first day of the week.
+    // Sunday closes the ISO week, whatever the locale calls the first day, so it must not roll forward
     @Test
     fun aSundayBelongsToTheMondayBeforeIt() {
         val sunday = millisOf(2026, Calendar.AUGUST, 30, hour = 23)

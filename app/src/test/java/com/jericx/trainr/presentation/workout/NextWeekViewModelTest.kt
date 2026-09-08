@@ -53,8 +53,7 @@ class NextWeekViewModelTest {
 
     private fun viewModel() = NextWeekViewModel(userRepository, planGenerator) { "en" }
 
-    // Recent enough that the week after it still lies ahead, which is the
-    // ordinary case: the next week follows the last one.
+    // Recent enough that the week after it still lies ahead, the ordinary case
     private val weekOneStart = WorkoutWeek.startOfDay() - TimeUnit.DAYS.toMillis(3)
 
     private val finishedWeek = WeeklyWorkoutPlan(
@@ -130,9 +129,6 @@ class NextWeekViewModelTest {
         assertThat(request.captured.previousWeek).isEqualTo(weekTwo)
     }
 
-    // A week that could not be generated is said out loud. Repeating the last
-    // one used to stand in silently, which told the client next week was ready
-    // when the coach never wrote it.
     @Test
     fun aFailedGenerationSavesNothingAndReportsWhy() = runTest {
         every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(finishedWeek))
@@ -147,8 +143,6 @@ class NextWeekViewModelTest {
         coVerify(exactly = 0) { userRepository.saveWeeklyWorkoutPlan(any()) }
     }
 
-    // Reopening the completion screen after the next week exists must not
-    // stack duplicates.
     @Test
     fun anAlreadyGeneratedWeekIsNotGeneratedAgain() = runTest {
         every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(finishedWeek))
@@ -175,9 +169,7 @@ class NextWeekViewModelTest {
         coVerify(exactly = 0) { userRepository.saveWeeklyWorkoutPlan(any()) }
         assertThat(viewModel.isReady.value).isTrue()
     }
-    // Coming back long after the plan ran out, the next week starts today
-    // rather than on a date that has already gone: nothing is missed before it
-    // begins, and no two weeks ever cover the same days.
+    // Starting on a date already gone would miss sessions before they began and overlap the week before
     @Test
     fun aWeekPickedUpLateStartsToday() = runTest {
         val longAgo = finishedWeek.copy(
@@ -209,9 +201,7 @@ class NextWeekViewModelTest {
         assertThat(request.captured.startDateMillis).isGreaterThan(WorkoutWeek.startOfDay())
     }
 
-    // Replacing the week you are in: same number, same dates, new training —
-    // and the week before it seeds the request so a replacement still
-    // progresses from what was actually lifted.
+    // The week before seeds the request, so a replacement still progresses from what was lifted
     @Test
     fun regeneratingReplacesTheWeekBeingTrainedInPlace() = runTest {
         val current = finishedWeek.copy(
@@ -239,8 +229,7 @@ class NextWeekViewModelTest {
         coVerify { userRepository.saveWeeklyWorkoutPlan(replacement) }
     }
 
-    // The safe way round: ask the model first, and drop the old week only once
-    // there is one to put in its place.
+    // Ask the model first and drop the old week only once there is one to put in its place
     @Test
     fun aFailedRegenerationLeavesTheWeekWhereItWas() = runTest {
         val current = finishedWeek.copy(
@@ -261,7 +250,6 @@ class NextWeekViewModelTest {
         assertThat(viewModel.isReady.value).isFalse()
     }
 
-    // A week that is behind you is a record, not something to rewrite.
     @Test
     fun aWeekYouAreDoneWithIsNotRegenerated() = runTest {
         every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(finishedWeek))
@@ -273,9 +261,7 @@ class NextWeekViewModelTest {
         coVerify(exactly = 0) { userRepository.deleteWeeklyWorkoutPlan(any()) }
     }
 
-    // The rule is enforced where the write happens, not only where the menu is
-    // drawn: a week still being trained is the week that is yours, and another
-    // one now would become the newest and take that title from it.
+    // Enforced at the write, not only where the menu is drawn: a newer week would take the title of current
     @Test
     fun neitherWayOnIsTakenWhileTheWeekIsStillBeingTrained() = runTest {
         val unfinished = finishedWeek.copy(
@@ -295,9 +281,6 @@ class NextWeekViewModelTest {
         coVerify(exactly = 0) { planGenerator.generate(any()) }
     }
 
-    // A block worth another turn need not be the newest one. The copy joins the
-    // plan at the end — its number and its dates come from there, its training
-    // from the week being copied.
     @Test
     fun repeatingAnOlderWeekAppendsItAtTheEnd() = runTest {
         val weekTwo = finishedWeek.copy(
@@ -316,18 +299,14 @@ class NextWeekViewModelTest {
 
         with(saved.captured) {
             assertThat(weekNumber).isEqualTo(3)
-            // Week one's training, not week two's.
             assertThat(workoutDays.single().title).isEqualTo("Full body")
-            // Following week two, never reaching back over it.
+            // Follows week two rather than reaching back over it
             assertThat(startDateMillis)
                 .isEqualTo(WorkoutWeek.dateOfDay(weekOneStart, 15))
             assertThat(workoutDays.single().status).isEqualTo(WorkoutStatus.NOT_STARTED)
         }
     }
 
-    // Running the same week again is sound coaching after a week that was not
-    // finished, and it asks nothing of the network. It is chosen, not
-    // substituted, so it saves the week with every log cleared.
     @Test
     fun repeatingTheLastWeekCopiesItWithNothingLogged() = runTest {
         every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(finishedWeek))
@@ -341,8 +320,7 @@ class NextWeekViewModelTest {
         with(saved.captured) {
             assertThat(id).isEqualTo(0)
             assertThat(weekNumber).isEqualTo(2)
-            // A copy of week one must not sit at week two still calling itself
-            // the first.
+            // A copy of week one must not sit at week two still calling itself the first
             assertThat(title).doesNotContain("Week 1")
             assertThat(startDateMillis).isEqualTo(WorkoutWeek.dateOfDay(weekOneStart, 8))
             val day = workoutDays.single()
@@ -369,9 +347,6 @@ class NextWeekViewModelTest {
         coVerify(exactly = 0) { userRepository.saveWeeklyWorkoutPlan(any()) }
     }
 
-    // Generating takes the better part of a minute. A second ask in that window
-    // — an impatient tap, or a screen rebuilt by a rotation — used to run
-    // alongside the first, and both wrote a week.
     @Test
     fun aSecondAskWhileGeneratingIsIgnored() = runTest {
         every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(finishedWeek))

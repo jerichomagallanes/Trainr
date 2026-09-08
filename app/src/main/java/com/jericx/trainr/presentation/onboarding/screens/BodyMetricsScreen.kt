@@ -59,10 +59,8 @@ fun BodyMetricsScreen(
     onNextClick: (height: Float, weight: Float, units: UnitSystem) -> Unit,
     onBackClick: () -> Unit
 ) {
-    // The profile is stored in centimetres and kilograms whichever units were
-    // typed, so the stored numbers have to be converted before they are put
-    // back in front of a client who reads pounds. Seeding them raw showed a
-    // kilogram weight under a label saying lbs.
+    // The profile stores centimetres and kilograms whichever units were typed,
+    // so seeded values have to be converted for a client who reads pounds.
     val startsImperial = initial?.bodyUnitSystem == UnitSystem.IMPERIAL
     var height by remember {
         mutableStateOf(
@@ -92,10 +90,8 @@ fun BodyMetricsScreen(
 
     val focusManager = LocalFocusManager.current
 
-    // Validated on what the text parses to, not on whether anything was typed.
-    // The imperial field's own filter makes the apostrophe optional, so "595"
-    // reached it happily and parsed to a height of zero, which is what the
-    // model would then have planned around.
+    // Validated on what the text parses to, not on whether anything was typed:
+    // the imperial filter allows "595", which parses to a height of zero.
     val (parsedHeightCm, parsedWeightKg) =
         BodyMetricsConverter.parseMetrics(height, weight, useMetric)
     val heightIsUsable = parsedHeightCm in
@@ -111,9 +107,6 @@ fun BodyMetricsScreen(
     var heightTouched by remember { mutableStateOf(false) }
     var weightTouched by remember { mutableStateOf(false) }
 
-    // The bounds, in the units on screen. An error that carries an example
-    // weight reads as the weight that was expected, which is not something to
-    // put in front of somebody about their own body; a range is a limit.
     val heightBounds = with(Constants.Workout) {
         if (useMetric) {
             MIN_HEIGHT_CM.toInt().toString() to
@@ -132,12 +125,9 @@ fun BodyMetricsScreen(
         }
     }
 
-    // Switching units rewrites both field values, swaps the height keyboard
-    // between decimal and text, and changes which input each field accepts.
-    // Focus is cleared first so the user is never left with a caret sitting in
-    // a value they did not type, in a field that now silently rejects most
-    // keystrokes. Re-selecting the unit already in use is a no-op, so it does
-    // not steal focus.
+    // Focus is cleared first because the switch rewrites both values and
+    // changes which keystrokes each field accepts; re-selecting the unit
+    // already in use is a no-op so it does not steal focus.
     fun switchUnits(toMetric: Boolean) {
         if (toMetric == useMetric) return
 
@@ -284,10 +274,8 @@ fun BodyMetricsScreen(
 
                 Spacer(modifier = Modifier.height(Spacing.extraLarge))
 
-                // Only for measurements that were accepted. A rejected 300 cm
-                // and 2 kg still produced a BMI of 0.2 labelled "Underweight",
-                // which is a verdict on a body, drawn from numbers the screen
-                // had just refused.
+                // Only for accepted measurements: a refused 300 cm and 2 kg
+                // otherwise gets a BMI of 0.2 labelled "Underweight".
                 val bmi = BodyMetricsConverter.calculateBMI(height, weight, useMetric)
                     ?.takeIf { isFormValid }
                 if (bmi != null) {
@@ -300,8 +288,6 @@ fun BodyMetricsScreen(
     }
 }
 
-// The frames draw the unit switch as tabs: square-bottomed segments that sit
-// on the fields they control, not free-floating chips.
 @Composable
 private fun UnitTab(
     text: String,
@@ -395,8 +381,6 @@ private fun getBMICategory(bmi: Float): String {
     }
 }
 
-// Missing and unusable are different complaints, and neither is worth making
-// before the client has left the field alone.
 @Composable
 private fun fieldMessage(
     label: String,
@@ -406,9 +390,6 @@ private fun fieldMessage(
     usable: Boolean,
     bounds: Pair<String, String>
 ): String? = when {
-    // An empty field is told what to do; a filled one is told the rule it
-    // broke. Both forms are the GOV.UK Design System's, which is also where
-    // "valid", "invalid" and "please" come from being absent.
     value.isBlank() && touched -> missing
     value.isNotBlank() && !usable ->
         stringResource(R.string.value_range_hint, label, bounds.first, bounds.second)

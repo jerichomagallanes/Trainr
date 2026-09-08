@@ -27,11 +27,8 @@ import com.jericx.trainr.presentation.common.components.layout.TrainrScreenConte
 import com.jericx.trainr.presentation.common.components.typography.TrainrScreenTitle
 import com.jericx.trainr.presentation.common.components.typography.TrainrSubtitle
 
-// Goal and style are two different questions — the outcome wanted, and the kind
-// of training wanted to get there — but they are the same kind of question, and
-// the review shows them on one card. They are asked together so the card's Edit
-// can reach both: style used to be collected on the limitations screen, which
-// left it displayed under a button that could not change it.
+// Goal and style share one card on the review, so they are asked together and
+// that card's Edit can reach both.
 @Composable
 fun FitnessGoalScreen(
     initial: UserProfile? = null,
@@ -41,9 +38,8 @@ fun FitnessGoalScreen(
 ) {
     var selectedGoal by remember { mutableStateOf(initial?.fitnessGoal) }
 
-    // Nothing is pre-chosen. The profile would fall back to mixed, but a list
-    // that opens already answered is the app deciding and the client agreeing
-    // by default, so the answer has to be given rather than accepted.
+    // Nothing pre-chosen: the profile falls back to mixed, and a list that
+    // opens already answered is the app deciding rather than the client.
     var selectedStyle by remember { mutableStateOf(initial?.workoutType) }
 
     TrainrScaffold(
@@ -87,8 +83,6 @@ fun FitnessGoalScreen(
 
                 Spacer(modifier = Modifier.height(Spacing.large))
 
-                // Titled with the same words the review uses for the row it
-                // fills in, so the screen answers the line that was tapped.
                 TrainrFormSection(title = stringResource(R.string.main_goal_label)) {
                     Column(
                         verticalArrangement = Arrangement.spacedBy(Spacing.card)

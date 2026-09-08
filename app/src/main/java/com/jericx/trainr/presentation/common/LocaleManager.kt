@@ -4,9 +4,8 @@ import android.content.Context
 import android.content.res.Configuration
 import java.util.Locale
 
-// The app is pinned to one language, so this exists to force it rather than to
-// switch it: the returned context carries the configuration, and the caller has
-// to install it or nothing changes.
+// The returned context only carries the configuration; the caller has to
+// install it or nothing changes.
 object LocaleManager {
 
     fun updateAppLocale(context: Context, languageCode: String): Context {

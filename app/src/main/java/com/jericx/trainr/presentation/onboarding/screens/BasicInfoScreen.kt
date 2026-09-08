@@ -49,8 +49,6 @@ fun BasicInfoScreen(
     var selectedGender by remember { mutableStateOf(initial?.gender) }
     var selectedExperience by remember { mutableStateOf(initial?.experienceLevel) }
 
-    // Required is only reported once a field has been left, never while it is
-    // still being filled in.
     var nameTouched by remember { mutableStateOf(false) }
     var ageTouched by remember { mutableStateOf(false) }
 
@@ -85,9 +83,6 @@ fun BasicInfoScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // The bar counts the way through first-time setup. Coming back
-            // to change one answer is not a seventh of anything, so it says
-            // nothing then.
             if (!isEditing) {
                 TrainrProgress(
                     currentStep = 1,
@@ -112,9 +107,8 @@ fun BasicInfoScreen(
                         modifier = Modifier.touchedOnBlur { nameTouched = true }
                     )
 
-                    // Nothing beyond "there is something here". A name is
-                    // whatever its owner says it is, and rules about their
-                    // shape lock real people out of the product.
+                    // Presence only: rules about a name's shape lock real
+                    // people out of the product.
                     TrainrFieldError(
                         message = stringResource(R.string.error_enter_name)
                             .takeIf { firstName.isBlank() && nameTouched }
@@ -134,8 +128,8 @@ fun BasicInfoScreen(
                         modifier = Modifier.touchedOnBlur { ageTouched = true }
                     )
 
-                    // States the bound rather than showing a specimen age. An
-                    // example in an error reads as the answer that was wanted.
+                    // States the bound; an example age in an error reads as the
+                    // answer that was wanted.
                     TrainrFieldError(
                         message = when {
                             age.isBlank() && ageTouched ->

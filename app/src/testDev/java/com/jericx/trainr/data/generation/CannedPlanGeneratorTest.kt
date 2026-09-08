@@ -9,8 +9,7 @@ import com.jericx.trainr.presentation.workout.model.ExerciseVideoCatalog
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
-// Lives in the dev unit-test source set because the generator it covers is only
-// compiled into the dev flavour.
+// In the dev unit-test source set: the generator it covers is dev-only.
 class CannedPlanGeneratorTest {
 
     private fun request(
@@ -40,9 +39,6 @@ class CannedPlanGeneratorTest {
             as PlanGenerationResult.Generated
         ).plan
 
-    // The parser rejects a week with the wrong number of days, and so does the
-    // generator's own check, so a canned week that ignored the profile would
-    // fail the same way a bad answer from the model does.
     @Test
     fun itHonoursTheNumberOfDaysAsked() = runTest {
         for (days in 1..7) {
@@ -59,14 +55,11 @@ class CannedPlanGeneratorTest {
         assertThat(slots.all { it in 1..7 }).isTrue()
     }
 
-    // Every key has to be one the catalog knows, or the tutorials that make the
-    // dev build worth looking at simply do not render.
     @Test
     fun everyExerciseUsesAKeyTheCatalogKnows() = runTest {
         val keys = plan().workoutDays.flatMap { it.exercises }.map { it.exerciseKey }
 
         assertThat(keys).isNotEmpty()
-        // The same movement recurs across days, so compare the distinct set.
         assertThat(ExerciseVideoCatalog.videoIds.keys).containsAtLeastElementsIn(keys.distinct())
     }
 
@@ -80,8 +73,6 @@ class CannedPlanGeneratorTest {
         assertThat(plan.userId).isEqualTo(1)
     }
 
-    // A canned week that never moved would make progression impossible to look
-    // at while building the screens that show it.
     @Test
     fun itProgressesFromTheWeekBefore() = runTest {
         val first = plan()
@@ -115,9 +106,6 @@ class CannedPlanGeneratorTest {
             .isInstanceOf(PlanGenerationResult.Generated::class.java)
     }
 
-    // The day header states the requested length and the routine adds its own
-    // exercises up. The two disagreeing reads as a bug on every screen that
-    // shows either, so a canned week has to add up as well.
     @Test
     fun itFillsTheSessionLengthThatWasAskedFor() = runTest {
         for (requested in listOf(30, 45, 60, 90)) {
@@ -128,8 +116,6 @@ class CannedPlanGeneratorTest {
         }
     }
 
-    // A bodyweight profile being handed goblet squats is exactly what a dev
-    // build is meant to let you notice, so it must not be the source of it.
     @Test
     fun itOnlyPrescribesMovementsTheClientHasTheKitFor() = runTest {
         val keys = plan(equipment = listOf(Equipment.NONE))
@@ -147,8 +133,6 @@ class CannedPlanGeneratorTest {
         assertThat(keys).contains("bent_over_row")
     }
 
-    // The card names the kit to bring, so it lists what this day needs rather
-    // than everything the client happens to own.
     @Test
     fun itNamesOnlyTheEquipmentTheDayActuallyNeeds() = runTest {
         val loaded = plan(

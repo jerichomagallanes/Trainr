@@ -27,8 +27,7 @@ fun TrainrProgress(
 ) {
     Box(
         modifier = modifier
-            // A bar with no semantics is furniture: nothing announces how far
-            // through the setup a screen reader is, and nothing can ask.
+            // Without this nothing announces setup progress to a screen reader.
             .progressSemantics(
                 value = currentStep.toFloat(),
                 valueRange = 0f..totalSteps.toFloat()

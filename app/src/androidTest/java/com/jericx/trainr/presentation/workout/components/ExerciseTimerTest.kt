@@ -117,7 +117,6 @@ class ExerciseTimerTest {
         assertThat(wasReset).isTrue()
     }
 
-    // Nothing to reset before it has started.
     @Test
     fun anUnstartedExerciseOffersNoReset() {
         setTimer(timer = null)

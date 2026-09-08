@@ -101,10 +101,8 @@ fun RoutineDetailScreen(
 ) {
     val locale = LocalLocale.current.platformLocale
 
-    // However the last exercise gets ticked — the slider or its own checkbox —
-    // finishing the routine is what ends the day. Opening an already-finished
-    // routine is not finishing it, so only the transition counts: null means
-    // nothing loaded has been seen yet, and the first loaded state only primes.
+    // Only the transition ends the day: null means nothing loaded has been seen
+    // yet, so the first loaded state primes and a finished routine is not re-finished.
     var wasComplete by remember { mutableStateOf<Boolean?>(null) }
 
     var showStartOver by remember { mutableStateOf(false) }
@@ -129,8 +127,7 @@ fun RoutineDetailScreen(
     Column(modifier = modifier.fillMaxSize()) {
         TrainrTopBar(onBackClick = onBackClick)
 
-        // A blank moment is honest; the sample week that used to fill it was a
-        // workout nobody was doing.
+        // A blank moment is honest; a sample routine here is one nobody is doing.
         if (!state.isLoaded) return@Column
 
         Column(
@@ -242,10 +239,6 @@ fun RoutineDetailScreen(
                 }
             }
 
-            // The foot of the screen holds exactly one action, and which one
-            // depends on whether there is anything left to finish. Sliding a
-            // finished session again says nothing; what a finished session
-            // needs is the way back, in the place the slider just was.
             if (!routine.isComplete) {
                 TrainrSlideToConfirm(
                     text = stringResource(R.string.slide_to_complete_routine),
@@ -280,9 +273,6 @@ fun RoutineDetailScreen(
     }
 }
 
-// Same shape as the plan screen's destructive dialogs: what is lost in red,
-// the way out in the quieter colour. The second sentence is the whole point of
-// the dialog, because "start over" alone does not say what survives.
 @Composable
 private fun StartWorkoutOverDialog(
     onConfirm: () -> Unit,

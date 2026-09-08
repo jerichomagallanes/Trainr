@@ -42,8 +42,7 @@ class ExerciseCardTest {
         composeTestRule.onNodeWithText("High-Intensity Intervals").assertIsDisplayed()
         composeTestRule.onNodeWithText("5 sets of 1 minute").assertIsDisplayed()
         composeTestRule.onNodeWithText("10 mins").assertIsDisplayed()
-        // The set rows are numbered too, so the position badge is no longer the
-        // only "2" on the card.
+        // The set rows are numbered too, so the badge is not the only "2" on the card.
         assertThat(
             composeTestRule.onAllNodesWithText("2").fetchSemanticsNodes()
         ).isNotEmpty()
@@ -76,8 +75,6 @@ class ExerciseCardTest {
         assertThat(toggled).isTrue()
     }
 
-    // The card is where the gate used to be: it only drew the table when the
-    // exercise had sets, so emptying one removed the only way to add another.
     @Test
     fun anExerciseWithNoSetsStillOffersAddSet() {
         setCard(sampleExercises[1].copy(sets = emptyList()))
@@ -85,9 +82,7 @@ class ExerciseCardTest {
         composeTestRule.onNodeWithText(string(R.string.add_set)).assertIsDisplayed()
     }
 
-    // Deliberately still tickable. An exercise with no sets is one done without
-    // logging numbers, and the slide to finish marks it complete regardless, so
-    // a disabled checkbox here would be a control the screen contradicts.
+    // Deliberately still tickable: the slide to finish marks it complete anyway.
     @Test
     fun anExerciseWithNoSetsCanStillBeTickedOff() {
         var toggled = false

@@ -34,8 +34,6 @@ class GeneratingScreenTest {
             .assertIsDisplayed()
     }
 
-    // The screen used to sit on a timer and only then ask for a plan, so every
-    // generation cost that wait on top of the real one.
     @Test
     fun generatingBeginsWithTheScreen() {
         var started = false
@@ -64,8 +62,6 @@ class GeneratingScreenTest {
         assertThat(done).isFalse()
     }
 
-    // A plan that answers at once still gets read: the screen holds briefly
-    // rather than flashing past.
     @Test
     fun aPlanThatIsReadyAtOnceStillShowsTheScreen() {
         var done = false
@@ -82,8 +78,6 @@ class GeneratingScreenTest {
         composeTestRule.waitForIdle()
         assertThat(done).isTrue()
     }
-    // Being unable to reach the model reads differently to the client than the
-    // model answering with nonsense, so the two are told apart.
     @Test
     fun beingOfflineIsSaidPlainly() {
         composeTestRule.setContent {
@@ -139,8 +133,6 @@ class GeneratingScreenTest {
         assertThat(retried).isTrue()
     }
 
-    // Nothing was written, so the way out is back to the profile the plan would
-    // have been built from.
     @Test
     fun theClientCanGoBackToTheirProfile() {
         var wentBack = false
@@ -163,8 +155,6 @@ class GeneratingScreenTest {
     }
 
 
-    // A spent allowance is its own kind of failure, and the client needs the
-    // opposite advice: wait, rather than try again.
     @Test
     fun theDailyLimitGetsItsOwnTitleAndReason() {
         composeTestRule.setContent {
@@ -186,8 +176,7 @@ class GeneratingScreenTest {
             .assertDoesNotExist()
     }
 
-    // Retrying a spent allowance cannot work. A button the app knows will fail
-    // invites the client to keep tapping and keep failing.
+    // Retrying a spent allowance cannot work, so nothing invites it.
     @Test
     fun theDailyLimitOffersNoRetry() {
         var retried = false
@@ -208,7 +197,6 @@ class GeneratingScreenTest {
         assertThat(retried).isFalse()
     }
 
-    // An ordinary failure still does, because a retry there may well work.
     @Test
     fun anOrdinaryFailureStillOffersRetry() {
         composeTestRule.setContent {

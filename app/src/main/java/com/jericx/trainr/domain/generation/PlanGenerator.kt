@@ -11,9 +11,6 @@ data class PlanRequest(
     val previousWeek: WeeklyWorkoutPlan? = null
 )
 
-// Generation either produces a plan or explains why it could not. It used to
-// answer null and let callers quietly substitute the built-in week, which told
-// the client their coach had written them a plan when it had not.
 sealed interface PlanGenerationResult {
     data class Generated(val plan: WeeklyWorkoutPlan) : PlanGenerationResult
 
@@ -25,10 +22,8 @@ sealed interface PlanGenerationResult {
     // The model answered, but never with a plan that held up.
     data object Failed : Failure
 
-    // Every model has spent its allowance for the day. Told apart from Failed
-    // because the two need opposite things from the client: one is worth
-    // retrying and the other cannot be, so offering a retry here would be a
-    // button the app already knows will fail.
+    // Every model has spent its allowance for the day. Kept apart from Failed
+    // because a retry here is a button the app already knows will fail.
     data object DailyLimitReached : Failure
 }
 

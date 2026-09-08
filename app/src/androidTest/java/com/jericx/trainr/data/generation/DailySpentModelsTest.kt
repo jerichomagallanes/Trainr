@@ -8,9 +8,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
-// Instrumented because it is SharedPreferences, and surviving a cold start is
-// the property that matters: the allowance outlives the process, so relearning
-// it every launch is exactly what this exists to avoid.
+// Instrumented because it is SharedPreferences: the allowance has to outlive the process.
 @RunWith(AndroidJUnit4::class)
 class DailySpentModelsTest {
 
@@ -45,8 +43,6 @@ class DailySpentModelsTest {
             .containsExactly("gemini-3.6-flash", "gemini-3.5-flash")
     }
 
-    // A new process reads what the last one wrote. This is the whole reason it
-    // is on disk rather than in memory.
     @Test
     fun aFreshInstanceSeesWhatAnEarlierOneRecorded() {
         DailySpentModels(context).markSpent("gemini-3.6-flash")
@@ -54,9 +50,7 @@ class DailySpentModelsTest {
         assertThat(DailySpentModels(context).spentToday()).isNotEmpty()
     }
 
-    // Yesterday's refusals say nothing about today's allowance, and the day is
-    // Google's rather than the device's: a client in Tokyo whose date rolled
-    // over hours ago still shares the same quota window.
+    // The quota day is Google's rather than the device's.
     @Test
     fun yesterdaysRefusalsAreForgotten() {
         context.getSharedPreferences("trainr_model_allowance", Context.MODE_PRIVATE)

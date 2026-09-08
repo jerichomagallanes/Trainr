@@ -61,7 +61,6 @@ class ExerciseSetTableTest {
         }
     }
 
-    // A jog has no weight and a squat has no clock: the columns follow the measure.
     @Test
     fun aWeightExerciseShowsBothWeightAndReps() {
         setTable(ExerciseMeasure.WEIGHT_AND_REPS)
@@ -87,7 +86,6 @@ class ExerciseSetTableTest {
         composeTestRule.onNodeWithText(string(R.string.reps_column)).assertDoesNotExist()
     }
 
-    // The target is shown as a hint, so an untouched row does not claim you did it.
     @Test
     fun anUnloggedSetShowsItsTargetWithoutRecordingIt() {
         var logged: ExerciseSet? = null
@@ -109,8 +107,7 @@ class ExerciseSetTableTest {
         assertThat(logged?.isCompleted).isTrue()
     }
 
-    // "300" seconds on screen is engineer language; the cell speaks the
-    // timer's m:ss and is typed like a microwave: 5-0-0 becomes 5:00.
+    // Typed like a microwave (5-0-0 becomes 5:00) and stored as seconds.
     @Test
     fun timeIsTypedLikeAMicrowaveAndStoredAsSeconds() {
         var logged: ExerciseSet? = null
@@ -126,8 +123,7 @@ class ExerciseSetTableTest {
         assertThat(logged?.actualSeconds).isEqualTo(300)
     }
 
-    // A finger crosses the row, not the little number at its left edge, and the
-    // delete is decided by how far the row travelled.
+    // Swipe across the row, not the set-number cell; distance decides the delete.
     private fun swipeRow(label: String, across: Float) {
         val bounds = composeTestRule.onNodeWithText(label).fetchSemanticsNode().boundsInRoot
         composeTestRule.onRoot().performTouchInput {
@@ -155,8 +151,7 @@ class ExerciseSetTableTest {
         assertThat(deleted?.setNumber).isEqualTo(2)
     }
 
-    // A real finger usually starts its swipe on the widest thing in the row —
-    // the input cell — so the field must not eat the drag.
+    // A finger usually starts on the widest cell, so the input must not eat the drag.
     @Test
     fun aSwipeStartingOnAnInputCellStillDeletes() {
         var deleted: ExerciseSet? = null
@@ -171,8 +166,8 @@ class ExerciseSetTableTest {
         assertThat(deleted?.setNumber).isEqualTo(2)
     }
 
-    // The stored routine lands after first composition and replaces every set
-    // instance; a swipe must delete the CURRENT set, not fire a stale capture.
+    // The stored routine replaces every set after first composition, so the swipe
+    // must delete the current set, not a stale capture.
     @Test
     fun aSwipeAfterTheSetsWereReplacedStillDeletes() {
         var deleted: ExerciseSet? = null
@@ -201,8 +196,7 @@ class ExerciseSetTableTest {
         assertThat(deleted?.setNumber).isEqualTo(2)
     }
 
-    // The app removes the set and renumbers on every report, so a single
-    // gesture must never report twice.
+    // Each report renumbers the rows, so one gesture must report exactly once.
     @Test
     fun oneSwipeDeletesExactlyOneSet() {
         val deletions = mutableListOf<Int>()
@@ -231,8 +225,6 @@ class ExerciseSetTableTest {
         assertThat(deletions).containsExactly(2)
     }
 
-    // Half a swipe used to be enough to delete, which made a stray graze
-    // destructive. It reveals the delete and lets go again.
     @Test
     fun halfASwipeRevealsTheDeleteWithoutDoingIt() {
         var deleted: ExerciseSet? = null
@@ -247,9 +239,7 @@ class ExerciseSetTableTest {
         assertThat(deleted).isNull()
     }
 
-    // The delete has to be visible while the row is held aside — that is the
-    // whole point of the reveal. Gating it on swipe progress as well as
-    // direction hid it again as the swipe neared its anchor.
+    // The delete stays visible while the row is held aside; do not gate it on swipe progress.
     @Test
     fun holdingARowAsideShowsTheDeleteBehindIt() {
         setTable(
@@ -279,7 +269,6 @@ class ExerciseSetTableTest {
             .assertDoesNotExist()
     }
 
-    // Every row can go, down to the last: Add set brings one back.
     @Test
     fun theOnlyRowCanBeSwipedAwayToo() {
         var deleted: ExerciseSet? = null

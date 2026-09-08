@@ -19,12 +19,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-// The route is where the screen meets the rest of the app, and a callback it
-// accepts but forgets to pass on becomes a control that draws and does nothing.
-// That has happened twice — once when a week opened from the list kept the
-// plan's menu, and once when this file gained a callback the route dropped —
-// and both times the screen's own tests passed, because they never go through
-// the route. These do.
+// A callback the route accepts but never passes on draws a control that does nothing,
+// and the screen's own tests never go through the route. These do.
 @RunWith(AndroidJUnit4::class)
 class WeeklyPlanRouteTest {
 
@@ -33,7 +29,6 @@ class WeeklyPlanRouteTest {
 
     private fun string(id: Int) = composeTestRule.activity.getString(id)
 
-    // Today, untouched: the week being trained, with everything still to do.
     private val liveWeek = SampleWorkoutData.weekOne.copy(
         startDateMillis = WorkoutWeek.startOfDay(),
         workoutDays = SampleWorkoutData.weekOne.workoutDays.map {
@@ -49,9 +44,7 @@ class WeeklyPlanRouteTest {
         onTrackProgressClick: () -> Unit = {},
         onUpdateProfileClick: () -> Unit = {}
     ) {
-        // Built out here rather than inside the composable: the same view model
-        // instance for the whole test, and nothing constructed during
-        // composition.
+        // One view model for the whole test, and nothing constructed during composition.
         val viewModel = WeeklyPlanViewModel(SavedStateHandle(), OneWeekRepository(liveWeek))
 
         composeTestRule.setContent {

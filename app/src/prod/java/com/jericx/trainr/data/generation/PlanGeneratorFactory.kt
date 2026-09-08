@@ -5,8 +5,7 @@ import com.jericx.trainr.domain.diagnostics.Breadcrumbs
 import com.jericx.trainr.domain.generation.SpentModels
 import com.jericx.trainr.presentation.workout.model.ExerciseVideoCatalog
 
-// The shipped build asks the model, through Firebase AI Logic so no key travels
-// inside the app.
+// Asks the model through Firebase AI Logic, so no key travels inside the app.
 internal fun planGenerator(
     spentModels: SpentModels,
     breadcrumbs: Breadcrumbs

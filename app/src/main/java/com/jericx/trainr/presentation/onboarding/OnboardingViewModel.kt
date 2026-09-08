@@ -34,8 +34,6 @@ class OnboardingViewModel @Inject constructor(
     private val _onboardingState = MutableStateFlow(OnboardingState())
     val onboardingState: StateFlow<OnboardingState> = _onboardingState.asStateFlow()
 
-    // A returning user editing or regenerating starts from the profile they
-    // saved, not from blank forms.
     init {
         viewModelScope.launch {
             userRepository.getCurrentUser()?.let { stored ->
@@ -110,10 +108,8 @@ class OnboardingViewModel @Inject constructor(
 
     suspend fun hasCompletedOnboarding(): Boolean = userRepository.hasUsers()
 
-    // Editing the profile from the plan must leave training history alone, so
-    // the stored user is updated in place: saveUserProfile's REPLACE would
-    // cascade every stored week away. The change takes effect on the next week
-    // generated, which reads the profile fresh.
+    // Updated in place to leave training history alone: saveUserProfile's
+    // REPLACE would cascade every stored week away.
     fun updateProfileOnly(onSuccess: () -> Unit) {
         viewModelScope.launch {
             try {
@@ -134,9 +130,9 @@ class OnboardingViewModel @Inject constructor(
         }
     }
 
-    // One plan at a time, and completion starts false: this view model outlives
-    // the screen, so a regeneration would otherwise begin already "complete"
-    // from the run before it and walk straight past the wait.
+    // This view model outlives the screen, so completion has to be reset or a
+    // regeneration begins already "complete" and walks past the wait. It is also
+    // the single-flight guard: a second tap must not write a second plan.
     private var isWorking = false
 
     fun saveUserProfile(onSuccess: () -> Unit = {}) {
@@ -156,10 +152,8 @@ class OnboardingViewModel @Inject constructor(
                 // would hand a new user a week of sessions already missed.
                 val start = WorkoutWeek.startOfDay()
 
-                // Nothing is written until there is a plan to write. Saving the
-                // user first would replace the stored one, and that REPLACE
-                // cascades every existing week away — so a regeneration that
-                // failed used to destroy the history it was meant to build on.
+                // Nothing is written until there is a plan: saving the user
+                // first REPLACEs it, cascading every existing week away.
                 val result = planGenerator.generate(
                     PlanRequest(
                         user = profile,
@@ -170,17 +164,9 @@ class OnboardingViewModel @Inject constructor(
                 )
 
                 if (result !is PlanGenerationResult.Generated) {
-                    // Keep what they typed. Thirteen answers is a lot to lose
-                    // to a failure they did not cause, and losing them means
-                    // typing it all again to try the very thing that just
-                    // failed. Saved without a plan, the app opens on the empty
-                    // state that already says the profile is safe and offers to
-                    // create a plan — so coming back later costs one tap.
-                    //
-                    // Only for a first profile. An existing one is already
-                    // stored, and saveUser REPLACEs: doing this to a client who
-                    // has been training would cascade their weeks away, which
-                    // is the whole reason nothing is written before the plan.
+                    // Keep what they typed, but only for a first profile: an
+                    // existing one is already stored and saveUser REPLACEs,
+                    // which would cascade a training client's weeks away.
                     if (existing == null) {
                         runCatching { userRepository.saveUser(profile) }
                     }
@@ -216,10 +202,8 @@ class OnboardingViewModel @Inject constructor(
     }
 }
 
-// Which questions the client has actually answered. It cannot be read off the
-// profile: every enum field starts on a real value, so an untouched profile
-// looks exactly like an answered one, and only the blank strings and zeroes
-// give anything away.
+// Cannot be read off the profile: every enum field starts on a real value, so
+// an untouched profile looks exactly like an answered one.
 enum class OnboardingStep {
     BASIC_INFO,
     BODY_METRICS,
@@ -230,14 +214,10 @@ enum class OnboardingStep {
 
 data class OnboardingState(
     val userProfile: UserProfile = UserProfile(),
-    // A step reopened by going back is filled in from what was typed; before
-    // it has been answered there is nothing to fill it with.
     val answeredSteps: Set<OnboardingStep> = emptySet(),
     val currentStep: Int = 0,
     val isLoading: Boolean = false,
     val error: String? = null,
     val isCompleted: Boolean = false,
-    // Set when a plan could not be written, so the screen can say why rather
-    // than handing over a week nobody asked for.
     val generationFailure: PlanGenerationResult.Failure? = null
 )

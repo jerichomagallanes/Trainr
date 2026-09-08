@@ -40,9 +40,9 @@ class DesignTokensTest {
         assertThat(Spacing.section).isEqualTo(30.dp)
     }
 
-    // Light stays on the Figma values even where they miss AA; iOS mirrors them.
-    // Raising contrast belongs in the dark half of the token, never here.
+    // Light stays on the Figma values even where they miss AA; raise contrast in the dark half, never here
     @Test
+    // The iOS app mirrors these exact values, so a change here is a change there.
     fun lightTokensStayOnTheFigmaValues() {
         with(LightTrainrColors) {
             assertThat(surfacePage).isEqualTo(Color.White)
@@ -93,8 +93,7 @@ class DesignTokensTest {
         }
     }
 
-    // Every added token's light value is the constant, or the exact composite,
-    // that its site rendered before the token existed. Light does not move.
+    // An added token's light value is exactly what its site rendered before it existed; light does not move
     @Test
     fun addedTokensKeepTheLightValuesTheirSitesRendered() {
         with(LightTrainrColors) {
@@ -132,17 +131,15 @@ class DesignTokensTest {
         }
     }
 
-    // A decorative rule is exempt from 1.4.11, so this is a perceptibility
-    // floor and not a WCAG one. Kept apart from the test above so the named
-    // threshold there stays honest.
+    // A decorative rule is exempt from 1.4.11, so 1.5 is a perceptibility floor and not a WCAG one,
+    // kept apart from the tests above so their named thresholds stay honest
     @Test
     fun theDarkDecorativeRuleStaysVisible() {
         assertThat(contrast(DarkTrainrColors.cardRule, DarkTrainrColors.surfacePage))
             .isAtLeast(1.5)
     }
 
-    // The completed card should mark itself, not shout. Its edge must not read
-    // louder than an ordinary card edge.
+    // The completed card marks itself without shouting: its edge must not read louder than a neutral one
     @Test
     fun theCompletedCardEdgeIsNoLouderThanANeutralOne() {
         with(DarkTrainrColors) {
@@ -151,8 +148,6 @@ class DesignTokensTest {
         }
     }
 
-    // The four grounds every ink tier can land on, which is the method the
-    // colour specification set and only half of it was covered.
     @Test
     fun everyDarkInkTierClearsAaOnAllFourGrounds() {
         with(DarkTrainrColors) {
@@ -177,8 +172,7 @@ class DesignTokensTest {
         }
     }
 
-    // The alpha-over-an-assumed-white-page leak: a dark inset panel has to stay
-    // lighter than the page under it, never darker like a 50% fill goes.
+    // A dark inset panel must stay lighter than the page under it, not darker as an alpha fill goes
     @Test
     fun theDarkPanelStaysLighterThanThePageItSitsOn() {
         with(DarkTrainrColors) {
@@ -200,8 +194,6 @@ class DesignTokensTest {
         }
     }
 
-    // The method, not a spot check: every ink is measured on all four grounds,
-    // which is where the placeholder and brand-on-selected holes were hiding.
     @Test
     fun darkInkClearsAaOnAllFourGrounds() {
         with(DarkTrainrColors) {
@@ -243,9 +235,7 @@ class DesignTokensTest {
         return (hi + 0.05) / (lo + 0.05)
     }
 
-    // The seven values that failed WCAG at the Figma originals. Body text needs
-    // 4.5:1, non-text 3:1, and the two grounds light actually uses are white and
-    // the sunken panel.
+    // Body text needs 4.5:1 and non-text 3:1; the only grounds light uses are white and the sunken panel
     @Test
     fun everyLightTokenClearsItsFloorOnBothGrounds() {
         with(LightTrainrColors) {
@@ -262,8 +252,7 @@ class DesignTokensTest {
         }
     }
 
-    // brandLarge keeps the Figma orange because its only callers label it at
-    // 16sp Black, which WCAG counts as large text.
+    // brandLarge's only callers label it at 16sp Black, which WCAG counts as large text, so 3:1 applies
     @Test
     fun brandLargeKeepsTheFigmaOrangeAtTheLargeTextFloor() {
         with(LightTrainrColors) {

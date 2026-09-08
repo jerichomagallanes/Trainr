@@ -51,8 +51,7 @@ class LimitationsScreenTest {
         assertThat(capturedInjuries).isEmpty()
     }
 
-    // Workout style moved to the goals screen, where the review card that shows
-    // it can actually reach it. It must not drift back here.
+    // Workout style belongs to the goals screen; it must not drift back here.
     @Test
     fun workoutStyleIsNotAskedOnThisScreen() {
         composeTestRule.setContent {

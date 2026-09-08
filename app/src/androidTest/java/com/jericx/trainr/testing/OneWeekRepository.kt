@@ -11,8 +11,7 @@ import com.jericx.trainr.domain.repository.UserRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 
-// Enough of a repository to put one stored week in front of a route. Writes go
-// nowhere: these tests are about what a screen is wired to, not what it stores.
+// Enough of a repository to put one stored week in front of a route; writes go nowhere.
 class OneWeekRepository(private val plan: WeeklyWorkoutPlan) : UserRepository {
 
     override suspend fun getCurrentUser(): UserProfile? = UserProfile(id = 1)

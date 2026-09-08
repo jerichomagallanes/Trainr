@@ -31,26 +31,18 @@ class NextWeekViewModel @Inject constructor(
     private val _failure = MutableStateFlow<PlanGenerationResult.Failure?>(null)
     val failure: StateFlow<PlanGenerationResult.Failure?> = _failure.asStateFlow()
 
-    // Finishing is state rather than a callback: a callback belongs to the
-    // composition that made it, so a screen rebuilt mid-generation — a rotation
-    // is enough — would never hear that its week had arrived.
+    // State rather than a callback: a screen rebuilt mid-generation, and a
+    // rotation is enough, would never hear that its week had arrived.
     private val _isReady = MutableStateFlow(false)
     val isReady: StateFlow<Boolean> = _isReady.asStateFlow()
 
-    // One week at a time. Generating takes the better part of a minute, so
-    // without this a second ask — a re-entered screen, an impatient tap — runs
-    // alongside the first and both write a week.
+    // Generating takes the better part of a minute; without this a second ask
+    // runs alongside the first and both write a week.
     private var isWorking = false
 
-    // Running the same week again: the sessions and their loads as they were
-    // written, with every log cleared. Sound coaching after a week that was not
-    // finished, or one where the prescribed weights never went up — and it asks
-    // nothing of the network, so it is the way through when the model cannot be
-    // reached. It is offered, never substituted.
-    // Any week can be run again, not only the newest: a block that went well
-    // is worth another turn whether it was last week or months ago. The copy
-    // joins the plan at the end and takes its dates from there, so repeating an
-    // old week never reaches back into weeks already trained.
+    // Asks nothing of the network, so it is the way through when the model cannot
+    // be reached; offered, never substituted for a generation. The copy joins the
+    // plan at the end and takes its dates from there, whatever week it came from.
     fun repeatWeek(sourceWeekNumber: Int? = null) {
         if (isWorking) return
         isWorking = true
@@ -78,14 +70,8 @@ class NextWeekViewModel @Inject constructor(
         }
     }
 
-    // Replacing the week you are in rather than adding one after it: the number
-    // and the dates stay, only the training inside them changes. The complement
-    // of the rule that adds a week — you may rewrite the week you are still in,
-    // and once it is behind you it is a record.
-    //
-    // Written the safe way round. The model is asked first and the old week goes
-    // only once a replacement exists, so a generation that fails leaves the week
-    // it could not improve exactly where it was.
+    // Written the safe way round: the model is asked first and the old week goes
+    // only once a replacement exists, so a failed generation loses nothing.
     fun regenerateThisWeek() {
         if (isWorking) return
         isWorking = true
@@ -121,8 +107,6 @@ class NextWeekViewModel @Inject constructor(
                     return@launch
                 }
 
-                // Only now. One week per number, so the old one goes to make
-                // room — and it goes with a replacement already in hand.
                 userRepository.deleteWeeklyWorkoutPlan(current.id)
                 userRepository.saveWeeklyWorkoutPlan(result.plan)
                 _isReady.value = true
@@ -132,8 +116,6 @@ class NextWeekViewModel @Inject constructor(
         }
     }
 
-    // The finished week seeds the request, so the model progresses from what
-    // was actually lifted instead of restarting from the intake answers.
     fun generateNextWeek() {
         if (isWorking) return
         isWorking = true
@@ -148,7 +130,7 @@ class NextWeekViewModel @Inject constructor(
     }
 
     private suspend fun generate() {
-            // Nothing to build on, or the week is already there: either way the
+            // Nothing to build on, or the week already exists: either way the
             // client is where they wanted to be.
             val (user, latest) = nextWeekFrom() ?: run {
                 _isReady.value = true
@@ -166,10 +148,6 @@ class NextWeekViewModel @Inject constructor(
                 )
             )
 
-            // Repeating the finished week used to stand in here. It is the same
-            // dishonesty as the sample week: the client is told next week is
-            // ready when the coach never wrote it, and repeating a week is a
-            // decision they should get to make.
             if (result !is PlanGenerationResult.Generated) {
                 _failure.value = result as PlanGenerationResult.Failure
                 return
@@ -179,23 +157,20 @@ class NextWeekViewModel @Inject constructor(
             _isReady.value = true
     }
 
-    // The user and the week to build on, or nothing when there is neither —
-    // and nothing to do when the week after this one already exists, so that
-    // revisiting the completion screen cannot stack duplicates.
+    // Null when the week after this one already exists, so revisiting the
+    // completion screen cannot stack duplicates.
     private suspend fun nextWeekFrom(): Pair<UserProfile, WeeklyWorkoutPlan>? {
         val user = userRepository.getCurrentUser() ?: return null
         val latest = userRepository.getWeeklyWorkoutPlans(user.id).first()
             .maxByOrNull { it.weekNumber } ?: return null
-        // The plan takes one week at a time, and the rule is enforced here as
-        // well as shown: a screen may forget to ask, the write must not.
+        // Enforced at the write as well as shown: a screen may forget to ask.
         if (!latest.isReadyForTheNextWeek()) return null
         if (userRepository.getWeeklyWorkoutPlan(user.id, latest.weekNumber + 1) != null) return null
         return user to latest
     }
 
-    // Never overlapping the week it follows, and never starting in the past:
-    // someone coming back a fortnight late begins today, not on a date that has
-    // already gone.
+    // Never overlaps the week it follows and never starts in the past: someone
+    // coming back a fortnight late begins today.
     private fun startAfter(previous: WeeklyWorkoutPlan): Long = maxOf(
         previous.startDateMillis
             ?.let { WorkoutWeek.dateOfDay(it, DAYS_PER_WEEK + 1) }
@@ -206,7 +181,6 @@ class NextWeekViewModel @Inject constructor(
     companion object {
         private const val DAYS_PER_WEEK = 7
 
-        // The same week over again: nothing carried across but the plan itself.
         fun repeatedWeek(
             previous: WeeklyWorkoutPlan,
             weekNumber: Int,

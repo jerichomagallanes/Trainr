@@ -24,9 +24,7 @@ fun StatusChip(
     @StringRes labelRes: Int,
     tone: StatusTone,
     modifier: Modifier = Modifier,
-    // The week card asks for one line beside a long week title; the day card
-    // wrapped before this chip absorbed it, and clipping there would be a
-    // light-mode change.
+    // Off by default: the day card wraps its longer labels rather than clipping.
     singleLine: Boolean = false
 ) {
     val colors = MaterialTheme.trainrColors

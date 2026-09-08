@@ -7,13 +7,8 @@ import com.jericx.trainr.domain.generation.SpentModels
 import java.util.Calendar
 import java.util.TimeZone
 
-// Remembers refusals until the allowance resets, and no longer.
-//
 // Google resets the daily quota at midnight Pacific, so that is the boundary
-// this keeps rather than the device's own midnight: a client in Tokyo whose
-// day rolled over eight hours ago still shares the same spent allowance.
-// Stored rather than held in memory because the allowance outlives the process,
-// and re-learning it after every cold start is what it is here to avoid.
+// this keeps rather than the device's own midnight.
 class DailySpentModels(context: Context) : SpentModels {
 
     private val prefs: SharedPreferences =
@@ -32,7 +27,6 @@ class DailySpentModels(context: Context) : SpentModels {
         }
     }
 
-    // The quota day, as Google counts it.
     private fun today(): String {
         val calendar = Calendar.getInstance(TimeZone.getTimeZone(QUOTA_ZONE))
         return "%04d-%02d-%02d".format(

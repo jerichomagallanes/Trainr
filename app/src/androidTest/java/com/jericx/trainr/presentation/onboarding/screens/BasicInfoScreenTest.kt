@@ -38,7 +38,6 @@ class BasicInfoScreenTest {
         hasProgressBarRangeInfo(ProgressBarRangeInfo(current = 1f, range = 0f..7f))
     )
 
-    // The bar counts the way through first-time setup.
     @Test
     fun firstTimeSetupShowsHowFarThroughItYouAre() {
         composeTestRule.setContent {
@@ -50,7 +49,6 @@ class BasicInfoScreenTest {
         setupProgress().assertCountEquals(1)
     }
 
-    // Coming back to change one answer is not a seventh of anything.
     @Test
     fun changingOneAnswerLaterCountsNothing() {
         composeTestRule.setContent {
@@ -66,8 +64,7 @@ class BasicInfoScreenTest {
         setupProgress().assertCountEquals(0)
     }
 
-    // "Female" rendered as "Fema..." on narrower phones; the chip label must
-    // shrink, never truncate.
+    // The chip label must shrink, never truncate.
     @Test
     fun everyGenderChipShowsItsWholeLabel() {
         composeTestRule.setContent {
@@ -159,8 +156,6 @@ class BasicInfoScreenTest {
         assertThat(capturedExperience).isEqualTo(ExperienceLevel.INTERMEDIATE)
     }
 
-    // The range was already enforced, silently: an age of 5 left the button
-    // dead with nothing on screen to explain it.
     @Test
     fun anAgeOutsideTheRangeSaysWhatTheRangeIs() {
         composeTestRule.setContent {
@@ -181,7 +176,6 @@ class BasicInfoScreenTest {
         ).assertIsDisplayed()
     }
 
-    // A field nobody has touched must not open already complaining.
     @Test
     fun anUntouchedAgeFieldSaysNothing() {
         composeTestRule.setContent {
@@ -200,13 +194,8 @@ class BasicInfoScreenTest {
         ).assertDoesNotExist()
     }
 
-    // A name is whatever its owner says it is, so the only rule is that there
-    // is one, and it is only asked for once the field has been left empty.
-    // Worded as an instruction rather than "Name is required", per the GOV.UK
-    // Design System: an empty field is told what to do.
-    //
-    // That wording is also the field's placeholder, which is why this counts
-    // nodes: one while the field is untouched, two once the error joins it.
+    // The ask doubles as the field placeholder, so this counts nodes: one while
+    // untouched, two once the error joins it.
     @Test
     fun leavingTheNameEmptyAsksForIt() {
         composeTestRule.setContent {

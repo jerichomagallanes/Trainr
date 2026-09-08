@@ -51,8 +51,6 @@ fun ReviewScreen(
     onConfirmClick: () -> Unit,
     onBackClick: () -> Unit,
     isRegenerating: Boolean = false,
-    // Saving the profile on its own: no plan is generated, so the button says
-    // what it does and the subtitle explains when the change lands.
     isProfileUpdate: Boolean = false,
     onEditPersonal: () -> Unit = {},
     onEditMeasurements: () -> Unit = {},
@@ -66,18 +64,13 @@ fun ReviewScreen(
             TrainrTopBar(
                 onBackClick = onBackClick,
                 showLogo = true,
-                // Entered from the plan this is a detour, not a flow: X leads
-                // back out; during onboarding the arrow steps back as usual.
                 closeInsteadOfBack = isRegenerating || isProfileUpdate
             )
         },
         bottomButton = {
             Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
-                // Sits with the button rather than at the end of the scroll: a
-                // client who taps generate without reading the cards would
-                // never reach it down there, and the moment it matters is the
-                // moment a plan is about to be written for their body.
-                // Saving a profile writes no plan, so it says nothing then.
+                // The health disclaimer sits with the button, not at the end
+                // of the scroll, so it is read before a plan is written.
                 if (!isProfileUpdate) {
                     Text(
                         text = stringResource(R.string.health_disclaimer),
@@ -101,8 +94,6 @@ fun ReviewScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Reached from the plan — to change a detail or to start over —
-            // there is no seven-step run to be six sevenths of.
             if (!isRegenerating && !isProfileUpdate) {
                 TrainrProgress(
                     currentStep = 6,
@@ -130,10 +121,8 @@ fun ReviewScreen(
                 val genderText = userProfile.gender.getLocalizedName()
                 val experienceText = userProfile.experienceLevel.getLocalizedName()
 
-                // Read back in the units they were entered in. The profile is
-                // stored in centimetres and kilograms whichever was typed, so
-                // a client in pounds was being shown their own weight
-                // converted into a number they had not used.
+                // Read back in the units they were entered in: the profile
+                // stores centimetres and kilograms whichever was typed.
                 val imperial = userProfile.bodyUnitSystem == UnitSystem.IMPERIAL
                 val heightText = if (imperial) {
                     BodyMetricsConverter.convertHeightToImperial(
@@ -151,11 +140,6 @@ fun ReviewScreen(
                     stringResource(R.string.weight_kg_format, userProfile.weight)
                 }
                 
-                // One card per step of the flow. These were one card whose Edit
-                // walked two screens, so changing a height meant tapping Edit on
-                // Personal Information, passing a screen about your name, and
-                // pressing Next. Onboarding already treats them as two
-                // questions, under two titles; the review now agrees with it.
                 ProfileSection(
                     title = stringResource(R.string.personal_information),
                     onEdit = onEditPersonal,
@@ -206,8 +190,6 @@ fun ReviewScreen(
                 }
                 val preferredTimeText = userProfile.preferredWorkoutTime.getLocalizedName()
                 
-                // Shown only when it was asked, so the card and the screen its
-                // Edit opens always agree on which questions exist.
                 val liftingUnitsText = userProfile.liftingUnitSystem?.let {
                     stringResource(
                         if (it == UnitSystem.IMPERIAL) R.string.weight_column_lbs
@@ -258,8 +240,6 @@ fun ReviewScreen(
 
                 Spacer(modifier = Modifier.height(Spacing.extraLarge))
 
-                // The card promises a routine about to be written; saving the
-                // profile alone writes none.
                 if (!isProfileUpdate) {
                     AIPreviewCard(userProfile = userProfile)
 

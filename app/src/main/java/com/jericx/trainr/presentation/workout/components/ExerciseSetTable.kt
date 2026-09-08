@@ -62,8 +62,6 @@ fun ExerciseSetTable(
     previousSets: List<ExerciseSet> = emptyList(),
     units: UnitSystem = UnitSystem.Default
 ) {
-    // No column at all without history: a week-one card looks exactly like the
-    // design, which has no PREVIOUS.
     val showPrevious = previousSets.isNotEmpty()
     val colors = MaterialTheme.trainrColors
 
@@ -71,9 +69,8 @@ fun ExerciseSetTable(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(Spacing.small)
     ) {
-        // Column headings over nothing are noise, so an emptied table is just
-        // its Add set button. The button itself is never conditional: deleting
-        // the last set has to leave a way back.
+        // Headings hide when there are no rows, but the Add set button below is
+        // never conditional: deleting the last set has to leave a way back.
         if (sets.isNotEmpty()) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 ColumnLabel(stringResource(R.string.set_column), Modifier.width(SetColumnWidth))
@@ -232,8 +229,7 @@ private fun ColumnLabel(text: String, modifier: Modifier = Modifier) {
     )
 }
 
-// The target is the placeholder rather than the value, so an untouched row shows
-// what was asked for without claiming you did it.
+// The target is the placeholder, not the value: an untouched row claims nothing.
 @Composable
 private fun NumberCell(
     value: String?,
@@ -284,11 +280,8 @@ private fun NumberCell(
     }
 }
 
-// Swiping a row away deletes its set, the way every logging app does it. The
-// delete fires exactly once per completed dismissal — confirmValueChange can
-// repeat within a drag — and rows are keyed to their set above, so a
-// renumbered survivor can't inherit the dismissed state and fire again. The
-// snap back only resets a row whose deletion the view model refused.
+// Rows are keyed to their set above, so a renumbered survivor cannot inherit a
+// dismissed state and delete again.
 @Composable
 private fun DeletableRow(
     onDelete: () -> Unit,
@@ -302,8 +295,8 @@ private fun DeletableRow(
     }
 }
 
-// Time is typed like a microwave timer: digits fill in from the seconds end
-// ("500" is 5:00), shown as m:ss to match the exercise timer, stored as seconds.
+// Digits fill in from the seconds end ("500" is 5:00), shown as m:ss, stored
+// as seconds.
 @Composable
 private fun DurationCell(
     seconds: Int?,
@@ -384,8 +377,8 @@ private const val SECONDS_PER_MINUTE = 60
 
 private const val NO_PREVIOUS = "—"
 
-// What was actually done last time, in the shape of this row's own columns; a
-// set that was prescribed but never logged shows a dash, not its target.
+// Actual values only: a set prescribed but never logged shows a dash, not its
+// target.
 internal fun previousCellText(
     measure: ExerciseMeasure,
     previous: ExerciseSet?,

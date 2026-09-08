@@ -142,10 +142,8 @@ val MaterialTheme.trainrColors: TrainrColors
     @ReadOnlyComposable
     get() = LocalTrainrColors.current
 
-// Art with baked fills, paired with its night drawing. res/drawable-night is
-// not enough on its own: below API 31 nothing can point a night qualifier at
-// the appearance preference, so it answers to the phone and leaves
-// Dark-on-a-light-phone with light art.
+// res/drawable-night alone is not enough: below API 31 the night qualifier
+// follows the phone, not the in-app appearance preference.
 @Composable
 fun themedPainter(@DrawableRes light: Int, @DrawableRes night: Int): Painter =
     painterResource(if (LocalTrainrDarkTheme.current) night else light)

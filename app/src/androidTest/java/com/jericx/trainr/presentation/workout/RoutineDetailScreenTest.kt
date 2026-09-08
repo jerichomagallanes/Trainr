@@ -54,8 +54,6 @@ class RoutineDetailScreenTest {
         }
     }
 
-    // Nothing left to finish, so the control has nothing to say — and it is
-    // reachable now that the finished session stays behind the congratulations.
     @Test
     fun aFinishedWorkoutOffersNothingToFinish() {
         composeTestRule.setContent {
@@ -116,7 +114,6 @@ class RoutineDetailScreenTest {
         assertThat(toggled).isEqualTo(2)
     }
 
-    // The design gives the finished card no timer row, and it has nothing left to time.
     @Test
     fun onlyTheUnfinishedExercisesOfferATimer() {
         setScreen()
@@ -148,8 +145,7 @@ class RoutineDetailScreenTest {
         assertThat(reported).isNull()
     }
 
-    // Tapping a day you already finished should show you the routine, not bounce
-    // you straight to the celebration screen you saw when you finished it.
+    // Reopening a day already finished shows the routine, not the celebration again.
     @Test
     fun openingAnAlreadyFinishedRoutineReportsNothing() {
         var reported: Int? = null
@@ -211,7 +207,6 @@ class RoutineDetailScreenTest {
         assertThat(completed).isTrue()
     }
 
-    // A short drag is how an accidental brush reads; it must not tick the routine off.
     @Test
     fun aPartialSlideLeavesTheRoutineAlone() {
         var completed = false
@@ -222,8 +217,6 @@ class RoutineDetailScreenTest {
         assertThat(completed).isFalse()
     }
 
-    // The foot of the screen holds exactly one action. Slide to finish while
-    // there is something to finish; the way back once there is not.
     @Test
     fun aFinishedWorkoutOffersTheWayBackInstead() {
         composeTestRule.setContent {
@@ -239,7 +232,6 @@ class RoutineDetailScreenTest {
             .assertIsDisplayed()
     }
 
-    // An untouched session has nothing to undo, so it must not offer to.
     @Test
     fun anUntouchedWorkoutDoesNotOfferToStartOver() {
         setScreen()
@@ -248,8 +240,6 @@ class RoutineDetailScreenTest {
             .assertDoesNotExist()
     }
 
-    // Clearing is destructive enough to ask first, and the dialog has to say
-    // what survives: "start over" alone reads as losing the plan itself.
     @Test
     fun startingOverAsksFirstAndSaysWhatSurvives() {
         var cleared = false

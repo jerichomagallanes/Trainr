@@ -88,8 +88,7 @@ class SampleWorkoutDataTest {
         assertThat(equipment.flatten()).isNotEmpty()
     }
 
-    // The design lists dumbbells and a treadmill for a routine that is five
-    // bodyweight exercises. A day should not ask for kit it never uses.
+    // The design lists dumbbells and a treadmill for five bodyweight exercises; the sample diverges
     @Test
     fun theCardioRoutineOnlyAsksForKitItsExercisesUse() {
         val cardioAndCore = SampleWorkoutData.weekOne.workoutDays
@@ -118,9 +117,7 @@ class SampleWorkoutDataTest {
         assertThat(weekdayOf(utcStart)).isEqualTo("Monday")
     }
 
-    // The routine screen lists each exercise's minutes while the plan card shows a
-    // total. If they disagree the app contradicts itself on screen, and a user
-    // adding up the parts gets a different answer.
+    // The routine screen lists each exercise's minutes and the plan card the total; they must agree
     @Test
     fun everyDaysDurationIsTheSumOfItsExercises() {
         SampleWorkoutData.weekOne.workoutDays.forEach { day ->
@@ -135,8 +132,6 @@ class SampleWorkoutDataTest {
         }
     }
 
-    // A day the plan calls Completed must not open a routine with work left in
-    // it, and vice versa.
     @Test
     fun everyDaysStatusAgreesWithItsRoutine() {
         SampleWorkoutData.weekOne.workoutDays.forEach { day ->
@@ -154,8 +149,6 @@ class SampleWorkoutDataTest {
         assertThat(notStarted.toRoutineUi().completedCount).isEqualTo(0)
     }
 
-    // Every field the routine card renders has to actually be there; a blank
-    // prescription or description is an empty chip on screen.
     @Test
     fun everyExerciseIsFullyDescribed() {
         SampleWorkoutData.weekOne.workoutDays.flatMap { it.exercises }.forEach { exercise ->
@@ -166,8 +159,7 @@ class SampleWorkoutDataTest {
         }
     }
 
-    // History is matched on the key, so every exercise needs a well-formed one
-    // and no day may carry the same key twice.
+    // History is matched on the exercise key, so it must be well formed and unique within a day
     @Test
     fun everyExerciseCarriesAUniqueWellFormedKey() {
         SampleWorkoutData.weekOne.workoutDays.forEach { day ->
@@ -178,8 +170,6 @@ class SampleWorkoutDataTest {
         }
     }
 
-    // What onboarding seeds must be the sample plan minus every trace of the
-    // pre-baked progress the previews need.
     @Test
     fun aFreshWeekStartsWithNothingDone() {
         val fresh = SampleWorkoutData.freshWeekOne(userId = 42, startDateMillis = 123L)
@@ -222,9 +212,6 @@ class SampleWorkoutDataTest {
             .isEqualTo(SampleWorkoutData.weekStartMillis)
     }
 
-    // A tutorial the parser cannot read is a card with a dead toggle on it.
-    // The design shows one on every card, so every day must resolve a video
-    // for each of its exercises through the catalog.
     @Test
     fun everyExerciseLinksAVideoTheParserCanRead() {
         SampleWorkoutData.weekOne.workoutDays.forEach { day ->

@@ -25,12 +25,10 @@ data class WeeklyPlanDay(
     val isToday: Boolean = false,
     val isPast: Boolean = false
 ) {
-    // Missed is not a state a day enters, it is what an unfinished day in the
-    // past IS. Deriving it means a session moved to a later day stops being
-    // missed on its own, with no flag to correct.
+    // Derived, not stored: a session moved to a later day stops being missed
+    // on its own, with no flag to correct.
     val isMissed: Boolean get() = isPast && day.status != WorkoutStatus.COMPLETED
 
-    // The past is a record: what happened on that date, or what did not.
     val isFrozen: Boolean get() = isPast || day.status == WorkoutStatus.COMPLETED
 }
 
@@ -39,26 +37,17 @@ data class WeeklyPlanUiState(
     val days: List<WeeklyPlanDay> = emptyList(),
     val weekStartMillis: Long = SampleWorkoutData.weekStartMillis,
     val weekEndMillis: Long = SampleWorkoutData.weekEndMillis,
-    // Nothing is drawn until the stored plan has been looked for, so an empty
-    // plan and a plan not read yet are never mistaken for one another.
+    // Keeps an empty plan and a plan not read yet from being mistaken for one another.
     val hasLoaded: Boolean = false,
     val hasPlan: Boolean = false,
-    // The newest week is the one being trained; the ones behind it are records.
-    // Which of the two a week is belongs to the week, not to the door it was
-    // opened through — the same week was live on home and frozen one tap away.
+    // A property of the week itself, not of the door it was opened through.
     val isCurrentWeek: Boolean = false,
-    // Next week is offered once this one is finished or its dates have run
-    // out; a missed day must not strand the plan on the same week forever.
+    // Dates running out counts as finished, so a missed day cannot strand the plan.
     val canStartNextWeek: Boolean = false,
     val canAddWeek: Boolean = false
 ) {
-    // Today's session when there is one, otherwise the next one still to come.
-    // A day that has already passed is never the target: opening it under a
-    // button that says "today's workout" would be a lie, and catching up is a
-    // tap on the day itself.
-    // Null once every session is done: falling back to the first day handed
-    // back a workout already finished and called it the next one. A week with
-    // nothing left in it leads to the next week instead.
+    // Never a completed day, so nothing finished can be offered as the next
+    // session; null once the week is done, which leads to the next week.
     val nextWorkout: WeeklyPlanDay?
         get() = days.firstOrNull { !it.isPast && it.day.status != WorkoutStatus.COMPLETED }
             ?: days.firstOrNull { it.day.status != WorkoutStatus.COMPLETED }
@@ -74,13 +63,10 @@ class WeeklyPlanViewModel @Inject constructor(
     private val userRepository: UserRepository
 ) : ViewModel() {
 
-    // Absent on home, which always shows the newest week; set when one
-    // particular week was opened from Weekly Progress.
+    // Absent on home, which shows the newest week; set when opened from Weekly Progress.
     private val requestedWeekNumber: Int? =
         savedStateHandle.get<Int>(Screen.WeekPlan.ARG_WEEK_NUMBER)?.takeIf { it > 0 }
 
-    // Nothing until the plan has been read: the screen shows a plan, or says
-    // there is none, and never a stand-in dressed as either.
     private val _uiState = MutableStateFlow(WeeklyPlanUiState())
     val uiState: StateFlow<WeeklyPlanUiState> = _uiState.asStateFlow()
 
@@ -106,17 +92,15 @@ class WeeklyPlanViewModel @Inject constructor(
                 stateFor(
                     plan = stored,
                     isCurrentWeek = stored.weekNumber == newest?.weekNumber,
-                    // Read off the newest week, not the one being looked at: an
-                    // old week is always finished, and that says nothing about
-                    // whether the plan is ready for another.
+                    // Read off the newest week, not the one being looked at: an old
+                    // week is always finished and says nothing about the plan.
                     canAddWeek = newest?.isReadyForTheNextWeek() ?: false
                 )
             }
         }
     }
 
-    // Dragging a session onto another weekday swaps the two around; the slots
-    // themselves never move, so the week keeps the shape it was generated with.
+    // Sessions swap; the weekday slots themselves never move.
     fun moveDay(from: Int, to: Int) {
         val state = _uiState.value
         if (!state.hasPlan) return
@@ -142,8 +126,7 @@ class WeeklyPlanViewModel @Inject constructor(
     companion object {
         private const val LAST_ISO_DAY = 7
 
-        // A finished session is the record of a date it was actually done on,
-        // so it stays put and nothing may be dragged across it.
+        // A finished session stays put, and nothing may be dragged across it.
         fun reorderedDays(days: List<WorkoutDay>, from: Int, to: Int): List<WorkoutDay> {
             if (from == to || from !in days.indices || to !in days.indices) return days
             val crossed = if (from < to) from..to else to..from
@@ -159,11 +142,8 @@ class WeeklyPlanViewModel @Inject constructor(
             plan: WeeklyWorkoutPlan,
             isSample: Boolean = false,
             isCurrentWeek: Boolean = true,
-            // Whether the plan can take another week, which is a fact about the
-            // newest week however old the one being read is. Repeating an old
-            // week appends to the end like any other week, so it has to wait for
-            // the same moment: adding one while a week is still being trained
-            // would move home onto the copy and strand the week in progress.
+            // A fact about the newest week, whatever week is being read: appending
+            // while one is still being trained would move home onto the copy.
             canAddWeek: Boolean? = null,
             nowMillis: Long = System.currentTimeMillis()
         ): WeeklyPlanUiState {

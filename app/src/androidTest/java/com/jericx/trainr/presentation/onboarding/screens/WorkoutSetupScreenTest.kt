@@ -39,8 +39,7 @@ class WorkoutSetupScreenTest {
             .assertIsDisplayed()
     }
 
-    // "90 mins" once rendered as "90..." inside its fixed-width chip: the
-    // laid-out text must never visually overflow.
+    // The laid-out chip text must never visually overflow.
     @Test
     fun everyDurationChipShowsItsWholeLabel() {
         composeTestRule.setContent {
@@ -76,9 +75,6 @@ class WorkoutSetupScreenTest {
         composeTestRule.onNodeWithText(string(R.string.both)).assertIsDisplayed()
     }
 
-    // Days, duration and preferred time used to open on three, forty five and
-    // the morning. A client could walk past all three and have the plan built
-    // around answers they never gave.
     @Test
     fun choosingOnlyALocationIsNotEnoughToContinue() {
         composeTestRule.setContent {
@@ -92,9 +88,8 @@ class WorkoutSetupScreenTest {
         composeTestRule.onNodeWithText(string(R.string.next)).assertIsNotEnabled()
     }
 
-    // "Bodyweight only" is one of the choices, so an empty set means the
-    // question is unanswered rather than that there is nothing available. It
-    // used to be sent on as bodyweight regardless.
+    // "Bodyweight only" is one of the choices, so an empty set means the question is
+    // unanswered rather than that there is nothing available.
     @Test
     fun equipmentHasToBeAnsweredRatherThanAssumed() {
         composeTestRule.setContent {

@@ -4,14 +4,8 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 
-// Version 1 with no migrations, because nothing has ever shipped. Room builds
-// the schema from the entities on a fresh install and never runs a migration on
-// one, so the five that used to live here could not execute anywhere. They were
-// the upgrade path for databases that do not exist.
-//
-// This is only true until the first build reaches a device that is not ours.
-// From the first upload onward, every schema change needs a migration and this
-// version number has to climb with it.
+// Version 1 with no migrations because nothing has shipped. From the first
+// upload onward, every schema change needs a migration and this number climbs.
 @Database(
     entities = [
         UserEntity::class,

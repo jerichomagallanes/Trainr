@@ -10,8 +10,7 @@ class GeneratedPlanParserTest {
 
     private val parser = GeneratedPlanParser()
 
-    // Days arrive out of order and carry a key the schema doesn't know, to pin
-    // that ordering is ours and unknown keys are ignored.
+    // Days arrive out of order and carry an unknown key: ordering is ours, unknown keys are ignored
     private val goodJson = """
         {
           "title": "Week 1",

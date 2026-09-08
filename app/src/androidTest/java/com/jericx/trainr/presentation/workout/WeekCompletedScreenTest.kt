@@ -74,7 +74,6 @@ class WeekCompletedScreenTest {
         assertThat(previewedNext).isTrue()
     }
 
-    // A plan on its first week must not read "Week 0".
     @Test
     fun theFirstWeekReadsAsWeekOne() {
         setScreen(weekNumber = 1)

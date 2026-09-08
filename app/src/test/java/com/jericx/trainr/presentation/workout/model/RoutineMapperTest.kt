@@ -71,8 +71,7 @@ class RoutineMapperTest {
         }
     }
 
-    // Position is the order they come in, not a stored field, so a reordered
-    // routine renumbers itself rather than showing 1, 4, 2.
+    // Position is the order they come in, not a stored field, so a routine renumbers itself
     @Test
     fun numbersExercisesByTheirOrder() {
         val routine = day(exercise("First"), exercise("Second"), exercise("Third")).toRoutineUi()
@@ -80,8 +79,7 @@ class RoutineMapperTest {
         assertThat(routine.exercises.map { it.position }).containsExactly(1, 2, 3).inOrder()
     }
 
-    // The minutes and the prescription are independent: ten minutes of "5 sets
-    // of 1 minute" is not five minutes.
+    // Minutes and prescription are independent: ten minutes of "5 sets of 1 minute" is not five
     @Test
     fun keepsTheTotalSeparateFromThePrescription() {
         val routine = day(
@@ -164,8 +162,7 @@ class RoutineMapperTest {
         assertThat(routine.exercises.single().sets.single().targetWeightKg).isEqualTo(12f)
     }
 
-    // Ticking an exercise off logs its target, so the number that gets stored
-    // has to be the one the client was looking at.
+    // Ticking an exercise off logs its target, so the stored number must be the one shown
     @Test
     fun loggingAPrescriptionRecordsTheWeightThatWasShown() {
         val logged = day(loaded(20f))

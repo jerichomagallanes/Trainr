@@ -54,10 +54,8 @@ fun TrainrSlideToConfirm(
     modifier: Modifier = Modifier
 ) {
     val density = LocalDensity.current
-    // A plain value, moved straight from the drag. It used to be an Animatable
-    // fed by a coroutine launched per delta, and an Animatable takes one mutator
-    // at a time: a snap queued behind the finger could land after the release
-    // began animating and cancel it, stranding the thumb mid-track.
+    // A plain value, not an Animatable: an Animatable takes one mutator at a
+    // time, so a snap queued behind the finger cancels the release mid-track.
     var offsetPx by remember { mutableFloatStateOf(0f) }
     val colors = MaterialTheme.trainrColors
 
@@ -82,25 +80,13 @@ fun TrainrSlideToConfirm(
         val labelStyle = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Black)
         val labelPadding = Spacing.tight + ThumbSize + Spacing.section
 
-        // The paint trails the thumb: it starts where the thumb starts and stops
-        // where the thumb begins, so it is exactly nothing until the first drag
-        // and the circle keeps sitting on unpainted track, staying the
-        // orange-on-white it was designed as. Filling under the thumb instead
-        // made it the same colour as its own background and it disappeared.
-        // The paint ends where the thumb begins, so the circle keeps sitting on
-        // unpainted track and stays the orange-on-white it was designed as.
-        // Painting under it instead made it the same colour as its own
-        // background and it disappeared.
-        //
-        // The thumb's own inset eases in over the first few pixels rather than
-        // being added the moment the thumb moves. Added as a step it left a
-        // stub of paint behind while the thumb sprang home, which sat there and
-        // then vanished all at once at the very end. This way the paint is a
-        // continuous function of the offset, so it shrinks back to nothing.
+        // The paint ends where the thumb begins, so the thumb keeps sitting on
+        // unpainted track instead of vanishing into its own colour. The inset
+        // eases in with the offset rather than as a step, or a stub of paint is
+        // left behind while the thumb springs home.
         val fillInset = with(density) { Spacing.tight.toPx() }
         val fillEnd = offsetPx + offsetPx.coerceAtMost(fillInset)
 
-        // Untouched track: an orange label on the unpainted ground.
         Text(
             text = text,
             style = labelStyle,
@@ -108,10 +94,8 @@ fun TrainrSlideToConfirm(
             modifier = Modifier.padding(start = labelPadding)
         )
 
-        // The same strip again in the inverse colours, cut off exactly where
-        // the thumb has reached. Drawing it twice and clipping the top copy is
-        // what lets one word be orange on the near side of the thumb and white
-        // on the far side, instead of the fill sliding under unchanged text.
+        // The same label in inverse colours, clipped at the thumb, is what makes
+        // one word orange behind the thumb and white ahead of it.
         Box(
             modifier = Modifier
                 .matchParentSize()
@@ -143,8 +127,6 @@ fun TrainrSlideToConfirm(
                     },
                     onDragStopped = {
                         if (offsetPx >= travel * ConfirmFraction) onConfirm()
-                        // Short of the end, the thumb returns: a slide that was
-                        // not finished did not ask for anything.
                         animate(offsetPx, 0f) { value, _ -> offsetPx = value }
                     }
                 )

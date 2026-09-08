@@ -79,8 +79,7 @@ fun WeeklyPlanRoute(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
-    // Coming back from a routine re-reads the plan, so a day completed there
-    // is reflected here.
+    // Returning from a routine re-reads the plan, so a day completed there shows here.
     LaunchedEffect(Unit) { viewModel.refresh() }
 
     WeeklyPlanScreen(
@@ -122,23 +121,10 @@ fun WeeklyPlanScreen(
     // Set only when a week was opened from Weekly Progress.
     onBackClick: (() -> Unit)? = null
 ) {
-    // Such a week is a look at the record rather than the plan being trained,
-    // so it gets a way back and drops the actions that belong to the plan
-    // standing in as home: regenerating, starting today, and the progress link
-    // that leads back where the reader just came from.
-    // A week already behind you is a record: it keeps its dates and its order,
-    // and offers none of the actions that belong to the week being trained. The
-    // newest week is live wherever it was opened from, so home and the list
-    // show the same thing rather than two versions of it.
+    // Any week but the newest is a record: its dates, order and contents are fixed.
     val isBrowsedWeek = state.hasPlan && !state.isCurrentWeek
 
-    // Two different questions, and they were being answered by one flag. Whether
-    // the week is live decides what may be done to its contents. Whether this is
-    // home decides what may be done to the plan as a whole: a week opened from
-    // the list is a week you went to see, so it does not carry the actions that
-    // rebuild the plan, nor a link back to the list you came from. Those read as
-    // offers here and did nothing, because the route that opens a week has no
-    // plan-level callbacks to give them.
+    // Distinct from isBrowsedWeek: plan-level actions and callbacks exist only on home.
     val isHome = onBackClick == null
     val locale = LocalLocale.current.platformLocale
     var showLeaveDialog by remember { mutableStateOf(false) }
@@ -170,16 +156,9 @@ fun WeeklyPlanScreen(
     val scrollState = rememberScrollState()
 
     Column(modifier = modifier.fillMaxSize()) {
-        // Home has nowhere to go back to. Plan-level actions live behind the
-        // heading's overflow, where the design puts them; who you are and what
-        // the app is belong to home's app bar, and stay reachable there even
-        // when there is no plan for the overflow to hang off.
         TrainrTopBar(
             onBackClick = onBackClick,
             actions = {
-                // Who you are belongs to home, not to a week you opened from
-                // somewhere else: a screen with a way back is somewhere you
-                // went, and the account is not part of what you went to see.
                 if (onBackClick == null) {
                     ProfileMenu(
                         versionName = versionName,
@@ -191,8 +170,7 @@ fun WeeklyPlanScreen(
             }
         )
 
-        // Nothing is drawn until the plan has been looked for: a blank moment
-        // is honest, where a stand-in week would be read as the real thing.
+        // A blank moment is honest where a stand-in week would read as the real thing.
         if (!state.hasLoaded) return@Column
 
         if (!state.hasPlan) {
@@ -217,11 +195,8 @@ fun WeeklyPlanScreen(
                     color = MaterialTheme.trainrColors.onSurface,
                     modifier = Modifier.weight(1f)
                 )
-                // Repeating is the one action a week can offer about itself:
-                // its subject is the week you are looking at, not the plan, so
-                // it belongs on whichever week that is. Building the next week
-                // and starting over are about the plan's future, and stay on
-                // home, which is where they have somewhere to go afterwards.
+                // Repeating is about this week; building the next one and
+                // starting over are plan-level, so they stay on home.
                 if (state.hasPlan && (isHome || state.canAddWeek || !isBrowsedWeek)) {
                     Box {
                         Icon(
@@ -241,10 +216,6 @@ fun WeeklyPlanScreen(
                                 MaterialTheme.trainrColors.raisedEdge
                             )
                         ) {
-                            // With the week behind you there are two sound
-                            // ways on: progress from what you lifted, or run
-                            // the same week again. The second is a coaching
-                            // decision, so it is offered rather than assumed.
                             if (isHome && state.canStartNextWeek) {
                                 DropdownMenuItem(
                                     text = { Text(stringResource(R.string.generate_next_week)) },
@@ -254,11 +225,6 @@ fun WeeklyPlanScreen(
                                     }
                                 )
                             }
-                            // Any week can be run again, this one or one from
-                            // months ago; the copy joins the plan at the end,
-                            // which is why it waits for the same moment as a
-                            // generated week rather than landing on top of one
-                            // still being trained.
                             if (state.canAddWeek) {
                                 DropdownMenuItem(
                                     text = { Text(stringResource(R.string.repeat_this_week)) },
@@ -268,9 +234,8 @@ fun WeeklyPlanScreen(
                                     }
                                 )
                             }
-                            // The other half of the same question: still in
-                            // this week, so it can be written again; done with
-                            // it, and the offer becomes the week that follows.
+                            // A week still being trained can be rewritten;
+                            // a finished one offers the next week instead.
                             if (!state.canAddWeek) {
                                 DropdownMenuItem(
                                     text = { Text(stringResource(R.string.regenerate_week)) },
@@ -350,18 +315,12 @@ fun WeeklyPlanScreen(
                 days = state.days,
                 locale = locale,
                 onDayClick = onDayClick,
-                // A week being read back is a record; only the plan you are
-                // training can be rescheduled.
                 canReorder = !isBrowsedWeek,
                 onMove = onMoveDay,
                 scrollState = scrollState
             )
         }
 
-        // Whatever is actually left: a session to train, or — with the week
-        // behind you — the week that follows it. Never a finished session
-        // dressed as the next one. Training is offered wherever the live week
-        // was opened from; building the next one is home's business.
         val next = state.nextWorkout
         when {
             next != null && !isBrowsedWeek -> TrainrButton(
@@ -384,8 +343,6 @@ fun WeeklyPlanScreen(
     }
 }
 
-// Who you are and what the app is: the two things that are about the client
-// rather than about this week's training, kept out of the plan's own overflow.
 @Composable
 private fun ProfileMenu(
     versionName: String,
@@ -448,8 +405,7 @@ private fun ProfileMenu(
     }
 }
 
-// The chosen appearance is applied as it is tapped rather than on closing, so
-// the dialog itself is the preview of what was picked.
+// Applied as it is tapped, so the dialog itself previews the choice.
 @Composable
 private fun AppearanceDialog(
     appearance: AppearanceMode,
@@ -541,8 +497,7 @@ private fun AboutDialog(versionName: String, onDismiss: () -> Unit) {
             Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
                 Text(text = stringResource(R.string.app_version_format, versionName))
                 Text(text = stringResource(R.string.app_about_message))
-                // Kept reachable after onboarding: the review shows it once,
-                // and a client training months later has nowhere else to find it.
+                // Must stay reachable: onboarding shows it only once.
                 Text(text = stringResource(R.string.health_disclaimer))
             }
         },
@@ -554,8 +509,6 @@ private fun AboutDialog(versionName: String, onDismiss: () -> Unit) {
     )
 }
 
-// Deleting every week is allowed, so landing there has to be a place rather
-// than a gap: it says what happened and offers the way out of it.
 @Composable
 private fun NoPlanYet(
     onCreatePlanClick: () -> Unit,
@@ -594,8 +547,6 @@ private fun NoPlanYet(
     }
 }
 
-// A week with nothing logged in it is just a week; one with training in it is a
-// record, and what a new week costs is named before it is asked for.
 @Composable
 private fun RegenerateWeekDialog(
     loggedWorkouts: Int,

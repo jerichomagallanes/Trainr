@@ -39,9 +39,8 @@ import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.views.YouTube
 private val ToggleHeight = 27.dp
 private val PlayerCorner = RoundedCornerShape(5.dp)
 
-// YouTube serves 16:9; the frame's 352x174 rectangle is 2.02:1, and matching it
-// would letterbox the player. Held from the moment the section opens so the
-// list does not jump as the player finds its own size.
+// YouTube serves 16:9; the frame's 2.02:1 rectangle would letterbox the player.
+// Held from the moment the section opens so the list does not jump.
 private const val VIDEO_ASPECT = 16f / 9f
 
 @Composable
@@ -106,21 +105,14 @@ private fun YouTubePlayer(videoId: String, modifier: Modifier = Modifier) {
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT
                 )
-                // Load-bearing for the Play Store, not just for tidiness.
-                // Registering as an observer is what pauses playback when the
-                // screen stops and releases the WebView when it goes; a player
-                // that outlived the screen would keep playing with the app in
-                // the background, which Google treats as Device and Network
-                // Abuse — an attempt to substitute for a YouTube subscription —
-                // and suspends for. Verified on device: backgrounding, locking
-                // the screen and navigating away each stop the audio.
+                // Observing is what pauses playback and releases the WebView; a
+                // player outliving the screen keeps playing in the background,
+                // which Play treats as Device and Network Abuse.
                 lifecycleOwner.lifecycle.addObserver(this)
                 addYouTubePlayerListener(object : AbstractYouTubePlayerListener() {
                     override fun onReady(youTubePlayer: YouTubePlayer) {
-                        // Cue, not load: cueing shows YouTube's own poster
-                        // frame and its own play button, and waits to be
-                        // asked. Loading would start playing the moment the
-                        // section opened.
+                        // Cue, not load: loading autoplays the moment the
+                        // section opens.
                         youTubePlayer.cueVideo(videoId, 0f)
                     }
                 })

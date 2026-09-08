@@ -32,8 +32,7 @@ class WeeklyPlanScreenTest {
     private fun string(id: Int, vararg args: Any) =
         composeTestRule.activity.getString(id, *args)
 
-    // The sample week is dated in the past, so every test says when "today" is:
-    // it decides which sessions are missed, and so which of them can be moved.
+    // "Today" decides which sessions read as missed, and so which can be moved.
     private val state = WeeklyPlanViewModel.stateFor(
         plan = SampleWorkoutData.weekOne,
         nowMillis = SampleWorkoutData.dateOf(3)
@@ -56,9 +55,6 @@ class WeeklyPlanScreenTest {
         }
     }
 
-    // A week opened from Weekly Progress is a record to read: it needs a way
-    // back, and must not offer to start today, to rebuild the plan, or to
-    // bounce the reader back to the progress screen they arrived from.
     private val pastWeek = WeeklyPlanViewModel.stateFor(
         plan = SampleWorkoutData.weekOne,
         isCurrentWeek = false,
@@ -78,8 +74,6 @@ class WeeklyPlanScreenTest {
             .assertDoesNotExist()
         composeTestRule.onNodeWithText(string(R.string.track_weekly_progress) + " →")
             .assertDoesNotExist()
-        // Nothing to offer while the plan is not ready for another week, so the
-        // overflow is not there to be opened.
         composeTestRule.onNodeWithContentDescription(string(R.string.plan_options))
             .assertDoesNotExist()
 
@@ -88,9 +82,6 @@ class WeeklyPlanScreenTest {
         assertThat(wentBack).isTrue()
     }
 
-    // The newest week opened from the list is still the week being trained, so
-    // its session is startable there. What rebuilds the plan is not, and neither
-    // is a link back to the list that opened it.
     @Test
     fun theLiveWeekOpenedFromTheListTrainsButDoesNotRebuild() {
         var started: WorkoutDay? = null
@@ -112,7 +103,6 @@ class WeeklyPlanScreenTest {
         assertThat(started).isNotNull()
     }
 
-    // The week's own action travels with the week. The plan's do not.
     @Test
     fun aWeekOpenedFromTheListOffersToRunItselfAgainAndNothingElse() {
         var repeated = false
@@ -134,8 +124,6 @@ class WeeklyPlanScreenTest {
         assertThat(repeated).isTrue()
     }
 
-    // A control that cannot do anything is worse than one that is absent: the
-    // week route has no plan-level callbacks to give it.
     @Test
     fun aFinishedWeekOpenedFromTheListOffersNoWayToBuildTheNextOne() {
         val finished = WeeklyPlanViewModel.stateFor(
@@ -154,7 +142,6 @@ class WeeklyPlanScreenTest {
             .assertDoesNotExist()
     }
 
-    // Home is the plan being trained: no back arrow, all actions present.
     @Test
     fun theHomePlanKeepsItsActionsAndHasNoWayBack() {
         setScreen()
@@ -165,7 +152,6 @@ class WeeklyPlanScreenTest {
             .assertIsDisplayed()
     }
 
-    // The CTA has to name a day, and it should be the one still to do.
     @Test
     fun startingTodaysWorkoutOpensTheFirstOutstandingDay() {
         var started: WorkoutDay? = null
@@ -180,8 +166,6 @@ class WeeklyPlanScreenTest {
         composeTestRule.onNodeWithContentDescription(string(R.string.plan_options)).performClick()
     }
 
-    // Who you are is not one of this week's actions, so it lives in the app bar
-    // and stays reachable even when there is no plan to hang an overflow off.
     @Test
     fun theProfileIsReachedFromTheAppBar() {
         var asked = false
@@ -214,8 +198,6 @@ class WeeklyPlanScreenTest {
         composeTestRule.onNodeWithText(string(R.string.update_profile)).assertIsDisplayed()
     }
 
-    // A week reached from the list is somewhere you went, and the account is
-    // not part of what you went there to see.
     @Test
     fun aWeekOpenedFromTheListHasNoAccountMenu() {
         composeTestRule.setContent {
@@ -226,7 +208,6 @@ class WeeklyPlanScreenTest {
             .assertDoesNotExist()
     }
 
-    // A build number is the one thing worth saying about the app itself.
     @Test
     fun aboutShowsWhichBuildIsRunning() {
         composeTestRule.setContent {
@@ -241,7 +222,6 @@ class WeeklyPlanScreenTest {
             .assertIsDisplayed()
     }
 
-    // A finished week can roll straight into the next one.
     @Test
     fun aFinishedWeekOffersStartingTheNextOne() {
         val finished = WeeklyPlanViewModel.stateFor(
@@ -265,9 +245,6 @@ class WeeklyPlanScreenTest {
         assertThat(started).isTrue()
     }
 
-    // A week behind you can be progressed from or run again; the second is a
-    // coaching decision, so it sits beside the first rather than happening on
-    // its own when something fails.
     @Test
     fun aFinishedWeekCanAlsoBeRepeated() {
         val finished = WeeklyPlanViewModel.stateFor(
@@ -291,8 +268,7 @@ class WeeklyPlanScreenTest {
         assertThat(repeated).isTrue()
     }
 
-    // Still in this week, so it can be written again. The dialog only stands in
-    // the way when there is training to lose.
+    // Nothing trained in this week yet, so no confirmation stands in the way.
     @Test
     fun theWeekBeingTrainedCanBeGeneratedAgain() {
         var regenerated = false
@@ -326,7 +302,6 @@ class WeeklyPlanScreenTest {
         openMenu()
         composeTestRule.onNodeWithText(string(R.string.regenerate_week)).performClick()
 
-        // Asked, not done.
         assertThat(regenerated).isFalse()
         composeTestRule.onNodeWithText(string(R.string.regenerate_week_title)).assertIsDisplayed()
         composeTestRule.onNodeWithText(string(R.string.regenerate_week_confirm)).performClick()
@@ -425,7 +400,6 @@ class WeeklyPlanScreenTest {
         assertThat(left).isFalse()
     }
 
-    // The plan is home: nothing to go back to, so no back arrow to mislead.
     @Test
     fun theHomeScreenOffersNoBackArrow() {
         setScreen()
@@ -466,8 +440,6 @@ class WeeklyPlanScreenTest {
         nowMillis = SampleWorkoutData.dateOf(1)
     )
 
-    // Long-press lifts a session; dragging it past the next card hands it that
-    // card's weekday and reports the move.
     @Test
     fun draggingASessionPastTheNextOneReschedulesIt() {
         var move: Pair<Int, Int>? = null
@@ -495,7 +467,6 @@ class WeeklyPlanScreenTest {
         assertThat(move).isEqualTo(0 to 1)
     }
 
-    // A finished session is the record of a date it was trained on.
     @Test
     fun aFinishedSessionDoesNotLift() {
         var move: Pair<Int, Int>? = null
@@ -534,9 +505,6 @@ class WeeklyPlanScreenTest {
         assertThat(move).isNull()
     }
 
-    // Found by hand: a week opened from Weekly Progress let its cards be
-    // dragged into a new order that was never saved, so the screen showed a
-    // move that had not happened.
     @Test
     fun aBrowsedWeekDoesNotLetItsSessionsBeDragged() {
         var move: Pair<Int, Int>? = null
@@ -584,8 +552,6 @@ class WeeklyPlanScreenTest {
         nowMillis = SampleWorkoutData.dateOf(9)
     )
 
-    // Missed is stated plainly and neutrally: the app says where you stand
-    // without turning a quiet week into a scolding.
     @Test
     fun aSessionWhoseDateHasGoneReadsAsMissed() {
         composeTestRule.setContent {
@@ -595,12 +561,9 @@ class WeeklyPlanScreenTest {
         assertThat(
             composeTestRule.onAllNodesWithText(string(R.string.missed)).fetchSemanticsNodes()
         ).hasSize(weekGoneBy.days.size)
-        // Nothing is scheduled today, so the button does not claim there is.
         composeTestRule.onNodeWithText(string(R.string.start_next_workout)).assertIsDisplayed()
     }
 
-    // The past is a record: a missed session holds its date until it is either
-    // trained or rescheduled, and dragging is not how that happens.
     @Test
     fun aMissedSessionDoesNotLift() {
         var move: Pair<Int, Int>? = null
@@ -624,8 +587,6 @@ class WeeklyPlanScreenTest {
         assertThat(move).isNull()
     }
 
-    // Deleting every week is allowed, so the plan screen has to be a place when
-    // there is nothing in it rather than a blank.
     @Test
     fun withNoPlanTheScreenSaysSoAndOffersToBuildOne() {
         var asked = false
@@ -644,8 +605,6 @@ class WeeklyPlanScreenTest {
         assertThat(asked).isTrue()
     }
 
-    // Before the plan has been read there is nothing to say yet, and saying
-    // "no plan" then would be wrong for the moment it takes to find one.
     @Test
     fun nothingIsSaidBeforeThePlanHasBeenRead() {
         composeTestRule.setContent {
@@ -656,8 +615,6 @@ class WeeklyPlanScreenTest {
         composeTestRule.onNodeWithText(string(R.string.start_todays_workout)).assertDoesNotExist()
     }
 
-    // With the week done the button leads to the next week, not back into a
-    // session already finished.
     @Test
     fun aFinishedWeekOffersTheNextWeekOnTheButton() {
         val finished = WeeklyPlanViewModel.stateFor(

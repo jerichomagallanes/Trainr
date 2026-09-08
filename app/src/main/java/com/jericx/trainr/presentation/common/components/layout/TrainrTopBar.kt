@@ -38,14 +38,11 @@ fun TrainrTopBar(
     onBackClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
     showLogo: Boolean = true,
-    // A close is a way OUT of a detour, where a back arrow would promise a
-    // step backwards through a flow that is not there.
     closeInsteadOfBack: Boolean = false,
-    // Account-level things live at the trailing edge, where they are looked for.
     actions: @Composable RowScope.() -> Unit = EmptyActions
 ) {
-    // Whether the trailing edge carries anything, so the logo can be balanced
-    // against it. Compose gives no way to ask a slot, so it is tracked here.
+    // Compose gives no way to ask whether a slot is empty, hence the identity
+    // check against the shared empty lambda.
     val hasActions = actions !== EmptyActions
 
     TopAppBar(
@@ -72,9 +69,8 @@ fun TrainrTopBar(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    // The title sits between whatever icons are present, so
-                    // the logo is nudged back towards the middle by however
-                    // many sides carry one.
+                    // The title centres between whatever icons are present, so
+                    // the logo leans back when only one side carries one.
                     val lean = when {
                         onBackClick != null && !hasActions -> -Spacing.large
                         onBackClick == null && hasActions -> Spacing.large

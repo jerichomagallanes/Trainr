@@ -21,9 +21,7 @@ class LocaleManagerTest {
 
     private fun localeOf(context: Context): Locale = context.resources.configuration.locales[0]
 
-    // The app ships English strings alone, so its dates have to be English too.
-    // The forcing lives in the context this returns: the Japanese phone it was
-    // handed must not survive into it.
+    // English strings only, so the returned context must not keep the phone's locale.
     @Test
     fun aJapanesePhoneGetsAnEnglishConfiguration() {
         val forced = LocaleManager.updateAppLocale(contextIn(Locale.JAPANESE), "en")
@@ -31,8 +29,6 @@ class LocaleManagerTest {
         assertThat(localeOf(forced).language).isEqualTo("en")
     }
 
-    // What it costs when the configuration is not forced: the weekday beside an
-    // English heading comes out as 月曜日.
     @Test
     fun anUnforcedConfigurationIsWhereJapaneseDatesCameFrom() {
         val monday = 1787529600000L // 2026-08-24

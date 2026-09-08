@@ -91,9 +91,6 @@ fun LimitationsScreen(
 
                 Spacer(modifier = Modifier.height(Spacing.extraLarge))
 
-                // Everything else in onboarding is needed, so the exception is the
-                // thing worth marking. Asterisking eleven fields to flag one
-                // would be noise.
                 TrainrSectionTitle(
                     stringResource(
                         R.string.optional_label,

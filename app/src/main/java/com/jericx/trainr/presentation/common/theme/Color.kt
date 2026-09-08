@@ -4,15 +4,10 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
-// Values taken from the Figma mockups. The design has no Figma variables, so
-// this file is the single source of truth for them.
-
-// Brand
 val Orange500 = Color(0xFFD37200)
 val Orange700 = Color(0xFF8B5A2B)
 val Orange300 = Color(0xFFDEB887)
 
-// Neutrals
 val Slate800 = Color(0xFF243036)
 val OutlineGray = Color(0xFFB0BEC5)
 val TextMuted = Color(0xFF626262)
@@ -26,16 +21,13 @@ val Gray300 = Color(0xFFE0E0E0)
 val Gray200 = Color(0xFFEEEEEE)
 val Gray100 = Color(0xFFF5F5F5)
 
-// Accents
 val Red700 = Color(0xFF8B1A1A)
 val Blue500 = Color(0xFF5DADE2)
 
-// Semantic
 val GreenSuccess = Color(0xFF4CAF50)
 val RedError = Color(0xFFE74C3C)
 val YellowWarning = Color(0xFFF39C12)
 
-// Workout status
 val StatusCompleted = Color(0xFF5F8C32)
 
 @Deprecated(
@@ -50,12 +42,10 @@ val StatusInProgress = Orange500
 )
 val StatusNotStarted = TextMuted
 
-// Surfaces
 val SurfaceLight = Color(0xFFFAFAFA)
 val SurfaceDark = Color(0xFF121212)
 
-// Semantic tokens. Light values are the constants above, unchanged; dark values
-// are tuned against the four dark grounds (page/card/raised/sunken).
+// Dark values are tuned against the four dark grounds (page/card/raised/sunken).
 
 @Immutable
 data class TrainrColors(
@@ -80,8 +70,8 @@ data class TrainrColors(
     val placeholder: Color,
     val outlineControl: Color,
     val outlineDivider: Color,
-    // Edge and internal rule of a card that has no fill, so the hairline is the
-    // card. Ink-weight in light by design; the outline tiers in dark.
+    // An unfilled card's hairline: ink-weight in light by design, outline tiers
+    // in dark.
     val cardEdge: Color,
     val cardRule: Color,
     val raisedEdge: Color,
@@ -102,9 +92,8 @@ data class TrainrColors(
     val brandStrongDisabled: Color,
     val statusDone: Color,
     val statusDoneInk: Color,
-    // The completed card's edge and rule. Dimmer than statusDoneInk in dark:
-    // as a hairline that ink reads at 7.12 on a card where the neutral edge is
-    // 4.90, so it shouted rather than marked.
+    // Dimmer than statusDoneInk in dark: as a hairline that ink reads 7.12 on a
+    // card where the neutral edge is 4.90.
     val statusDoneEdge: Color,
     val statusActive: Color,
     val statusIdle: Color,
@@ -115,7 +104,6 @@ data class TrainrColors(
     val onDanger: Color,
     val dotInactive: Color,
     val shadowSpot: Color,
-    // The 5% black the secondary button draws; shadowSpot is the platform default.
     val shadowSpotSoft: Color,
     val shadowSpotBrand: Color,
     val scrim: Color

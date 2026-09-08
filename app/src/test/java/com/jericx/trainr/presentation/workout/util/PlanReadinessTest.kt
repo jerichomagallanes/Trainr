@@ -35,8 +35,7 @@ class PlanReadinessTest {
         assertThat(finished.isReadyForTheNextWeek()).isTrue()
     }
 
-    // The week still being trained is the week that is yours. Another one now
-    // would become the newest and quietly take that title from it.
+    // Another week now would become the newest and take the title of current from the one being trained
     @Test
     fun aWeekStillBeingTrainedIsNot() {
         val started = week(WorkoutStatus.COMPLETED, WorkoutStatus.NOT_STARTED)
@@ -44,8 +43,7 @@ class PlanReadinessTest {
         assertThat(started.isReadyForTheNextWeek()).isFalse()
     }
 
-    // Missed days do not strand the plan: once the dates have run out the week
-    // is not coming back, finished or not.
+    // Missed days must not strand the plan: once the dates have run out the week is not coming back
     @Test
     fun aWeekWhoseDatesHaveRunOutIsReadyEvenWithDaysMissed() {
         val missed = week(WorkoutStatus.COMPLETED, WorkoutStatus.NOT_STARTED)

@@ -48,15 +48,11 @@ fun WeeklyProgressRoute(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
-    // Coming back from a routine re-reads the plans, so a day completed there
-    // is reflected here.
+    // Returning from a routine re-reads the plans, so a day completed there shows here.
     LaunchedEffect(Unit) { viewModel.refresh() }
 
-    // Delete the last week and this screen is a list of nothing. Progress
-    // against no plan is not a place to stand, so it hands back to the one
-    // screen that has something to say about having no plan — and something to
-    // do about it. Only once the reading is done: an empty list before that
-    // just means the plans have not been read yet.
+    // An empty list means "no plans" only once the reading is done; progress
+    // against no plan hands back to the screen that can offer a new one.
     LaunchedEffect(state.hasLoaded, state.weeks.isEmpty()) {
         if (state.hasLoaded && state.weeks.isEmpty()) onLastWeekDeleted()
     }
@@ -133,10 +129,6 @@ fun WeeklyProgressScreen(
     }
 }
 
-// Only an unstarted week can be swiped away, and the swipe asks before it
-// deletes: a week is a good deal more than a set. The delete fires once per
-// completed dismissal and the state snaps back, so a card that survives the
-// question is not left half open.
 @Composable
 private fun DeletableWeek(
     canDelete: Boolean,
@@ -146,7 +138,6 @@ private fun DeletableWeek(
     TrainrSwipeToDelete(
         onDelete = onDelete,
         contentDescription = stringResource(R.string.delete_week_confirm),
-        // Every week slides aside; the dialog is where the weight of it lands.
         enabled = canDelete
     ) {
         content()
@@ -165,8 +156,6 @@ private fun DeleteWeekDialog(
             Text(text = stringResource(R.string.delete_week_title, week.weekNumber))
         },
         text = {
-            // Training that was actually done is named before it goes, so the
-            // choice is made knowing what it costs.
             Text(
                 text = if (week.hasTraining) {
                     pluralStringResource(

@@ -77,11 +77,8 @@ class VideoTutorialTest {
         }
     }
 
-    // Load-bearing for the Play Store, not just for tidiness: a player that
-    // outlives the screen keeps playing while the app is in the background,
-    // which is a Device and Network Abuse suspension. The player is bound to
-    // the screen's lifecycle so that leaving the app pauses it and leaving the
-    // screen releases it — this pins that binding to the player's presence.
+    // A player outliving the screen keeps playing in the background, which is a Play
+    // Store Device and Network Abuse suspension; this pins the lifecycle binding.
     @Test
     fun thePlayerIsBoundToTheScreenAndLetGoWithIt() {
         val owner = FakeLifecycleOwner()

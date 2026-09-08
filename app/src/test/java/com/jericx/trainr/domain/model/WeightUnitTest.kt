@@ -18,8 +18,7 @@ class WeightUnitTest {
             UnitSystem.IMPERIAL)).isEqualTo(45f)
     }
 
-    // A literal conversion of 20 kg is 44.09 lb, which is not a plate, a
-    // dumbbell, or a number anyone would write in a log.
+    // A literal 20 kg is 44.09 lb, which is not a plate or a dumbbell anyone owns
     @Test
     fun aPrescriptionMovesOntoAWeightTheGymActuallyHas() {
         assertThat(WeightUnit.forDisplay(WeightUnit.loadable(20f, UnitSystem.IMPERIAL),
@@ -28,16 +27,14 @@ class WeightUnitTest {
             UnitSystem.IMPERIAL)).isEqualTo(20f)
     }
 
-    // Kilograms are prescribed for a gym graduated in kilograms; a 12 kg
-    // dumbbell exists and must not be rounded onto one that is easier to state.
+    // A 12 kg dumbbell exists, so a metric prescription is never rounded to a rounder number
     @Test
     fun aMetricPrescriptionIsLeftAlone() {
         assertThat(WeightUnit.loadable(12f, UnitSystem.METRIC)).isEqualTo(12f)
         assertThat(WeightUnit.loadable(22.5f, UnitSystem.METRIC)).isEqualTo(22.5f)
     }
 
-    // What the client typed is the record, so it survives the trip to storage
-    // and back without moving. 22 lb is not a plate, but it is what they lifted.
+    // What the client typed is the record: 22 lb is not a plate, but it survives storage unmoved
     @Test
     fun whatTheClientTypedComesBackUnchanged() {
         for (pounds in listOf(22f, 45f, 47.5f, 95f, 135f, 225f)) {

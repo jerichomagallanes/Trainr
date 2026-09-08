@@ -68,12 +68,9 @@ class OnboardingViewModelTest {
 
     @Test
     fun `initial state has default UserProfile and not loading`() {
-        // Arrange / Act
         val state = viewModel.onboardingState.value
 
-        // Assert
-        // createdAt defaults to System.currentTimeMillis(), so comparing whole
-        // profiles fails whenever the clock ticks between the two constructions.
+        // createdAt defaults to the clock, so whole-profile comparison needs it pinned
         assertThat(state.userProfile).isEqualTo(UserProfile(createdAt = state.userProfile.createdAt))
         assertThat(state.isLoading).isFalse()
         assertThat(state.isCompleted).isFalse()
@@ -82,7 +79,6 @@ class OnboardingViewModelTest {
 
     @Test
     fun `updateBasicInfo updates firstName age gender experience`() {
-        // Arrange / Act
         viewModel.updateBasicInfo(
             firstName = "Jericho",
             age = 30,
@@ -90,7 +86,6 @@ class OnboardingViewModelTest {
             experience = ExperienceLevel.INTERMEDIATE
         )
 
-        // Assert
         val profile = viewModel.onboardingState.value.userProfile
         assertThat(profile.firstName).isEqualTo("Jericho")
         assertThat(profile.age).isEqualTo(30)
@@ -100,13 +95,10 @@ class OnboardingViewModelTest {
 
     @Test
     fun `updateBodyMetrics updates height and weight without clobbering other fields`() {
-        // Arrange
         viewModel.updateBasicInfo("Ana", 25, Gender.FEMALE, ExperienceLevel.BEGINNER)
 
-        // Act
         viewModel.updateBodyMetrics(height = 165f, weight = 60f, UnitSystem.METRIC)
 
-        // Assert
         val profile = viewModel.onboardingState.value.userProfile
         assertThat(profile.height).isEqualTo(165f)
         assertThat(profile.weight).isEqualTo(60f)
@@ -116,10 +108,8 @@ class OnboardingViewModelTest {
 
     @Test
     fun `updateFitnessGoal sets the goal and the workout style together`() {
-        // Arrange / Act
         viewModel.updateFitnessGoal(FitnessGoal.MUSCLE_GAIN, WorkoutType.HIIT)
 
-        // Assert
         val profile = viewModel.onboardingState.value.userProfile
         assertThat(profile.fitnessGoal).isEqualTo(FitnessGoal.MUSCLE_GAIN)
         assertThat(profile.workoutType).isEqualTo(WorkoutType.HIIT)
@@ -127,10 +117,8 @@ class OnboardingViewModelTest {
 
     @Test
     fun `updateWorkoutSetup sets all five fields`() {
-        // Arrange
         val equipment = listOf(Equipment.DUMBBELLS, Equipment.BENCH)
 
-        // Act
         viewModel.updateWorkoutSetup(
             location = WorkoutLocation.HOME,
             equipment = equipment,
@@ -140,7 +128,6 @@ class OnboardingViewModelTest {
             preferredTime = WorkoutTime.EVENING
         )
 
-        // Assert
         val profile = viewModel.onboardingState.value.userProfile
         assertThat(profile.workoutLocation).isEqualTo(WorkoutLocation.HOME)
         assertThat(profile.availableEquipment).containsExactlyElementsIn(equipment)
@@ -150,11 +137,8 @@ class OnboardingViewModelTest {
         assertThat(profile.liftingUnitSystem).isEqualTo(UnitSystem.IMPERIAL)
     }
 
-    // The two units are separate questions. Reading your own weight in pounds
-    // says nothing about what the plates in your gym are marked in.
     @Test
     fun `body units and lifting units are kept apart`() {
-        // Act
         viewModel.updateBodyMetrics(178f, 75f, UnitSystem.IMPERIAL)
         viewModel.updateWorkoutSetup(
             location = WorkoutLocation.GYM,
@@ -165,18 +149,14 @@ class OnboardingViewModelTest {
             preferredTime = WorkoutTime.EVENING
         )
 
-        // Assert
         val profile = viewModel.onboardingState.value.userProfile
         assertThat(profile.bodyUnitSystem).isEqualTo(UnitSystem.IMPERIAL)
         assertThat(profile.liftingUnitSystem).isEqualTo(UnitSystem.METRIC)
         assertThat(profile.weightUnits).isEqualTo(UnitSystem.METRIC)
     }
 
-    // Never asked means never answered, and the sets then read in whatever the
-    // client reads their own body in.
     @Test
     fun `without loaded equipment the sets follow the body units`() {
-        // Act
         viewModel.updateBodyMetrics(178f, 75f, UnitSystem.IMPERIAL)
         viewModel.updateWorkoutSetup(
             location = WorkoutLocation.HOME,
@@ -187,7 +167,6 @@ class OnboardingViewModelTest {
             preferredTime = WorkoutTime.MORNING
         )
 
-        // Assert
         val profile = viewModel.onboardingState.value.userProfile
         assertThat(profile.liftingUnitSystem).isNull()
         assertThat(profile.weightUnits).isEqualTo(UnitSystem.IMPERIAL)
@@ -195,43 +174,32 @@ class OnboardingViewModelTest {
 
     @Test
     fun `updateLimitations sets injuries`() {
-        // Arrange
         val injuries = listOf("Lower back", "Right knee")
 
-        // Act
         viewModel.updateLimitations(injuries)
 
-        // Assert
         val profile = viewModel.onboardingState.value.userProfile
         assertThat(profile.injuries).containsExactlyElementsIn(injuries)
     }
 
-    // Limitations used to carry the workout style too, so saving injuries
-    // overwrote a style chosen on another screen.
     @Test
     fun `updateLimitations leaves the workout style alone`() {
-        // Arrange
         viewModel.updateFitnessGoal(FitnessGoal.ENDURANCE, WorkoutType.CARDIO)
 
-        // Act
         viewModel.updateLimitations(listOf("Right knee"))
 
-        // Assert
         assertThat(viewModel.onboardingState.value.userProfile.workoutType)
             .isEqualTo(WorkoutType.CARDIO)
     }
 
     @Test
     fun `saveUserProfile on success sets isCompleted and invokes callback`() = runTest(testDispatcher) {
-        // Arrange
         coEvery { userRepository.saveUser(any()) } returns 42L
         var callbackInvoked = false
 
-        // Act
         viewModel.saveUserProfile(onSuccess = { callbackInvoked = true })
         advanceUntilIdle()
 
-        // Assert
         val state = viewModel.onboardingState.value
         assertThat(state.isLoading).isFalse()
         assertThat(state.isCompleted).isTrue()
@@ -257,9 +225,6 @@ class OnboardingViewModelTest {
         }
     }
 
-    // A plan that could not be written is said out loud. It used to be replaced
-    // by the built-in week, which told the client their coach had written them
-    // a plan when it had not.
     @Test
     fun `a failed generation writes no plan and reports why`() = runTest(testDispatcher) {
         coEvery { planGenerator.generate(any()) } returns PlanGenerationResult.Offline
@@ -277,10 +242,7 @@ class OnboardingViewModelTest {
         coVerify(exactly = 0) { userRepository.saveWeeklyWorkoutPlan(any()) }
     }
 
-    // The answers survive a failure nobody caused. Thirteen questions is a lot
-    // to type again, and typing them again is the price of retrying the very
-    // thing that just failed. Saved without a plan, the app opens on the empty
-    // state that says the profile is safe and offers to create one.
+    // The answers survive a failure nobody caused; saved without a plan, the app opens on the empty state
     @Test
     fun `a first profile is kept when generation fails`() = runTest(testDispatcher) {
         coEvery { planGenerator.generate(any()) } returns
@@ -293,9 +255,7 @@ class OnboardingViewModelTest {
         coVerify(exactly = 0) { userRepository.saveWeeklyWorkoutPlan(any()) }
     }
 
-    // Saving the user first would replace the stored one, and that REPLACE
-    // cascades every stored week away: a regeneration that failed destroyed the
-    // history it was meant to build on.
+    // Saving the user first REPLACEs the row, which cascades every stored week away
     @Test
     fun `a failed regeneration leaves the stored plan alone`() = runTest(testDispatcher) {
         coEvery { userRepository.getCurrentUser() } returns UserProfile(id = 7)
@@ -327,8 +287,7 @@ class OnboardingViewModelTest {
 
         assertThat(saved.captured).isEqualTo(generated)
         with(request.captured) {
-            // Generation runs before the user row exists, so the request
-            // carries the id it will be saved under: none, for a new client.
+            // Generation runs before the user row exists, so a new client's id is still 0
             assertThat(user.id).isEqualTo(0L)
             assertThat(weekNumber).isEqualTo(1)
             assertThat(languageCode).isEqualTo("en")
@@ -360,23 +319,19 @@ class OnboardingViewModelTest {
 
     @Test
     fun `saveUserProfile on repository failure surfaces error and does not complete`() = runTest(testDispatcher) {
-        // Arrange
         coEvery { userRepository.saveUser(any()) } throws RuntimeException("DB write failed")
         var callbackInvoked = false
 
-        // Act
         viewModel.saveUserProfile(onSuccess = { callbackInvoked = true })
         advanceUntilIdle()
 
-        // Assert
         val state = viewModel.onboardingState.value
         assertThat(state.isLoading).isFalse()
         assertThat(state.isCompleted).isFalse()
         assertThat(state.error).isEqualTo("DB write failed")
         assertThat(callbackInvoked).isFalse()
     }
-    // The regenerate flow deliberately wipes history; editing the profile must
-    // not, so it updates the stored user rather than re-inserting it.
+    // Regenerating wipes history; editing the profile must not, so it updates rather than re-inserts
     @Test
     fun `updateProfileOnly saves the profile and leaves the plan alone`() = runTest {
         val stored = UserProfile(id = 4, firstName = "Jet", age = 28)
@@ -401,8 +356,7 @@ class OnboardingViewModelTest {
         assertThat(viewModel.onboardingState.value.isLoading).isFalse()
     }
 
-    // Anchoring week one to the Monday just gone handed anyone who signed up
-    // later in the week a plan of sessions that had already been missed.
+    // Anchoring week one to the Monday just gone would hand a late signup already-missed sessions
     @Test
     fun `the first week starts today`() = runTest {
         val request = slot<PlanRequest>()
@@ -416,8 +370,6 @@ class OnboardingViewModelTest {
             .isEqualTo(WorkoutWeek.startOfDay())
     }
 
-    // Two taps on Generate used to start two runs, and for a client with no
-    // stored user that meant two of everything.
     @Test
     fun `a second tap while generating is ignored`() = runTest(testDispatcher) {
         coEvery { userRepository.saveUser(any()) } returns 42L
@@ -430,8 +382,7 @@ class OnboardingViewModelTest {
         coVerify(exactly = 1) { userRepository.saveWeeklyWorkoutPlan(any()) }
     }
 
-    // The view model outlives the screen, so a regeneration must not start out
-    // already complete from the run before it.
+    // The view model outlives the screen, so a regeneration must not start out complete
     @Test
     fun `regenerating starts from not complete`() = runTest(testDispatcher) {
         coEvery { userRepository.saveUser(any()) } returns 42L
@@ -447,29 +398,22 @@ class OnboardingViewModelTest {
     }
 
 
-    // Stepping back to a screen has to show what was typed there. The profile
-    // cannot say whether a step was answered, because every enum field starts
-    // on a real value that looks like a choice.
+    // The profile cannot say whether a step was answered: every enum field starts on a real value
     @Test
     fun `a step is only marked answered once it has been filled in`() {
-        // Assert
         assertThat(viewModel.onboardingState.value.answeredSteps).isEmpty()
 
-        // Act
         viewModel.updateBodyMetrics(175f, 70f, UnitSystem.METRIC)
 
-        // Assert
         assertThat(viewModel.onboardingState.value.answeredSteps)
             .containsExactly(OnboardingStep.BODY_METRICS)
     }
 
     @Test
     fun `answered steps accumulate rather than replace one another`() {
-        // Act
         viewModel.updateBasicInfo("Jericho", 31, Gender.FEMALE, ExperienceLevel.ADVANCED)
         viewModel.updateFitnessGoal(FitnessGoal.STRENGTH, WorkoutType.HIIT)
 
-        // Assert
         assertThat(viewModel.onboardingState.value.answeredSteps)
             .containsExactly(OnboardingStep.BASIC_INFO, OnboardingStep.GOALS)
     }

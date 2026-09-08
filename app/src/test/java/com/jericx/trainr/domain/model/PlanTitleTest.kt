@@ -5,8 +5,7 @@ import org.junit.Test
 
 class PlanTitleTest {
 
-    // The model writes the week number into the title often enough that copying
-    // a week would leave the second one calling itself the first.
+    // The model writes the week number into the title, so a copied week would call itself the first
     @Test
     fun aTrailingWeekNumberIsDropped() {
         assertThat("Beginner Muscle Building - Week 1".withoutWeekNumber())
@@ -33,8 +32,7 @@ class PlanTitleTest {
         assertThat("Weekend Warrior".withoutWeekNumber()).isEqualTo("Weekend Warrior")
     }
 
-    // Blank titles fail validation, so a title that was nothing but its number
-    // keeps what it had rather than costing the client a retry.
+    // Blank titles fail validation, so a title that is nothing but its number keeps it
     @Test
     fun aTitleThatIsOnlyANumberKeepsIt() {
         assertThat("Week 2".withoutWeekNumber()).isEqualTo("Week 2")

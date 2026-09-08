@@ -11,8 +11,7 @@ object WorkoutDateFormatter {
 
     private const val RANGE_SEPARATOR = " – "
 
-    // DateFormat.FULL rather than a pattern, so ja reads 2025年7月23日水曜日
-    // instead of an English sentence with translated words.
+    // DateFormat.FULL rather than a pattern, so ja reads 2025年7月23日水曜日.
     fun formatFullDate(dateMillis: Long, locale: Locale): String =
         DateFormat.getDateInstance(DateFormat.FULL, locale).format(Date(dateMillis))
 

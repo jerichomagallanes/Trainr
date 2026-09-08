@@ -13,9 +13,8 @@ import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.domain.model.WorkoutType
 
 class PlanPromptBuilder(
-    // The canonical exercise vocabulary (the video catalog's keys). The model
-    // may invent new keys for other movements, but these movements must use
-    // these exact keys or history and tutorials silently split.
+    // The video catalog's keys. These movements must use these exact keys or
+    // history and tutorials silently split.
     private val canonicalKeys: Collection<String> = emptyList()
 ) {
 
@@ -162,9 +161,8 @@ class PlanPromptBuilder(
         UnitSystem.IMPERIAL -> "pounds"
     }
 
-    // In kilograms, because that is the unit the contract speaks. Five pounds
-    // is 2.27 kg, so a client in pounds gets multiples that convert back onto
-    // the plates and dumbbells they actually own.
+    // Kilograms, the unit the contract speaks: 2.27 kg is five pounds, so a
+    // client in pounds gets multiples that land on real plates.
     private fun incrementKg(units: UnitSystem): String = when (units) {
         UnitSystem.METRIC -> "2.5"
         UnitSystem.IMPERIAL -> "2.27"

@@ -32,20 +32,15 @@ data class RoutineDetailUiState(
     val equipment: List<String>,
     val dateMillis: Long,
     val timer: ExerciseTimerUi? = null,
-    // One tutorial open at a time. The player is a WebView and it now exists
-    // for as long as the section is open rather than only while playing, so
-    // opening one closes the last rather than stacking them up the screen.
+    // One at a time: each player is a WebView that lives as long as its section is open.
     val expandedVideo: Int? = null,
     val dayNumber: Int = 1,
     val weekNumber: Int = 1,
     val completesTheWeek: Boolean = false,
     // Which units the client reads and writes; storage stays metric.
     val unitSystem: UnitSystem = UnitSystem.Default,
-    // False until the stored routine has been read. Nothing is drawn before
-    // then: the screen used to open on the built-in sample week and swap it for
-    // the real one a moment later, which read as a flicker of someone else's
-    // workout. The completion guard needs it too — that swap must not count as
-    // finishing the day.
+    // False until the stored routine has been read: nothing is drawn before then,
+    // and the completion guard must not read the load as finishing the day.
     val isLoaded: Boolean = true
 )
 
@@ -64,9 +59,6 @@ class RoutineDetailViewModel @Inject constructor(
     private val requestedWeekNumber: Int? =
         savedStateHandle.get<Int>(Screen.RoutineDetail.ARG_WEEK_NUMBER)?.takeIf { it > 0 }
 
-    // Empty rather than the sample week: a placeholder that is never drawn has
-    // no business being real-looking, and one that is drawn has no business
-    // being a placeholder.
     private val _uiState = MutableStateFlow(
         RoutineDetailUiState(
             routine = RoutineUi(title = "", exercises = emptyList()),
@@ -80,8 +72,7 @@ class RoutineDetailViewModel @Inject constructor(
 
     private var tickJob: Job? = null
 
-    // Non-null once the routine came from storage; the sample fallback keeps
-    // it null so nothing tries to persist rows that do not exist.
+    // Null on the sample fallback, so nothing persists rows that do not exist.
     private var storedDay: WorkoutDay? = null
     private var weeklyPlanId = 0L
 
@@ -211,12 +202,8 @@ class RoutineDetailViewModel @Inject constructor(
         }
     }
 
-    // Puts the session back to un-started. The mirror of completeRoutine: it
-    // clears the ticks and the logged numbers, and leaves the prescription
-    // alone, because the targets were never overwritten to begin with.
-    //
-    // The day's own status follows from its exercises, so persistDayStatus
-    // moves it back out of completed without being told to.
+    // Clears the ticks and the logged numbers; the prescribed targets were
+    // never overwritten, so they need no restoring.
     fun clearProgress() {
         cancelTick()
         _uiState.update { it.copy(routine = it.routine.clearProgress(), timer = null) }
@@ -265,8 +252,6 @@ class RoutineDetailViewModel @Inject constructor(
         _uiState.update { it.copy(timer = null) }
     }
 
-    // Back to the top of the interval, held there: resetting is preparing to go
-    // again, not going again.
     fun resetTimer() {
         cancelTick()
         _uiState.update { state ->
@@ -289,8 +274,6 @@ class RoutineDetailViewModel @Inject constructor(
         tickJob = null
     }
 
-    // Running out of time is what finishes an exercise, so the card turns green
-    // and its timer goes away together.
     private suspend fun tick() {
         while (true) {
             delay(TICK_MILLIS)
@@ -313,9 +296,6 @@ class RoutineDetailViewModel @Inject constructor(
     private fun completionOf(position: Int): Boolean? =
         _uiState.value.routine.exercises.firstOrNull { it.position == position }?.isCompleted
 
-    // Ticking off the last set finishes the exercise, and can finish the day
-    // with it; adding one that has not been done reopens both. The screen shows
-    // that the moment it happens, so the record has to follow at once.
     private fun reconcileCompletion(position: Int, was: Boolean?) {
         val now = completionOf(position) ?: return
         if (now != was) persistExerciseCompleted(position, now)
@@ -335,16 +315,14 @@ class RoutineDetailViewModel @Inject constructor(
         )
         viewModelScope.launch {
             userRepository.updateWorkoutExercise(exercise, day.id)
-            // Both ways round: un-ticking clears the marks on the sets, and
-            // those have to reach the record too.
+            // Un-ticking clears the marks on the sets, which must reach the record too.
             persistFilledSets(listOf(position))
             persistDayStatus()
         }
     }
 
-    // Completing writes the prescription onto sets that were never filled in,
-    // so the day is stored the way it will be read back — by the PREVIOUS
-    // column, and by the prompt that builds next week.
+    // Completing writes the prescription onto sets never filled in, so the day
+    // reads back the same way for the PREVIOUS column and next week's prompt.
     private suspend fun persistFilledSets(positions: List<Int>) {
         var day = storedDay ?: return
         positions.forEach { position ->
@@ -408,8 +386,6 @@ class RoutineDetailViewModel @Inject constructor(
             )
         }
 
-        // Finishing the last outstanding day of the week ends the week, not just
-        // the day — so the routine has to know which of the two it is.
         fun completesTheWeek(days: List<WorkoutDay>, dayNumber: Int): Boolean =
             days.filterIndexed { index, _ -> index != dayNumber - 1 }
                 .all { it.status == WorkoutStatus.COMPLETED }

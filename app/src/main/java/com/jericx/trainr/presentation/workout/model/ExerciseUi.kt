@@ -3,10 +3,9 @@ package com.jericx.trainr.presentation.workout.model
 import com.jericx.trainr.domain.model.ExerciseMeasure
 import com.jericx.trainr.domain.model.ExerciseSet
 
-// `detail` is the prescription chip — "5 minutes", "5 sets of 1 minute",
-// "3 sets of 20 reps". WorkoutExercise cannot express it alongside `minutes`:
-// it has one `duration` field, but exercise 2 needs both a 10-minute total and
-// a 1-minute per-set duration. Carried here until the domain gains a field.
+// `detail` is the prescription chip ("3 sets of 20 reps"), carried here because
+// WorkoutExercise has one `duration` field and cannot hold both a total and a
+// per-set duration.
 data class ExerciseUi(
     val position: Int,
     val name: String,
@@ -15,8 +14,7 @@ data class ExerciseUi(
     val detail: String,
     val measure: ExerciseMeasure = ExerciseMeasure.REPS,
     val sets: List<ExerciseSet> = emptyList(),
-    // The same movement's sets from the last completed day that had it, matched
-    // on exerciseKey; empty when there is no history yet.
+    // Sets from the last completed day with this movement, matched on exerciseKey.
     val previousSets: List<ExerciseSet> = emptyList(),
     val videoUrl: String? = null,
     val isCompleted: Boolean = false

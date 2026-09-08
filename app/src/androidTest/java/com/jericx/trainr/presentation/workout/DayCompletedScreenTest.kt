@@ -74,7 +74,6 @@ class DayCompletedScreenTest {
         assertThat(wentBack).isTrue()
     }
 
-    // A one-day-a-week plan must not read "Day 0".
     @Test
     fun theFirstWorkoutDayReadsAsDayOne() {
         setScreen(dayNumber = 1)

@@ -8,10 +8,8 @@ import com.jericx.trainr.domain.model.WorkoutExercise
 import com.jericx.trainr.domain.model.WorkoutStatus
 import java.util.Calendar
 
-// Placeholder content until plan generation exists, written in the shape a
-// generated plan arrives in so the screens map it the same way either source.
-// Kept in the presentation layer so it needs no Room migration. dayNumber is
-// the ISO day of week.
+// Written in the shape a generated plan arrives in, so the screens map either
+// source the same way. dayNumber is the ISO day of week.
 object SampleWorkoutData {
 
     const val DEFAULT_DAY_NUMBER = 3
@@ -20,8 +18,7 @@ object SampleWorkoutData {
 
     val weekEndMillis: Long get() = dateOf(7)
 
-    // Read per call rather than cached: the default time zone can be changed
-    // after this object is first touched, which would otherwise freeze a stale date.
+    // Read per call: a cached date would freeze if the default time zone changes.
     fun dateOf(dayNumber: Int): Long = Calendar.getInstance().apply {
         clear()
         set(2025, Calendar.JULY, 21)
@@ -32,9 +29,6 @@ object SampleWorkoutData {
         weekOne.workoutDays.firstOrNull { it.dayNumber == dayNumber }
             ?: weekOne.workoutDays.first()
 
-    // What the Generating screen "generates" until real generation exists: the
-    // sample week with nothing done yet, started on the given Monday. This is
-    // the seam a generated plan will replace.
     fun freshWeekOne(userId: Long, startDateMillis: Long): WeeklyWorkoutPlan {
         val now = System.currentTimeMillis()
         return weekOne.copy(
@@ -155,7 +149,6 @@ object SampleWorkoutData {
                     status = WorkoutStatus.IN_PROGRESS,
                     duration = 28,
                     exerciseCount = 5,
-                    // Jogging, intervals and three floor exercises: a mat, nothing else.
                     equipment = listOf("Yoga Mat"),
                     exercises = listOf(
                         WorkoutExercise(
