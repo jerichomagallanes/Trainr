@@ -97,7 +97,6 @@ class DesignTokensTest {
     @Test
     fun addedTokensKeepTheLightValuesTheirSitesRendered() {
         with(LightTrainrColors) {
-            assertThat(placeholder).isEqualTo(Color(0xFF707070))
             assertThat(surfacePanel).isEqualTo(SurfaceLight)
             assertThat(onSurfaceStrong).isEqualTo(Color.Black)
             assertThat(cardEdge).isEqualTo(Slate800)
@@ -105,6 +104,20 @@ class DesignTokensTest {
             assertThat(brandOnSelected).isEqualTo(Orange500)
             assertThat(shadowSpot).isEqualTo(Color.Black)
             assertThat(shadowSpotSoft).isEqualTo(Color.Black.copy(alpha = 0.05f))
+        }
+    }
+
+    // The six light values raised for AA, kept apart from the tokens that did not move
+    @Test
+    fun lightAaFixesKeepTheirRaisedValues() {
+        with(LightTrainrColors) {
+            assertThat(placeholder).isEqualTo(Color(0xFF707070))
+            assertThat(outlineControl).isEqualTo(Color(0xFF808E95))
+            assertThat(brandStrong).isEqualTo(Color(0xFFAB5C00))
+            assertThat(statusDone).isEqualTo(Color(0xFF567C2C))
+            assertThat(statusDoneInk).isEqualTo(Color(0xFF4F7429))
+            assertThat(statusActive).isEqualTo(Color(0xFFB36000))
+            assertThat(dangerInk).isEqualTo(Color(0xFFC0392B))
         }
     }
 
