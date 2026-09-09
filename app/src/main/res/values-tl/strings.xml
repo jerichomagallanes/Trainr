@@ -380,4 +380,26 @@
         <item>Tagalog</item>
         <item>日本語</item>
     </string-array>
+
+    <!-- Trainr Pro -->
+    <string name="pro_name">Trainr Pro</string>
+    <string name="pro_headline">Patuloy na magsulat ang coach</string>
+    <string name="pro_benefit_next_week">Bagong linggo kada linggo, batay sa aktwal mong naiangat</string>
+    <string name="pro_benefit_regenerate">Muling isulat ang linggong hindi bagay sa iyo</string>
+    <string name="pro_benefit_fresh_plan">Magsimula ng bagong plano kapag nagbago ang layunin mo</string>
+    <string name="pro_free_note">Libre pa rin ang unang linggo mo, bawat set na itinala, at ang pag-ulit ng linggo.</string>
+    <string name="pro_monthly">Buwanan</string>
+    <string name="pro_yearly">Taunan</string>
+    <string name="pro_best_value">Pinakasulit</string>
+    <string name="pro_trial_then">Libreng %1$s, tapos %2$s</string>
+    <string name="pro_subscribe">Mag-subscribe</string>
+    <string name="pro_not_now">Hindi muna</string>
+    <string name="pro_restore">Ibalik ang pagbili</string>
+    <string name="pro_restored">Naibalik na ang subscription mo.</string>
+    <string name="pro_nothing_to_restore">Walang natagpuang pagbili sa account na ito.</string>
+    <string name="pro_unavailable">Hindi available ang mga subscription ngayon. Subukan muli mamaya.</string>
+    <string name="pro_terms">Mga Tuntunin ng Paggamit</string>
+    <string name="pro_privacy">Patakaran sa Privacy</string>
+    <string name="pro_renewal_apple">Sisingilin ang bayad sa iyong Apple ID sa pagkumpirma. Awtomatiko itong nagre-renew maliban kung magkansela ka nang hindi bababa sa 24 oras bago matapos ang panahon. Pamahalaan ito sa Settings.</string>
+    <string name="pro_renewal_google">Sisingilin ang bayad sa iyong Google Play account sa pagkumpirma. Awtomatiko itong nagre-renew maliban kung magkansela ka nang hindi bababa sa 24 oras bago matapos ang panahon. Pamahalaan ito sa mga subscription ng Play Store.</string>
 </resources>

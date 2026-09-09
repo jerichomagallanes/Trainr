@@ -371,4 +371,26 @@
         <item>Tagalog</item>
         <item>日本語</item>
     </string-array>
+
+    <!-- Trainr Pro -->
+    <string name="pro_name">Trainr Pro</string>
+    <string name="pro_headline">コーチに書き続けてもらう</string>
+    <string name="pro_benefit_next_week">実際に挙げた重量から、毎週あたらしい1週間を作成</string>
+    <string name="pro_benefit_regenerate">合わなかった週は作り直せます</string>
+    <string name="pro_benefit_fresh_plan">目標が変わったら、いつでも新しいプランを</string>
+    <string name="pro_free_note">最初の1週間、記録したセット、週の繰り返しは、すべて無料のままです。</string>
+    <string name="pro_monthly">月額</string>
+    <string name="pro_yearly">年額</string>
+    <string name="pro_best_value">いちばんお得</string>
+    <string name="pro_trial_then">%1$s無料、その後%2$s</string>
+    <string name="pro_subscribe">登録する</string>
+    <string name="pro_not_now">今はしない</string>
+    <string name="pro_restore">購入を復元</string>
+    <string name="pro_restored">サブスクリプションを復元しました。</string>
+    <string name="pro_nothing_to_restore">このアカウントに購入履歴は見つかりませんでした。</string>
+    <string name="pro_unavailable">現在サブスクリプションをご利用いただけません。しばらくしてからお試しください。</string>
+    <string name="pro_terms">利用規約</string>
+    <string name="pro_privacy">プライバシーポリシー</string>
+    <string name="pro_renewal_apple">お支払いは確定時にApple IDへ請求されます。期間終了の24時間前までに解約しない限り自動更新されます。設定から管理できます。</string>
+    <string name="pro_renewal_google">お支払いは確定時にGoogle Playアカウントへ請求されます。期間終了の24時間前までに解約しない限り自動更新されます。Playストアの定期購入から管理できます。</string>
 </resources>
