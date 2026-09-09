@@ -5,19 +5,25 @@ package com.jericx.trainr.domain.purchases
 // real money on a model call.
 class ProGate(
     private val isPro: () -> Boolean,
+    // False when the purchases layer never came up: no key it can validate, or
+    // the store refused to talk to us. Nothing can be bought in that state, so
+    // asking someone to buy is asking the impossible.
+    private val canSell: () -> Boolean,
     private val allowance: FreeGenerationAllowance
 ) {
 
     fun decide(): Decision = when {
+        !canSell() -> Decision.ALLOWED
         isPro() -> Decision.ALLOWED
         !allowance.hasBeenUsed() -> Decision.ALLOWED
         else -> Decision.ASK
     }
 
     // Called once a generation is actually under way. Subscribers spend
-    // nothing, so their first week stays available if they ever lapse.
+    // nothing, so their first week stays available if they ever lapse, and
+    // neither does anyone using a build that cannot sell them the alternative.
     fun spend() {
-        if (!isPro()) allowance.markUsed()
+        if (canSell() && !isPro()) allowance.markUsed()
     }
 
     enum class Decision { ALLOWED, ASK }

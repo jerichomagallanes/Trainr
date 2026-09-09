@@ -12,8 +12,8 @@ class ProGateTests {
         }
     }
 
-    private fun gate(isPro: Boolean, used: Boolean) =
-        ProGate(isPro = { isPro }, allowance = FakeAllowance(used))
+    private fun gate(isPro: Boolean, used: Boolean, canSell: Boolean = true) =
+        ProGate(isPro = { isPro }, canSell = { canSell }, allowance = FakeAllowance(used))
 
     @Test
     fun `the first generation is free`() {
@@ -36,7 +36,7 @@ class ProGateTests {
     @Test
     fun `spending is what closes the free allowance`() {
         val allowance = FakeAllowance()
-        val gate = ProGate(isPro = { false }, allowance = allowance)
+        val gate = ProGate(isPro = { false }, canSell = { true }, allowance = allowance)
 
         assertThat(gate.decide()).isEqualTo(ProGate.Decision.ALLOWED)
         gate.spend()
@@ -45,11 +45,28 @@ class ProGateTests {
         assertThat(gate.decide()).isEqualTo(ProGate.Decision.ASK)
     }
 
+    // A build that cannot sell must not ask. This is the state a release carries
+    // while the key is still a sandbox one, and it used to strand people: the
+    // free week ran out and the paywall had nothing on it.
+    @Test
+    fun `a build that cannot sell never asks`() {
+        assertThat(gate(isPro = false, used = true, canSell = false).decide())
+            .isEqualTo(ProGate.Decision.ALLOWED)
+    }
+
+    @Test
+    fun `a build that cannot sell spends nothing`() {
+        val allowance = FakeAllowance()
+        ProGate(isPro = { false }, canSell = { false }, allowance = allowance).spend()
+
+        assertThat(allowance.used).isFalse()
+    }
+
     // A subscriber who lapses should still find the free week they never used.
     @Test
     fun `a subscriber spends nothing`() {
         val allowance = FakeAllowance()
-        ProGate(isPro = { true }, allowance = allowance).spend()
+        ProGate(isPro = { true }, canSell = { true }, allowance = allowance).spend()
 
         assertThat(allowance.used).isFalse()
     }
