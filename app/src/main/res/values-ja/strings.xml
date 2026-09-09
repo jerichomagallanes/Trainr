@@ -424,7 +424,7 @@
     <string name="pro_compare_rewrite">週を作り直す</string>
     <string name="pro_compare_fresh">新しいプランを始める</string>
     <string name="pro_compare_one">1</string>
-    <string name="pro_compare_unlimited">無制限</string>
+    <string name="pro_compare_every_week">毎週</string>
     <string name="pro_questions">ご質問は？</string>
     <string name="pro_faq_includes_q">Trainr Proには何が含まれますか？</string>
     <string name="pro_faq_includes_a">AIがあたらしい週を書く機能です。記録した内容から次の週を作り、合わない週は作り直し、目標が変わればプランを新しく始められます。</string>
