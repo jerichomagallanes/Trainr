@@ -67,6 +67,7 @@ fun WeeklyPlanRoute(
     onStartTodayClick: (WorkoutDay) -> Unit = {},
     onLeavePlanConfirmed: () -> Unit = {},
     onUpdateProfileClick: () -> Unit = {},
+    onOpenProClick: () -> Unit = {},
     onStartNextWeekClick: () -> Unit = {},
     onRepeatWeekClick: () -> Unit = {},
     onRegenerateWeekClick: () -> Unit = {},
@@ -89,6 +90,7 @@ fun WeeklyPlanRoute(
         onStartTodayClick = onStartTodayClick,
         onLeavePlanConfirmed = onLeavePlanConfirmed,
         onUpdateProfileClick = onUpdateProfileClick,
+        onOpenProClick = onOpenProClick,
         onStartNextWeekClick = onStartNextWeekClick,
         onRepeatWeekClick = onRepeatWeekClick,
         onRegenerateWeekClick = onRegenerateWeekClick,
@@ -110,6 +112,7 @@ fun WeeklyPlanScreen(
     onStartTodayClick: (WorkoutDay) -> Unit = {},
     onLeavePlanConfirmed: () -> Unit = {},
     onUpdateProfileClick: () -> Unit = {},
+    onOpenProClick: () -> Unit = {},
     onStartNextWeekClick: () -> Unit = {},
     onRepeatWeekClick: () -> Unit = {},
     onRegenerateWeekClick: () -> Unit = {},
@@ -163,6 +166,7 @@ fun WeeklyPlanScreen(
                     ProfileMenu(
                         versionName = versionName,
                         onUpdateProfileClick = onUpdateProfileClick,
+                        onOpenProClick = onOpenProClick,
                         appearance = appearance,
                         onAppearanceChange = onAppearanceChange
                     )
@@ -347,6 +351,7 @@ fun WeeklyPlanScreen(
 private fun ProfileMenu(
     versionName: String,
     onUpdateProfileClick: () -> Unit,
+    onOpenProClick: () -> Unit,
     appearance: AppearanceMode,
     onAppearanceChange: (AppearanceMode) -> Unit
 ) {
@@ -385,6 +390,13 @@ private fun ProfileMenu(
                 onClick = {
                     expanded = false
                     onUpdateProfileClick()
+                }
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.pro_name)) },
+                onClick = {
+                    expanded = false
+                    onOpenProClick()
                 }
             )
             DropdownMenuItem(

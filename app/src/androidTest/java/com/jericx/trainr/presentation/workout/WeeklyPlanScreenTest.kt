@@ -184,6 +184,24 @@ class WeeklyPlanScreenTest {
         assertThat(asked).isTrue()
     }
 
+    // The only way in for someone who has not hit the limit, and the only way
+    // back for someone who has already paid.
+    @Test
+    fun proIsReachedFromTheProfileMenu() {
+        var asked = false
+        composeTestRule.setContent {
+            TrainrTheme {
+                WeeklyPlanScreen(state = state, onOpenProClick = { asked = true })
+            }
+        }
+
+        composeTestRule.onNodeWithContentDescription(string(R.string.profile_and_app))
+            .performClick()
+        composeTestRule.onNodeWithText(string(R.string.pro_name)).performClick()
+
+        assertThat(asked).isTrue()
+    }
+
     @Test
     fun theProfileIsStillReachableWithNoPlan() {
         composeTestRule.setContent {

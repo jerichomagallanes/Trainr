@@ -1,5 +1,7 @@
 package com.jericx.trainr.presentation
 
+import com.jericx.trainr.presentation.purchases.PaywallReason
+
 sealed class Screen(val route: String) {
     data object SplashScreen : Screen("splash_screen")
     data object Welcome : Screen("welcome_screen")
@@ -32,6 +34,18 @@ sealed class Screen(val route: String) {
             const val ARG_EDIT = "edit"
         }
     }
+    // The reason someone reached a paid action, carried through so the paywall
+    // can lead with it rather than with every feature at once.
+    data object Paywall : Screen("paywall_screen?reason={reason}") {
+        const val ARG_REASON = "reason"
+
+        fun createRoute(reason: PaywallReason) = "paywall_screen?reason=${reason.name}"
+    }
+
+    // Whether this shows the offer or the subscription depends on the
+    // entitlement, which is not the screen's identity.
+    data object Pro : Screen("pro_screen")
+
     data object Home : Screen("home_screen")
 
     // One stored week, opened from Weekly Progress. Home always shows the
