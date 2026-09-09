@@ -110,6 +110,18 @@ damage arising from your use of Trainr or from following a plan it wrote. This
 does not exclude anything that cannot be excluded by law, and nothing here takes
 away rights you have as a consumer where you live.
 
+## If you got Trainr from the App Store
+
+Apple's standard licence agreement also applies to copies downloaded from the
+App Store, and you can read it here:
+https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+
+That agreement covers the software licence: what you may do with the app, and
+Apple's part as the distributor rather than the maker. This document covers
+Trainr itself — what it does, the training you do at your own risk, that a model
+wrote your plan, and how paying works. Where the two disagree about the licence,
+Apple's agreement wins for App Store copies.
+
 ## Changes
 
 If these terms change, the date at the top changes with them, and the history is
