@@ -138,6 +138,32 @@ class ProPaywallScreenTest {
         composeTestRule.onNodeWithText(string(R.string.pro_unavailable)).assertIsDisplayed()
     }
 
+    // Two plans is what actually ships: lifetime is built but not sold, so the
+    // offering returns Monthly and Yearly only. Every other test here passes a
+    // lifetime plan, which means the configuration real buyers see was the one
+    // configuration nothing covered.
+    @Test
+    fun twoPlansIsAWholePaywall() {
+        setScreen(plans = listOf(monthly, yearly), selectedId = "yearly")
+
+        composeTestRule.onNodeWithText(string(R.string.pro_monthly)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.pro_yearly)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.pro_save_percent, 33)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(
+            button(R.string.pro_subscribe_to, string(R.string.pro_yearly))
+        ).assertIsDisplayed()
+
+        // Nothing that belongs to a product we are not selling.
+        composeTestRule.onNodeWithText(string(R.string.pro_lifetime)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.pro_pay_once)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(button(R.string.pro_buy_lifetime)).assertDoesNotExist()
+
+        // And the renewal terms still appear, because everything on sale renews.
+        composeTestRule.onNodeWithText(string(R.string.pro_renewal_google))
+            .performScrollTo()
+            .assertIsDisplayed()
+    }
+
     // The table is the one place the free tier's actual number appears.
     @Test
     fun theComparisonNamesWhatTheFreeTierGets() {
