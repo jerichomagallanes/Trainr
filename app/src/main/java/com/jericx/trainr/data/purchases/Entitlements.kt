@@ -72,12 +72,16 @@ class Entitlements(
     companion object {
         const val ENTITLEMENT = "trainr_ai_workout_plans_pro"
 
-        // Public SDK keys are meant to ship in the binary; the secret key is
-        // never in the app. This one is still the sandbox key, which is why a
-        // release refuses to use it.
-        private const val API_KEY = "goog_PLACEHOLDER_UNTIL_PLAY_PRODUCTS_EXIST"
+        // RevenueCat's test store key, and the same one iOS uses: it is
+        // platform-agnostic and returns an offering without any Play products
+        // existing, which is what lets the paywall be used before the console
+        // work is done. A public SDK key is meant to ship in the binary; the
+        // secret key is never in the app.
+        private const val API_KEY = "test_WMIQYjVmrPgWhTvqwpfnkobWhAB"
 
+        // A sandbox key validates nothing a real buyer does, so a release built
+        // against one refuses to configure and leaves every paid path open.
         val keyIsShippable: Boolean
-            get() = BuildConfig.DEBUG || !API_KEY.contains("PLACEHOLDER")
+            get() = BuildConfig.DEBUG || !API_KEY.startsWith("test_")
     }
 }
