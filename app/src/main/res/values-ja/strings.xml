@@ -438,4 +438,13 @@
     <string name="pro_faq_free_q">無料のままの機能は？</string>
     <string name="pro_faq_free_a">最初のAI週、記録したすべてのセット、レストタイマー、各種目の動画、過去の週と記録、そして週の繰り返しは、いつでも無料です。</string>
     <string name="pro_support_trouble">サブスクリプションでお困りですか？</string>
+
+    <!-- Trainr Pro contextual prompt -->
+    <string name="pro_upgrade_title">Trainr Proにアップグレード</string>
+    <string name="pro_continue">続ける</string>
+    <string name="pro_free_limit">無料の上限：AIが書く週は1回</string>
+    <string name="pro_and_more">Proにはさらに次の機能も</string>
+    <string name="pro_prompt_next_week">無料のAI週を使い切りました。Proなら、記録したセットをもとに毎週あたらしい1週間を作成します。</string>
+    <string name="pro_prompt_rewrite">無料のAI週を使い切りました。Proなら、合わない週はいつでも作り直せます。</string>
+    <string name="pro_prompt_fresh">無料のAI週を使い切りました。Proなら、目標や器具、日数が変わったときに新しいプランを始められます。</string>
 </resources>

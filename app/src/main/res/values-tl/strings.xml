@@ -447,4 +447,13 @@
     <string name="pro_faq_free_q">Ano ang mananatiling libre?</string>
     <string name="pro_faq_free_a">Ang unang linggong isinulat ng AI, bawat set na itinala mo, ang rest timer, ang video sa bawat ehersisyo, lahat ng nakaraang linggo at progreso, at ang pag-ulit ng linggo kahit gaano karami.</string>
     <string name="pro_support_trouble">May problema sa subscription mo?</string>
+
+    <!-- Trainr Pro contextual prompt -->
+    <string name="pro_upgrade_title">Mag-upgrade sa Trainr Pro</string>
+    <string name="pro_continue">Magpatuloy</string>
+    <string name="pro_free_limit">Limitasyon ng libre: isang linggong isinulat ng AI</string>
+    <string name="pro_and_more">At higit pa ang kasama sa Pro</string>
+    <string name="pro_prompt_next_week">Nagamit na ang libreng linggong isinulat ng AI. Sa Pro, gumagawa ito ng bago kada linggo mula sa mga set na talagang itinala mo.</string>
+    <string name="pro_prompt_rewrite">Nagamit na ang libreng linggong isinulat ng AI. Sa Pro, makakahiling ka ng ibang linggo kapag hindi bagay ang isa.</string>
+    <string name="pro_prompt_fresh">Nagamit na ang libreng linggong isinulat ng AI. Sa Pro, makakasimula ka ng bagong plano kapag nagbago ang layunin, kagamitan o araw mo.</string>
 </resources>
