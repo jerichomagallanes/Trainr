@@ -110,6 +110,58 @@ damage arising from your use of Trainr or from following a plan it wrote. This
 does not exclude anything that cannot be excluded by law, and nothing here takes
 away rights you have as a consumer where you live.
 
+## If you got Trainr from the App Store
+
+Apple requires any agreement covering an app it distributes to carry the terms
+below. This section applies only to copies of Trainr downloaded from the App
+Store, and where it disagrees with anything above, this section wins for those
+copies.
+
+1. **This agreement is with the developer, not Apple.** Apple is not a party to
+   it. The developer, not Apple, is solely responsible for Trainr and its
+   content.
+
+2. **What the licence covers.** You have a non-transferable licence to use
+   Trainr on any Apple-branded products you own or control, as permitted by the
+   Usage Rules in Apple's Media Services Terms and Conditions, except that
+   Trainr may also be used by other accounts in your Family Sharing group.
+
+3. **Support is the developer's.** Apple has no obligation to provide any
+   maintenance or support for Trainr.
+
+4. **Warranty.** The developer is solely responsible for any product warranties,
+   whether express or implied by law, to the extent they have not effectively
+   been disclaimed. If Trainr fails to conform to any applicable warranty, you
+   may notify Apple, and Apple will refund the purchase price of Trainr to you.
+   To the maximum extent permitted by law, Apple has no other warranty
+   obligation whatsoever with respect to Trainr.
+
+5. **Claims about the app are the developer's to answer.** The developer, not
+   Apple, is responsible for any claim relating to Trainr: product liability, a
+   failure to conform to a legal or regulatory requirement, or a claim under
+   consumer protection, privacy or similar law, including any claim arising from
+   its health-related use.
+
+6. **Intellectual property.** If a third party claims that Trainr infringes
+   their intellectual property, the developer, not Apple, is responsible for
+   investigating, defending, settling and discharging that claim.
+
+7. **Where you are.** You confirm that you are not located in a country subject
+   to a U.S. Government embargo or designated by it as supporting terrorism, and
+   that you are not on any U.S. Government list of prohibited or restricted
+   parties.
+
+8. **Who to contact.** Questions, complaints or claims about Trainr should be
+   directed to: Jericho Isaac Magallanes, Osaka, Japan,
+   jericho.magallanes324@gmail.com
+
+9. **Third-party terms.** You must comply with any applicable third-party terms
+   when using Trainr — your mobile data plan's terms, for instance.
+
+10. **Apple can enforce this section.** Apple and its subsidiaries are
+    third-party beneficiaries of this section, and each has the right to enforce
+    these terms against you.
+
 ## Changes
 
 If these terms change, the date at the top changes with them, and the history is
