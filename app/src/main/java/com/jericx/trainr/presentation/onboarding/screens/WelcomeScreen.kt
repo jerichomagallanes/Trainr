@@ -1,13 +1,15 @@
 package com.jericx.trainr.presentation.onboarding.screens
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -38,6 +40,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.shape.CircleShape
@@ -81,11 +84,16 @@ fun WelcomeScreen(
     Column(modifier = Modifier.fillMaxSize()) {
         WelcomeHeader()
 
-        Box(
+        // The illustration is sized from the height as well as the width, so a
+        // short screen shrinks the picture rather than pushing the page dots and
+        // the button off the bottom. The height factor is loose enough that a
+        // normal phone is unaffected and only genuinely short screens give way.
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
         ) {
+            val illustration = minOf(maxWidth * 0.65f, maxHeight * 0.45f)
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -93,26 +101,37 @@ fun WelcomeScreen(
                     .padding(vertical = Spacing.large),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Spacer(modifier = Modifier.height(Spacing.extraLarge))
+                // The carousel scrolls and the button does not: on a short
+                // screen the illustration is what should give way, and a
+                // primary action pushed past the bottom edge cannot be tapped
+                // at all.
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState()),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Spacer(modifier = Modifier.height(Spacing.extraLarge))
 
-                InfiniteHorizontalPager(
-                    items = pages,
-                    modifier = Modifier.fillMaxWidth(),
-                    onPageChanged = { page ->
-                        currentPage = pages.indexOf(page)
+                    InfiniteHorizontalPager(
+                        items = pages,
+                        modifier = Modifier.fillMaxWidth(),
+                        onPageChanged = { page ->
+                            currentPage = pages.indexOf(page)
+                        }
+                    ) { page ->
+                        OnboardingPageContent(page = page, illustration = illustration)
                     }
-                ) { page ->
-                    OnboardingPageContent(page = page)
+
+                    Spacer(modifier = Modifier.height(Spacing.large))
+
+                    PageIndicator(
+                        pageCount = pages.size,
+                        currentPage = currentPage
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(Spacing.large))
-
-                PageIndicator(
-                    pageCount = pages.size,
-                    currentPage = currentPage
-                )
-
-                Spacer(modifier = Modifier.weight(1f))
 
                 TrainrButton(
                     text = stringResource(R.string.get_started),
@@ -127,15 +146,14 @@ fun WelcomeScreen(
 }
 
 @Composable
-private fun OnboardingPageContent(page: OnboardingPage) {
+private fun OnboardingPageContent(page: OnboardingPage, illustration: Dp) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(
             modifier = Modifier
-                .fillMaxWidth(0.65f)
-                .aspectRatio(1f)
+                .size(illustration)
                 .clip(MaterialTheme.shapes.large)
         ) {
             Image(
@@ -162,53 +180,75 @@ private fun OnboardingPageContent(page: OnboardingPage) {
 // already consumes is subtracted back out.
 private val HeaderTopMargin = 151.dp
 
+// On a short screen that margin is a quarter of the height, which is what
+// pushed the page dots and the caption off the bottom. Below this it steps down.
+private val ShortScreenHeight = 700.dp
+private val ShortScreenTopMargin = 96.dp
+
+// The width the title and the wordmark need side by side at full size. Below it
+// both step down together, because a Row will let them overflow rather than
+// shrink, and the wordmark is an image with no smaller size to fall back on.
+private val HeaderFullWidth = 380.dp
+
 @Composable
 private fun WelcomeHeader() {
     val consumedInset = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = Spacing.large)
-            .padding(top = (HeaderTopMargin - consumedInset).coerceAtLeast(0.dp)),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Row(
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = stringResource(R.string.welcome_to) + " ",
-                style = MaterialTheme.typography.headlineLarge.copy(fontSize = 30.sp),
-                color = MaterialTheme.trainrColors.onSurface
-            )
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+        val topMargin = if (maxHeight < ShortScreenHeight) {
+            ShortScreenTopMargin
+        } else {
+            HeaderTopMargin
+        }
+        val isNarrow = maxWidth < HeaderFullWidth
+        val titleSize = if (isNarrow) 24.sp else 30.sp
+        val markHeight = if (isNarrow) 42.dp else 52.dp
 
-            Image(
-                painter = themedPainter(R.drawable.img_trainr, R.drawable.img_trainr_night),
-                contentDescription = stringResource(R.string.trainr),
-                modifier = Modifier.height(52.dp),
-                contentScale = ContentScale.FillHeight
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = Spacing.large)
+                .padding(top = (topMargin - consumedInset).coerceAtLeast(0.dp)),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(R.string.welcome_to) + " ",
+                    style = MaterialTheme.typography.headlineLarge.copy(fontSize = titleSize),
+                    color = MaterialTheme.trainrColors.onSurface,
+                    maxLines = 1
+                )
+
+                Image(
+                    painter = themedPainter(R.drawable.img_trainr, R.drawable.img_trainr_night),
+                    contentDescription = stringResource(R.string.trainr),
+                    modifier = Modifier.height(markHeight),
+                    contentScale = ContentScale.FillHeight
+                )
+            }
+
+            Spacer(modifier = Modifier.height(Spacing.small))
+
+            Text(
+                text = buildAnnotatedString {
+                    append(stringResource(R.string.your) + " ")
+                    withStyle(
+                        style = SpanStyle(
+                            color = MaterialTheme.trainrColors.brandStrong,
+                            fontWeight = FontWeight.Bold
+                        )
+                    ) {
+                        append(stringResource(R.string.ai_powered))
+                    }
+                    append(" " + stringResource(R.string.personal_trainer))
+                },
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                color = MaterialTheme.trainrColors.onSurface,
+                textAlign = TextAlign.Center
             )
         }
-
-        Spacer(modifier = Modifier.height(Spacing.small))
-
-        Text(
-            text = buildAnnotatedString {
-                append(stringResource(R.string.your) + " ")
-                withStyle(
-                    style = SpanStyle(
-                        color = MaterialTheme.trainrColors.brandStrong,
-                        fontWeight = FontWeight.Bold
-                    )
-                ) {
-                    append(stringResource(R.string.ai_powered))
-                }
-                append(" " + stringResource(R.string.personal_trainer))
-            },
-            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
-            color = MaterialTheme.trainrColors.onSurface,
-            textAlign = TextAlign.Center
-        )
     }
 }
 
