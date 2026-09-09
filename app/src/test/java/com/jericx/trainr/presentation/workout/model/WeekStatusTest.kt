@@ -32,7 +32,7 @@ class WeekStatusTest {
 
         assertThat(labels).containsExactly(
             R.string.completed,
-            R.string.in_progress,
+            R.string.status_in_progress,
             R.string.not_completed,
             R.string.skipped,
             R.string.upcoming

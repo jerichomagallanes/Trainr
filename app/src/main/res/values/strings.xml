@@ -170,7 +170,7 @@
     </plurals>
     <string name="equipment_label">Equipment:</string>
     <string name="completed">Completed</string>
-    <string name="in_progress">In Progress</string>
+    <string name="status_in_progress">In Progress</string>
     <string name="not_started">Not started</string>
     <string name="hide_video_tutorial">Hide video tutorial</string>
     <string name="show_video_tutorial">Show video tutorial</string>
@@ -355,7 +355,6 @@
     <string name="none_injury">None</string>
     
     <!-- Language Selection -->
-    <string name="language_selection">Language Selection</string>
     <string name="language_english">English</string>
     <string name="language_tagalog">Tagalog</string>
     <string name="language_japanese">日本語</string>

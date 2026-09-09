@@ -56,7 +56,7 @@ private fun StatusChipPreview() {
             modifier = Modifier.padding(Spacing.medium)
         ) {
             StatusChip(labelRes = R.string.completed, tone = StatusTone.DONE)
-            StatusChip(labelRes = R.string.in_progress, tone = StatusTone.ACTIVE)
+            StatusChip(labelRes = R.string.status_in_progress, tone = StatusTone.ACTIVE)
             StatusChip(labelRes = R.string.not_started, tone = StatusTone.IDLE)
         }
     }

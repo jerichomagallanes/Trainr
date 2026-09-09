@@ -11,7 +11,7 @@ class WorkoutStatusUiTest {
     @Test
     fun eachStatusMapsToItsOwnLabel() {
         assertThat(WorkoutStatus.COMPLETED.labelRes).isEqualTo(R.string.completed)
-        assertThat(WorkoutStatus.IN_PROGRESS.labelRes).isEqualTo(R.string.in_progress)
+        assertThat(WorkoutStatus.IN_PROGRESS.labelRes).isEqualTo(R.string.status_in_progress)
         assertThat(WorkoutStatus.NOT_STARTED.labelRes).isEqualTo(R.string.not_started)
     }
 

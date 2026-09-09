@@ -9,7 +9,7 @@ import com.jericx.trainr.presentation.workout.model.StatusTone
 val WorkoutStatus.labelRes: Int
     get() = when (this) {
         WorkoutStatus.COMPLETED -> R.string.completed
-        WorkoutStatus.IN_PROGRESS -> R.string.in_progress
+        WorkoutStatus.IN_PROGRESS -> R.string.status_in_progress
         WorkoutStatus.NOT_STARTED -> R.string.not_started
     }
 

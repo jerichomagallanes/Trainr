@@ -167,7 +167,7 @@
     </plurals>
     <string name="equipment_label">器具:</string>
     <string name="completed">完了</string>
-    <string name="in_progress">進行中</string>
+    <string name="status_in_progress">進行中</string>
     <string name="not_started">未開始</string>
     <string name="hide_video_tutorial">ビデオチュートリアルを非表示</string>
     <string name="show_video_tutorial">ビデオチュートリアルを表示</string>
@@ -347,7 +347,6 @@
     <string name="none_injury">なし</string>
     
     <!-- Language Selection -->
-    <string name="language_selection">言語選択</string>
     <string name="language_english">English</string>
     <string name="language_tagalog">Tagalog</string>
     <string name="language_japanese">日本語</string>
