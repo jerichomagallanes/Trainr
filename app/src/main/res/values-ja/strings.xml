@@ -430,8 +430,8 @@
     <string name="pro_faq_includes_a">AIがあたらしい週を書く機能です。記録した内容から次の週を作り、合わない週は作り直し、目標が変わればプランを新しく始められます。</string>
     <string name="pro_faq_human_q">プランは実際のトレーナーが作っていますか？</string>
     <string name="pro_faq_human_a">いいえ。Geminiモデルが、ご回答をもとに作成し、記録したセットに合わせて進めます。プランは目安であり、医療上の助言ではありません。</string>
-    <string name="pro_faq_renew_q">Proは買い切りですか、自動更新ですか？</string>
-    <string name="pro_faq_renew_a">月額と年額は期間の終わりに自動更新されます。買い切りは一度のお支払いで、更新はありません。</string>
+    <string name="pro_faq_renew_q">Proは自動更新されますか？</string>
+    <string name="pro_faq_renew_a">はい。月額と年額は、解約するまで期間の終わりに自動更新されます。</string>
     <string name="pro_faq_cancel_q">いつでも解約できますか？</string>
     <string name="pro_faq_cancel_a">はい。お支払い済みの期間が終わるまでProをお使いいただけます。作成した週や記録が失われることはありません。</string>
     <string name="pro_faq_devices_q">機種を変えたらどうなりますか？</string>

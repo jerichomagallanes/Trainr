@@ -439,8 +439,8 @@
     <string name="pro_faq_includes_a">Binubuksan ng Pro ang bagong linggong isinusulat ng AI: gumawa ng susunod na linggo mula sa naiangat mo, muling isulat ang linggong hindi bagay, at magsimula ng bagong plano kapag nagbago ang layunin mo.</string>
     <string name="pro_faq_human_q">Tunay bang trainer ang gumagawa ng plano ko?</string>
     <string name="pro_faq_human_a">Hindi. Isang Gemini model ang gumagawa nito mula sa mga sagot mo, at isinusulong ito batay sa mga set na itinala mo. Gabay lang ang mga plano, hindi payong medikal.</string>
-    <string name="pro_faq_renew_q">Isang bayad lang ba ang Pro o nagre-renew ito?</string>
-    <string name="pro_faq_renew_a">Awtomatikong nagre-renew ang Buwanan at Taunan sa dulo ng bawat panahon. Ang Panghabambuhay ay isang bayad lang at hindi nagre-renew.</string>
+    <string name="pro_faq_renew_q">Awtomatiko bang nagre-renew ang Pro?</string>
+    <string name="pro_faq_renew_a">Oo. Nagre-renew ang Buwanan at Taunan sa dulo ng bawat panahon, hanggang sa mag-cancel ka.</string>
     <string name="pro_faq_cancel_q">Maaari ba akong magkansela anumang oras?</string>
     <string name="pro_faq_cancel_a">Oo. Mananatili ang Pro hanggang matapos ang panahong binayaran mo, at walang maaalis sa mga nagawa o naitala mo.</string>
     <string name="pro_faq_devices_q">Paano kung magpalit ako ng telepono?</string>

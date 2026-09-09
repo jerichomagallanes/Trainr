@@ -438,8 +438,8 @@
     <string name="pro_faq_includes_a">Pro unlocks new AI-written weeks: generate next week from what you lifted, rewrite a week that does not suit you, and start a fresh plan whenever your goal changes.</string>
     <string name="pro_faq_human_q">Is my plan written by a real trainer?</string>
     <string name="pro_faq_human_a">No. A Gemini model writes it from the answers you gave, and progresses it from the sets you log. Plans are guidance, not medical advice.</string>
-    <string name="pro_faq_renew_q">Is Pro a one-time payment or does it renew?</string>
-    <string name="pro_faq_renew_a">Monthly and Yearly renew automatically at the end of each period. Lifetime is a single payment that never renews.</string>
+    <string name="pro_faq_renew_q">Does Pro renew automatically?</string>
+    <string name="pro_faq_renew_a">Yes. Monthly and Yearly renew at the end of each period, until you cancel.</string>
     <string name="pro_faq_cancel_q">Can I cancel any time?</string>
     <string name="pro_faq_cancel_a">Yes. You keep Pro until the period you have paid for ends, and nothing you have generated or logged is taken away.</string>
     <string name="pro_faq_devices_q">What happens if I get a new phone?</string>
