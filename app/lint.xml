@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+    <!-- strings.xml is the source of truth for both apps: the iOS catalog and its
+         L10n accessors are generated from it. So a string can be live on iOS and
+         genuinely unreferenced here, and lint is right about the reference while
+         being wrong about the string being dead. Scoped to the Pro copy, which
+         Android will use when its paywall lands, rather than blanket-disabled. -->
+    <issue id="UnusedResources">
+        <ignore regexp="R\.string\.pro_" />
+    </issue>
+</lint>
