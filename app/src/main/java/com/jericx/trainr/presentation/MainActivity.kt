@@ -432,11 +432,14 @@ fun AppContent(
                 }
 
                 composable(Screen.Generating.route) {
-                    LaunchedEffect(Unit) { proGate.spend() }
                     GeneratingScreen(
                         isReady = onboardingState.isCompleted,
                         onStart = { onboardingViewModel.saveUserProfile() },
                         onDone = {
+                            // Spent here and nowhere earlier: a generation that
+                            // failed has taken nothing, so the free week is
+                            // still there to be used.
+                            proGate.spend()
                             navController.navigate(Screen.Home.route) {
                                 popUpTo(0) { inclusive = true }
                             }
@@ -584,7 +587,6 @@ fun AppContent(
                 }
 
                 composable(Screen.RegeneratingWeek.route) {
-                    LaunchedEffect(Unit) { proGate.spend() }
                     val nextWeekViewModel: NextWeekViewModel = hiltViewModel()
                     val failure by nextWeekViewModel.failure.collectAsStateWithLifecycle()
                     val weekIsReady by nextWeekViewModel.isReady.collectAsStateWithLifecycle()
@@ -592,6 +594,10 @@ fun AppContent(
                         isReady = weekIsReady,
                         onStart = { nextWeekViewModel.regenerateThisWeek() },
                         onDone = {
+                            // Spent here and nowhere earlier: a generation that
+                            // failed has taken nothing, so the free week is
+                            // still there to be used.
+                            proGate.spend()
                             navController.navigate(Screen.Home.route) {
                                 popUpTo(0) { inclusive = true }
                             }
@@ -603,7 +609,6 @@ fun AppContent(
                 }
 
                 composable(Screen.GeneratingNextWeek.route) {
-                    LaunchedEffect(Unit) { proGate.spend() }
                     val nextWeekViewModel: NextWeekViewModel = hiltViewModel()
                     val nextWeekFailure by nextWeekViewModel.failure.collectAsStateWithLifecycle()
                     val weekIsReady by nextWeekViewModel.isReady.collectAsStateWithLifecycle()
@@ -611,6 +616,10 @@ fun AppContent(
                         isReady = weekIsReady,
                         onStart = { nextWeekViewModel.generateNextWeek() },
                         onDone = {
+                            // Spent here and nowhere earlier: a generation that
+                            // failed has taken nothing, so the free week is
+                            // still there to be used.
+                            proGate.spend()
                             navController.navigate(Screen.Home.route) {
                                 popUpTo(0) { inclusive = true }
                             }

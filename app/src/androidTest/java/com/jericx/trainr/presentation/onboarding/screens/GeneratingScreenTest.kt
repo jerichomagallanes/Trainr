@@ -78,6 +78,28 @@ class GeneratingScreenTest {
         composeTestRule.waitForIdle()
         assertThat(done).isTrue()
     }
+    // The one free generation is spent in onDone, so a failure reaching it would
+    // charge someone their free week for a plan they never got — which is
+    // exactly what happened when the spend sat on the screen appearing instead.
+    @Test
+    fun aGenerationThatFailedNeverFinishes() {
+        var done = false
+        composeTestRule.setContent {
+            TrainrTheme {
+                GeneratingScreen(
+                    isReady = false,
+                    onStart = {},
+                    onDone = { done = true },
+                    failure = PlanGenerationResult.Offline
+                )
+            }
+        }
+
+        composeTestRule.mainClock.advanceTimeBy(10_000)
+
+        assertThat(done).isFalse()
+    }
+
     @Test
     fun beingOfflineIsSaidPlainly() {
         composeTestRule.setContent {
