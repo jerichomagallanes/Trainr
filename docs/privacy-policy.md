@@ -1,10 +1,13 @@
 # Privacy Policy for Trainr
 
-**Last updated: 5 September 2026**
+**Last updated: 9 September 2026**
 
 Trainr is a workout planning app. This policy explains what it collects, where
 that goes, and what you can do about it. It is written to be read, not to cover
-anybody in legalese.
+anybody in legalese. It covers both the Android and the iOS app, which behave the
+same way and are noted separately only where they differ.
+
+The terms you agree to by using the app are in the [terms of use](terms-of-use).
 
 ## What Trainr asks you for
 
@@ -63,10 +66,10 @@ Google's handling of this data is governed by their own terms:
 - Gemini API terms: https://ai.google.dev/gemini-api/terms
 - Google Privacy Policy: https://policies.google.com/privacy
 
-Trainr also uses **Firebase App Check** with Play Integrity, which checks that the
-request is coming from a genuine install of this app rather than something
-pretending to be it. This involves your device and app being attested by Google
-Play. It is a security measure and carries no profile data.
+Trainr also uses **Firebase App Check**, which checks that the request is coming
+from a genuine install of this app rather than something pretending to be it. On
+Android this attests the app through Google Play Integrity, and on iOS through
+Apple's App Attest. It is a security measure and carries no profile data.
 
 ## Crash reports
 
@@ -75,7 +78,7 @@ finds out and can fix it. If a crash happens, the following is sent to Google:
 
 - The stack trace: which part of the code failed
 - What the app was doing at the time
-- Basic details about the device and the version of Android on it
+- Basic details about the device and the version of Android or iOS on it
 - A random identifier Crashlytics generates for your installation, used to tell
   one crash from the same crash happening twice
 
@@ -105,8 +108,8 @@ onboarding, and the plan is written without it.
 - No location, contacts, photos, microphone or camera access
 - Nothing is sold or shared with third parties beyond the plan generation described above
 
-The app requests two permissions, both needed to reach the plan generation
-service: internet access and network state.
+On Android the app requests two permissions, both needed to reach the plan
+generation service: internet access and network state. On iOS it requests none.
 
 ## Children
 
@@ -115,8 +118,9 @@ below 13.
 
 ## Deleting your data
 
-Uninstalling Trainr deletes everything it holds. You can also clear it from within
-Android at any time: **Settings → Apps → Trainr → Storage → Clear storage**.
+Uninstalling Trainr deletes everything it holds. You can also clear it without
+uninstalling: on Android, **Settings → Apps → Trainr → Storage → Clear storage**;
+on iOS, delete the app, which removes its data with it.
 
 ## Not medical advice
 
