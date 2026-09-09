@@ -171,7 +171,7 @@
     </plurals>
     <string name="equipment_label">Equipment:</string>
     <string name="completed">Tapos na</string>
-    <string name="in_progress">Ginagawa</string>
+    <string name="status_in_progress">Ginagawa</string>
     <string name="not_started">Hindi pa nasimulan</string>
     <string name="hide_video_tutorial">Itago ang video tutorial</string>
     <string name="show_video_tutorial">Ipakita ang video tutorial</string>
@@ -356,7 +356,6 @@
     <string name="none_injury">Wala</string>
     
     <!-- Language Selection -->
-    <string name="language_selection">Pagpili ng Wika</string>
     <string name="language_english">English</string>
     <string name="language_tagalog">Tagalog</string>
     <string name="language_japanese">日本語</string>

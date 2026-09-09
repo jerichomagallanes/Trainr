@@ -15,7 +15,7 @@ enum class WeekStatus {
 val WeekStatus.labelRes: Int
     get() = when (this) {
         WeekStatus.COMPLETED -> R.string.completed
-        WeekStatus.IN_PROGRESS -> R.string.in_progress
+        WeekStatus.IN_PROGRESS -> R.string.status_in_progress
         WeekStatus.NOT_COMPLETED -> R.string.not_completed
         WeekStatus.SKIPPED -> R.string.skipped
         WeekStatus.UPCOMING -> R.string.upcoming

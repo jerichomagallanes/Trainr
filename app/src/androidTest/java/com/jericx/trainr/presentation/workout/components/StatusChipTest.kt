@@ -37,7 +37,7 @@ class StatusChipTest {
     fun inProgressChipShowsItsLabel() {
         setChip(WorkoutStatus.IN_PROGRESS)
 
-        composeTestRule.onNodeWithText(string(R.string.in_progress)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.status_in_progress)).assertIsDisplayed()
     }
 
     @Test

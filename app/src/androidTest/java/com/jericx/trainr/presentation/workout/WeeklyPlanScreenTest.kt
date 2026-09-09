@@ -364,7 +364,7 @@ class WeeklyPlanScreenTest {
         setScreen()
 
         composeTestRule.onNodeWithText(string(R.string.completed)).assertIsDisplayed()
-        composeTestRule.onNodeWithText(string(R.string.in_progress)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.status_in_progress)).assertIsDisplayed()
         composeTestRule.onNodeWithText(string(R.string.not_started)).assertIsDisplayed()
     }
 
