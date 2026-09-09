@@ -29,6 +29,7 @@ room = "2.8.4"
 # Media
 youtube-player = "13.0.0"
 firebase-bom = "34.18.0"
+revenuecat = "10.20.0"
 google-services = "4.5.0"
 firebase-crashlytics-plugin = "3.0.8"
 
@@ -95,6 +96,7 @@ mockwebserver = { group = "com.squareup.okhttp3", name = "mockwebserver", versio
 
 youtube-player = { group = "com.pierfrancescosoffritti.androidyoutubeplayer", name = "core", version.ref = "youtube-player" }
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebase-bom" }
+revenuecat = { group = "com.revenuecat.purchases", name = "purchases", version.ref = "revenuecat" }
 firebase-ai = { group = "com.google.firebase", name = "firebase-ai" }
 firebase-appcheck-playintegrity = { group = "com.google.firebase", name = "firebase-appcheck-playintegrity" }
 firebase-appcheck-debug = { group = "com.google.firebase", name = "firebase-appcheck-debug" }

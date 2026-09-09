@@ -224,6 +224,8 @@ dependencies {
 
     implementation(libs.youtube.player)
 
+    implementation(libs.revenuecat)
+
     // Unit tests
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

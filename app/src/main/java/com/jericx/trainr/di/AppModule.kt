@@ -9,6 +9,8 @@ import com.jericx.trainr.data.local.UserMapper
 import com.jericx.trainr.data.preferences.LanguageCodeProvider
 import com.jericx.trainr.data.preferences.LanguagePreferences
 import com.jericx.trainr.data.preferences.ThemePreferences
+import com.jericx.trainr.data.purchases.Entitlements
+import com.jericx.trainr.data.purchases.StoredGenerationAllowance
 import com.jericx.trainr.data.repository.UserRepositoryImpl
 import com.jericx.trainr.data.generation.planGenerator
 import com.jericx.trainr.domain.diagnostics.Breadcrumbs
@@ -16,6 +18,8 @@ import com.jericx.trainr.data.diagnostics.CrashlyticsBreadcrumbs
 import com.jericx.trainr.domain.generation.PlanGenerator
 import com.jericx.trainr.data.generation.DailySpentModels
 import com.jericx.trainr.domain.generation.SpentModels
+import com.jericx.trainr.domain.purchases.FreeGenerationAllowance
+import com.jericx.trainr.domain.purchases.ProGate
 import com.jericx.trainr.domain.repository.UserRepository
 import dagger.Module
 import dagger.Provides
@@ -41,6 +45,26 @@ object AppModule {
     @Provides
     @Singleton
     fun provideBreadcrumbs(): Breadcrumbs = CrashlyticsBreadcrumbs()
+
+    @Provides
+    @Singleton
+    fun provideEntitlements(
+        @ApplicationContext context: Context,
+        breadcrumbs: Breadcrumbs
+    ): Entitlements = Entitlements(context, breadcrumbs)
+
+    @Provides
+    @Singleton
+    fun provideGenerationAllowance(
+        @ApplicationContext context: Context
+    ): FreeGenerationAllowance = StoredGenerationAllowance(context)
+
+    @Provides
+    @Singleton
+    fun provideProGate(
+        entitlements: Entitlements,
+        allowance: FreeGenerationAllowance
+    ): ProGate = ProGate(isPro = { entitlements.isPro.value }, allowance = allowance)
 
     @Provides
     @Singleton
