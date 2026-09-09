@@ -379,4 +379,26 @@
         <item>Tagalog</item>
         <item>日本語</item>
     </string-array>
+
+    <!-- Trainr Pro -->
+    <string name="pro_name">Trainr Pro</string>
+    <string name="pro_headline">Keep the coach writing</string>
+    <string name="pro_benefit_next_week">A new week each week, written from what you actually lifted</string>
+    <string name="pro_benefit_regenerate">Rewrite a week that does not suit you</string>
+    <string name="pro_benefit_fresh_plan">Start a fresh plan whenever your goal changes</string>
+    <string name="pro_free_note">Your first week, every set you log, and repeating a week all stay free.</string>
+    <string name="pro_monthly">Monthly</string>
+    <string name="pro_yearly">Yearly</string>
+    <string name="pro_best_value">Best value</string>
+    <string name="pro_trial_then">%1$s free, then %2$s</string>
+    <string name="pro_subscribe">Subscribe</string>
+    <string name="pro_not_now">Not now</string>
+    <string name="pro_restore">Restore purchase</string>
+    <string name="pro_restored">Your subscription is back.</string>
+    <string name="pro_nothing_to_restore">No purchase was found on this account.</string>
+    <string name="pro_unavailable">Subscriptions are not available right now. Please try again later.</string>
+    <string name="pro_terms">Terms of Use</string>
+    <string name="pro_privacy">Privacy Policy</string>
+    <string name="pro_renewal_apple">Payment is charged to your Apple ID at confirmation. It renews automatically unless you cancel at least 24 hours before the period ends. Manage it in Settings.</string>
+    <string name="pro_renewal_google">Payment is charged to your Google Play account at confirmation. It renews automatically unless you cancel at least 24 hours before the period ends. Manage it in Play Store subscriptions.</string>
 </resources>
