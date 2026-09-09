@@ -164,6 +164,34 @@ class ProPaywallScreenTest {
         composeTestRule.onNodeWithText(string(R.string.pro_faq_cancel_a)).assertIsDisplayed()
     }
 
+    // Play has no standard EULA to fall back on, so this link is the only terms
+    // an Android buyer is ever shown.
+    @Test
+    fun theTermsAreLinkedBeforeBuying() {
+        var opened: String? = null
+        composeTestRule.setContent {
+            TrainrTheme {
+                ProPaywallScreen(
+                    reason = PaywallReason.NEXT_WEEK,
+                    plans = listOf(monthly, yearly, lifetime),
+                    selectedId = "yearly",
+                    isWorking = false,
+                    onSelect = {},
+                    onBuy = {},
+                    onRestore = {},
+                    onClose = {},
+                    onOpenLink = { opened = it }
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.pro_terms))
+            .performScrollTo()
+            .performClick()
+
+        assertThat(opened).isEqualTo(ProLinks.TERMS)
+    }
+
     // Restore has to be reachable, not buried behind a purchase.
     @Test
     fun restoreIsOnThePaywall() {

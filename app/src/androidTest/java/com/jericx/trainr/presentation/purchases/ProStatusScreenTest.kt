@@ -52,6 +52,18 @@ class ProStatusScreenTest {
         assertThat(opened).isEqualTo(ProLinks.SUBSCRIPTIONS)
     }
 
+    // The terms someone accepts when buying are the terms they are shown
+    // afterwards, so both screens carry the same link.
+    @Test
+    fun theTermsAreShownToWhoeverAgreedToThem() {
+        var opened: String? = null
+        setScreen(onOpenLink = { opened = it })
+
+        composeTestRule.onNodeWithText(string(R.string.pro_terms)).performClick()
+
+        assertThat(opened).isEqualTo(ProLinks.TERMS)
+    }
+
     @Test
     fun restoreIsReachableHere() {
         var restored = false

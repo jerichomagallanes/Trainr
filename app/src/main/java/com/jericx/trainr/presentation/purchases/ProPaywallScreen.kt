@@ -141,6 +141,12 @@ fun ProPaywallScreen(
                         modifier = Modifier.clickable(enabled = !isWorking, onClick = onRestore)
                     )
                     Text(
+                        text = stringResource(R.string.pro_terms),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.brandStrong,
+                        modifier = Modifier.clickable { onOpenLink(ProLinks.TERMS) }
+                    )
+                    Text(
                         text = stringResource(R.string.pro_privacy),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.brandStrong,
