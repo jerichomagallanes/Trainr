@@ -52,7 +52,12 @@ import com.jericx.trainr.presentation.onboarding.OnboardingViewModel
 import com.jericx.trainr.presentation.onboarding.screens.BasicInfoScreen
 import com.jericx.trainr.presentation.onboarding.screens.BodyMetricsScreen
 import com.jericx.trainr.presentation.onboarding.screens.FitnessGoalScreen
+import com.jericx.trainr.domain.purchases.ProGate
 import com.jericx.trainr.presentation.onboarding.screens.GeneratingScreen
+import com.jericx.trainr.presentation.purchases.PaywallReason
+import com.jericx.trainr.presentation.purchases.ProPaywallRoute
+import com.jericx.trainr.presentation.purchases.ProPromptSheet
+import com.jericx.trainr.presentation.purchases.ProRoute
 import com.jericx.trainr.presentation.onboarding.screens.LimitationsScreen
 import com.jericx.trainr.presentation.onboarding.screens.ReviewScreen
 import com.jericx.trainr.presentation.onboarding.screens.WelcomeScreen
@@ -120,6 +125,9 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var themePreferences: ThemePreferences
 
+    @Inject
+    lateinit var proGate: ProGate
+
     // English-only for now, whatever the device says. The returned context
     // carries that configuration and must become the activity's base before any
     // resources are read, so it cannot move to onCreate.
@@ -142,7 +150,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             AppContent(
                 versionName = versionName,
-                themePreferences = themePreferences
+                themePreferences = themePreferences,
+                proGate = proGate
             )
         }
     }
@@ -161,7 +170,11 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun AppContent(versionName: String, themePreferences: ThemePreferences) {
+fun AppContent(
+    versionName: String,
+    themePreferences: ThemePreferences,
+    proGate: ProGate
+) {
     val context = LocalContext.current
     val navController = rememberNavController()
 
@@ -210,6 +223,17 @@ fun AppContent(versionName: String, themePreferences: ThemePreferences) {
         }
     }
 
+    // Asked for where the tap happened, so the limit is explained before anyone
+    // is shown a price.
+    var prompt by remember { mutableStateOf<PaywallReason?>(null) }
+
+    fun askThen(reason: PaywallReason, route: String) {
+        when (proGate.decide()) {
+            ProGate.Decision.ALLOWED -> navController.navigate(route)
+            ProGate.Decision.ASK -> prompt = reason
+        }
+    }
+
     val appearance by themePreferences.appearance.collectAsStateWithLifecycle()
 
     LaunchedEffect(appearance) { context.persistAppNightMode(appearance) }
@@ -221,6 +245,17 @@ fun AppContent(versionName: String, themePreferences: ThemePreferences) {
                 .systemBarsPadding(),
             color = MaterialTheme.trainrColors.surfacePage
         ) {
+            prompt?.let { reason ->
+                ProPromptSheet(
+                    reason = reason,
+                    onContinue = {
+                        prompt = null
+                        navController.navigate(Screen.Paywall.createRoute(reason))
+                    },
+                    onDismiss = { prompt = null }
+                )
+            }
+
             NavHost(navController = navController, startDestination = Screen.SplashScreen.route) {
                 composable(route = Screen.SplashScreen.route) {
                     SplashScreen(versionName = versionName)
@@ -371,6 +406,8 @@ fun AppContent(versionName: String, themePreferences: ThemePreferences) {
                                         inclusive = false
                                     )
                                 }
+                            } else if (fromPlan) {
+                                askThen(PaywallReason.FRESH_PLAN, Screen.Generating.route)
                             } else {
                                 navController.navigate(Screen.Generating.route)
                             }
@@ -395,6 +432,7 @@ fun AppContent(versionName: String, themePreferences: ThemePreferences) {
                 }
 
                 composable(Screen.Generating.route) {
+                    LaunchedEffect(Unit) { proGate.spend() }
                     GeneratingScreen(
                         isReady = onboardingState.isCompleted,
                         onStart = { onboardingViewModel.saveUserProfile() },
@@ -455,7 +493,7 @@ fun AppContent(versionName: String, themePreferences: ThemePreferences) {
                         onStartTodayClick = openDay,
                         onRepeatWeekClick = { nextWeekViewModel.repeatWeek(weekNumber) },
                         onRegenerateWeekClick = {
-                            navController.navigate(Screen.RegeneratingWeek.route)
+                            askThen(PaywallReason.REWRITE, Screen.RegeneratingWeek.route)
                         }
                     )
                 }
@@ -519,12 +557,34 @@ fun AppContent(versionName: String, themePreferences: ThemePreferences) {
                             navController.navigate(Screen.WeeklyProgress.route)
                         },
                         onPreviewNextWeekClick = {
-                            navController.navigate(Screen.GeneratingNextWeek.route)
+                            askThen(PaywallReason.NEXT_WEEK, Screen.GeneratingNextWeek.route)
                         }
                     )
                 }
 
+                composable(
+                    route = Screen.Paywall.route,
+                    arguments = listOf(
+                        navArgument(Screen.Paywall.ARG_REASON) {
+                            type = NavType.StringType
+                            nullable = true
+                            defaultValue = null
+                        }
+                    )
+                ) { entry ->
+                    val name = entry.arguments?.getString(Screen.Paywall.ARG_REASON)
+                    ProPaywallRoute(
+                        reason = PaywallReason.entries.firstOrNull { it.name == name },
+                        onClose = { navController.popBackStack() }
+                    )
+                }
+
+                composable(Screen.Pro.route) {
+                    ProRoute(onClose = { navController.popBackStack() })
+                }
+
                 composable(Screen.RegeneratingWeek.route) {
+                    LaunchedEffect(Unit) { proGate.spend() }
                     val nextWeekViewModel: NextWeekViewModel = hiltViewModel()
                     val failure by nextWeekViewModel.failure.collectAsStateWithLifecycle()
                     val weekIsReady by nextWeekViewModel.isReady.collectAsStateWithLifecycle()
@@ -543,6 +603,7 @@ fun AppContent(versionName: String, themePreferences: ThemePreferences) {
                 }
 
                 composable(Screen.GeneratingNextWeek.route) {
+                    LaunchedEffect(Unit) { proGate.spend() }
                     val nextWeekViewModel: NextWeekViewModel = hiltViewModel()
                     val nextWeekFailure by nextWeekViewModel.failure.collectAsStateWithLifecycle()
                     val weekIsReady by nextWeekViewModel.isReady.collectAsStateWithLifecycle()
@@ -597,12 +658,13 @@ fun AppContent(versionName: String, themePreferences: ThemePreferences) {
                                 Screen.Review.createRoute(fromPlan = true, profileOnly = true)
                             )
                         },
+                        onOpenProClick = { navController.navigate(Screen.Pro.route) },
                         onStartNextWeekClick = {
-                            navController.navigate(Screen.GeneratingNextWeek.route)
+                            askThen(PaywallReason.NEXT_WEEK, Screen.GeneratingNextWeek.route)
                         },
                         onRepeatWeekClick = { nextWeekViewModel.repeatWeek() },
                         onRegenerateWeekClick = {
-                            navController.navigate(Screen.RegeneratingWeek.route)
+                            askThen(PaywallReason.REWRITE, Screen.RegeneratingWeek.route)
                         },
                         onCreatePlanClick = {
                             navController.navigate(Screen.Review.createRoute(fromPlan = true))
