@@ -387,6 +387,8 @@
     <string name="pro_restore">購入を復元</string>
     <string name="pro_restored">サブスクリプションを復元しました。</string>
     <string name="pro_nothing_to_restore">このアカウントに購入履歴は見つかりませんでした。</string>
+    <string name="pro_active">サブスクリプションは有効です</string>
+    <string name="pro_manage">サブスクリプションを管理</string>
     <string name="pro_unavailable">現在サブスクリプションをご利用いただけません。しばらくしてからお試しください。</string>
     <string name="pro_terms">利用規約</string>
     <string name="pro_privacy">プライバシーポリシー</string>

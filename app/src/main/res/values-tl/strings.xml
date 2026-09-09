@@ -396,6 +396,8 @@
     <string name="pro_restore">Ibalik ang pagbili</string>
     <string name="pro_restored">Naibalik na ang subscription mo.</string>
     <string name="pro_nothing_to_restore">Walang natagpuang pagbili sa account na ito.</string>
+    <string name="pro_active">Aktibo ang iyong subscription</string>
+    <string name="pro_manage">Pamahalaan ang subscription</string>
     <string name="pro_unavailable">Hindi available ang mga subscription ngayon. Subukan muli mamaya.</string>
     <string name="pro_terms">Mga Tuntunin ng Paggamit</string>
     <string name="pro_privacy">Patakaran sa Privacy</string>
