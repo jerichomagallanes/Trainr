@@ -5,6 +5,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.R
@@ -87,23 +88,13 @@ class LimitationsScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText(string(R.string.knee_problems_injury)).performClick()
-        composeTestRule.onNodeWithText(string(R.string.none_injury)).performClick()
+        composeTestRule.onNodeWithText(string(R.string.knee_problems_injury))
+            .performScrollTo().performClick()
+        composeTestRule.onNodeWithText(string(R.string.none_injury))
+            .performScrollTo().performClick()
         composeTestRule.onNodeWithText(string(R.string.submit)).performClick()
 
         assertThat(capturedInjuries).isEmpty()
     }
 
-    // Workout style belongs to the goals screen; it must not drift back here.
-    @Test
-    fun workoutStyleIsNotAskedOnThisScreen() {
-        composeTestRule.setContent {
-            TrainrTheme {
-                LimitationsScreen(onNextClick = {}, onBackClick = {})
-            }
-        }
-
-        composeTestRule.onNodeWithText(string(R.string.preferred_workout_style))
-            .assertDoesNotExist()
-    }
 }

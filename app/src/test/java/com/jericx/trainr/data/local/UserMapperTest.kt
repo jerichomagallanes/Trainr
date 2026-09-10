@@ -8,8 +8,6 @@ import com.jericx.trainr.domain.model.FitnessGoal
 import com.jericx.trainr.domain.model.Gender
 import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.model.WorkoutLocation
-import com.jericx.trainr.domain.model.WorkoutTime
-import com.jericx.trainr.domain.model.WorkoutType
 import org.junit.Test
 
 class UserMapperTest {
@@ -29,9 +27,7 @@ class UserMapperTest {
         availableEquipment = listOf(Equipment.DUMBBELL, Equipment.BARBELL),
         workoutDaysPerWeek = 4,
         workoutDuration = 60,
-        preferredWorkoutTime = WorkoutTime.EVENING,
         injuries = listOf(Injury.LOWER_BACK),
-        workoutType = WorkoutType.STRENGTH,
         createdAt = 1_700_000_000_000L
     )
 
@@ -47,8 +43,6 @@ class UserMapperTest {
         assertThat(entity.fitnessGoal).isEqualTo("MUSCLE_GAIN")
         assertThat(entity.experienceLevel).isEqualTo("INTERMEDIATE")
         assertThat(entity.workoutLocation).isEqualTo("GYM")
-        assertThat(entity.preferredWorkoutTime).isEqualTo("EVENING")
-        assertThat(entity.workoutType).isEqualTo("STRENGTH")
         assertThat(entity.availableEquipment).containsExactly("DUMBBELL", "BARBELL").inOrder()
         assertThat(entity.injuries).containsExactly("LOWER_BACK")
         assertThat(entity.createdAt).isEqualTo(1_700_000_000_000L)

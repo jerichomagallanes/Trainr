@@ -33,7 +33,6 @@ import com.jericx.trainr.domain.model.equipmentFor
 import com.jericx.trainr.domain.model.LoadedEquipment
 import com.jericx.trainr.domain.model.UnitSystem
 import com.jericx.trainr.domain.model.WorkoutLocation
-import com.jericx.trainr.domain.model.WorkoutTime
 import com.jericx.trainr.presentation.common.getLocalizedName
 import com.jericx.trainr.presentation.common.components.cards.TrainrLocationCard
 import com.jericx.trainr.presentation.common.components.cards.TrainrSelectionCard
@@ -42,7 +41,6 @@ import com.jericx.trainr.presentation.common.components.core.TrainrCheckboxChip
 import com.jericx.trainr.presentation.common.components.core.TrainrDropdown
 import com.jericx.trainr.presentation.common.components.core.TrainrMultiSelectChip
 import com.jericx.trainr.presentation.common.components.core.TrainrProgress
-import com.jericx.trainr.presentation.common.components.core.TrainrRadioChip
 import com.jericx.trainr.presentation.common.components.core.TrainrToggleChip
 import com.jericx.trainr.presentation.common.components.layout.TrainrChipGroup
 import com.jericx.trainr.presentation.common.components.layout.TrainrFlowRow
@@ -67,8 +65,7 @@ fun WorkoutSetupScreen(
         equipment: List<Equipment>,
         liftingUnits: UnitSystem?,
         daysPerWeek: Int,
-        duration: Int,
-        preferredTime: WorkoutTime
+        duration: Int
     ) -> Unit,
     onBackClick: () -> Unit
 ) {
@@ -80,7 +77,6 @@ fun WorkoutSetupScreen(
     // answer the plan is built around.
     var selectedDays by remember { mutableStateOf(initial?.workoutDaysPerWeek?.takeIf { it > 0 }) }
     var selectedDuration by remember { mutableStateOf(initial?.workoutDuration?.takeIf { it > 0 }) }
-    var selectedTime by remember { mutableStateOf(initial?.preferredWorkoutTime) }
     var selectedLiftingUnits by remember { mutableStateOf(initial?.liftingUnitSystem) }
 
     // A bodyweight setup has no plates to read, so lifting units stay unasked
@@ -103,15 +99,13 @@ fun WorkoutSetupScreen(
                     val location = selectedLocation
                     val days = selectedDays
                     val duration = selectedDuration
-                    val time = selectedTime
-                    if (location != null && days != null && duration != null && time != null) {
+                    if (location != null && days != null && duration != null) {
                         onNextClick(
                             location,
                             selectedEquipment.toList(),
                             if (hasLoadedEquipment) selectedLiftingUnits else null,
                             days,
-                            duration,
-                            time
+                            duration
                         )
                     }
                 },
@@ -121,8 +115,7 @@ fun WorkoutSetupScreen(
                     selectedEquipment.isNotEmpty() &&
                     (!hasLoadedEquipment || selectedLiftingUnits != null) &&
                     selectedDays != null &&
-                    selectedDuration != null &&
-                    selectedTime != null
+                    selectedDuration != null
             )
         }
     ) { paddingValues ->
@@ -310,44 +303,6 @@ fun WorkoutSetupScreen(
                                 modifier = Modifier.weight(1f)
                             )
                         }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(Spacing.sectionGap))
-
-                TrainrFormSection(
-                    title = stringResource(R.string.preferred_workout_time),
-                    verticalPadding = 0.dp,
-                    titleGap = Spacing.card
-                ) {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(Spacing.card)
-                    ) {
-                        TrainrRadioChip(
-                            text = stringResource(R.string.early_morning_time),
-                            selected = selectedTime == WorkoutTime.EARLY_MORNING,
-                            onClick = { selectedTime = WorkoutTime.EARLY_MORNING }
-                        )
-                        TrainrRadioChip(
-                            text = stringResource(R.string.morning_time),
-                            selected = selectedTime == WorkoutTime.MORNING,
-                            onClick = { selectedTime = WorkoutTime.MORNING }
-                        )
-                        TrainrRadioChip(
-                            text = stringResource(R.string.afternoon_time),
-                            selected = selectedTime == WorkoutTime.AFTERNOON,
-                            onClick = { selectedTime = WorkoutTime.AFTERNOON }
-                        )
-                        TrainrRadioChip(
-                            text = stringResource(R.string.evening_time),
-                            selected = selectedTime == WorkoutTime.EVENING,
-                            onClick = { selectedTime = WorkoutTime.EVENING }
-                        )
-                        TrainrRadioChip(
-                            text = stringResource(R.string.flexible_anytime),
-                            selected = selectedTime == WorkoutTime.ANYTIME,
-                            onClick = { selectedTime = WorkoutTime.ANYTIME }
-                        )
                     }
                 }
             }

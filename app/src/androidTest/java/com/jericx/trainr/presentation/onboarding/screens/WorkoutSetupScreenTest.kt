@@ -29,7 +29,7 @@ class WorkoutSetupScreenTest {
         composeTestRule.setContent {
             TrainrTheme {
                 WorkoutSetupScreen(
-                    onNextClick = { _, _, _, _, _, _ -> },
+                    onNextClick = { _, _, _, _, _ -> },
                     onBackClick = {}
                 )
             }
@@ -45,7 +45,7 @@ class WorkoutSetupScreenTest {
         composeTestRule.setContent {
             TrainrTheme {
                 WorkoutSetupScreen(
-                    onNextClick = { _, _, _, _, _, _ -> },
+                    onNextClick = { _, _, _, _, _ -> },
                     onBackClick = {}
                 )
             }
@@ -64,7 +64,7 @@ class WorkoutSetupScreenTest {
         composeTestRule.setContent {
             TrainrTheme {
                 WorkoutSetupScreen(
-                    onNextClick = { _, _, _, _, _, _ -> },
+                    onNextClick = { _, _, _, _, _ -> },
                     onBackClick = {}
                 )
             }
@@ -79,7 +79,7 @@ class WorkoutSetupScreenTest {
     fun choosingOnlyALocationIsNotEnoughToContinue() {
         composeTestRule.setContent {
             TrainrTheme {
-                WorkoutSetupScreen(onNextClick = { _, _, _, _, _, _ -> }, onBackClick = {})
+                WorkoutSetupScreen(onNextClick = { _, _, _, _, _ -> }, onBackClick = {})
             }
         }
 
@@ -94,7 +94,7 @@ class WorkoutSetupScreenTest {
     fun equipmentHasToBeAnsweredRatherThanAssumed() {
         composeTestRule.setContent {
             TrainrTheme {
-                WorkoutSetupScreen(onNextClick = { _, _, _, _, _, _ -> }, onBackClick = {})
+                WorkoutSetupScreen(onNextClick = { _, _, _, _, _ -> }, onBackClick = {})
             }
         }
 

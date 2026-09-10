@@ -11,8 +11,6 @@ import com.jericx.trainr.domain.model.Gender
 import com.jericx.trainr.domain.model.UnitSystem
 import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.model.WorkoutLocation
-import com.jericx.trainr.domain.model.WorkoutTime
-import com.jericx.trainr.domain.model.WorkoutType
 import com.jericx.trainr.domain.generation.PlanGenerationResult
 import com.jericx.trainr.domain.generation.PlanGenerator
 import com.jericx.trainr.domain.generation.PlanRequest
@@ -71,12 +69,11 @@ class OnboardingViewModel @Inject constructor(
         )
     }
 
-    fun updateFitnessGoal(goal: FitnessGoal, workoutType: WorkoutType) {
+    fun updateFitnessGoal(goal: FitnessGoal) {
         _onboardingState.value = _onboardingState.value.copy(
             answeredSteps = answeredWith(OnboardingStep.GOALS),
             userProfile = _onboardingState.value.userProfile.copy(
-                fitnessGoal = goal,
-                workoutType = workoutType
+                fitnessGoal = goal
             )
         )
     }
@@ -86,8 +83,7 @@ class OnboardingViewModel @Inject constructor(
         equipment: List<Equipment>,
         liftingUnits: UnitSystem?,
         daysPerWeek: Int,
-        duration: Int,
-        preferredTime: WorkoutTime
+        duration: Int
     ) {
         _onboardingState.value = _onboardingState.value.copy(
             answeredSteps = answeredWith(OnboardingStep.SETUP),
@@ -96,8 +92,7 @@ class OnboardingViewModel @Inject constructor(
                 liftingUnitSystem = liftingUnits,
                 availableEquipment = equipment,
                 workoutDaysPerWeek = daysPerWeek,
-                workoutDuration = duration,
-                preferredWorkoutTime = preferredTime
+                workoutDuration = duration
             )
         )
     }

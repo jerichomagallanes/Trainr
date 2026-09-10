@@ -39,7 +39,6 @@ import com.jericx.trainr.presentation.common.components.typography.TrainrScreenT
 import com.jericx.trainr.presentation.common.components.typography.TrainrSubtitle
 import com.jericx.trainr.presentation.common.getFocusPhrase
 import com.jericx.trainr.presentation.common.getLocalizedName
-import com.jericx.trainr.presentation.common.getProgramPhrase
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.trainrColors
 import com.jericx.trainr.presentation.onboarding.util.BodyMetricsConverter
@@ -168,14 +167,12 @@ fun ReviewScreen(
                 Spacer(modifier = Modifier.height(Spacing.screen))
 
                 val fitnessGoalText = userProfile.fitnessGoal.getLocalizedName()
-                val workoutTypeText = userProfile.workoutType.getLocalizedName()
                 
                 ProfileSection(
                     title = stringResource(R.string.fitness_goals_label),
                     onEdit = onEditGoals,
                     items = listOf(
-                        stringResource(R.string.main_goal_label) to fitnessGoalText,
-                        stringResource(R.string.workout_style_label) to workoutTypeText
+                        stringResource(R.string.main_goal_label) to fitnessGoalText
                     )
                 )
 
@@ -191,7 +188,6 @@ fun ReviewScreen(
                     }
                     equipmentNames.joinToString(", ")
                 }
-                val preferredTimeText = userProfile.preferredWorkoutTime.getLocalizedName()
                 
                 val liftingUnitsText = userProfile.liftingUnitSystem?.let {
                     stringResource(
@@ -221,8 +217,7 @@ fun ReviewScreen(
                             R.plurals.duration_minutes_format,
                             userProfile.workoutDuration,
                             userProfile.workoutDuration
-                        ),
-                        stringResource(R.string.preferred_time_label) to preferredTimeText
+                        )
                     )
                 )
 
@@ -361,7 +356,6 @@ private fun AIPreviewCard(userProfile: UserProfile) {
                                     userProfile.workoutDaysPerWeek
                                 )
                             },
-                            userProfile.workoutType.getProgramPhrase(),
                             userProfile.fitnessGoal.getFocusPhrase()
                         ),
                         style = MaterialTheme.typography.bodyMedium,

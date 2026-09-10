@@ -17,7 +17,6 @@ import com.jericx.trainr.R
 import com.jericx.trainr.domain.model.FitnessGoal
 import com.jericx.trainr.domain.model.UnitSystem
 import com.jericx.trainr.domain.model.UserProfile
-import com.jericx.trainr.domain.model.WorkoutType
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 import org.junit.Rule
 import org.junit.Test
@@ -54,15 +53,6 @@ class ReviewScreenTest {
                 profile.workoutDaysPerWeek
             ),
             composeTestRule.activity.getString(
-                when (profile.workoutType) {
-                    WorkoutType.STRENGTH -> R.string.program_strength
-                    WorkoutType.CARDIO -> R.string.program_cardio
-                    WorkoutType.HIIT -> R.string.program_hiit
-                    WorkoutType.YOGA -> R.string.program_flexibility
-                    WorkoutType.MIXED -> R.string.program_mixed
-                }
-            ),
-            composeTestRule.activity.getString(
                 when (profile.fitnessGoal) {
                     FitnessGoal.WEIGHT_LOSS -> R.string.goal_focus_lose_weight
                     FitnessGoal.MUSCLE_GAIN -> R.string.goal_focus_build_muscle
@@ -78,7 +68,6 @@ class ReviewScreenTest {
     fun theRoutinePreviewNamesTheGoalTheUserChose() {
         val profile = sampleProfile.copy(
             fitnessGoal = FitnessGoal.ENDURANCE,
-            workoutType = WorkoutType.CARDIO,
             workoutDaysPerWeek = 4
         )
         setScreen(profile)
@@ -94,7 +83,6 @@ class ReviewScreenTest {
     fun theRoutinePreviewNamesTheWorkoutStyleTheUserChose() {
         val profile = sampleProfile.copy(
             fitnessGoal = FitnessGoal.MUSCLE_GAIN,
-            workoutType = WorkoutType.STRENGTH,
             workoutDaysPerWeek = 3
         )
         setScreen(profile)

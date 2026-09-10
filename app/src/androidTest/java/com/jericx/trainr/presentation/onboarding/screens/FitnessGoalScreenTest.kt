@@ -12,7 +12,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.R
 import com.jericx.trainr.domain.model.FitnessGoal
-import com.jericx.trainr.domain.model.WorkoutType
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 import org.junit.Rule
 import org.junit.Test
@@ -30,7 +29,7 @@ class FitnessGoalScreenTest {
     fun displaysScreenTitle() {
         composeTestRule.setContent {
             TrainrTheme {
-                FitnessGoalScreen(onNextClick = { _, _ -> }, onBackClick = {})
+                FitnessGoalScreen(onNextClick = { }, onBackClick = {})
             }
         }
 
@@ -39,17 +38,16 @@ class FitnessGoalScreenTest {
     }
 
     @Test
-    fun nextDisabledUntilBothAnswersAreGiven() {
+    fun nextDisabledUntilTheGoalIsChosen() {
         composeTestRule.setContent {
             TrainrTheme {
-                FitnessGoalScreen(onNextClick = { _, _ -> }, onBackClick = {})
+                FitnessGoalScreen(onNextClick = { }, onBackClick = {})
             }
         }
 
         composeTestRule.onNodeWithText(string(R.string.next)).assertIsNotEnabled()
 
         composeTestRule.onNodeWithText(string(R.string.build_muscle)).performClick()
-        composeTestRule.onNodeWithText(string(R.string.hiit)).performScrollTo().performClick()
 
         composeTestRule.onNodeWithText(string(R.string.next)).assertIsEnabled()
     }
@@ -59,63 +57,14 @@ class FitnessGoalScreenTest {
         var captured: FitnessGoal? = null
         composeTestRule.setContent {
             TrainrTheme {
-                FitnessGoalScreen(onNextClick = { goal, _ -> captured = goal }, onBackClick = {})
+                FitnessGoalScreen(onNextClick = { goal -> captured = goal }, onBackClick = {})
             }
         }
 
         composeTestRule.onNodeWithText(string(R.string.build_muscle)).performClick()
-        composeTestRule.onNodeWithText(string(R.string.hiit)).performScrollTo().performClick()
         composeTestRule.onNodeWithText(string(R.string.next)).performClick()
 
         assertThat(captured).isEqualTo(FitnessGoal.MUSCLE_GAIN)
     }
 
-    @Test
-    fun nextEmitsTheChosenWorkoutStyleBesideTheGoal() {
-        var capturedStyle: WorkoutType? = null
-        composeTestRule.setContent {
-            TrainrTheme {
-                FitnessGoalScreen(
-                    onNextClick = { _, style -> capturedStyle = style },
-                    onBackClick = {}
-                )
-            }
-        }
-
-        composeTestRule.onNodeWithText(string(R.string.get_stronger)).performClick()
-        composeTestRule.onNodeWithText(string(R.string.hiit)).performScrollTo().performClick()
-        composeTestRule.onNodeWithText(string(R.string.next)).performClick()
-
-        assertThat(capturedStyle).isEqualTo(WorkoutType.HIIT)
-    }
-
-    @Test
-    fun noStyleIsChosenUntilTheClientChoosesOne() {
-        var emitted = false
-        composeTestRule.setContent {
-            TrainrTheme {
-                FitnessGoalScreen(onNextClick = { _, _ -> emitted = true }, onBackClick = {})
-            }
-        }
-
-        composeTestRule.onNodeWithText(string(R.string.lose_weight)).performClick()
-
-        composeTestRule.onNodeWithText(string(R.string.next)).assertIsNotEnabled()
-        composeTestRule.onNodeWithText(string(R.string.next)).performClick()
-        assertThat(emitted).isFalse()
-    }
-
-    @Test
-    fun bothAnswersTogetherAreEnough() {
-        composeTestRule.setContent {
-            TrainrTheme {
-                FitnessGoalScreen(onNextClick = { _, _ -> }, onBackClick = {})
-            }
-        }
-
-        composeTestRule.onNodeWithText(string(R.string.lose_weight)).performClick()
-        composeTestRule.onNodeWithText(string(R.string.mixed_balanced)).performScrollTo().performClick()
-
-        composeTestRule.onNodeWithText(string(R.string.next)).assertIsEnabled()
-    }
 }

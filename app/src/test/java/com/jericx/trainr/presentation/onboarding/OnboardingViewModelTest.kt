@@ -15,8 +15,6 @@ import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
 import com.jericx.trainr.domain.model.WorkoutLocation
 import com.jericx.trainr.domain.model.WorkoutStatus
-import com.jericx.trainr.domain.model.WorkoutTime
-import com.jericx.trainr.domain.model.WorkoutType
 import com.jericx.trainr.presentation.onboarding.OnboardingStep
 import com.jericx.trainr.domain.model.UnitSystem
 import com.jericx.trainr.domain.generation.PlanGenerator
@@ -124,16 +122,15 @@ class OnboardingViewModelTest {
     }
 
     @Test
-    fun `updateFitnessGoal sets the goal and the workout style together`() {
-        viewModel.updateFitnessGoal(FitnessGoal.MUSCLE_GAIN, WorkoutType.HIIT)
+    fun `updateFitnessGoal sets the goal`() {
+        viewModel.updateFitnessGoal(FitnessGoal.MUSCLE_GAIN)
 
         val profile = viewModel.onboardingState.value.userProfile
         assertThat(profile.fitnessGoal).isEqualTo(FitnessGoal.MUSCLE_GAIN)
-        assertThat(profile.workoutType).isEqualTo(WorkoutType.HIIT)
     }
 
     @Test
-    fun `updateWorkoutSetup sets all five fields`() {
+    fun `updateWorkoutSetup sets every field it is given`() {
         val equipment = listOf(Equipment.DUMBBELL, Equipment.OTHER)
 
         viewModel.updateWorkoutSetup(
@@ -142,7 +139,6 @@ class OnboardingViewModelTest {
             liftingUnits = UnitSystem.IMPERIAL,
             daysPerWeek = 4,
             duration = 45,
-            preferredTime = WorkoutTime.EVENING
         )
 
         val profile = viewModel.onboardingState.value.userProfile
@@ -150,7 +146,6 @@ class OnboardingViewModelTest {
         assertThat(profile.availableEquipment).containsExactlyElementsIn(equipment)
         assertThat(profile.workoutDaysPerWeek).isEqualTo(4)
         assertThat(profile.workoutDuration).isEqualTo(45)
-        assertThat(profile.preferredWorkoutTime).isEqualTo(WorkoutTime.EVENING)
         assertThat(profile.liftingUnitSystem).isEqualTo(UnitSystem.IMPERIAL)
     }
 
@@ -163,7 +158,6 @@ class OnboardingViewModelTest {
             liftingUnits = UnitSystem.METRIC,
             daysPerWeek = 4,
             duration = 45,
-            preferredTime = WorkoutTime.EVENING
         )
 
         val profile = viewModel.onboardingState.value.userProfile
@@ -181,7 +175,6 @@ class OnboardingViewModelTest {
             liftingUnits = null,
             daysPerWeek = 3,
             duration = 30,
-            preferredTime = WorkoutTime.MORNING
         )
 
         val profile = viewModel.onboardingState.value.userProfile
@@ -200,13 +193,13 @@ class OnboardingViewModelTest {
     }
 
     @Test
-    fun `updateLimitations leaves the workout style alone`() {
-        viewModel.updateFitnessGoal(FitnessGoal.ENDURANCE, WorkoutType.CARDIO)
+    fun `updateLimitations leaves the goal alone`() {
+        viewModel.updateFitnessGoal(FitnessGoal.ENDURANCE)
 
         viewModel.updateLimitations(listOf(Injury.KNEE))
 
-        assertThat(viewModel.onboardingState.value.userProfile.workoutType)
-            .isEqualTo(WorkoutType.CARDIO)
+        assertThat(viewModel.onboardingState.value.userProfile.fitnessGoal)
+            .isEqualTo(FitnessGoal.ENDURANCE)
     }
 
     @Test
@@ -354,7 +347,7 @@ class OnboardingViewModelTest {
         coEvery { userRepository.getCurrentUser() } returns stored
         val viewModel = OnboardingViewModel(userRepository, planGenerator, catalog)
         advanceUntilIdle()
-        viewModel.updateFitnessGoal(FitnessGoal.STRENGTH, WorkoutType.MIXED)
+        viewModel.updateFitnessGoal(FitnessGoal.STRENGTH)
 
         var done = false
         viewModel.updateProfileOnly { done = true }
@@ -428,7 +421,7 @@ class OnboardingViewModelTest {
     @Test
     fun `answered steps accumulate rather than replace one another`() {
         viewModel.updateBasicInfo("Jericho", 31, Gender.FEMALE, ExperienceLevel.ADVANCED)
-        viewModel.updateFitnessGoal(FitnessGoal.STRENGTH, WorkoutType.HIIT)
+        viewModel.updateFitnessGoal(FitnessGoal.STRENGTH)
 
         assertThat(viewModel.onboardingState.value.answeredSteps)
             .containsExactly(OnboardingStep.BASIC_INFO, OnboardingStep.GOALS)

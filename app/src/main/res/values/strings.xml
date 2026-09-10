@@ -90,12 +90,6 @@
     <string name="equipment_other">Other</string>
     <string name="workout_days_per_week">How many days per week can you work out?</string>
     <string name="session_duration">Session Duration</string>
-    <string name="preferred_workout_time">Preferred Workout Time</string>
-    <string name="early_morning_time">Early Morning (5-7 AM)</string>
-    <string name="morning_time">Morning (7-12 PM)</string>
-    <string name="afternoon_time">Afternoon (12-5 PM)</string>
-    <string name="evening_time">Evening (5-10 PM)</string>
-    <string name="flexible_anytime">Flexible/Anytime</string>
     <plurals name="workout_days_option">
         <item quantity="one">%d day</item>
         <item quantity="other">%d days</item>
@@ -105,17 +99,6 @@
     <string name="lets_keep_you_safe">LET\'S KEEP YOU SAFE</string>
     <string name="limitations_description">Tell us about any limitations so we can adapt your workouts</string>
     <string name="any_injuries_or_areas">Any injuries or areas to be careful with?</string>
-    <string name="preferred_workout_style">Preferred Workout Style</string>
-    <string name="strength_training">Strength Training</string>
-    <string name="strength_training_description">Focus on building muscle and strength.</string>
-    <string name="cardio">Cardio</string>
-    <string name="cardio_description">Improve endurance and burn calories.</string>
-    <string name="hiit">HIIT</string>
-    <string name="hiit_description">High intensity interval training.</string>
-    <string name="mixed_balanced">Mixed/Balanced</string>
-    <string name="mobility_yoga">Mobility &amp; Yoga</string>
-    <string name="mobility_yoga_description">Stretching, mobility and yoga work.</string>
-    <string name="mixed_balanced_description">Combination of different training styles.</string>
     
     <!-- Review Screen -->
     <string name="your_fitness_profile">YOUR FITNESS PROFILE</string>
@@ -259,18 +242,16 @@
     <string name="experience_label">Experience</string>
     <string name="fitness_goals_label">Fitness Goals</string>
     <string name="main_goal_label">Main Goal</string>
-    <string name="workout_style_label">Workout Style</string>
     <string name="workout_setup_label">Workout Setup</string>
     <string name="location_label">Location</string>
     <string name="equipment_label_full">Equipment</string>
     <string name="weights_in_label">Weights in</string>
     <string name="schedule_label">Schedule</string>
     <string name="duration_label">Duration</string>
-    <string name="preferred_time_label">Preferred Time</string>
     <string name="limitations_label">Limitations</string>
     <string name="injuries_concerns_label">Injuries/Concerns</string>
     <string name="ai_routine_preview_label">AI Workout Plan</string>
-    <string name="ai_routine_description">Based on your profile, we\'ll create a %1$s %2$s plan focused on %3$s.</string>
+    <string name="ai_routine_description">Based on your profile, we\'ll create a %1$s plan focused on %2$s.</string>
     <string name="bodyweight_only_label">Bodyweight only</string>
     <string name="flexible_schedule">Flexible</string>
     <plurals name="days_per_week_format">
@@ -318,11 +299,6 @@
     <string name="goal_focus_improve_endurance">improving endurance</string>
     <string name="goal_focus_general_fitness">general fitness</string>
     <string name="goal_focus_flexibility">flexibility and mobility</string>
-    <string name="program_strength">strength</string>
-    <string name="program_cardio">cardio</string>
-    <string name="program_hiit">HIIT</string>
-    <string name="program_flexibility">mobility</string>
-    <string name="program_mixed">balanced</string>
     
     <!-- Workout Locations -->
     <string name="home_location">Home</string>
@@ -330,18 +306,8 @@
     <string name="both_location">Both</string>
     
     <!-- Workout Styles -->
-    <string name="strength_training_style">Strength Training</string>
-    <string name="cardio_style">Cardio</string>
-    <string name="hiit_style">HIIT</string>
-    <string name="flexibility_mobility_style">Flexibility &amp; Mobility</string>
-    <string name="mixed_balanced_style">Mixed/Balanced</string>
     
     <!-- Workout Times -->
-    <string name="early_morning">Early Morning</string>
-    <string name="morning">Morning</string>
-    <string name="afternoon">Afternoon</string>
-    <string name="evening">Evening</string>
-    <string name="flexible_anytime_time">Flexible/Anytime</string>
     
     <!-- Injury Options -->
     <string name="lower_back_pain_injury">Lower Back Pain</string>
