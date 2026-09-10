@@ -3,6 +3,7 @@ package com.jericx.trainr.data.generation
 import com.jericx.trainr.domain.catalog.ExerciseCatalog
 import com.jericx.trainr.domain.catalog.InMemoryExerciseCatalog
 import com.jericx.trainr.domain.catalog.PatternRequirement
+import com.jericx.trainr.domain.generation.SessionMinutes
 import com.jericx.trainr.domain.model.Equipment
 import com.jericx.trainr.domain.model.ExerciseMeasure
 import com.jericx.trainr.domain.model.ExerciseSet
@@ -111,7 +112,7 @@ class GeneratedPlanParser(private val catalog: ExerciseCatalog = InMemoryExercis
                     "${limits.maxSetsPerSession}, warm-up included"
             )
         }
-        val minutes = day.exercises.sumOf { it.minutes }
+        val minutes = SessionMinutes.forDay(day.exercises.map { it.minutes })
         if (limits.sessionCeilingMinutes > 0 && minutes > limits.sessionCeilingMinutes) {
             add(
                 "$where: runs about $minutes minutes of work and rest, and the client asked " +
@@ -178,14 +179,15 @@ class GeneratedPlanParser(private val catalog: ExerciseCatalog = InMemoryExercis
     // fourth number for the model to keep in agreement with the other three.
     // A rep is about three seconds at the moderate velocity ACSM asks for.
     private val GeneratedExercise.minutes: Int
-        get() {
-            val perSet = when (resolvedMeasure) {
+        get() = SessionMinutes.forExercise(
+            measure = resolvedMeasure,
+            perSet = when (resolvedMeasure) {
                 ExerciseMeasure.DURATION -> sets.map { it.seconds ?: 0 }
-                else -> sets.map { (it.reps ?: 0) * SECONDS_PER_REP }
-            }
-            val rest = (restSeconds ?: 0) * (sets.size - 1).coerceAtLeast(0)
-            return ceil((perSet.sum() + rest) / 60.0).toInt().coerceAtLeast(1)
-        }
+                else -> sets.map { it.reps ?: 0 }
+            },
+            restSeconds = restSeconds ?: 0,
+            unilateral = catalog[exerciseKey]?.unilateral == true
+        )
 
     // How a movement is measured is a property of the movement, so the catalog
     // answers it. A key the catalog does not know degrades to REPS, the same
@@ -203,7 +205,7 @@ class GeneratedPlanParser(private val catalog: ExerciseCatalog = InMemoryExercis
     private fun GeneratedDay.toDomain() = WorkoutDay(
         dayNumber = dayNumber,
         title = title,
-        duration = exercises.sumOf { it.minutes },
+        duration = SessionMinutes.forDay(exercises.map { it.minutes }),
         exerciseCount = exercises.size,
         equipment = exercises
             .mapNotNull { catalog[it.exerciseKey] }

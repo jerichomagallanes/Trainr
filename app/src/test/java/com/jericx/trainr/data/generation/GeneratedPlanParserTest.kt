@@ -115,14 +115,17 @@ class GeneratedPlanParserTest {
     }
 
     // Five minutes of jogging, then two sets of twenty at three seconds a rep
-    // with thirty seconds between them: eight minutes, whatever the model
-    // would have claimed.
+    // with thirty seconds between them: eight minutes of work, plus the minute
+    // spent walking from one to the other, whatever the model would have
+    // claimed.
     @Test
     fun aDaysNumbersAreDerivedNotAccepted() {
         val cardio = parseGood().workoutDays.first { it.dayNumber == 3 }
 
-        assertThat(cardio.duration).isEqualTo(8)
+        assertThat(cardio.duration).isEqualTo(9)
         assertThat(cardio.exerciseCount).isEqualTo(2)
+        assertThat(cardio.duration)
+            .isEqualTo(cardio.exercises.sumOf { it.durationMinutes } + 1)
     }
 
     @Test
