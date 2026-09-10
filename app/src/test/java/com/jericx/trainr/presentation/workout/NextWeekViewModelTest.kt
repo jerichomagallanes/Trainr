@@ -51,7 +51,7 @@ class NextWeekViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun viewModel() = NextWeekViewModel(userRepository, planGenerator) { "en" }
+    private fun viewModel() = NextWeekViewModel(userRepository, planGenerator)
 
     // Recent enough that the week after it still lies ahead, the ordinary case
     private val weekOneStart = WorkoutWeek.startOfDay() - TimeUnit.DAYS.toMillis(3)

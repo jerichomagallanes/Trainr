@@ -20,8 +20,7 @@ data class PlanLimits(
     // Empty means the vocabulary is not being enforced, which is only true in
     // tests: a real request always has a shortlist.
     val allowedKeys: Set<String> = emptySet(),
-    val requiredPatterns: Set<PatternRequirement> = emptySet(),
-    val languageCode: String = "en"
+    val requiredPatterns: Set<PatternRequirement> = emptySet()
 ) {
     companion object {
         val Unbounded = PlanLimits(maxSetsPerSession = Int.MAX_VALUE)
@@ -63,7 +62,7 @@ class GeneratedPlanParser(private val catalog: ExerciseCatalog = InMemoryExercis
                 startDateMillis = startDateMillis,
                 workoutDays = generated.days
                     .sortedBy { it.dayNumber }
-                    .map { it.toDomain(limits.languageCode) }
+                    .map { it.toDomain() }
             )
         )
     }
@@ -189,7 +188,7 @@ class GeneratedPlanParser(private val catalog: ExerciseCatalog = InMemoryExercis
     // The day's kit is the union of what its movements need, which the
     // catalog already knows; asking a model to restate it only gave it a way
     // to name equipment the client does not own.
-    private fun GeneratedDay.toDomain(languageCode: String) = WorkoutDay(
+    private fun GeneratedDay.toDomain() = WorkoutDay(
         dayNumber = dayNumber,
         title = title,
         duration = exercises.sumOf { it.minutes },
@@ -200,14 +199,14 @@ class GeneratedPlanParser(private val catalog: ExerciseCatalog = InMemoryExercis
             .filterNot { it == Equipment.NONE }
             .distinct()
             .map { it.asDisplayText() },
-        exercises = exercises.map { it.toDomain(languageCode) }
+        exercises = exercises.map { it.toDomain() }
     )
 
-    private fun GeneratedExercise.toDomain(languageCode: String): WorkoutExercise {
+    private fun GeneratedExercise.toDomain(): WorkoutExercise {
         val resolved = resolvedMeasure
         return WorkoutExercise(
             exerciseKey = exerciseKey,
-            name = catalog[exerciseKey]?.displayName(languageCode) ?: exerciseKey,
+            name = catalog[exerciseKey]?.name ?: exerciseKey,
             measure = resolved,
             sets = sets.mapIndexed { index, set -> set.toDomain(index + 1, resolved) },
             setCount = sets.size,

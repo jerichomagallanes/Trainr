@@ -7,7 +7,6 @@ data class PlanRequest(
     val user: UserProfile,
     val weekNumber: Int,
     val startDateMillis: Long,
-    val languageCode: String,
     val previousWeek: WeeklyWorkoutPlan? = null
 )
 

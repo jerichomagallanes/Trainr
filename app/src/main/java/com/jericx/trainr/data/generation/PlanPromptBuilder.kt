@@ -103,8 +103,8 @@ class PlanPromptBuilder {
         - exerciseKey is chosen from the movement list in the request and never
           invented. The app owns each movement's name, the muscle it trains and
           how it is measured, so all you choose is which movement and how much.
-        - Day titles, prescription and instructions are display copy in the
-          requested language.
+        - Day titles, prescription and instructions are display copy, written
+          in English.
         - Day titles are short and name the session's focus ("Full Body
           Strength", "Lower Body Power") - never letter or index labels like
           "Full Body A" or "Day 1".
@@ -150,7 +150,7 @@ class PlanPromptBuilder {
             if (user.injuries.isNotEmpty()) {
                 appendLine("- Injuries or areas to protect: ${user.injuries.joinToString { it.asText() }}")
             }
-            appendLine("- Write all display copy in: ${request.languageCode.asLanguage()}")
+            appendLine("- Write all display copy in: English")
             appendRequiredPatterns(shortlist)
             request.previousWeek?.let { appendHistory(it) }
             appendVocabulary(shortlist)
@@ -286,11 +286,5 @@ class PlanPromptBuilder {
         Equipment.RESISTANCE_BAND -> "resistance bands"
         Equipment.SUSPENSION_BAND -> "a suspension trainer"
         Equipment.OTHER -> "other gym kit (ab wheel, box, sled, rings, jump rope)"
-    }
-
-    private fun String.asLanguage() = when (this) {
-        "ja" -> "Japanese"
-        "tl" -> "Tagalog (Filipino)"
-        else -> "English"
     }
 }

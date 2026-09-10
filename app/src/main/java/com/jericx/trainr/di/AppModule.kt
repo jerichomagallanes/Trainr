@@ -6,8 +6,6 @@ import com.jericx.trainr.common.Constants
 import com.jericx.trainr.data.local.TrainrDatabase
 import com.jericx.trainr.data.local.UserDao
 import com.jericx.trainr.data.local.UserMapper
-import com.jericx.trainr.data.preferences.LanguageCodeProvider
-import com.jericx.trainr.data.preferences.LanguagePreferences
 import com.jericx.trainr.data.preferences.ThemePreferences
 import com.jericx.trainr.data.purchases.Entitlements
 import com.jericx.trainr.data.purchases.StoredGenerationAllowance
@@ -117,13 +115,5 @@ object AppModule {
     @Singleton
     fun provideThemePreferences(@ApplicationContext context: Context): ThemePreferences {
         return ThemePreferences(context)
-    }
-
-    @Provides
-    @Singleton
-    fun provideLanguageCodeProvider(@ApplicationContext context: Context): LanguageCodeProvider {
-        return LanguageCodeProvider {
-            LanguagePreferences(context).getCurrentLanguageObject(context).code
-        }
     }
 }

@@ -37,11 +37,9 @@ import com.jericx.trainr.BuildConfig
 import com.jericx.trainr.data.diagnostics.CrashlyticsBreadcrumbs
 import com.jericx.trainr.domain.diagnostics.Breadcrumbs
 import com.jericx.trainr.data.preferences.AppearanceMode
-import com.jericx.trainr.data.preferences.NavigationStateManager
 import com.jericx.trainr.data.preferences.ThemePreferences
 import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.model.WorkoutDay
-import com.jericx.trainr.presentation.common.LocaleManager
 import com.jericx.trainr.presentation.common.theme.DarkTrainrColors
 import com.jericx.trainr.presentation.common.theme.LightTrainrColors
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
@@ -72,6 +70,7 @@ import com.jericx.trainr.presentation.workout.WeeklyProgressRoute
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import javax.inject.Inject
+import java.util.Locale
 
 private val editArguments = listOf(
     navArgument(Screen.EditableStep.ARG_EDIT) {
@@ -92,8 +91,6 @@ private fun rememberBreadcrumbs(): Breadcrumbs = remember { CrashlyticsBreadcrum
 
 private val NavBackStackEntry.isEditing: Boolean
     get() = arguments?.getBoolean(Screen.EditableStep.ARG_EDIT) ?: false
-
-private const val FORCED_LANGUAGE = "en"
 
 private fun AppearanceMode.isDark(systemInDarkTheme: Boolean): Boolean = when (this) {
     AppearanceMode.SYSTEM -> systemInDarkTheme
@@ -128,11 +125,15 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var proGate: ProGate
 
-    // English-only for now, whatever the device says. The returned context
-    // carries that configuration and must become the activity's base before any
-    // resources are read, so it cannot move to onCreate.
+    // The app ships English copy only, so dates and numbers have to be English
+    // too, whatever the device says. The configured context must become the
+    // activity's base before any resources are read, so it cannot move to
+    // onCreate.
     override fun attachBaseContext(newBase: Context) {
-        super.attachBaseContext(LocaleManager.updateAppLocale(newBase, FORCED_LANGUAGE))
+        Locale.setDefault(Locale.ENGLISH)
+        val config = Configuration(newBase.resources.configuration)
+        config.setLocale(Locale.ENGLISH)
+        super.attachBaseContext(newBase.createConfigurationContext(config))
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -193,19 +194,6 @@ fun AppContent(
     val splashScreenDuration = 2000L
     var showSplashScreen by remember { mutableStateOf(true) }
 
-    LaunchedEffect(Unit) {
-        if (NavigationStateManager.isLanguageChangePending(context)) {
-            val savedRoute = NavigationStateManager.getCurrentRoute(context)
-            if (savedRoute != null && savedRoute != Screen.SplashScreen.route) {
-                showSplashScreen = false
-                navController.navigate(savedRoute) {
-                    popUpTo(Screen.SplashScreen.route) { inclusive = true }
-                }
-                NavigationStateManager.clearNavigationState(context)
-            }
-        }
-    }
-
     LaunchedEffect(showSplashScreen) {
         if (showSplashScreen) {
             delay(splashScreenDuration)
@@ -262,14 +250,8 @@ fun AppContent(
                 }
 
                 composable(Screen.Welcome.route) {
-                    LaunchedEffect(Unit) {
-                        NavigationStateManager.saveCurrentRoute(context, Screen.Welcome.route)
-                    }
                     WelcomeScreen(
                         onGetStartedClick = {
-                            NavigationStateManager.saveCurrentRoute(
-                                context, Screen.BasicInfo.createRoute()
-                            )
                             navController.navigate(Screen.BasicInfo.createRoute())
                         }
                     )

@@ -54,8 +54,8 @@ android {
         buildConfig = true
     }
 
-    // English-only for now: ja and tl stay in the repo but out of the build
-    // until language switching returns.
+    // English-only: keeps the library translations AppCompat and Material ship
+    // with out of the APK.
     androidResources {
         localeFilters += listOf("en")
     }

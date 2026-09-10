@@ -26,7 +26,7 @@ class PlanPromptBuilderTest {
         measure: ExerciseMeasure,
         pattern: MovementPattern,
         equipment: Equipment = Equipment.NONE
-    ) = CatalogExercise(key, key, key, muscle, emptyList(), equipment, measure, pattern, staple = true)
+    ) = CatalogExercise(key, key, muscle, emptyList(), equipment, measure, pattern, staple = true)
 
     private val shortlist = listOf(
         catalogExercise(
@@ -40,7 +40,6 @@ class PlanPromptBuilderTest {
     private val builder = PlanPromptBuilder()
 
     private fun request(
-        languageCode: String = "en",
         previousWeek: WeeklyWorkoutPlan? = null,
         units: UnitSystem = UnitSystem.METRIC
     ) = PlanRequest(
@@ -58,7 +57,6 @@ class PlanPromptBuilderTest {
         ),
         weekNumber = if (previousWeek == null) 1 else 2,
         startDateMillis = 0L,
-        languageCode = languageCode,
         previousWeek = previousWeek
     )
 
@@ -72,12 +70,6 @@ class PlanPromptBuilderTest {
         assertThat(prompt).contains("about 45 minutes")
         assertThat(prompt).contains("lower back pain")
         assertThat(prompt).contains("English")
-    }
-
-    @Test
-    fun displayCopyLanguageFollowsTheAppLanguage() {
-        assertThat(builder.userPrompt(request(languageCode = "ja"), shortlist)).contains("Japanese")
-        assertThat(builder.userPrompt(request(languageCode = "tl"), shortlist)).contains("Tagalog")
     }
 
     @Test

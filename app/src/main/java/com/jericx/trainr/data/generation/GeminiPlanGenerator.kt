@@ -117,8 +117,7 @@ class GeminiPlanGenerator(
                     PlanLimits(
                         maxSetsPerSession = SessionBudget.maxSetsPerSession(request.user),
                         allowedKeys = exerciseKeys.toSet(),
-                        requiredPatterns = ExerciseShortlist.requiredPatterns(shortlist),
-                        languageCode = request.languageCode
+                        requiredPatterns = ExerciseShortlist.requiredPatterns(shortlist)
                     )
                 )
             ) {

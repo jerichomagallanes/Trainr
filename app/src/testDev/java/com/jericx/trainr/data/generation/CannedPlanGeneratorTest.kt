@@ -26,8 +26,7 @@ class CannedPlanGeneratorTest {
             availableEquipment = equipment
         ),
         weekNumber = weekNumber,
-        startDateMillis = 1_000L,
-        languageCode = "en"
+        startDateMillis = 1_000L
     )
 
     private suspend fun plan(
@@ -86,7 +85,6 @@ class CannedPlanGeneratorTest {
                     ),
                     weekNumber = 2,
                     startDateMillis = 2_000L,
-                    languageCode = "en",
                     previousWeek = first
                 )
             ) as PlanGenerationResult.Generated
