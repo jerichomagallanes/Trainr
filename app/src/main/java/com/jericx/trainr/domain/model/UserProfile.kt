@@ -85,6 +85,27 @@ val EquipmentChoices = listOf(
     Equipment.OTHER
 )
 
+// A profile saved before the catalog settled on nine categories still names
+// the old finer-grained kit. Dropping those would quietly empty someone's
+// equipment and hand them a bodyweight plan without saying why.
+private val LegacyEquipment = mapOf(
+    "DUMBBELLS" to Equipment.DUMBBELL,
+    "KETTLEBELLS" to Equipment.KETTLEBELL,
+    "RESISTANCE_BANDS" to Equipment.RESISTANCE_BAND,
+    "MACHINES" to Equipment.MACHINE,
+    "CABLE_MACHINE" to Equipment.MACHINE,
+    "CARDIO_MACHINES" to Equipment.MACHINE,
+    "PULL_UP_BAR" to Equipment.MACHINE,
+    "SQUAT_RACK" to Equipment.BARBELL,
+    "BENCH" to Equipment.OTHER,
+    "JUMP_ROPE" to Equipment.OTHER,
+    "OTHERS" to Equipment.OTHER,
+    "MAT" to Equipment.NONE
+)
+
+fun storedEquipment(raw: String): Equipment? =
+    runCatching { Equipment.valueOf(raw) }.getOrNull() ?: LegacyEquipment[raw]
+
 fun equipmentFor(location: WorkoutLocation): List<Equipment> = when (location) {
     WorkoutLocation.HOME -> EquipmentChoices
     WorkoutLocation.GYM, WorkoutLocation.BOTH ->

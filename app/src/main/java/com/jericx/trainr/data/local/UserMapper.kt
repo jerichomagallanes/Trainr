@@ -38,9 +38,7 @@ class UserMapper {
             fitnessGoal = FitnessGoal.valueOf(entity.fitnessGoal),
             experienceLevel = ExperienceLevel.valueOf(entity.experienceLevel),
             workoutLocation = WorkoutLocation.valueOf(entity.workoutLocation),
-            availableEquipment = entity.availableEquipment.mapNotNull {
-                try { Equipment.valueOf(it) } catch (e: Exception) { null }
-            },
+            availableEquipment = entity.availableEquipment.mapNotNull(::storedEquipment).distinct(),
             workoutDaysPerWeek = entity.workoutDaysPerWeek,
             workoutDuration = entity.workoutDuration,
             preferredWorkoutTime = WorkoutTime.valueOf(entity.preferredWorkoutTime),
