@@ -16,8 +16,8 @@ private fun catalogExercise(
     muscle: MuscleGroup,
     measure: ExerciseMeasure,
     pattern: MovementPattern,
-    requires: Set<Equipment> = setOf(Equipment.NONE)
-) = CatalogExercise(key, key.replace('_', ' '), key, muscle, requires, measure, pattern, staple = true)
+    equipment: Equipment = Equipment.NONE
+) = CatalogExercise(key, key.replace('_', ' '), key, muscle, equipment, measure, pattern, staple = true)
 
 class GeneratedPlanParserTest {
 
@@ -188,14 +188,14 @@ class GeneratedPlanParserTest {
     // Asking a model to restate the day's kit only gave it a way to name
     // equipment the client does not own.
     @Test
-    fun theDaysEquipmentIsTheUnionOfWhatItsMovementsNeed() {
+    fun theDaysEquipmentComesFromItsMovements() {
         val parser = GeneratedPlanParser(
             InMemoryExerciseCatalog(
                 listOf(
                     catalogExercise(
                         "goblet_squat", MuscleGroup.QUADRICEPS,
                         ExerciseMeasure.WEIGHT_AND_REPS, MovementPattern.SQUAT,
-                        requires = setOf(Equipment.DUMBBELLS)
+                        equipment = Equipment.DUMBBELL
                     ),
                     catalogExercise("warm_up_jog", MuscleGroup.CARDIO, ExerciseMeasure.DURATION, MovementPattern.CONDITIONING),
                     catalogExercise("bicycle_crunch", MuscleGroup.ABDOMINALS, ExerciseMeasure.REPS, MovementPattern.CORE)
@@ -205,7 +205,7 @@ class GeneratedPlanParserTest {
         val plan = (parser.parse(goodJson, 7, 2, 0L) as PlanParseResult.Parsed).plan
 
         assertThat(plan.workoutDays.first { it.dayNumber == 1 }.equipment)
-            .containsExactly("Dumbbells")
+            .containsExactly("Dumbbell")
         assertThat(plan.workoutDays.first { it.dayNumber == 3 }.equipment).isEmpty()
     }
 

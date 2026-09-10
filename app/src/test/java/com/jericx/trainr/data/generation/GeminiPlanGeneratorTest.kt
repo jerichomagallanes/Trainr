@@ -73,7 +73,7 @@ class GeminiPlanGeneratorTest {
         listOf(
             CatalogExercise(
                 "goblet_squat", "Goblet Squat", "ゴブレットスクワット",
-                MuscleGroup.QUADRICEPS, setOf(Equipment.NONE),
+                MuscleGroup.QUADRICEPS, Equipment.NONE,
                 ExerciseMeasure.WEIGHT_AND_REPS, MovementPattern.SQUAT, staple = true
             )
         )

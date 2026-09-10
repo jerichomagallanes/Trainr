@@ -118,7 +118,7 @@ class OnboardingViewModelTest {
 
     @Test
     fun `updateWorkoutSetup sets all five fields`() {
-        val equipment = listOf(Equipment.DUMBBELLS, Equipment.BENCH)
+        val equipment = listOf(Equipment.DUMBBELL, Equipment.OTHER)
 
         viewModel.updateWorkoutSetup(
             location = WorkoutLocation.HOME,

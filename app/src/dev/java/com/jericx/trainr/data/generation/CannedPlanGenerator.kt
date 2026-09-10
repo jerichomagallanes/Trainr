@@ -132,18 +132,14 @@ class CannedPlanGenerator : PlanGenerator {
         const val BODYWEIGHT = "Bodyweight"
 
         fun Equipment.asText(): String = when (this) {
-            Equipment.DUMBBELLS -> "Dumbbells"
             Equipment.BARBELL -> "Barbell"
-            Equipment.KETTLEBELLS -> "Kettlebells"
-            Equipment.BENCH -> "Bench"
-            Equipment.RESISTANCE_BANDS -> "Resistance bands"
-            Equipment.PULL_UP_BAR -> "Pull-up bar"
-            Equipment.SQUAT_RACK -> "Squat rack"
-            Equipment.CABLE_MACHINE -> "Cable machine"
-            Equipment.MACHINES -> "Weight machines"
-            Equipment.CARDIO_MACHINES -> "Cardio equipment"
-            Equipment.MAT -> "Exercise mat"
-            Equipment.JUMP_ROPE -> "Jump rope"
+            Equipment.DUMBBELL -> "Dumbbell"
+            Equipment.KETTLEBELL -> "Kettlebell"
+            Equipment.MACHINE -> "Machine"
+            Equipment.PLATE -> "Plate"
+            Equipment.RESISTANCE_BAND -> "Resistance Band"
+            Equipment.SUSPENSION_BAND -> "Suspension Band"
+            Equipment.OTHER -> "Other"
             Equipment.NONE -> BODYWEIGHT
         }
 
@@ -185,7 +181,7 @@ class CannedPlanGenerator : PlanGenerator {
                 )
             ),
             Candidate(
-                needs = setOf(Equipment.DUMBBELLS, Equipment.KETTLEBELLS),
+                needs = setOf(Equipment.DUMBBELL, Equipment.KETTLEBELL),
                 exercise = WorkoutExercise(
                     exerciseKey = "goblet_squat",
                     name = "Goblet Squat",
@@ -199,7 +195,7 @@ class CannedPlanGenerator : PlanGenerator {
                 )
             ),
             Candidate(
-                needs = setOf(Equipment.DUMBBELLS),
+                needs = setOf(Equipment.DUMBBELL),
                 exercise = WorkoutExercise(
                     exerciseKey = "dumbbell_floor_press",
                     name = "Dumbbell Floor Press",
@@ -213,7 +209,7 @@ class CannedPlanGenerator : PlanGenerator {
                 )
             ),
             Candidate(
-                needs = setOf(Equipment.DUMBBELLS, Equipment.BARBELL),
+                needs = setOf(Equipment.DUMBBELL, Equipment.BARBELL),
                 exercise = WorkoutExercise(
                     exerciseKey = "bent_over_row",
                     name = "Bent Over Row",
@@ -227,7 +223,7 @@ class CannedPlanGenerator : PlanGenerator {
                 )
             ),
             Candidate(
-                needs = setOf(Equipment.DUMBBELLS, Equipment.BARBELL),
+                needs = setOf(Equipment.DUMBBELL, Equipment.BARBELL),
                 exercise = WorkoutExercise(
                     exerciseKey = "romanian_deadlift",
                     name = "Romanian Deadlift",
@@ -241,7 +237,7 @@ class CannedPlanGenerator : PlanGenerator {
                 )
             ),
             Candidate(
-                needs = setOf(Equipment.DUMBBELLS, Equipment.BARBELL),
+                needs = setOf(Equipment.DUMBBELL, Equipment.BARBELL),
                 exercise = WorkoutExercise(
                     exerciseKey = "overhead_press",
                     name = "Overhead Press",

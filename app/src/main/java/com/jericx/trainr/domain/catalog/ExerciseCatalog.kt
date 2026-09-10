@@ -10,7 +10,7 @@ data class CatalogExercise(
     val name: String,
     val nameJa: String,
     val muscle: MuscleGroup,
-    val requires: Set<Equipment>,
+    val equipment: Equipment,
     val measure: ExerciseMeasure,
     val pattern: MovementPattern,
     val staple: Boolean
@@ -18,14 +18,12 @@ data class CatalogExercise(
     fun displayName(languageCode: String): String =
         if (languageCode == JAPANESE) nameJa.ifBlank { name } else name
 
-    // Bodyweight needs nothing, so it is available to everyone; everything else
-    // needs every item it lists, not any one of them.
+    // Bodyweight needs nothing, so it is available to everyone.
     fun isAvailableWith(owned: Set<Equipment>): Boolean =
-        requires == BODYWEIGHT || owned.containsAll(requires)
+        equipment == Equipment.NONE || equipment in owned
 
     private companion object {
         const val JAPANESE = "ja"
-        val BODYWEIGHT = setOf(Equipment.NONE)
     }
 }
 

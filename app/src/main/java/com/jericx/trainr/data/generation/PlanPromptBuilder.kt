@@ -278,18 +278,14 @@ class PlanPromptBuilder {
 
     private fun Equipment.asText() = when (this) {
         Equipment.NONE -> "bodyweight only"
-        Equipment.DUMBBELLS -> "dumbbells"
-        Equipment.BARBELL -> "barbell and plates"
-        Equipment.BENCH -> "adjustable bench"
-        Equipment.RESISTANCE_BANDS -> "resistance bands"
-        Equipment.PULL_UP_BAR -> "pull-up bar"
-        Equipment.KETTLEBELLS -> "kettlebells"
-        Equipment.SQUAT_RACK -> "squat rack"
-        Equipment.CABLE_MACHINE -> "cable machine"
-        Equipment.MACHINES -> "weight machines (lat pulldown, leg press, chest press, leg curl)"
-        Equipment.CARDIO_MACHINES -> "cardio machines (treadmill, bike, rower)"
-        Equipment.MAT -> "exercise mat"
-        Equipment.JUMP_ROPE -> "jump rope"
+        Equipment.BARBELL -> "barbell"
+        Equipment.DUMBBELL -> "dumbbells"
+        Equipment.KETTLEBELL -> "kettlebells"
+        Equipment.MACHINE -> "machines and cables"
+        Equipment.PLATE -> "weight plates"
+        Equipment.RESISTANCE_BAND -> "resistance bands"
+        Equipment.SUSPENSION_BAND -> "a suspension trainer"
+        Equipment.OTHER -> "other gym kit (ab wheel, box, sled, rings, jump rope)"
     }
 
     private fun String.asLanguage() = when (this) {

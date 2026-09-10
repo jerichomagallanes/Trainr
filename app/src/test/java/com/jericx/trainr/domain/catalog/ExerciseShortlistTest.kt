@@ -11,7 +11,7 @@ class ExerciseShortlistTest {
     private fun exercise(
         key: String,
         muscle: MuscleGroup = MuscleGroup.CHEST,
-        requires: Set<Equipment> = setOf(Equipment.NONE),
+        equipment: Equipment = Equipment.NONE,
         pattern: MovementPattern = MovementPattern.HORIZONTAL_PUSH,
         staple: Boolean = false
     ) = CatalogExercise(
@@ -19,7 +19,7 @@ class ExerciseShortlistTest {
         name = key,
         nameJa = key,
         muscle = muscle,
-        requires = requires,
+        equipment = equipment,
         measure = ExerciseMeasure.REPS,
         pattern = pattern,
         staple = staple
@@ -35,27 +35,30 @@ class ExerciseShortlistTest {
         val catalog = InMemoryExerciseCatalog(
             listOf(
                 exercise("push_up"),
-                exercise("barbell_bench_press", requires = setOf(Equipment.BARBELL, Equipment.BENCH))
+                exercise("barbell_bench_press", equipment = Equipment.BARBELL)
             )
         )
 
-        val offered = ExerciseShortlist.forRequest(catalog, profile(Equipment.DUMBBELLS))
+        val offered = ExerciseShortlist.forRequest(catalog, profile(Equipment.DUMBBELL))
 
         assertThat(offered.map { it.key }).containsExactly("push_up")
     }
 
-    // Every listed item, not any one of them: a bench press needs the bench
-    // as well as the bar.
+    // Bodyweight is the one category everybody owns; everything else has to
+    // be ticked on the setup screen before it can be prescribed.
     @Test
-    fun aMovementNeedsEverythingItLists() {
+    fun bodyweightIsAvailableToEveryoneAndNothingElseIs() {
         val catalog = InMemoryExerciseCatalog(
-            listOf(exercise("barbell_bench_press", requires = setOf(Equipment.BARBELL, Equipment.BENCH)))
+            listOf(
+                exercise("push_up"),
+                exercise("machine_leg_press", equipment = Equipment.MACHINE)
+            )
         )
 
-        assertThat(ExerciseShortlist.forRequest(catalog, profile(Equipment.BARBELL))).isEmpty()
-        assertThat(
-            ExerciseShortlist.forRequest(catalog, profile(Equipment.BARBELL, Equipment.BENCH))
-        ).hasSize(1)
+        assertThat(ExerciseShortlist.forRequest(catalog, profile(Equipment.NONE)).map { it.key })
+            .containsExactly("push_up")
+        assertThat(ExerciseShortlist.forRequest(catalog, profile(Equipment.MACHINE)).map { it.key })
+            .containsExactly("push_up", "machine_leg_press")
     }
 
     // A key the model cannot name again is a lift whose history stops there.

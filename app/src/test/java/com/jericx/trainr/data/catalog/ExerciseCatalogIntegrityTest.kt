@@ -17,7 +17,7 @@ class ExerciseCatalogIntegrityTest {
 
     @Test
     fun theFileParsesAndIsWorthShipping() {
-        assertThat(catalog.all.size).isAtLeast(200)
+        assertThat(catalog.all.size).isAtLeast(450)
     }
 
     // A dropped entry is silent: the reader skips what it cannot understand,
@@ -67,23 +67,33 @@ class ExerciseCatalogIntegrityTest {
         assertThat(bodyweight.any { it.pattern.isPull }).isTrue()
     }
 
+    // The catalog is a closed vocabulary, so a movement naming a category the
+    // profile cannot hold is a movement nobody will ever be offered.
+    @Test
+    fun everyMovementSitsInExactlyOneOfTheNineCategories() {
+        assertThat(Equipment.entries).hasSize(9)
+        assertThat(catalog.all.map { it.equipment }.toSet()).hasSize(9)
+    }
+
     // A movement listing kit that is never offered on the setup screen can
     // never be selected, so it is dead weight in every schema that carries it.
     @Test
     fun nothingRequiresEquipmentTheAppNeverAsksAbout() {
         val askedAbout = Equipment.entries.toSet()
-        val unknown = catalog.all.flatMap { it.requires }.toSet() - askedAbout
+        val unknown = catalog.all.map { it.equipment }.toSet() - askedAbout
 
         assertThat(unknown).isEmpty()
     }
 
+    // Every category the setup screen offers has to lead somewhere, or a
+    // client ticks a chip and the plan ignores it.
     @Test
-    fun bodyweightMovementsAreNotAlsoLoaded() {
-        val confused = catalog.all.filter {
-            Equipment.NONE in it.requires && it.requires.size > 1
+    fun everyEquipmentTheSetupScreenOffersHasMovements() {
+        val empty = Equipment.entries.filter { kit ->
+            catalog.all.none { it.equipment == kit }
         }
 
-        assertThat(confused).isEmpty()
+        assertThat(empty).isEmpty()
     }
 
     // Staples are what the shortlist reaches for first; if most things are

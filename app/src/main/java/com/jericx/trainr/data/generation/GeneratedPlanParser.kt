@@ -196,7 +196,7 @@ class GeneratedPlanParser(private val catalog: ExerciseCatalog = InMemoryExercis
         exerciseCount = exercises.size,
         equipment = exercises
             .mapNotNull { catalog[it.exerciseKey] }
-            .flatMap { it.requires }
+            .map { it.equipment }
             .filterNot { it == Equipment.NONE }
             .distinct()
             .map { it.asDisplayText() },
