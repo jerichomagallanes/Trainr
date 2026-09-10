@@ -37,6 +37,28 @@ additional set is worth about 0.37% more gain, and ten or more per muscle beats
 fewer (VOL). The prompt therefore carries a weekly set target keyed to
 experience rather than leaving volume to the model's taste.
 
+The target is capped by what the client's sessions can hold. Ten sets across
+nine regions is ninety sets a week, and three 45-minute hypertrophy sessions pay
+for forty-two — so the target and the session set cap could not both be met, and
+only the cap is checked when a plan comes back. The prompt now also says how a
+set is counted, because "sets per muscle group" is ambiguous once movements are
+compound: one for the muscle the movement trains and half for each it assists,
+the direct/indirect convention the volume literature uses (VOL). Where even the
+four-set floor does not fit — one or two short sessions a week — the prompt says
+so and asks for compound movements rather than a target the week cannot buy.
+
+**Session length.** The session set cap is a proxy for time and it misprices
+timed work: three thirty-minute walks are three sets and a ninety-minute day. A
+plan is therefore also checked against the minutes its own sets and rests add up
+to, and rejected past half again the answered session length.
+
+**Conditioning and mobility in the vocabulary.** How much of each the offered
+movement list carries is keyed to the goal: a weight-loss week that must reach
+250 minutes of moderate work (WHO-2020, ACSM-WL) needs walking and cycling in
+the vocabulary, and a flexibility week needs stretching and mobility work. The
+squat/press/pull requirement (TIME) is not imposed on a flexibility goal, since
+rejecting the plan for lacking a squat overrules the answer the client gave.
+
 **Frequency, per muscle group.** Twice a week beats once at matched volume
 (FREQ). Session frequency by training age: 2–3 days novice, 3–4 intermediate,
 4–5 advanced (ACSM-2009). The split rules (full body at 2–3 days, upper/lower at

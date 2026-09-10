@@ -20,7 +20,12 @@ data class PlanLimits(
     // Empty means the vocabulary is not being enforced, which is only true in
     // tests: a real request always has a shortlist.
     val allowedKeys: Set<String> = emptySet(),
-    val requiredPatterns: Set<PatternRequirement> = emptySet()
+    val requiredPatterns: Set<PatternRequirement> = emptySet(),
+    // Zero means unchecked, which is only true in tests: the set cap is a
+    // proxy for time and a timed set breaks it, so the minutes are what
+    // actually has to fit.
+    val sessionMinutes: Int = 0,
+    val sessionCeilingMinutes: Int = 0
 ) {
     companion object {
         val Unbounded = PlanLimits(maxSetsPerSession = Int.MAX_VALUE)
@@ -104,6 +109,13 @@ class GeneratedPlanParser(private val catalog: ExerciseCatalog = InMemoryExercis
             add(
                 "$where: has $sets sets but the client's session length allows at most " +
                     "${limits.maxSetsPerSession}, warm-up included"
+            )
+        }
+        val minutes = day.exercises.sumOf { it.minutes }
+        if (limits.sessionCeilingMinutes > 0 && minutes > limits.sessionCeilingMinutes) {
+            add(
+                "$where: runs about $minutes minutes of work and rest, and the client asked " +
+                    "for about ${limits.sessionMinutes}"
             )
         }
         day.exercises.groupingBy { it.exerciseKey }.eachCount()

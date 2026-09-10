@@ -19,6 +19,17 @@ object SessionBudget {
 
     private const val FLOOR_SETS = 4
 
+    // The nine regions volume is counted over, and what a set is worth across
+    // them: one for the muscle the movement trains and half for each it
+    // assists, which the catalog names. Averaged over the catalog that is
+    // about three halves a set.
+    private const val TRAINABLE_REGIONS = 9
+    private const val REGION_SETS_PER_SET_HALVES = 3
+
+    // The minimum effective dose (Iversen 2021). A week that cannot pay for
+    // it is a real answer, not a number to round up to.
+    const val MINIMUM_WEEKLY_SETS = 4
+
     fun restSeconds(goal: FitnessGoal): Int = when (goal) {
         FitnessGoal.STRENGTH -> 180
         FitnessGoal.MUSCLE_GAIN -> 120
@@ -36,9 +47,32 @@ object SessionBudget {
     // The floor worth programming is 4 hard sets per muscle group per week
     // (Iversen 2021); growth keeps improving up to 10 and beyond (Schoenfeld
     // 2017), which only fits once there are days to spread it over.
-    fun weeklySetsPerMuscle(user: UserProfile): Int = when {
-        user.fitnessGoal == FitnessGoal.MUSCLE_GAIN ||
-            user.fitnessGoal == FitnessGoal.STRENGTH -> if (user.workoutDaysPerWeek >= 3) 10 else 6
-        else -> 6
+    //
+    // Capped by what the sessions can actually hold. Asked for ten where the
+    // week pays for five, a model has to break either this or the session cap,
+    // and only one of the two is checked - so the target became the rule that
+    // was always quietly dropped.
+    fun weeklySetsPerMuscle(user: UserProfile): Int {
+        val ideal = when {
+            user.fitnessGoal == FitnessGoal.MUSCLE_GAIN ||
+                user.fitnessGoal == FitnessGoal.STRENGTH ->
+                if (user.workoutDaysPerWeek >= 3) 10 else 6
+            else -> 6
+        }
+        val setsInTheWeek = maxSetsPerSession(user) * user.workoutDaysPerWeek
+        val affordable =
+            setsInTheWeek * REGION_SETS_PER_SET_HALVES / 2 / TRAINABLE_REGIONS
+        return affordable.coerceIn(1, ideal)
     }
+
+    // Where even the minimum dose does not fit, the honest instruction is to
+    // spend the week on movements that cover the most ground, not to chase a
+    // target the client has no time for.
+    fun coversEveryRegion(user: UserProfile): Boolean =
+        weeklySetsPerMuscle(user) >= MINIMUM_WEEKLY_SETS
+
+    // The session length is what the client answered; this is the point past
+    // which the day is no longer that session. Half again as long as "about
+    // 45 minutes" is not about 45 minutes.
+    fun sessionCeilingMinutes(user: UserProfile): Int = user.workoutDuration * 3 / 2
 }

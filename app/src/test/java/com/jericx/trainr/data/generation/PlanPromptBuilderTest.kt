@@ -72,6 +72,19 @@ class PlanPromptBuilderTest {
         assertThat(prompt).contains("English")
     }
 
+    // The cap is enforced and the target is not, so a target the week cannot
+    // buy is the rule that gets dropped. Both numbers, and the rule for
+    // counting a set against them, have to be in the prompt.
+    @Test
+    fun thePromptCarriesABudgetTheWeekCanActuallyPayFor() {
+        val prompt = builder.userPrompt(request(), shortlist)
+
+        assertThat(prompt).contains("Session set cap: at most 14 sets")
+        assertThat(prompt).contains("Weekly set target: about 7 hard sets")
+        assertThat(prompt).contains("never past 67")
+        assertThat(prompt).contains("half for each muscle that movement assists")
+    }
+
     @Test
     fun weekOneCarriesNoHistory() {
         assertThat(builder.userPrompt(request(), shortlist)).doesNotContain("Last week")

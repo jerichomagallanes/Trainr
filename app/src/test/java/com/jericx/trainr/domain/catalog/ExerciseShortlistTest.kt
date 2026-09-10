@@ -3,6 +3,7 @@ package com.jericx.trainr.domain.catalog
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.domain.model.Equipment
 import com.jericx.trainr.domain.model.ExerciseMeasure
+import com.jericx.trainr.domain.model.FitnessGoal
 import com.jericx.trainr.domain.model.UserProfile
 import org.junit.Test
 
@@ -25,8 +26,10 @@ class ExerciseShortlistTest {
         staple = staple
     )
 
-    private fun profile(vararg owned: Equipment) =
-        UserProfile(availableEquipment = owned.toList())
+    private fun profile(
+        vararg owned: Equipment,
+        goal: FitnessGoal = FitnessGoal.GENERAL_FITNESS
+    ) = UserProfile(availableEquipment = owned.toList(), fitnessGoal = goal)
 
     // A barbell movement offered to someone with no barbell is a movement they
     // cannot do, and the model has no way to know that.
@@ -133,5 +136,75 @@ class ExerciseShortlistTest {
                 PatternRequirement.UPPER_PUSH,
                 PatternRequirement.UPPER_PULL
             )
+    }
+
+    private fun conditioning(key: String, staple: Boolean = false) = exercise(
+        key = key,
+        muscle = MuscleGroup.CARDIO,
+        pattern = MovementPattern.CONDITIONING,
+        staple = staple
+    )
+
+    private fun mobility(key: String) =
+        exercise(key = key, muscle = MuscleGroup.FULL_BODY, pattern = MovementPattern.MOBILITY)
+
+    private fun mixedCatalog() = InMemoryExerciseCatalog(
+        buildList {
+            add(conditioning("walking", staple = true))
+            repeat(9) { add(conditioning("zz_activity_$it")) }
+            add(mobility("stretching"))
+            repeat(3) { add(mobility("zz_mobility_$it")) }
+            MuscleGroup.entries
+                .filter { it.region.isTrainable }
+                .forEach { muscle -> repeat(12) { add(exercise("lift_${muscle}_$it", muscle = muscle)) } }
+        }
+    )
+
+    // Ranked among the muscle regions, conditioning and mobility lost every
+    // slot to the alphabet: a client who asked for flexibility was offered a
+    // single stretch, and one who asked to lose weight was never offered a walk.
+    @Test
+    fun theGoalDecidesHowMuchConditioningAndMobilityIsOffered() {
+        val catalog = mixedCatalog()
+
+        val forMuscle = ExerciseShortlist.forRequest(
+            catalog, profile(Equipment.NONE, goal = FitnessGoal.MUSCLE_GAIN)
+        )
+        val forFlexibility = ExerciseShortlist.forRequest(
+            catalog, profile(Equipment.NONE, goal = FitnessGoal.FLEXIBILITY)
+        )
+        val forWeightLoss = ExerciseShortlist.forRequest(
+            catalog, profile(Equipment.NONE, goal = FitnessGoal.WEIGHT_LOSS)
+        )
+
+        fun List<CatalogExercise>.mobility() = count { it.pattern == MovementPattern.MOBILITY }
+        fun List<CatalogExercise>.conditioning() = count { it.primary == MuscleGroup.CARDIO }
+
+        assertThat(forFlexibility.mobility()).isGreaterThan(forMuscle.mobility())
+        assertThat(forWeightLoss.conditioning()).isGreaterThan(forMuscle.conditioning())
+        assertThat(forMuscle.mobility()).isAtLeast(1)
+    }
+
+    // Every goal needs a warm-up, and the staple is what a coach reaches for
+    // rather than whatever sorts first.
+    @Test
+    fun theStapleConditioningAndMobilityAreTheOnesOffered() {
+        val shortlist = ExerciseShortlist.forRequest(
+            mixedCatalog(), profile(Equipment.NONE, goal = FitnessGoal.WEIGHT_LOSS)
+        )
+
+        assertThat(shortlist.map { it.key }).containsAtLeast("walking", "stretching")
+    }
+
+    // Someone who came for mobility should not have their week rejected for
+    // holding no squat.
+    @Test
+    fun aFlexibilityGoalIsNotHeldToTheSquatPressPullRule() {
+        val shortlist = ExerciseShortlist.forRequest(mixedCatalog(), profile(Equipment.NONE))
+
+        assertThat(ExerciseShortlist.requiredPatterns(shortlist, FitnessGoal.MUSCLE_GAIN))
+            .isNotEmpty()
+        assertThat(ExerciseShortlist.requiredPatterns(shortlist, FitnessGoal.FLEXIBILITY))
+            .isEmpty()
     }
 }

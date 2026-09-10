@@ -42,9 +42,11 @@ class PlanPromptBuilder {
         - Train every major muscle group at least twice in the week: the same work
           split over two days beats all of it on one.
         - Reach the weekly set target given below for each major muscle group, and
-          never exceed the session set cap given below. The cap is what the
-          client's session length pays for once warm-up and rest are counted, so a
-          session that exceeds it is a session they will not finish.
+          never exceed the session set cap or the session length given below. The
+          cap is what the client's session length pays for once warm-up and rest
+          are counted, so a session that exceeds it is a session they will not
+          finish. A timed set spends its own seconds, not one set's worth: three
+          thirty-minute walks are a ninety-minute day whatever the set count says.
         - Cover every pattern the request names as required, and order each
           session large muscle groups before small, multi-joint before
           single-joint.
@@ -131,15 +133,27 @@ class PlanPromptBuilder {
             appendLine("- Trains at: ${user.workoutLocation.asText()}")
             appendLine("- Available equipment: ${user.availableEquipment.asText()}")
             appendLine("- Days per week: ${user.workoutDaysPerWeek} (plan EXACTLY this many days)")
-            appendLine("- Session length: about ${user.workoutDuration} minutes")
+            appendLine(
+                "- Session length: about ${user.workoutDuration} minutes, and never past " +
+                    "${SessionBudget.sessionCeilingMinutes(user)} once every set and rest is counted"
+            )
             appendLine(
                 "- Session set cap: at most ${SessionBudget.maxSetsPerSession(user)} sets in " +
                     "one day, warm-up included"
             )
             appendLine(
                 "- Weekly set target: about ${SessionBudget.weeklySetsPerMuscle(user)} hard sets " +
-                    "per major muscle group across the week"
+                    "per major muscle group across the week. The groups are chest, back, " +
+                    "shoulders, arms, core, quads, hamstrings, glutes and hips, calves. A set " +
+                    "counts once for the muscle its movement trains and half for each muscle " +
+                    "that movement assists"
             )
+            if (!SessionBudget.coversEveryRegion(user)) {
+                appendLine(
+                    "- This week cannot reach the minimum useful dose for every group, so " +
+                        "prefer compound movements that train several at once over isolation work"
+                )
+            }
             weeklyConditioningMinutes(user)?.let {
                 appendLine("- Weekly conditioning: $it")
             }
@@ -151,7 +165,7 @@ class PlanPromptBuilder {
                 appendLine("- Injuries or areas to protect: ${user.injuries.joinToString { it.asText() }}")
             }
             appendLine("- Write all display copy in: English")
-            appendRequiredPatterns(shortlist)
+            appendRequiredPatterns(shortlist, user.fitnessGoal)
             request.previousWeek?.let { appendHistory(it) }
             appendVocabulary(shortlist)
         }
@@ -169,8 +183,11 @@ class PlanPromptBuilder {
             else -> null
         }
 
-    private fun StringBuilder.appendRequiredPatterns(shortlist: List<CatalogExercise>) {
-        val required = ExerciseShortlist.requiredPatterns(shortlist)
+    private fun StringBuilder.appendRequiredPatterns(
+        shortlist: List<CatalogExercise>,
+        goal: FitnessGoal
+    ) {
+        val required = ExerciseShortlist.requiredPatterns(shortlist, goal)
         if (required.isEmpty()) return
         appendLine("- The week must include " + required.joinToString(", ") { it.label })
     }
