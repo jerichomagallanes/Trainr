@@ -187,7 +187,7 @@ class PlanPromptBuilder {
             if (group.isEmpty()) return@forEach
             appendLine()
             appendLine(measure.asHeading())
-            group.groupBy { it.muscle }
+            group.groupBy { it.primary }
                 .toSortedMap()
                 .forEach { (muscle, exercises) ->
                     appendLine("  $muscle: ${exercises.joinToString(", ") { it.key }}")

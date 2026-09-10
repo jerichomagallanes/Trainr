@@ -45,7 +45,7 @@ class OnboardingViewModelTest {
     private val catalog = InMemoryExerciseCatalog(
         listOf(
             CatalogExercise(
-                "push_up", "Push Up", "プッシュアップ", MuscleGroup.CHEST,
+                "push_up", "Push Up", "プッシュアップ", MuscleGroup.CHEST, null,
                 Equipment.NONE, ExerciseMeasure.REPS,
                 MovementPattern.HORIZONTAL_PUSH, staple = true
             )

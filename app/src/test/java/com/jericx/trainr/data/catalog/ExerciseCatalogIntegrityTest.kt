@@ -17,20 +17,15 @@ class ExerciseCatalogIntegrityTest {
     private val source = File("src/main/assets/exercise-catalog.json").readText()
     private val catalog = ExerciseCatalogReader.read(source)
 
-    // Every entry is read off the source's own list, so a category can be
-    // short but never long. Four of them are transcribed end to end; the rest
-    // fill up as the remaining pages arrive.
+    // Each category holds exactly what the source's own filter holds. The one
+    // entry short of 452 is a user-made "custom" superset, which is somebody's
+    // own and not part of the list.
     @Test
-    fun noCategoryHoldsMoreMovementsThanTheSourceHas() {
+    fun eachCategoryHoldsExactlyTheMovementsTheSourceHas() {
         val counted = catalog.all.groupingBy { it.equipment }.eachCount()
 
-        FULL_CATEGORIES.forEach { (kit, size) ->
-            assertThat(counted[kit] ?: 0).isEqualTo(size)
-        }
-        CATALOG_SIZE.forEach { (kit, size) ->
-            assertThat(counted[kit] ?: 0).isAtMost(size)
-        }
-        assertThat(catalog.all.size).isAtMost(CATALOG_SIZE.values.sum())
+        assertThat(counted).containsExactlyEntriesIn(CATALOG_SIZE)
+        assertThat(catalog.all).hasSize(451)
     }
 
     // A dropped entry is silent: the reader skips what it cannot understand,
@@ -50,23 +45,16 @@ class ExerciseCatalogIntegrityTest {
         assertThat(catalog.all.filterNot { shape.matches(it.key) }).isEmpty()
     }
 
-    // These keys index saved history and hand-verified tutorials. The ones
-    // still missing are bodyweight movements the source's own list will
-    // restore; nothing may be lost beyond those.
+    // These keys index saved history and hand-verified tutorials. Renaming one
+    // silently splits a client's log and drops their video.
     @Test
-    fun theTutorialKeysStillInTheCatalogAreTheOnesItCanHold() {
+    fun theKeysTutorialsAreIndexedOnAreAllPresent() {
         val missing = ExerciseVideoCatalog.videoIds.keys.filter { catalog[it] == null }
 
-        assertThat(missing).containsExactly(
-            "bicycle_crunch", "glute_bridge", "high_intensity_intervals", "jump_squat",
-            "leg_raise", "plank", "romanian_deadlift", "russian_twist", "walking_lunge",
-            "warm_up_jog"
-        )
+        assertThat(missing).isEmpty()
     }
 
-    // Whatever the setup screen offers has to lead somewhere. While a
-    // category is still empty the chip is simply not shown, so this holds
-    // for every state the catalog passes through.
+    // Whatever the setup screen offers has to lead somewhere.
     @Test
     fun everyCategoryTheSetupScreenOffersCanTrainEveryRegion() {
         val stocked = catalog.all.map { it.equipment }.toSet()
@@ -80,15 +68,25 @@ class ExerciseCatalogIntegrityTest {
         }
     }
 
-    // A gym-goer must be able to press, pull and squat from the catalog
-    // alone, or the week the prompt insists on cannot be built.
+    // Someone who owns nothing must still get a whole week, or the app's own
+    // "bodyweight only" answer leads to a plan it cannot build.
     @Test
-    fun aFullGymCanPushPullAndSquat() {
-        val everything = catalog.all
+    fun aClientWithNoEquipmentCanPushPullAndSquat() {
+        val bodyweight = catalog.availableWith(setOf(Equipment.NONE))
 
-        assertThat(everything.any { it.pattern.isLowerPush }).isTrue()
-        assertThat(everything.any { it.pattern.isPush }).isTrue()
-        assertThat(everything.any { it.pattern.isPull }).isTrue()
+        assertThat(bodyweight.any { it.pattern.isLowerPush }).isTrue()
+        assertThat(bodyweight.any { it.pattern.isPush }).isTrue()
+        assertThat(bodyweight.any { it.pattern.isPull }).isTrue()
+    }
+
+    @Test
+    fun aClientWithNoEquipmentCanTrainEveryRegion() {
+        val reachable = catalog.availableWith(setOf(Equipment.NONE))
+            .map { it.primary.region }
+            .toSet()
+        val missing = MuscleRegion.entries.filter { it.isTrainable && it !in reachable }
+
+        assertThat(missing).isEmpty()
     }
 
     @Test
@@ -104,10 +102,10 @@ class ExerciseCatalogIntegrityTest {
         val source = File("../docs/exercise-source.txt").readLines()
             .filterNot { it.isBlank() || it.startsWith("#") }
             .map { it.split("|") }
-            .map { (equipment, name, muscle) -> Triple(name, equipment, muscle) }
+            .map { Triple(it[1], it[0], it[2]) }
             .toSet()
         val catalogued = catalog.all
-            .map { Triple(it.name, it.equipment.name, it.muscle.name) }
+            .map { Triple(it.name, it.equipment.name, it.primary.name) }
             .toSet()
 
         assertThat(catalogued - source).isEmpty()
@@ -115,16 +113,7 @@ class ExerciseCatalogIntegrityTest {
     }
 
     private companion object {
-        // Transcribed end to end, so these are exact.
-        val FULL_CATEGORIES = mapOf(
-            Equipment.DUMBBELL to 70,
-            Equipment.KETTLEBELL to 13,
-            Equipment.PLATE to 8,
-            Equipment.SUSPENSION_BAND to 7
-        )
-
-        // What each category holds in the source. A category at its size is
-        // finished; one below it is still waiting on pages.
+        // What each category holds in the source's own equipment filter.
         val CATALOG_SIZE = mapOf(
             Equipment.NONE to 105,
             Equipment.BARBELL to 74,
@@ -134,7 +123,7 @@ class ExerciseCatalogIntegrityTest {
             Equipment.PLATE to 8,
             Equipment.RESISTANCE_BAND to 13,
             Equipment.SUSPENSION_BAND to 7,
-            Equipment.OTHER to 17
+            Equipment.OTHER to 16
         )
     }
 

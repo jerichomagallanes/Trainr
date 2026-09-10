@@ -100,7 +100,7 @@ object SampleWorkoutData {
                             isCompleted = true
                         ),
                         WorkoutExercise(
-                            exerciseKey = "bent_over_row",
+                            exerciseKey = "barbell_bent_over_row",
                             name = "Bent-Over Rows",
                             measure = ExerciseMeasure.WEIGHT_AND_REPS,
                             sets = repSets(3, reps = 12, weightKg = 18f, done = true),
@@ -110,7 +110,7 @@ object SampleWorkoutData {
                             isCompleted = true
                         ),
                         WorkoutExercise(
-                            exerciseKey = "overhead_press",
+                            exerciseKey = "barbell_overhead_press",
                             name = "Overhead Press",
                             measure = ExerciseMeasure.WEIGHT_AND_REPS,
                             sets = repSets(3, reps = 10, weightKg = 12f, done = true),
@@ -120,7 +120,7 @@ object SampleWorkoutData {
                             isCompleted = true
                         ),
                         WorkoutExercise(
-                            exerciseKey = "romanian_deadlift",
+                            exerciseKey = "barbell_romanian_deadlift",
                             name = "Romanian Deadlifts",
                             measure = ExerciseMeasure.WEIGHT_AND_REPS,
                             sets = repSets(3, reps = 12, weightKg = 24f, done = true),
@@ -152,7 +152,7 @@ object SampleWorkoutData {
                     equipment = listOf("Yoga Mat"),
                     exercises = listOf(
                         WorkoutExercise(
-                            exerciseKey = "warm_up_jog",
+                            exerciseKey = "warm_up",
                             name = "Warm-up jog",
                             measure = ExerciseMeasure.DURATION,
                             sets = timedSets(1, seconds = 300, done = true),
@@ -162,7 +162,7 @@ object SampleWorkoutData {
                             isCompleted = true
                         ),
                         WorkoutExercise(
-                            exerciseKey = "high_intensity_intervals",
+                            exerciseKey = "hiit",
                             name = "High-Intensity Intervals",
                             measure = ExerciseMeasure.DURATION,
                             sets = timedSets(5, seconds = 60),
@@ -181,7 +181,7 @@ object SampleWorkoutData {
                             instructions = "Core exercise with alternating elbow-to-knee twists to target abs and obliques."
                         ),
                         WorkoutExercise(
-                            exerciseKey = "russian_twist",
+                            exerciseKey = "bodyweight_russian_twist",
                             name = "Russian Twists",
                             measure = ExerciseMeasure.REPS,
                             sets = repSets(3, reps = 15),
@@ -190,7 +190,7 @@ object SampleWorkoutData {
                             instructions = "Seated core exercise involving torso rotation to engage abs and obliques."
                         ),
                         WorkoutExercise(
-                            exerciseKey = "leg_raise",
+                            exerciseKey = "lying_leg_raise",
                             name = "Leg Raises",
                             measure = ExerciseMeasure.REPS,
                             sets = repSets(3, reps = 12),
