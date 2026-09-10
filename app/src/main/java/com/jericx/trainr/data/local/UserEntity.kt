@@ -17,7 +17,6 @@ data class UserEntity(
     val weight: Float,
     val fitnessGoal: String,
     val experienceLevel: String,
-    val workoutLocation: String,
     val availableEquipment: List<String>,
     val workoutDaysPerWeek: Int,
     val workoutDuration: Int,

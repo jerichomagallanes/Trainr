@@ -15,6 +15,9 @@ import com.jericx.trainr.presentation.common.theme.TrainrTheme
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import com.jericx.trainr.domain.model.Equipment
+import com.jericx.trainr.domain.model.EquipmentChoices
+import com.google.common.truth.Truth.assertThat
 
 @RunWith(AndroidJUnit4::class)
 class WorkoutSetupScreenTest {
@@ -29,7 +32,7 @@ class WorkoutSetupScreenTest {
         composeTestRule.setContent {
             TrainrTheme {
                 WorkoutSetupScreen(
-                    onNextClick = { _, _, _, _, _ -> },
+                    onNextClick = { _, _, _, _ -> },
                     onBackClick = {}
                 )
             }
@@ -39,13 +42,16 @@ class WorkoutSetupScreenTest {
             .assertIsDisplayed()
     }
 
-    // The laid-out chip text must never visually overflow.
+    // The laid-out chip text must never visually overflow. Asserted without
+    // scrolling to it: the screen is one scrolling Column, so every chip is
+    // composed and measured, and scrolling past nine wrapping chips is what
+    // this never settles behind.
     @Test
     fun everyDurationChipShowsItsWholeLabel() {
         composeTestRule.setContent {
             TrainrTheme {
                 WorkoutSetupScreen(
-                    onNextClick = { _, _, _, _, _ -> },
+                    onNextClick = { _, _, _, _ -> },
                     onBackClick = {}
                 )
             }
@@ -55,54 +61,47 @@ class WorkoutSetupScreenTest {
             composeTestRule.onNodeWithText(
                 composeTestRule.activity.resources
                     .getQuantityString(R.plurals.minutes, minutes, minutes)
-            ).performScrollTo().assert(notEllipsized())
+            ).assert(notEllipsized())
         }
     }
 
+    // Equipment is the question now: every category the catalog stocks is on
+    // the screen, with no answer about where someone stands in front of it.
     @Test
-    fun displaysLocationOptions() {
+    fun displaysEveryEquipmentCategory() {
         composeTestRule.setContent {
             TrainrTheme {
-                WorkoutSetupScreen(
-                    onNextClick = { _, _, _, _, _ -> },
-                    onBackClick = {}
-                )
+                WorkoutSetupScreen(onNextClick = { _, _, _, _ -> }, onBackClick = {})
             }
         }
 
-        composeTestRule.onNodeWithText(string(R.string.home)).assertIsDisplayed()
-        composeTestRule.onNodeWithText(string(R.string.gym)).assertIsDisplayed()
-        composeTestRule.onNodeWithText(string(R.string.both)).assertIsDisplayed()
-    }
-
-    @Test
-    fun choosingOnlyALocationIsNotEnoughToContinue() {
-        composeTestRule.setContent {
-            TrainrTheme {
-                WorkoutSetupScreen(onNextClick = { _, _, _, _, _ -> }, onBackClick = {})
-            }
+        EquipmentChoices.forEach { kit ->
+            composeTestRule.onNodeWithText(kit.label()).assertExists()
         }
-
-        composeTestRule.onNodeWithText(string(R.string.home)).performClick()
-
-        composeTestRule.onNodeWithText(string(R.string.next)).assertIsNotEnabled()
     }
 
-    // "Bodyweight only" is one of the choices, so an empty set means the question is
-    // unanswered rather than that there is nothing available.
+    // "Bodyweight only" is one of the choices, so an empty set means the
+    // question is unanswered rather than that there is nothing available.
     @Test
     fun equipmentHasToBeAnsweredRatherThanAssumed() {
         composeTestRule.setContent {
             TrainrTheme {
-                WorkoutSetupScreen(onNextClick = { _, _, _, _, _ -> }, onBackClick = {})
+                WorkoutSetupScreen(onNextClick = { _, _, _, _ -> }, onBackClick = {})
             }
         }
 
-        composeTestRule.onNodeWithText(string(R.string.home)).performClick()
-        composeTestRule.onNodeWithText(string(R.string.select_days_placeholder))
-            .performScrollTo()
-            .assertIsDisplayed()
-
         composeTestRule.onNodeWithText(string(R.string.next)).assertIsNotEnabled()
+    }
+
+    private fun Equipment.label(): String = when (this) {
+        Equipment.NONE -> string(R.string.bodyweight_only)
+        Equipment.BARBELL -> string(R.string.equipment_barbell)
+        Equipment.DUMBBELL -> string(R.string.equipment_dumbbell)
+        Equipment.KETTLEBELL -> string(R.string.equipment_kettlebell)
+        Equipment.MACHINE -> string(R.string.equipment_machine)
+        Equipment.PLATE -> string(R.string.equipment_plate)
+        Equipment.RESISTANCE_BAND -> string(R.string.equipment_resistance_band)
+        Equipment.SUSPENSION_BAND -> string(R.string.equipment_suspension_band)
+        Equipment.OTHER -> string(R.string.equipment_other)
     }
 }

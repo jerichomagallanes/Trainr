@@ -13,7 +13,6 @@ import com.jericx.trainr.domain.model.UnitSystem
 import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
 import com.jericx.trainr.domain.model.WorkoutExercise
-import com.jericx.trainr.domain.model.WorkoutLocation
 import com.jericx.trainr.domain.model.WorkoutStatus
 
 class PlanPromptBuilder {
@@ -127,7 +126,6 @@ class PlanPromptBuilder {
             appendLine("- Age ${user.age}, height ${user.height} cm, weight ${user.weight} kg")
             appendLine("- Goal: ${user.fitnessGoal.asText()}")
             appendLine("- Experience: ${user.experienceLevel.asText()}")
-            appendLine("- Trains at: ${user.workoutLocation.asText()}")
             appendLine("- Available equipment: ${user.availableEquipment.asText()}")
             appendLine("- Days per week: ${user.workoutDaysPerWeek} (plan EXACTLY this many days)")
             appendLine(
@@ -270,8 +268,6 @@ class PlanPromptBuilder {
     }
 
     private fun ExperienceLevel.asText() = name.lowercase()
-
-    private fun WorkoutLocation.asText() = name.lowercase()
 
     // Named the way a coach would name them, so the model knows what a
     // machine is for rather than guessing from an enum constant.

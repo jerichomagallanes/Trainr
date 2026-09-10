@@ -22,22 +22,23 @@ class EquipmentVocabularyTest {
         ).inOrder()
     }
 
-    // "I have no equipment" is an answer at home and nowhere else.
+    // "I have no equipment" is one of the nine answers, not a special case of
+    // where someone stands: a gym member can still be given a push-up.
     @Test
-    fun bodyweightOnlyIsOfferedOnlyWhereItIsAnAnswer() {
-        assertThat(equipmentFor(WorkoutLocation.HOME)).contains(Equipment.NONE)
-        assertThat(equipmentFor(WorkoutLocation.GYM)).doesNotContain(Equipment.NONE)
-        assertThat(equipmentFor(WorkoutLocation.BOTH)).doesNotContain(Equipment.NONE)
+    fun everyCategoryIncludingBodyweightIsOffered() {
+        val offered = equipmentFor()
+
+        assertThat(offered).containsNoDuplicates()
+        assertThat(offered).containsExactlyElementsIn(EquipmentChoices).inOrder()
+        assertThat(offered).contains(Equipment.NONE)
     }
 
+    // A category the catalog cannot serve is a chip that leads nowhere.
     @Test
-    fun everyLocationCanReachEveryKindOfKit() {
-        WorkoutLocation.entries.forEach { location ->
-            val offered = equipmentFor(location)
-            assertThat(offered).containsNoDuplicates()
-            assertThat(offered).containsAtLeast(
-                Equipment.BARBELL, Equipment.DUMBBELL, Equipment.MACHINE, Equipment.OTHER
-            )
-        }
+    fun aCategoryNothingIsStockedForIsNotOffered() {
+        val stocked = setOf(Equipment.NONE, Equipment.DUMBBELL)
+
+        assertThat(equipmentFor(stocked))
+            .containsExactly(Equipment.NONE, Equipment.DUMBBELL).inOrder()
     }
 }

@@ -16,7 +16,7 @@ import androidx.room.TypeConverters
     ],
     // Bumped without a migration on purpose: the version has to move for the
     // destructive fallback to fire, or an old file fails its identity check.
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

@@ -11,7 +11,6 @@ data class UserProfile(
     val weight: Float = 0f,
     val fitnessGoal: FitnessGoal = FitnessGoal.GENERAL_FITNESS,
     val experienceLevel: ExperienceLevel = ExperienceLevel.BEGINNER,
-    val workoutLocation: WorkoutLocation = WorkoutLocation.HOME,
     val availableEquipment: List<Equipment> = emptyList(),
     val workoutDaysPerWeek: Int = Constants.Workout.DEFAULT_WORKOUT_DAYS_PER_WEEK,
     val workoutDuration: Int = Constants.Workout.DEFAULT_WORKOUT_DURATION,
@@ -48,12 +47,6 @@ enum class ExperienceLevel {
     ADVANCED
 }
 
-enum class WorkoutLocation {
-    HOME,
-    GYM,
-    BOTH
-}
-
 // The equipment vocabulary the exercise catalog is categorised by, and the
 // only vocabulary the setup screen asks about. One tag per movement: what a
 // bench press is done with is the bar, and the bench is part of doing it.
@@ -69,8 +62,7 @@ enum class Equipment {
     OTHER
 }
 
-// Asked in the catalog's own order. "No equipment" is an answer only where
-// there might be none; at a gym it is not a thing anyone means.
+// Asked in the catalog's own order.
 val EquipmentChoices = listOf(
     Equipment.NONE,
     Equipment.BARBELL,
@@ -107,12 +99,13 @@ fun storedEquipment(raw: String): Equipment? =
 // A chip the catalog cannot serve is a lie: the client ticks it, the shortlist
 // comes back empty, and the plan is built from nothing. What is offered is
 // what there are movements for.
+//
+// Where they train used to gate this and could not: a gym has resistance
+// bands and a spare room has a machine, so every answer offered the same nine
+// and the question only cost a tap.
 fun equipmentFor(
-    location: WorkoutLocation,
     stocked: Set<Equipment> = EquipmentChoices.toSet()
-): List<Equipment> = EquipmentChoices
-    .filter { it in stocked }
-    .filterNot { it == Equipment.NONE && location != WorkoutLocation.HOME }
+): List<Equipment> = EquipmentChoices.filter { it in stocked }
 
 // Stored and sent as these constants, never as the words on the chip: a
 // profile filled in Japanese used to reach the model as Japanese injury names,
