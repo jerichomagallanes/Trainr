@@ -3,7 +3,6 @@ package com.jericx.trainr.di
 import android.content.Context
 import androidx.room.Room
 import com.jericx.trainr.common.Constants
-import com.jericx.trainr.data.local.MIGRATION_1_2
 import com.jericx.trainr.data.local.TrainrDatabase
 import com.jericx.trainr.data.local.UserDao
 import com.jericx.trainr.data.local.UserMapper
@@ -40,7 +39,13 @@ object AppModule {
             context,
             TrainrDatabase::class.java,
             Constants.DATABASE_NAME
-        ).addMigrations(MIGRATION_1_2).build()
+        )
+            // Nothing is in production, so a schema change resets the local
+            // database rather than earning a migration. This has to become a
+            // real migration before the first release: left here, the first
+            // schema change after launch silently wipes every client.
+            .fallbackToDestructiveMigration(dropAllTables = true)
+            .build()
     }
 
     @Provides
