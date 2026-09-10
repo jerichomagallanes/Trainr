@@ -7,6 +7,12 @@ import com.jericx.trainr.domain.diagnostics.NoBreadcrumbs
 import com.jericx.trainr.domain.generation.PlanRequest
 import com.jericx.trainr.domain.generation.SpentModels
 import com.jericx.trainr.domain.model.Injury
+import com.jericx.trainr.domain.catalog.CatalogExercise
+import com.jericx.trainr.domain.catalog.InMemoryExerciseCatalog
+import com.jericx.trainr.domain.catalog.MovementPattern
+import com.jericx.trainr.domain.catalog.MuscleGroup
+import com.jericx.trainr.domain.model.Equipment
+import com.jericx.trainr.domain.model.ExerciseMeasure
 import com.jericx.trainr.domain.model.UserProfile
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
@@ -17,14 +23,17 @@ class GeminiPlanGeneratorTest {
         private val remaining = ArrayDeque(answers)
         val modelsAsked = mutableListOf<String>()
         val prompts = mutableListOf<String>()
+        val offered = mutableListOf<List<String>>()
 
         override suspend fun generate(
             model: String,
             systemInstruction: String,
-            userPrompt: String
+            userPrompt: String,
+            exerciseKeys: List<String>
         ): GeminiResponse {
             modelsAsked += model
             prompts += userPrompt
+            offered += exerciseKeys
             return remaining.removeFirstOrNull() ?: GeminiResponse.Failed
         }
     }
@@ -53,10 +62,21 @@ class GeminiPlanGeneratorTest {
         breadcrumbs: Breadcrumbs = NoBreadcrumbs
     ) = GeminiPlanGenerator(
         client = client,
-        parser = GeneratedPlanParser(),
+        parser = GeneratedPlanParser(catalog),
         promptBuilder = PlanPromptBuilder(),
+        catalog = catalog,
         spentModels = spentModels,
         breadcrumbs = breadcrumbs
+    )
+
+    private val catalog = InMemoryExerciseCatalog(
+        listOf(
+            CatalogExercise(
+                "goblet_squat", "Goblet Squat", "ゴブレットスクワット",
+                MuscleGroup.QUADRICEPS, setOf(Equipment.NONE),
+                ExerciseMeasure.WEIGHT_AND_REPS, MovementPattern.SQUAT, staple = true
+            )
+        )
     )
 
     private fun request(daysPerWeek: Int = 1) = PlanRequest(
@@ -73,13 +93,9 @@ class GeminiPlanGeneratorTest {
             {
               "dayNumber": 1,
               "title": "Full Body",
-              "equipment": ["Dumbbells"],
               "exercises": [
                 {
                   "exerciseKey": "goblet_squat",
-                  "name": "Goblet Squats",
-                  "measure": "WEIGHT_AND_REPS",
-                  "durationMinutes": 8,
                   "prescription": "3 sets of 12 reps",
                   "instructions": "Squat holding a dumbbell at your chest.",
                   "restSeconds": 60,

@@ -16,10 +16,13 @@ sealed interface GeminiResponse {
 // One request to one model. The generator owns the retries and the model list.
 interface PlanModelClient {
 
+    // The movement keys become the schema's exerciseKey enum, so an answer
+    // naming a movement this client cannot perform is not representable.
     suspend fun generate(
         model: String,
         systemInstruction: String,
-        userPrompt: String
+        userPrompt: String,
+        exerciseKeys: List<String>
     ): GeminiResponse
 
     companion object {

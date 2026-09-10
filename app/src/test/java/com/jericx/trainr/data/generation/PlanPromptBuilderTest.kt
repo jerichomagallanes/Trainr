@@ -4,6 +4,9 @@ import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.domain.generation.PlanRequest
 import com.jericx.trainr.domain.model.Injury
 import com.jericx.trainr.domain.model.Equipment
+import com.jericx.trainr.domain.catalog.CatalogExercise
+import com.jericx.trainr.domain.catalog.MovementPattern
+import com.jericx.trainr.domain.catalog.MuscleGroup
 import com.jericx.trainr.domain.model.ExerciseMeasure
 import com.jericx.trainr.domain.model.ExerciseSet
 import com.jericx.trainr.domain.model.FitnessGoal
@@ -16,6 +19,23 @@ import com.jericx.trainr.domain.model.UnitSystem
 import org.junit.Test
 
 class PlanPromptBuilderTest {
+
+    private fun catalogExercise(
+        key: String,
+        muscle: MuscleGroup,
+        measure: ExerciseMeasure,
+        pattern: MovementPattern,
+        requires: Set<Equipment> = setOf(Equipment.NONE)
+    ) = CatalogExercise(key, key, key, muscle, requires, measure, pattern, staple = true)
+
+    private val shortlist = listOf(
+        catalogExercise(
+            "goblet_squat", MuscleGroup.QUADRICEPS,
+            ExerciseMeasure.WEIGHT_AND_REPS, MovementPattern.SQUAT, setOf(Equipment.DUMBBELLS)
+        ),
+        catalogExercise("push_up", MuscleGroup.CHEST, ExerciseMeasure.REPS, MovementPattern.HORIZONTAL_PUSH),
+        catalogExercise("plank", MuscleGroup.ABDOMINALS, ExerciseMeasure.DURATION, MovementPattern.CORE)
+    )
 
     private val builder = PlanPromptBuilder()
 
@@ -44,7 +64,7 @@ class PlanPromptBuilderTest {
 
     @Test
     fun thePromptCarriesEverythingTheCoachMustRespect() {
-        val prompt = builder.userPrompt(request())
+        val prompt = builder.userPrompt(request(), shortlist)
 
         assertThat(prompt).contains("build muscle")
         assertThat(prompt).contains("dumbbells, pull-up bar")
@@ -56,13 +76,13 @@ class PlanPromptBuilderTest {
 
     @Test
     fun displayCopyLanguageFollowsTheAppLanguage() {
-        assertThat(builder.userPrompt(request(languageCode = "ja"))).contains("Japanese")
-        assertThat(builder.userPrompt(request(languageCode = "tl"))).contains("Tagalog")
+        assertThat(builder.userPrompt(request(languageCode = "ja"), shortlist)).contains("Japanese")
+        assertThat(builder.userPrompt(request(languageCode = "tl"), shortlist)).contains("Tagalog")
     }
 
     @Test
     fun weekOneCarriesNoHistory() {
-        assertThat(builder.userPrompt(request())).doesNotContain("Last week")
+        assertThat(builder.userPrompt(request(), shortlist)).doesNotContain("Last week")
     }
 
     @Test
@@ -110,7 +130,7 @@ class PlanPromptBuilderTest {
             )
         )
 
-        val prompt = builder.userPrompt(request(previousWeek = previous))
+        val prompt = builder.userPrompt(request(previousWeek = previous), shortlist)
 
         assertThat(prompt).contains("Last week (week 1)")
         assertThat(prompt).contains("goblet_squat: prescribed \"2 sets of 12 reps\"")
@@ -119,25 +139,40 @@ class PlanPromptBuilderTest {
         assertThat(prompt).contains("Skipped Day (skipped)")
     }
 
-    // A near-duplicate key (dumbbell_goblet_squat beside goblet_squat) splits history and loses the tutorial
+    // The vocabulary is the client's own, so it belongs in the request and not
+    // in a brief that is identical for everyone.
     @Test
-    fun theCanonicalVocabularyIsPinnedInTheBrief() {
-        val brief = PlanPromptBuilder(canonicalKeys = setOf("goblet_squat", "plank"))
-            .systemInstruction()
+    fun theVocabularyIsListedByHowEachMovementIsMeasured() {
+        val prompt = builder.userPrompt(request(), shortlist)
 
-        assertThat(brief).contains("goblet_squat, plank")
-        assertThat(brief).contains("near-duplicate")
-        assertThat(PlanPromptBuilder().systemInstruction()).doesNotContain("near-duplicate")
+        assertThat(prompt).contains("Movements you may prescribe")
+        assertThat(prompt).contains("Weighted - every set needs reps and weightKg:")
+        assertThat(prompt).contains("QUADRICEPS: goblet_squat")
+        assertThat(prompt).contains("Bodyweight - every set needs reps:")
+        assertThat(prompt).contains("CHEST: push_up")
+        assertThat(builder.systemInstruction()).doesNotContain("goblet_squat")
+    }
+
+    // Programming around what the client owns is the app's job, so the demand
+    // is only made where the shortlist can meet it.
+    @Test
+    fun theWeekIsToldWhichPatternsItMustCover() {
+        val prompt = builder.userPrompt(request(), shortlist)
+
+        assertThat(prompt).contains("a squat or lunge")
+        assertThat(prompt).contains("an upper-body press")
+        assertThat(builder.userPrompt(request(), emptyList()))
+            .doesNotContain("The week must include")
     }
 
     // In pounds the gym's step is 5 lb, so a 2.5% rise on 20 kg reads back as the same 45 lb
     @Test
     fun theBriefNamesTheIncrementTheClientCanActuallyLoad() {
-        val metric = PlanPromptBuilder().userPrompt(request(units = UnitSystem.METRIC))
+        val metric = PlanPromptBuilder().userPrompt(request(units = UnitSystem.METRIC), shortlist)
         assertThat(metric).contains("Reads weights in kilograms")
         assertThat(metric).contains("increment 2.5 kg")
 
-        val imperial = PlanPromptBuilder().userPrompt(request(units = UnitSystem.IMPERIAL))
+        val imperial = PlanPromptBuilder().userPrompt(request(units = UnitSystem.IMPERIAL), shortlist)
         assertThat(imperial).contains("Reads weights in pounds")
         assertThat(imperial).contains("increment 2.27 kg")
     }
@@ -154,7 +189,7 @@ class PlanPromptBuilderTest {
     fun theCoachingBriefKeepsItsLoadBearingRules() {
         val brief = builder.systemInstruction()
 
-        assertThat(brief).contains("lower_snake_case")
+        assertThat(brief).contains("chosen from the movement list")
         assertThat(brief).contains("warm-up")
         assertThat(brief).contains("kilograms")
         assertThat(brief).contains("strength 3-6 reps")

@@ -14,15 +14,12 @@ data class GeneratedPlan(
 data class GeneratedDay(
     val dayNumber: Int,
     val title: String,
-    val equipment: List<String> = emptyList(),
     val exercises: List<GeneratedExercise>
 )
 
 @Serializable
 data class GeneratedExercise(
     val exerciseKey: String,
-    val name: String,
-    val measure: String,
     val prescription: String,
     val instructions: String,
     val restSeconds: Int? = null,

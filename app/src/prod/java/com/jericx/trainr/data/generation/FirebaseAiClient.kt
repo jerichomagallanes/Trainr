@@ -19,14 +19,15 @@ class FirebaseAiClient : PlanModelClient {
     override suspend fun generate(
         model: String,
         systemInstruction: String,
-        userPrompt: String
+        userPrompt: String,
+        exerciseKeys: List<String>
     ): GeminiResponse = try {
         val generativeModel = Firebase.ai(backend = GenerativeBackend.googleAI())
             .generativeModel(
                 modelName = model,
                 generationConfig = generationConfig {
                     responseMimeType = "application/json"
-                    responseSchema = GENERATED_PLAN_SCHEMA
+                    responseSchema = generatedPlanSchema(exerciseKeys)
                     temperature = TEMPERATURE
                 },
                 systemInstruction = content { text(systemInstruction) }
