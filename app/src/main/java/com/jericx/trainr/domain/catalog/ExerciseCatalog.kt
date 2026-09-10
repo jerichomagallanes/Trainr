@@ -15,8 +15,10 @@ data class CatalogExercise(
     val measure: ExerciseMeasure,
     val pattern: MovementPattern,
     val staple: Boolean,
-    // How to perform it, written once and the same for everyone. Empty where
-    // the movement is an activity with no technique to describe.
+    // One line for the card and the how-to behind a tap, both owned by the
+    // catalog so a form cue can never be generated. Empty where the movement
+    // is an activity with no technique to describe.
+    val summary: String = "",
     val steps: List<String> = emptyList()
 ) {
     // Bodyweight needs nothing, so it is available to everyone.
