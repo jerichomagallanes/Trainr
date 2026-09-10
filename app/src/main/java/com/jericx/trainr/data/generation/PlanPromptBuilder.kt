@@ -1,5 +1,7 @@
 package com.jericx.trainr.data.generation
 
+import com.jericx.trainr.domain.catalog.CatalogExercise
+import com.jericx.trainr.domain.catalog.ExerciseShortlist
 import com.jericx.trainr.domain.generation.PlanRequest
 import com.jericx.trainr.domain.generation.SessionBudget
 import com.jericx.trainr.domain.model.Equipment
@@ -15,11 +17,7 @@ import com.jericx.trainr.domain.model.WorkoutLocation
 import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.domain.model.WorkoutType
 
-class PlanPromptBuilder(
-    // The video catalog's keys. These movements must use these exact keys or
-    // history and tutorials silently split.
-    private val canonicalKeys: Collection<String> = emptyList()
-) {
+class PlanPromptBuilder {
 
     fun systemInstruction(): String = """
         You are an experienced, certified strength and conditioning coach writing a
@@ -47,9 +45,9 @@ class PlanPromptBuilder(
           never exceed the session set cap given below. The cap is what the
           client's session length pays for once warm-up and rest are counted, so a
           session that exceeds it is a session they will not finish.
-        - Include a lower-body push, an upper-body push and an upper-body pull
-          every week. Order each session large muscle groups before small,
-          multi-joint before single-joint.
+        - Cover every pattern the request names as required, and order each
+          session large muscle groups before small, multi-joint before
+          single-joint.
         - Each day starts with a short warm-up exercise (DURATION measure): easy
           versions of the movements that follow, not a generic routine and not
           static stretching.
@@ -69,11 +67,10 @@ class PlanPromptBuilder(
           muscle or strength, keep conditioning short and low-impact and keep it
           off the day before a hard leg session: running blunts strength and size
           gains where cycling does not.
-        - Use ONLY the client's available equipment, and list in each day's
-          equipment array only items from that list. Prescribe a weight (measure
-          WEIGHT_AND_REPS, weightKg on every set) only for movements loaded by that
-          equipment; bodyweight movements are REPS; timed work, holds and cardio
-          are DURATION with seconds.
+        - The movement list is already filtered to what this client owns, so
+          every key in it is one they can perform. Give each set the targets its
+          group asks for: weighted movements take reps and weightKg, bodyweight
+          movements take reps, timed movements take seconds.
         - Weights are kilograms, whatever the client reads them in. Every
           weightKg must be a multiple of the client's smallest loadable
           increment, given below, or the plan asks for a weight they cannot
@@ -103,12 +100,11 @@ class PlanPromptBuilder(
         - If an exercise was skipped, repeat its week unchanged.
 
         Output rules:
-        - exerciseKey is a canonical English lower_snake_case slug (goblet_squat,
-          bent_over_row), singular, identical for the same movement in every week
-          and language. It is an identifier, never translated.${knownKeysRule()}
-        - name, titles, equipment, prescription and instructions are display copy
-          in the requested language. Capitalize each equipment item ("Dumbbells",
-          "Yoga Mat").
+        - exerciseKey is chosen from the movement list in the request and never
+          invented. The app owns each movement's name, the muscle it trains and
+          how it is measured, so all you choose is which movement and how much.
+        - Day titles, prescription and instructions are display copy in the
+          requested language.
         - Day titles are short and name the session's focus ("Full Body
           Strength", "Lower Body Power") - never letter or index labels like
           "Full Body A" or "Day 1".
@@ -121,7 +117,7 @@ class PlanPromptBuilder(
         - Respond with JSON only, exactly matching the provided schema.
     """.trimIndent()
 
-    fun userPrompt(request: PlanRequest): String {
+    fun userPrompt(request: PlanRequest, shortlist: List<CatalogExercise>): String {
         val user = request.user
 
         return buildString {
@@ -155,7 +151,9 @@ class PlanPromptBuilder(
                 appendLine("- Injuries or areas to protect: ${user.injuries.joinToString { it.asText() }}")
             }
             appendLine("- Write all display copy in: ${request.languageCode.asLanguage()}")
+            appendRequiredPatterns(shortlist)
             request.previousWeek?.let { appendHistory(it) }
+            appendVocabulary(shortlist)
         }
     }
 
@@ -171,14 +169,37 @@ class PlanPromptBuilder(
             else -> null
         }
 
-    private fun knownKeysRule(): String =
-        if (canonicalKeys.isEmpty()) {
-            ""
-        } else {
-            "\n        - When you prescribe one of these movements or a close variant of" +
-                "\n          it, use exactly this key rather than minting a near-duplicate:" +
-                "\n          ${canonicalKeys.sorted().joinToString(", ")}."
+    private fun StringBuilder.appendRequiredPatterns(shortlist: List<CatalogExercise>) {
+        val required = ExerciseShortlist.requiredPatterns(shortlist)
+        if (required.isEmpty()) return
+        appendLine("- The week must include " + required.joinToString(", ") { it.label })
+    }
+
+    // Grouped by what a set of it looks like, then by the muscle it trains, so
+    // the model reads off which targets to write rather than inferring them
+    // from a slug. Already filtered to this client's equipment.
+    private fun StringBuilder.appendVocabulary(shortlist: List<CatalogExercise>) {
+        if (shortlist.isEmpty()) return
+        appendLine()
+        appendLine("Movements you may prescribe. Use these keys exactly, and no others.")
+        ExerciseMeasure.entries.forEach { measure ->
+            val group = shortlist.filter { it.measure == measure }
+            if (group.isEmpty()) return@forEach
+            appendLine()
+            appendLine(measure.asHeading())
+            group.groupBy { it.muscle }
+                .toSortedMap()
+                .forEach { (muscle, exercises) ->
+                    appendLine("  $muscle: ${exercises.joinToString(", ") { it.key }}")
+                }
         }
+    }
+
+    private fun ExerciseMeasure.asHeading() = when (this) {
+        ExerciseMeasure.WEIGHT_AND_REPS -> "Weighted - every set needs reps and weightKg:"
+        ExerciseMeasure.REPS -> "Bodyweight - every set needs reps:"
+        ExerciseMeasure.DURATION -> "Timed - every set needs seconds:"
+    }
 
     private fun StringBuilder.appendHistory(week: WeeklyWorkoutPlan) {
         appendLine()

@@ -1,5 +1,9 @@
 package com.jericx.trainr.data.generation
 
+import com.jericx.trainr.domain.catalog.ExerciseCatalog
+import com.jericx.trainr.domain.catalog.InMemoryExerciseCatalog
+import com.jericx.trainr.domain.catalog.PatternRequirement
+import com.jericx.trainr.domain.model.Equipment
 import com.jericx.trainr.domain.model.ExerciseMeasure
 import com.jericx.trainr.domain.model.ExerciseSet
 import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
@@ -11,7 +15,14 @@ import kotlinx.serialization.json.Json
 
 // What the client's own answers make possible, so a plan that cannot be
 // performed is rejected while the model still has an attempt left to fix it.
-data class PlanLimits(val maxSetsPerSession: Int) {
+data class PlanLimits(
+    val maxSetsPerSession: Int,
+    // Empty means the vocabulary is not being enforced, which is only true in
+    // tests: a real request always has a shortlist.
+    val allowedKeys: Set<String> = emptySet(),
+    val requiredPatterns: Set<PatternRequirement> = emptySet(),
+    val languageCode: String = "en"
+) {
     companion object {
         val Unbounded = PlanLimits(maxSetsPerSession = Int.MAX_VALUE)
     }
@@ -24,7 +35,7 @@ sealed interface PlanParseResult {
 
 // The generator never writes ids, dates, week numbers or completion state, so
 // those arrive as parameters rather than JSON.
-class GeneratedPlanParser {
+class GeneratedPlanParser(private val catalog: ExerciseCatalog = InMemoryExerciseCatalog(emptyList())) {
 
     private val decoder = Json { ignoreUnknownKeys = true }
 
@@ -50,7 +61,9 @@ class GeneratedPlanParser {
                 weekNumber = weekNumber,
                 title = generated.title.withoutWeekNumber(),
                 startDateMillis = startDateMillis,
-                workoutDays = generated.days.sortedBy { it.dayNumber }.map { it.toDomain() }
+                workoutDays = generated.days
+                    .sortedBy { it.dayNumber }
+                    .map { it.toDomain(limits.languageCode) }
             )
         )
     }
@@ -64,6 +77,19 @@ class GeneratedPlanParser {
             .filterValues { it > 1 }
             .keys.forEach { add("plan: day $it appears more than once") }
         plan.days.forEach { check(it, limits) }
+        checkPatterns(plan, limits)
+    }
+
+    // The three patterns that earn the most for the time they take. Checked
+    // across the week rather than the day, because a split spreads them.
+    private fun MutableList<String>.checkPatterns(plan: GeneratedPlan, limits: PlanLimits) {
+        if (limits.requiredPatterns.isEmpty()) return
+        val patterns = plan.days
+            .flatMap { it.exercises }
+            .mapNotNull { catalog[it.exerciseKey]?.pattern }
+        limits.requiredPatterns
+            .filterNot { requirement -> patterns.any(requirement::isMetBy) }
+            .forEach { add("plan: the week has no ${it.label}, and needs one") }
     }
 
     private fun MutableList<String>.check(day: GeneratedDay, limits: PlanLimits) {
@@ -84,15 +110,27 @@ class GeneratedPlanParser {
         day.exercises.groupingBy { it.exerciseKey }.eachCount()
             .filterValues { it > 1 }
             .keys.forEach { add("$where: exerciseKey '$it' appears more than once") }
-        day.exercises.forEach { check(where, it) }
+        day.exercises.forEach { check(where, it, limits) }
     }
 
-    private fun MutableList<String>.check(dayWhere: String, exercise: GeneratedExercise) {
+    private fun MutableList<String>.check(
+        dayWhere: String,
+        exercise: GeneratedExercise,
+        limits: PlanLimits
+    ) {
         val where = "$dayWhere, ${exercise.exerciseKey.ifBlank { "exercise" }}"
         if (!keyShape.matches(exercise.exerciseKey)) {
             add("$where: exerciseKey '${exercise.exerciseKey}' is not a lower_snake_case slug")
         }
-        if (exercise.name.isBlank()) add("$where: name is blank")
+        if (limits.allowedKeys.isNotEmpty() && exercise.exerciseKey !in limits.allowedKeys) {
+            add(
+                "$where: '${exercise.exerciseKey}' is not one of the movements offered; " +
+                    "choose only from that list"
+            )
+        }
+        if (catalog[exercise.exerciseKey] == null && limits.allowedKeys.isNotEmpty()) {
+            add("$where: '${exercise.exerciseKey}' is not a movement the app knows")
+        }
         if (exercise.prescription.isBlank()) add("$where: prescription is blank")
         if (exercise.instructions.isBlank()) add("$where: instructions are blank")
         if (exercise.restSeconds != null && exercise.restSeconds !in MIN_REST..MAX_REST) {
@@ -138,25 +176,38 @@ class GeneratedPlanParser {
             return ceil((perSet.sum() + rest) / 60.0).toInt().coerceAtLeast(1)
         }
 
-    // Unknown measures degrade to REPS, the same fallback the database mapper uses.
+    // How a movement is measured is a property of the movement, so the catalog
+    // answers it. A key the catalog does not know degrades to REPS, the same
+    // fallback the database mapper uses.
     private val GeneratedExercise.resolvedMeasure: ExerciseMeasure
-        get() = runCatching { ExerciseMeasure.valueOf(measure) }
-            .getOrDefault(ExerciseMeasure.REPS)
+        get() = catalog[exerciseKey]?.measure ?: ExerciseMeasure.REPS
 
-    private fun GeneratedDay.toDomain() = WorkoutDay(
+    private fun Equipment.asDisplayText() = name.lowercase()
+        .split('_')
+        .joinToString(" ") { part -> part.replaceFirstChar { it.uppercase() } }
+
+    // The day's kit is the union of what its movements need, which the
+    // catalog already knows; asking a model to restate it only gave it a way
+    // to name equipment the client does not own.
+    private fun GeneratedDay.toDomain(languageCode: String) = WorkoutDay(
         dayNumber = dayNumber,
         title = title,
         duration = exercises.sumOf { it.minutes },
         exerciseCount = exercises.size,
-        equipment = equipment,
-        exercises = exercises.map { it.toDomain() }
+        equipment = exercises
+            .mapNotNull { catalog[it.exerciseKey] }
+            .flatMap { it.requires }
+            .filterNot { it == Equipment.NONE }
+            .distinct()
+            .map { it.asDisplayText() },
+        exercises = exercises.map { it.toDomain(languageCode) }
     )
 
-    private fun GeneratedExercise.toDomain(): WorkoutExercise {
+    private fun GeneratedExercise.toDomain(languageCode: String): WorkoutExercise {
         val resolved = resolvedMeasure
         return WorkoutExercise(
             exerciseKey = exerciseKey,
-            name = name,
+            name = catalog[exerciseKey]?.displayName(languageCode) ?: exerciseKey,
             measure = resolved,
             sets = sets.mapIndexed { index, set -> set.toDomain(index + 1, resolved) },
             setCount = sets.size,

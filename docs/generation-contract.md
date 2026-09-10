@@ -19,6 +19,7 @@ knows better**, as parameters to `GeneratedPlanParser.parse()`:
 | Video tutorial URLs | Model-written URLs are routinely dead or wrong. Resolved at render time from the hand-verified `ExerciseVideoCatalog`, keyed on `exerciseKey`. |
 | Completion state, actuals, notes, ids | A new plan has no history, and only the user logs work. |
 | `durationMinutes` | Arithmetic on the prescription, not a fourth number the model has to keep in agreement with sets, reps and rest. |
+| `name`, `measure`, and a day's `equipment` | Facts about the movement, not about this client's week. The catalog owns them, so a plan cannot rename a movement, measure it wrongly, or claim kit the client does not have. |
 
 Derived rather than accepted, so the app can never contradict itself on
 screen: an exercise's `durationMinutes` is its prescribed work plus its rest
@@ -55,13 +56,10 @@ its exercise list, and set numbers are the order the sets arrive in.
               "type": "object",
               "additionalProperties": false,
               "required": [
-                "exerciseKey", "name", "measure",
-                "prescription", "instructions", "sets"
+                "exerciseKey", "prescription", "instructions", "sets"
               ],
               "properties": {
-                "exerciseKey": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
-                "name": { "type": "string", "minLength": 1 },
-                "measure": { "enum": ["WEIGHT_AND_REPS", "REPS", "DURATION"] },
+                "exerciseKey": { "enum": ["<the movements this client can perform>"] },
                 "prescription": { "type": "string", "minLength": 1 },
                 "instructions": { "type": "string", "minLength": 1 },
                 "restSeconds": { "type": ["integer", "null"], "minimum": 1 },
@@ -101,8 +99,6 @@ its exercise list, and set numbers are the order the sets arrive in.
       "exercises": [
         {
           "exerciseKey": "goblet_squat",
-          "name": "Goblet Squats",
-          "measure": "WEIGHT_AND_REPS",
           "prescription": "3 sets of 12 reps",
           "instructions": "Squat holding a dumbbell at your chest to build the legs and brace the core.",
           "restSeconds": 60,
@@ -114,8 +110,6 @@ its exercise list, and set numbers are the order the sets arrive in.
         },
         {
           "exerciseKey": "plank",
-          "name": "Plank",
-          "measure": "DURATION",
           "prescription": "3 sets of 45 seconds",
           "instructions": "Hold a straight line from head to heels to brace the whole core.",
           "sets": [
@@ -157,9 +151,13 @@ its exercise list, and set numbers are the order the sets arrive in.
   seconds.
 - **`dayNumber`** — ISO day of week, 1 = Monday. Weeks start Monday. Each day
   appears at most once; the parser sorts days by it.
-- **`equipment`** — display strings in the user's language, only what the
-  day's exercises actually use, drawn from the equipment the user said they
-  have.
+- **`equipment`** — not written. Derived as the union of what the day's
+  movements require, which the catalog already records.
+- **`exerciseKey`** — an enum, not a string. The values are the movements this
+  client owns the equipment for, capped and spread across muscle regions by
+  `ExerciseShortlist`, plus every key their previous week used so progression
+  keeps its thread. A movement outside that set is unrepresentable rather than
+  rejected afterwards, which is what makes a small on-device model viable.
 
 ## Validation
 
@@ -172,7 +170,8 @@ outside 1–100, seconds outside 5–5400, `restSeconds` outside 5–600, `weigh
 outside 0.5–500 kg, more than 12 exercises in a day or 10 sets in an exercise,
 or a day whose total sets exceed what the client's session length pays for
 (see `SessionBudget`). A set missing the target its measure requires is
-rejected too.
+rejected too, as is a key outside the offered vocabulary and a week missing a
+movement pattern it was told to cover.
 Tolerated: unknown JSON keys (ignored), unknown `measure` (degrades to
 `REPS`), stray set targets (stripped).
 
@@ -196,3 +195,7 @@ The prompt that requests a plan must tell the model, alongside this schema:
 - The session's set cap and the weekly set target per muscle group, both
   computed by `SessionBudget` from the user's answers. What the rules
   themselves rest on is in docs/programming-evidence.md.
+- The movements it may prescribe, grouped by how each is measured so the model
+  reads off which targets to write, and the movement patterns the week must
+  cover. Both come from the shortlist, so both are already filtered to this
+  client's equipment.

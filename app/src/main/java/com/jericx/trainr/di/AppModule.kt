@@ -17,6 +17,8 @@ import com.jericx.trainr.domain.diagnostics.Breadcrumbs
 import com.jericx.trainr.data.diagnostics.CrashlyticsBreadcrumbs
 import com.jericx.trainr.domain.generation.PlanGenerator
 import com.jericx.trainr.data.generation.DailySpentModels
+import com.jericx.trainr.data.catalog.AssetExerciseCatalog
+import com.jericx.trainr.domain.catalog.ExerciseCatalog
 import com.jericx.trainr.domain.generation.SpentModels
 import com.jericx.trainr.domain.purchases.FreeGenerationAllowance
 import com.jericx.trainr.domain.purchases.ProGate
@@ -101,9 +103,15 @@ object AppModule {
     // Which generator answers is a property of the build: see planGenerator()
     // in the dev and prod source sets.
     fun providePlanGenerator(
+        catalog: ExerciseCatalog,
         spentModels: SpentModels,
         breadcrumbs: Breadcrumbs
-    ): PlanGenerator = planGenerator(spentModels, breadcrumbs)
+    ): PlanGenerator = planGenerator(catalog, spentModels, breadcrumbs)
+
+    @Provides
+    @Singleton
+    fun provideExerciseCatalog(@ApplicationContext context: Context): ExerciseCatalog =
+        AssetExerciseCatalog(context)
 
     @Provides
     @Singleton

@@ -1,14 +1,36 @@
 package com.jericx.trainr.data.generation
 
 import com.google.common.truth.Truth.assertThat
+import com.jericx.trainr.domain.catalog.CatalogExercise
+import com.jericx.trainr.domain.catalog.InMemoryExerciseCatalog
+import com.jericx.trainr.domain.catalog.MovementPattern
+import com.jericx.trainr.domain.catalog.MuscleGroup
+import com.jericx.trainr.domain.model.Equipment
 import com.jericx.trainr.domain.model.ExerciseMeasure
 import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
 import com.jericx.trainr.domain.model.WorkoutStatus
 import org.junit.Test
 
+private fun catalogExercise(
+    key: String,
+    muscle: MuscleGroup,
+    measure: ExerciseMeasure,
+    pattern: MovementPattern,
+    requires: Set<Equipment> = setOf(Equipment.NONE)
+) = CatalogExercise(key, key.replace('_', ' '), key, muscle, requires, measure, pattern, staple = true)
+
 class GeneratedPlanParserTest {
 
-    private val parser = GeneratedPlanParser()
+    private val catalog = InMemoryExerciseCatalog(
+        listOf(
+            catalogExercise("warm_up_jog", MuscleGroup.CARDIO, ExerciseMeasure.DURATION, MovementPattern.CONDITIONING),
+            catalogExercise("bicycle_crunch", MuscleGroup.ABDOMINALS, ExerciseMeasure.REPS, MovementPattern.CORE),
+            catalogExercise("goblet_squat", MuscleGroup.QUADRICEPS, ExerciseMeasure.WEIGHT_AND_REPS, MovementPattern.SQUAT),
+            catalogExercise("plank", MuscleGroup.ABDOMINALS, ExerciseMeasure.DURATION, MovementPattern.CORE)
+        )
+    )
+
+    private val parser = GeneratedPlanParser(catalog)
 
     // Days arrive out of order and carry an unknown key: ordering is ours, unknown keys are ignored
     private val goodJson = """
@@ -19,22 +41,15 @@ class GeneratedPlanParserTest {
             {
               "dayNumber": 3,
               "title": "Cardio & Core",
-              "equipment": ["Yoga Mat"],
               "exercises": [
                 {
                   "exerciseKey": "warm_up_jog",
-                  "name": "Warm-up jog",
-                  "measure": "DURATION",
-                  "durationMinutes": 5,
                   "prescription": "5 minutes",
                   "instructions": "Light jogging in place to warm up.",
                   "sets": [{ "seconds": 300 }]
                 },
                 {
                   "exerciseKey": "bicycle_crunch",
-                  "name": "Bicycle Crunches",
-                  "measure": "REPS",
-                  "durationMinutes": 4,
                   "prescription": "2 sets of 20 reps",
                   "instructions": "Alternate elbow to knee.",
                   "restSeconds": 30,
@@ -45,13 +60,9 @@ class GeneratedPlanParserTest {
             {
               "dayNumber": 1,
               "title": "Full Body Strength",
-              "equipment": ["Dumbbells"],
               "exercises": [
                 {
                   "exerciseKey": "goblet_squat",
-                  "name": "Goblet Squats",
-                  "measure": "WEIGHT_AND_REPS",
-                  "durationMinutes": 8,
                   "prescription": "3 sets of 12 reps",
                   "instructions": "Squat holding a dumbbell at your chest.",
                   "restSeconds": 60,
@@ -119,7 +130,7 @@ class GeneratedPlanParserTest {
         val squat = parseGood().workoutDays.first { it.dayNumber == 1 }.exercises.single()
 
         assertThat(squat.exerciseKey).isEqualTo("goblet_squat")
-        assertThat(squat.name).isEqualTo("Goblet Squats")
+        assertThat(squat.name).isEqualTo("goblet squat")
         assertThat(squat.measure).isEqualTo(ExerciseMeasure.WEIGHT_AND_REPS)
         assertThat(squat.durationMinutes).isEqualTo(4)
         assertThat(squat.prescription).isEqualTo("3 sets of 12 reps")
@@ -153,17 +164,49 @@ class GeneratedPlanParserTest {
         }
     }
 
+    // How a movement is measured is a fact about the movement, so it comes
+    // from the catalog and the model never gets to disagree with it.
     @Test
-    fun anUnknownMeasureDegradesToReps() {
-        val plan = parser.parse(
-            goodJsonWith("\"measure\": \"REPS\"", "\"measure\": \"DISTANCE\""),
-            userId = 1, weekNumber = 1, startDateMillis = 0L
-        )
+    fun theCatalogDecidesHowAMovementIsMeasured() {
+        val plan = parseGood()
+        val jog = plan.workoutDays.first { it.dayNumber == 3 }.exercises.first()
+        val squat = plan.workoutDays.first { it.dayNumber == 1 }.exercises.single()
 
-        val crunches = (plan as PlanParseResult.Parsed).plan
-            .workoutDays.first { it.dayNumber == 3 }
-            .exercises.first { it.exerciseKey == "bicycle_crunch" }
-        assertThat(crunches.measure).isEqualTo(ExerciseMeasure.REPS)
+        assertThat(jog.measure).isEqualTo(ExerciseMeasure.DURATION)
+        assertThat(squat.measure).isEqualTo(ExerciseMeasure.WEIGHT_AND_REPS)
+    }
+
+    // The name shown on the card is the catalog's, so a plan cannot invent a
+    // movement that reads like one the app knows.
+    @Test
+    fun theCatalogNamesTheMovement() {
+        val squat = parseGood().workoutDays.first { it.dayNumber == 1 }.exercises.single()
+
+        assertThat(squat.name).isEqualTo("goblet squat")
+    }
+
+    // Asking a model to restate the day's kit only gave it a way to name
+    // equipment the client does not own.
+    @Test
+    fun theDaysEquipmentIsTheUnionOfWhatItsMovementsNeed() {
+        val parser = GeneratedPlanParser(
+            InMemoryExerciseCatalog(
+                listOf(
+                    catalogExercise(
+                        "goblet_squat", MuscleGroup.QUADRICEPS,
+                        ExerciseMeasure.WEIGHT_AND_REPS, MovementPattern.SQUAT,
+                        requires = setOf(Equipment.DUMBBELLS)
+                    ),
+                    catalogExercise("warm_up_jog", MuscleGroup.CARDIO, ExerciseMeasure.DURATION, MovementPattern.CONDITIONING),
+                    catalogExercise("bicycle_crunch", MuscleGroup.ABDOMINALS, ExerciseMeasure.REPS, MovementPattern.CORE)
+                )
+            )
+        )
+        val plan = (parser.parse(goodJson, 7, 2, 0L) as PlanParseResult.Parsed).plan
+
+        assertThat(plan.workoutDays.first { it.dayNumber == 1 }.equipment)
+            .containsExactly("Dumbbells")
+        assertThat(plan.workoutDays.first { it.dayNumber == 3 }.equipment).isEmpty()
     }
 
     @Test
@@ -221,7 +264,7 @@ class GeneratedPlanParserTest {
     fun theSameExerciseTwiceInOneDayIsRejected() {
         val errors = errorsOf(goodJsonWith("warm_up_jog", "bicycle_crunch"))
 
-        assertThat(errors).containsExactly("day 3: exerciseKey 'bicycle_crunch' appears more than once")
+        assertThat(errors).contains("day 3: exerciseKey 'bicycle_crunch' appears more than once")
     }
 
     @Test
@@ -290,9 +333,6 @@ class GeneratedPlanParserTest {
         val squats = """
             {
               "exerciseKey": "goblet_squat",
-              "name": "Goblet Squats",
-              "measure": "WEIGHT_AND_REPS",
-              "durationMinutes": 8,
               "prescription": "3 sets of 12 reps",
               "instructions": "Squat holding a dumbbell at your chest to build the legs and brace the core.",
               "restSeconds": 60,
@@ -306,9 +346,6 @@ class GeneratedPlanParserTest {
         val plank = """
             {
               "exerciseKey": "plank",
-              "name": "Plank",
-              "measure": "DURATION",
-              "durationMinutes": 6,
               "prescription": "3 sets of 45 seconds",
               "instructions": "Hold a straight line from head to heels to brace the whole core.",
               "sets": [{ "seconds": 45 }, { "seconds": 45 }, { "seconds": 45 }]
@@ -321,7 +358,6 @@ class GeneratedPlanParserTest {
                 {
                   "dayNumber": 1,
                   "title": "Full Body Strength",
-                  "equipment": ["Dumbbells", "Yoga Mat"],
                   "exercises": [$squats, $plank]
                 }
               ]

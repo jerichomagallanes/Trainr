@@ -2,6 +2,8 @@ package com.jericx.trainr.data.generation
 
 import com.jericx.trainr.domain.diagnostics.Breadcrumbs
 import com.jericx.trainr.domain.diagnostics.NoBreadcrumbs
+import com.jericx.trainr.domain.catalog.ExerciseCatalog
+import com.jericx.trainr.domain.catalog.ExerciseShortlist
 import com.jericx.trainr.domain.generation.PlanGenerator
 import com.jericx.trainr.domain.generation.PlanGenerationResult
 import com.jericx.trainr.domain.generation.PlanRequest
@@ -13,13 +15,22 @@ class GeminiPlanGenerator(
     private val client: PlanModelClient,
     private val parser: GeneratedPlanParser,
     private val promptBuilder: PlanPromptBuilder,
+    private val catalog: ExerciseCatalog,
     private val spentModels: SpentModels,
     // Nothing from the profile goes in here. See Breadcrumbs.
     private val breadcrumbs: Breadcrumbs = NoBreadcrumbs
 ) : PlanGenerator {
 
     override suspend fun generate(request: PlanRequest): PlanGenerationResult {
-        val basePrompt = promptBuilder.userPrompt(request)
+        // Last week's movements stay reachable whatever the shortlist would
+        // otherwise drop, or progression loses the lift it was tracking.
+        val carriedOver = request.previousWeek
+            ?.workoutDays.orEmpty()
+            .flatMap { day -> day.exercises.map { it.exerciseKey } }
+            .toSet()
+        val shortlist = ExerciseShortlist.forRequest(catalog, request.user, carriedOver)
+        val exerciseKeys = shortlist.map { it.key }
+        val basePrompt = promptBuilder.userPrompt(request, shortlist)
         var feedback: List<String> = emptyList()
         var failure: PlanGenerationResult.Failure = PlanGenerationResult.Failed
 
@@ -29,6 +40,7 @@ class GeminiPlanGenerator(
         // already known to be out of allowance today are not asked at all.
         val spent = spentModels.spentToday()
         breadcrumbs.state("week", request.weekNumber.toString())
+        breadcrumbs.state("movements_offered", exerciseKeys.size.toString())
         breadcrumbs.state("models_spent_today", spent.size.toString())
         val models = PlanModelClient.MODELS.filterNot { it in spent }
             // Everything is spent, so ask anyway: the reset may have just
@@ -52,7 +64,8 @@ class GeminiPlanGenerator(
                 val answer = client.generate(
                     model = models[modelIndex],
                     systemInstruction = promptBuilder.systemInstruction(),
-                    userPrompt = prompt
+                    userPrompt = prompt,
+                    exerciseKeys = exerciseKeys
                 )
             ) {
                 is GeminiResponse.Text -> answer.value
@@ -101,7 +114,12 @@ class GeminiPlanGenerator(
                     request.user.id,
                     request.weekNumber,
                     request.startDateMillis,
-                    PlanLimits(SessionBudget.maxSetsPerSession(request.user))
+                    PlanLimits(
+                        maxSetsPerSession = SessionBudget.maxSetsPerSession(request.user),
+                        allowedKeys = exerciseKeys.toSet(),
+                        requiredPatterns = ExerciseShortlist.requiredPatterns(shortlist),
+                        languageCode = request.languageCode
+                    )
                 )
             ) {
                 is PlanParseResult.Parsed -> {
