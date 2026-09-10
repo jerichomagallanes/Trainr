@@ -106,11 +106,15 @@ private val LegacyEquipment = mapOf(
 fun storedEquipment(raw: String): Equipment? =
     runCatching { Equipment.valueOf(raw) }.getOrNull() ?: LegacyEquipment[raw]
 
-fun equipmentFor(location: WorkoutLocation): List<Equipment> = when (location) {
-    WorkoutLocation.HOME -> EquipmentChoices
-    WorkoutLocation.GYM, WorkoutLocation.BOTH ->
-        EquipmentChoices.filterNot { it == Equipment.NONE }
-}
+// A chip the catalog cannot serve is a lie: the client ticks it, the shortlist
+// comes back empty, and the plan is built from nothing. What is offered is
+// what there are movements for.
+fun equipmentFor(
+    location: WorkoutLocation,
+    stocked: Set<Equipment> = EquipmentChoices.toSet()
+): List<Equipment> = EquipmentChoices
+    .filter { it in stocked }
+    .filterNot { it == Equipment.NONE && location != WorkoutLocation.HOME }
 
 enum class WorkoutType {
     STRENGTH,
