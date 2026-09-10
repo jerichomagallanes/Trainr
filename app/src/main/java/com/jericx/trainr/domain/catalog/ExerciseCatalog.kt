@@ -10,12 +10,15 @@ data class CatalogExercise(
     val name: String,
     val nameJa: String,
     val primary: MuscleGroup,
-    // The source names one too; unread for now, so null rather than a guess.
-    val secondary: MuscleGroup?,
+    // A movement can assist several; Around The World names three.
+    val secondary: List<MuscleGroup>,
     val equipment: Equipment,
     val measure: ExerciseMeasure,
     val pattern: MovementPattern,
-    val staple: Boolean
+    val staple: Boolean,
+    // How to perform it, written once and the same for everyone. Empty where
+    // the movement is an activity with no technique to describe.
+    val steps: List<String> = emptyList()
 ) {
     fun displayName(languageCode: String): String =
         if (languageCode == JAPANESE) nameJa.ifBlank { name } else name

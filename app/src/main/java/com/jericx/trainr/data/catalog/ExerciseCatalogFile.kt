@@ -24,11 +24,12 @@ internal data class CatalogEntry(
     val name: String = "",
     val nameJa: String = "",
     val primary: String = "",
-    val secondary: String? = null,
+    val secondary: List<String> = emptyList(),
     val equipment: String = "",
     val measure: String = "",
     val pattern: String = "",
-    val staple: Boolean = false
+    val staple: Boolean = false,
+    val steps: List<String> = emptyList()
 )
 
 // An entry the code does not understand is dropped, not fatal: the data file
@@ -49,8 +50,8 @@ object ExerciseCatalogReader {
         val kit = enumOrNull<Equipment>(equipment) ?: return null
         if (key.isBlank() || name.isBlank()) return null
         return CatalogExercise(
-            key, name, nameJa, prime, secondary?.let { enumOrNull<MuscleGroup>(it) },
-            kit, measure, pattern, staple
+            key, name, nameJa, prime, secondary.mapNotNull { enumOrNull<MuscleGroup>(it) },
+            kit, measure, pattern, staple, steps
         )
     }
 

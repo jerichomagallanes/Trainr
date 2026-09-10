@@ -17,7 +17,7 @@ private fun catalogExercise(
     measure: ExerciseMeasure,
     pattern: MovementPattern,
     equipment: Equipment = Equipment.NONE
-) = CatalogExercise(key, key.replace('_', ' '), key, muscle, null, equipment, measure, pattern, staple = true)
+) = CatalogExercise(key, key.replace('_', ' '), key, muscle, emptyList(), equipment, measure, pattern, staple = true)
 
 class GeneratedPlanParserTest {
 

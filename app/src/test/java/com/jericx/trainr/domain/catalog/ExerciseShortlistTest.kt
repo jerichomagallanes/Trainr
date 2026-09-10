@@ -19,7 +19,7 @@ class ExerciseShortlistTest {
         name = key,
         nameJa = key,
         primary = muscle,
-        secondary = null,
+        secondary = emptyList(),
         equipment = equipment,
         measure = ExerciseMeasure.REPS,
         pattern = pattern,

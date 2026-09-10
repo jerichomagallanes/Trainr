@@ -26,7 +26,7 @@ class PlanPromptBuilderTest {
         measure: ExerciseMeasure,
         pattern: MovementPattern,
         equipment: Equipment = Equipment.NONE
-    ) = CatalogExercise(key, key, key, muscle, null, equipment, measure, pattern, staple = true)
+    ) = CatalogExercise(key, key, key, muscle, emptyList(), equipment, measure, pattern, staple = true)
 
     private val shortlist = listOf(
         catalogExercise(
