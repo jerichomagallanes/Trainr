@@ -4,6 +4,11 @@ import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.domain.model.Injury
 import com.jericx.trainr.domain.model.Equipment
 import com.jericx.trainr.domain.model.ExperienceLevel
+import com.jericx.trainr.domain.catalog.CatalogExercise
+import com.jericx.trainr.domain.catalog.InMemoryExerciseCatalog
+import com.jericx.trainr.domain.catalog.MovementPattern
+import com.jericx.trainr.domain.catalog.MuscleGroup
+import com.jericx.trainr.domain.model.ExerciseMeasure
 import com.jericx.trainr.domain.model.FitnessGoal
 import com.jericx.trainr.domain.model.Gender
 import com.jericx.trainr.domain.model.UserProfile
@@ -37,6 +42,17 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class OnboardingViewModelTest {
 
+    private val catalog = InMemoryExerciseCatalog(
+        listOf(
+            CatalogExercise(
+                "push_up", "Push Up", "プッシュアップ", MuscleGroup.CHEST,
+                Equipment.NONE, ExerciseMeasure.REPS,
+                MovementPattern.HORIZONTAL_PUSH, staple = true
+            )
+        )
+    )
+
+
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var userRepository: UserRepository
     private lateinit var planGenerator: PlanGenerator
@@ -59,7 +75,7 @@ class OnboardingViewModelTest {
                 )
             )
         }
-        viewModel = OnboardingViewModel(userRepository, planGenerator) { "en" }
+        viewModel = OnboardingViewModel(userRepository, planGenerator, { "en" }, catalog)
     }
 
     @After
@@ -299,7 +315,7 @@ class OnboardingViewModelTest {
     @Test
     fun `a stored profile is loaded so editing starts from saved answers`() = runTest(testDispatcher) {
         coEvery { userRepository.getCurrentUser() } returns UserProfile(id = 7L, firstName = "Jeco", age = 26)
-        val loaded = OnboardingViewModel(userRepository, planGenerator) { "en" }
+        val loaded = OnboardingViewModel(userRepository, planGenerator, { "en" }, catalog)
 
         advanceUntilIdle()
 
@@ -337,7 +353,7 @@ class OnboardingViewModelTest {
     fun `updateProfileOnly saves the profile and leaves the plan alone`() = runTest {
         val stored = UserProfile(id = 4, firstName = "Jet", age = 28)
         coEvery { userRepository.getCurrentUser() } returns stored
-        val viewModel = OnboardingViewModel(userRepository, planGenerator) { "en" }
+        val viewModel = OnboardingViewModel(userRepository, planGenerator, { "en" }, catalog)
         advanceUntilIdle()
         viewModel.updateFitnessGoal(FitnessGoal.STRENGTH, WorkoutType.MIXED)
 

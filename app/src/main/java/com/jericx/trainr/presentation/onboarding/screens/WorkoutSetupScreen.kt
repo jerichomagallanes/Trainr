@@ -28,6 +28,7 @@ import com.jericx.trainr.R
 import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.common.Constants
 import com.jericx.trainr.domain.model.Equipment
+import com.jericx.trainr.domain.model.EquipmentChoices
 import com.jericx.trainr.domain.model.equipmentFor
 import com.jericx.trainr.domain.model.LoadedEquipment
 import com.jericx.trainr.domain.model.UnitSystem
@@ -60,6 +61,7 @@ import com.jericx.trainr.presentation.common.theme.Spacing
 fun WorkoutSetupScreen(
     initial: UserProfile? = null,
     isEditing: Boolean = false,
+    stockedEquipment: Set<Equipment> = EquipmentChoices.toSet(),
     onNextClick: (
         location: WorkoutLocation,
         equipment: List<Equipment>,
@@ -193,7 +195,7 @@ fun WorkoutSetupScreen(
                         titleGap = Spacing.card
                     ) {
                         val equipmentOptions = selectedLocation
-                            ?.let { equipmentFor(it) }
+                            ?.let { equipmentFor(it, stockedEquipment) }
                             .orEmpty()
                             .map { it to it.getLocalizedName() }
 

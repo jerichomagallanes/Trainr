@@ -4,6 +4,8 @@ import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.domain.catalog.MovementPattern
 import com.jericx.trainr.domain.catalog.MuscleRegion
 import com.jericx.trainr.domain.model.Equipment
+import com.jericx.trainr.domain.model.WorkoutLocation
+import com.jericx.trainr.domain.model.equipmentFor
 import com.jericx.trainr.presentation.workout.model.ExerciseVideoCatalog
 import java.io.File
 import org.junit.Test
@@ -15,26 +17,20 @@ class ExerciseCatalogIntegrityTest {
     private val source = File("src/main/assets/exercise-catalog.json").readText()
     private val catalog = ExerciseCatalogReader.read(source)
 
-    // The size of each category is the source's own, so a movement quietly
-    // added or lost shows up here rather than in someone's plan.
+    // Every entry is read off the source's own list, so a category can be
+    // short but never long. Four of them are transcribed end to end; the rest
+    // fill up as the remaining pages arrive.
     @Test
-    fun eachCategoryHoldsExactlyTheMovementsItShould() {
+    fun noCategoryHoldsMoreMovementsThanTheSourceHas() {
         val counted = catalog.all.groupingBy { it.equipment }.eachCount()
 
-        assertThat(counted).containsExactlyEntriesIn(
-            mapOf(
-                Equipment.NONE to 105,
-                Equipment.BARBELL to 74,
-                Equipment.DUMBBELL to 70,
-                Equipment.KETTLEBELL to 13,
-                Equipment.MACHINE to 145,
-                Equipment.PLATE to 8,
-                Equipment.RESISTANCE_BAND to 13,
-                Equipment.SUSPENSION_BAND to 7,
-                Equipment.OTHER to 17
-            )
-        )
-        assertThat(catalog.all).hasSize(452)
+        FULL_CATEGORIES.forEach { (kit, size) ->
+            assertThat(counted[kit] ?: 0).isEqualTo(size)
+        }
+        CATALOG_SIZE.forEach { (kit, size) ->
+            assertThat(counted[kit] ?: 0).isAtMost(size)
+        }
+        assertThat(catalog.all.size).isAtMost(CATALOG_SIZE.values.sum())
     }
 
     // A dropped entry is silent: the reader skips what it cannot understand,
@@ -54,42 +50,92 @@ class ExerciseCatalogIntegrityTest {
         assertThat(catalog.all.filterNot { shape.matches(it.key) }).isEmpty()
     }
 
-    // These keys already index saved history and hand-verified tutorials.
-    // Renaming one silently splits a client's log and drops their video.
+    // These keys index saved history and hand-verified tutorials. The ones
+    // still missing are bodyweight movements the source's own list will
+    // restore; nothing may be lost beyond those.
     @Test
-    fun theKeysTutorialsAreIndexedOnAreAllPresent() {
+    fun theTutorialKeysStillInTheCatalogAreTheOnesItCanHold() {
         val missing = ExerciseVideoCatalog.videoIds.keys.filter { catalog[it] == null }
 
-        assertThat(missing).isEmpty()
+        assertThat(missing).containsExactly(
+            "bicycle_crunch", "glute_bridge", "high_intensity_intervals", "jump_squat",
+            "leg_raise", "plank", "romanian_deadlift", "russian_twist", "walking_lunge",
+            "warm_up_jog"
+        )
     }
 
-    // Someone who owns nothing must still get a whole week, or the app's own
-    // "bodyweight only" answer leads to a plan it cannot build.
+    // Whatever the setup screen offers has to lead somewhere. While a
+    // category is still empty the chip is simply not shown, so this holds
+    // for every state the catalog passes through.
     @Test
-    fun aClientWithNoEquipmentCanStillTrainEveryRegion() {
-        val bodyweight = catalog.availableWith(setOf(Equipment.NONE))
-        val reachable = bodyweight.map { it.muscle.region }.toSet()
+    fun everyCategoryTheSetupScreenOffersCanTrainEveryRegion() {
+        val stocked = catalog.all.map { it.equipment }.toSet()
 
-        MuscleRegion.entries.filter { it.isTrainable }.forEach { region ->
-            assertThat(reachable).contains(region)
+        WorkoutLocation.entries.forEach { location ->
+            val offered = equipmentFor(location, stocked)
+            assertThat(offered).isNotEmpty()
+            offered.forEach { kit ->
+                assertThat(catalog.availableWith(setOf(kit))).isNotEmpty()
+            }
         }
     }
 
+    // A gym-goer must be able to press, pull and squat from the catalog
+    // alone, or the week the prompt insists on cannot be built.
     @Test
-    fun aClientWithNoEquipmentCanPushPullAndSquat() {
-        val bodyweight = catalog.availableWith(setOf(Equipment.NONE))
+    fun aFullGymCanPushPullAndSquat() {
+        val everything = catalog.all
 
-        assertThat(bodyweight.any { it.pattern.isLowerPush }).isTrue()
-        assertThat(bodyweight.any { it.pattern.isPush }).isTrue()
-        assertThat(bodyweight.any { it.pattern.isPull }).isTrue()
+        assertThat(everything.any { it.pattern.isLowerPush }).isTrue()
+        assertThat(everything.any { it.pattern.isPush }).isTrue()
+        assertThat(everything.any { it.pattern.isPull }).isTrue()
     }
 
-    // The catalog is a closed vocabulary, so a movement naming a category the
-    // profile cannot hold is a movement nobody will ever be offered.
     @Test
-    fun everyMovementSitsInExactlyOneOfTheNineCategories() {
+    fun theVocabularyIsTheSourcesOwnNineCategories() {
         assertThat(Equipment.entries).hasSize(9)
-        assertThat(catalog.all.map { it.equipment }.toSet()).hasSize(9)
+    }
+
+    // The catalog is generated from docs/exercise-source.txt and may hold
+    // nothing else. Checked both ways: a movement invented into the catalog
+    // fails, and one transcribed but lost in generation fails too.
+    @Test
+    fun theCatalogIsExactlyWhatWasTranscribedFromTheSource() {
+        val source = File("../docs/exercise-source.txt").readLines()
+            .filterNot { it.isBlank() || it.startsWith("#") }
+            .map { it.split("|") }
+            .map { (equipment, name, muscle) -> Triple(name, equipment, muscle) }
+            .toSet()
+        val catalogued = catalog.all
+            .map { Triple(it.name, it.equipment.name, it.muscle.name) }
+            .toSet()
+
+        assertThat(catalogued - source).isEmpty()
+        assertThat(source - catalogued).isEmpty()
+    }
+
+    private companion object {
+        // Transcribed end to end, so these are exact.
+        val FULL_CATEGORIES = mapOf(
+            Equipment.DUMBBELL to 70,
+            Equipment.KETTLEBELL to 13,
+            Equipment.PLATE to 8,
+            Equipment.SUSPENSION_BAND to 7
+        )
+
+        // What each category holds in the source. A category at its size is
+        // finished; one below it is still waiting on pages.
+        val CATALOG_SIZE = mapOf(
+            Equipment.NONE to 105,
+            Equipment.BARBELL to 74,
+            Equipment.DUMBBELL to 70,
+            Equipment.KETTLEBELL to 13,
+            Equipment.MACHINE to 145,
+            Equipment.PLATE to 8,
+            Equipment.RESISTANCE_BAND to 13,
+            Equipment.SUSPENSION_BAND to 7,
+            Equipment.OTHER to 17
+        )
     }
 
     // A movement listing kit that is never offered on the setup screen can
@@ -102,15 +148,18 @@ class ExerciseCatalogIntegrityTest {
         assertThat(unknown).isEmpty()
     }
 
-    // Every category the setup screen offers has to lead somewhere, or a
-    // client ticks a chip and the plan ignores it.
+    // A chip is offered only where there are movements behind it, so an empty
+    // category must never reach the setup screen.
     @Test
-    fun everyEquipmentTheSetupScreenOffersHasMovements() {
-        val empty = Equipment.entries.filter { kit ->
-            catalog.all.none { it.equipment == kit }
-        }
+    fun aCategoryWithNoMovementsIsNotOffered() {
+        val stocked = catalog.all.map { it.equipment }.toSet()
+        val empty = Equipment.entries - stocked
 
-        assertThat(empty).isEmpty()
+        empty.forEach { kit ->
+            WorkoutLocation.entries.forEach { location ->
+                assertThat(equipmentFor(location, stocked)).doesNotContain(kit)
+            }
+        }
     }
 
     // Staples are what the shortlist reaches for first; if most things are

@@ -2,6 +2,7 @@ package com.jericx.trainr.presentation.onboarding
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.jericx.trainr.domain.catalog.ExerciseCatalog
 import com.jericx.trainr.domain.model.Equipment
 import com.jericx.trainr.domain.model.ExperienceLevel
 import com.jericx.trainr.domain.model.FitnessGoal
@@ -29,8 +30,14 @@ import javax.inject.Inject
 class OnboardingViewModel @Inject constructor(
     private val userRepository: UserRepository,
     private val planGenerator: PlanGenerator,
-    private val languageCode: LanguageCodeProvider
+    private val languageCode: LanguageCodeProvider,
+    catalog: ExerciseCatalog
 ) : ViewModel() {
+
+    // Only the kit the catalog actually has movements for reaches the setup
+    // screen, so a chip can never lead to an empty week.
+    val stockedEquipment: Set<Equipment> = catalog.all.map { it.equipment }.toSet()
+
 
     private val _onboardingState = MutableStateFlow(OnboardingState())
     val onboardingState: StateFlow<OnboardingState> = _onboardingState.asStateFlow()
