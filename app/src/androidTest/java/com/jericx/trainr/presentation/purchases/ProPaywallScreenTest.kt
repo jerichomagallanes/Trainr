@@ -54,8 +54,10 @@ class ProPaywallScreenTest {
         reason: PaywallReason? = PaywallReason.NEXT_WEEK,
         plans: List<PaywallPlan> = listOf(monthly, yearly, lifetime),
         selectedId: String? = "yearly",
+        noticeRes: Int? = null,
         onBuy: () -> Unit = {},
-        onRestore: () -> Unit = {}
+        onRestore: () -> Unit = {},
+        onNoticeShown: () -> Unit = {}
     ) {
         composeTestRule.setContent {
             TrainrTheme {
@@ -64,9 +66,11 @@ class ProPaywallScreenTest {
                     plans = plans,
                     selectedId = selectedId,
                     isWorking = false,
+                    noticeRes = noticeRes,
                     onSelect = {},
                     onBuy = onBuy,
                     onRestore = onRestore,
+                    onNoticeShown = onNoticeShown,
                     onClose = {},
                     onOpenLink = {}
                 )
@@ -204,9 +208,11 @@ class ProPaywallScreenTest {
                     plans = listOf(monthly, yearly, lifetime),
                     selectedId = "yearly",
                     isWorking = false,
+                    noticeRes = null,
                     onSelect = {},
                     onBuy = {},
                     onRestore = {},
+                    onNoticeShown = {},
                     onClose = {},
                     onOpenLink = { opened = it }
                 )
@@ -229,5 +235,26 @@ class ProPaywallScreenTest {
         composeTestRule.onNodeWithText(string(R.string.pro_restore)).performScrollTo().performClick()
 
         assertThat(restored).isTrue()
+    }
+
+    // A restore that found nothing used to end in silence, which reads as a
+    // broken button.
+    @Test
+    fun aRestoreThatFoundNothingSaysSo() {
+        var shown = false
+        setScreen(noticeRes = R.string.pro_nothing_to_restore, onNoticeShown = { shown = true })
+
+        composeTestRule.onNodeWithText(string(R.string.pro_nothing_to_restore)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.close)).performClick()
+
+        assertThat(shown).isTrue()
+    }
+
+    @Test
+    fun noNoticeIsNoDialog() {
+        setScreen()
+
+        composeTestRule.onNodeWithText(string(R.string.pro_nothing_to_restore)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.pro_restored)).assertDoesNotExist()
     }
 }

@@ -1,5 +1,6 @@
 package com.jericx.trainr.presentation.purchases
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -27,7 +28,9 @@ import com.jericx.trainr.presentation.common.theme.trainrColors
 @Composable
 fun ProStatusScreen(
     isWorking: Boolean,
+    @StringRes noticeRes: Int?,
     onRestore: () -> Unit,
+    onNoticeShown: () -> Unit,
     onOpenLink: (String) -> Unit
 ) {
     val colors = MaterialTheme.trainrColors
@@ -86,5 +89,6 @@ fun ProStatusScreen(
                 )
             }
         }
+        ProNoticeDialog(noticeRes = noticeRes, onDismiss = onNoticeShown)
     }
 }

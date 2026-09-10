@@ -24,12 +24,20 @@ class ProStatusScreenTest {
     private fun string(id: Int) = composeTestRule.activity.getString(id)
 
     private fun setScreen(
+        noticeRes: Int? = null,
         onRestore: () -> Unit = {},
+        onNoticeShown: () -> Unit = {},
         onOpenLink: (String) -> Unit = {}
     ) {
         composeTestRule.setContent {
             TrainrTheme {
-                ProStatusScreen(isWorking = false, onRestore = onRestore, onOpenLink = onOpenLink)
+                ProStatusScreen(
+                    isWorking = false,
+                    noticeRes = noticeRes,
+                    onRestore = onRestore,
+                    onNoticeShown = onNoticeShown,
+                    onOpenLink = onOpenLink
+                )
             }
         }
     }
@@ -72,5 +80,33 @@ class ProStatusScreenTest {
         composeTestRule.onNodeWithText(string(R.string.pro_restore)).performClick()
 
         assertThat(restored).isTrue()
+    }
+
+    // Restoring from here used to end in silence either way, so a subscriber
+    // could not tell a working restore from a broken button.
+    @Test
+    fun aRestoreThatWorkedSaysSo() {
+        var shown = false
+        setScreen(noticeRes = R.string.pro_restored, onNoticeShown = { shown = true })
+
+        composeTestRule.onNodeWithText(string(R.string.pro_restored)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.close)).performClick()
+
+        assertThat(shown).isTrue()
+    }
+
+    @Test
+    fun aRestoreThatFoundNothingSaysSo() {
+        setScreen(noticeRes = R.string.pro_nothing_to_restore)
+
+        composeTestRule.onNodeWithText(string(R.string.pro_nothing_to_restore)).assertIsDisplayed()
+    }
+
+    @Test
+    fun noNoticeIsNoDialog() {
+        setScreen()
+
+        composeTestRule.onNodeWithText(string(R.string.pro_restored)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.pro_nothing_to_restore)).assertDoesNotExist()
     }
 }
