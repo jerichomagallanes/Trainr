@@ -178,7 +178,6 @@ fun ReviewScreen(
 
                 Spacer(modifier = Modifier.height(Spacing.screen))
 
-                val locationText = userProfile.workoutLocation.getLocalizedName()
                 val equipmentText = if (userProfile.availableEquipment.isEmpty() ||
                     userProfile.availableEquipment.contains(Equipment.NONE))
                     stringResource(R.string.bodyweight_only_label)
@@ -200,7 +199,6 @@ fun ReviewScreen(
                     title = stringResource(R.string.workout_setup_label),
                     onEdit = onEditSetup,
                     items = listOfNotNull(
-                        stringResource(R.string.location_label) to locationText,
                         stringResource(R.string.equipment_label_full) to equipmentText,
                         liftingUnitsText?.let {
                             stringResource(R.string.weights_in_label) to it

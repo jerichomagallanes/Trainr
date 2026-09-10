@@ -32,7 +32,6 @@ import com.jericx.trainr.domain.model.EquipmentChoices
 import com.jericx.trainr.domain.model.equipmentFor
 import com.jericx.trainr.domain.model.LoadedEquipment
 import com.jericx.trainr.domain.model.UnitSystem
-import com.jericx.trainr.domain.model.WorkoutLocation
 import com.jericx.trainr.presentation.common.getLocalizedName
 import com.jericx.trainr.presentation.common.components.cards.TrainrLocationCard
 import com.jericx.trainr.presentation.common.components.cards.TrainrSelectionCard
@@ -61,7 +60,6 @@ fun WorkoutSetupScreen(
     isEditing: Boolean = false,
     stockedEquipment: Set<Equipment> = EquipmentChoices.toSet(),
     onNextClick: (
-        location: WorkoutLocation,
         equipment: List<Equipment>,
         liftingUnits: UnitSystem?,
         daysPerWeek: Int,
@@ -69,7 +67,6 @@ fun WorkoutSetupScreen(
     ) -> Unit,
     onBackClick: () -> Unit
 ) {
-    var selectedLocation by remember { mutableStateOf(initial?.workoutLocation) }
     var selectedEquipment by remember {
         mutableStateOf(initial?.availableEquipment?.toSet() ?: emptySet())
     }
@@ -96,12 +93,10 @@ fun WorkoutSetupScreen(
             TrainrButton(
                 text = stringResource(if (isEditing) R.string.save else R.string.next),
                 onClick = {
-                    val location = selectedLocation
                     val days = selectedDays
                     val duration = selectedDuration
-                    if (location != null && days != null && duration != null) {
+                    if (days != null && duration != null) {
                         onNextClick(
-                            location,
                             selectedEquipment.toList(),
                             if (hasLoadedEquipment) selectedLiftingUnits else null,
                             days,
@@ -111,8 +106,7 @@ fun WorkoutSetupScreen(
                 },
                 // An empty equipment set means unanswered, not "nothing
                 // available": "bodyweight only" is itself one of the choices.
-                enabled = selectedLocation != null &&
-                    selectedEquipment.isNotEmpty() &&
+                enabled = selectedEquipment.isNotEmpty() &&
                     (!hasLoadedEquipment || selectedLiftingUnits != null) &&
                     selectedDays != null &&
                     selectedDuration != null
@@ -139,86 +133,42 @@ fun WorkoutSetupScreen(
 
                 Spacer(modifier = Modifier.height(Spacing.extraLarge))
 
-                TrainrSectionTitle(stringResource(R.string.where_will_you_work_out))
-
-                Spacer(modifier = Modifier.height(Spacing.card))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
+                TrainrFormSection(
+                    title = stringResource(R.string.available_equipment),
+                    verticalPadding = 0.dp,
+                    titleGap = Spacing.card
                 ) {
-                    TrainrLocationCard(
-                        text = stringResource(R.string.home),
-                        iconRes = R.drawable.ic_house,
-                        isSelected = selectedLocation == WorkoutLocation.HOME,
-                        onClick = {
-                            selectedLocation = WorkoutLocation.HOME
-                            selectedEquipment = emptySet()
-                        },
-                        modifier = Modifier.weight(1f)
-                    )
-                    TrainrLocationCard(
-                        text = stringResource(R.string.gym),
-                        iconRes = R.drawable.ic_fitness_center,
-                        isSelected = selectedLocation == WorkoutLocation.GYM,
-                        onClick = {
-                            selectedLocation = WorkoutLocation.GYM
-                            selectedEquipment = emptySet()
-                        },
-                        modifier = Modifier.weight(1f)
-                    )
-                    TrainrLocationCard(
-                        text = stringResource(R.string.both),
-                        iconRes = R.drawable.ic_sync_alt,
-                        isSelected = selectedLocation == WorkoutLocation.BOTH,
-                        onClick = {
-                            selectedLocation = WorkoutLocation.BOTH
-                            selectedEquipment = emptySet()
-                        },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
+                    val equipmentOptions = equipmentFor(stockedEquipment)
+                        .map { it to it.getLocalizedName() }
 
-                if (selectedLocation != null) {
-                    Spacer(modifier = Modifier.height(Spacing.sectionGap))
-
-                    TrainrFormSection(
-                        title = stringResource(R.string.available_equipment),
-                        verticalPadding = 0.dp,
-                        titleGap = Spacing.card
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.tight),
+                        verticalArrangement = Arrangement.spacedBy(Spacing.card)
                     ) {
-                        val equipmentOptions = selectedLocation
-                            ?.let { equipmentFor(it, stockedEquipment) }
-                            .orEmpty()
-                            .map { it to it.getLocalizedName() }
-
-                        FlowRow(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(Spacing.tight),
-                            verticalArrangement = Arrangement.spacedBy(Spacing.card)
-                        ) {
-                            equipmentOptions.forEach { (equipment, label) ->
-                                TrainrToggleChip(
-                                    text = label,
-                                    selected = selectedEquipment.contains(equipment),
-                                    onClick = {
-                                        selectedEquipment = if (equipment == Equipment.NONE) {
-                                            if (selectedEquipment.contains(equipment)) {
-                                                emptySet()
-                                            } else {
-                                                setOf(Equipment.NONE)
-                                            }
+                        equipmentOptions.forEach { (equipment, label) ->
+                            TrainrToggleChip(
+                                text = label,
+                                selected = selectedEquipment.contains(equipment),
+                                onClick = {
+                                    // "No equipment" is an answer, not an
+                                    // absence: it cannot share the row with kit.
+                                    selectedEquipment = if (equipment == Equipment.NONE) {
+                                        if (selectedEquipment.contains(equipment)) {
+                                            emptySet()
                                         } else {
-                                            val newSet = selectedEquipment - Equipment.NONE
-                                            if (newSet.contains(equipment)) {
-                                                newSet - equipment
-                                            } else {
-                                                newSet + equipment
-                                            }
+                                            setOf(Equipment.NONE)
+                                        }
+                                    } else {
+                                        val newSet = selectedEquipment - Equipment.NONE
+                                        if (newSet.contains(equipment)) {
+                                            newSet - equipment
+                                        } else {
+                                            newSet + equipment
                                         }
                                     }
-                                )
-                            }
+                                }
+                            )
                         }
                     }
                 }

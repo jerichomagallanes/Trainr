@@ -10,7 +10,6 @@ import com.jericx.trainr.domain.model.ExperienceLevel
 import com.jericx.trainr.domain.model.FitnessGoal
 import com.jericx.trainr.domain.model.Gender
 import com.jericx.trainr.domain.model.UserProfile
-import com.jericx.trainr.domain.model.WorkoutLocation
 import com.jericx.trainr.domain.model.WorkoutStatus
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -41,7 +40,6 @@ class UserRepositoryImplTest {
         weight = 72f,
         fitnessGoal = FitnessGoal.MUSCLE_GAIN,
         experienceLevel = ExperienceLevel.INTERMEDIATE,
-        workoutLocation = WorkoutLocation.GYM,
         availableEquipment = listOf(Equipment.DUMBBELL),
         workoutDaysPerWeek = 4,
         workoutDuration = 60,

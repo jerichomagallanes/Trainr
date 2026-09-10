@@ -44,13 +44,6 @@ fun FitnessGoal.getFocusPhrase(): String = when (this) {
 }
 
 @Composable
-fun WorkoutLocation.getLocalizedName(): String = when (this) {
-    WorkoutLocation.HOME -> stringResource(R.string.home_location)
-    WorkoutLocation.GYM -> stringResource(R.string.gym_location)
-    WorkoutLocation.BOTH -> stringResource(R.string.both_location)
-}
-
-@Composable
 fun Equipment.getLocalizedName(): String = when (this) {
     Equipment.NONE -> stringResource(R.string.bodyweight_only)
     Equipment.BARBELL -> stringResource(R.string.equipment_barbell)

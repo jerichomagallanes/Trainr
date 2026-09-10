@@ -10,7 +10,6 @@ import com.jericx.trainr.domain.model.Injury
 import com.jericx.trainr.domain.model.Gender
 import com.jericx.trainr.domain.model.UnitSystem
 import com.jericx.trainr.domain.model.UserProfile
-import com.jericx.trainr.domain.model.WorkoutLocation
 import com.jericx.trainr.domain.generation.PlanGenerationResult
 import com.jericx.trainr.domain.generation.PlanGenerator
 import com.jericx.trainr.domain.generation.PlanRequest
@@ -79,7 +78,6 @@ class OnboardingViewModel @Inject constructor(
     }
 
     fun updateWorkoutSetup(
-        location: WorkoutLocation,
         equipment: List<Equipment>,
         liftingUnits: UnitSystem?,
         daysPerWeek: Int,
@@ -88,7 +86,6 @@ class OnboardingViewModel @Inject constructor(
         _onboardingState.value = _onboardingState.value.copy(
             answeredSteps = answeredWith(OnboardingStep.SETUP),
             userProfile = _onboardingState.value.userProfile.copy(
-                workoutLocation = location,
                 liftingUnitSystem = liftingUnits,
                 availableEquipment = equipment,
                 workoutDaysPerWeek = daysPerWeek,

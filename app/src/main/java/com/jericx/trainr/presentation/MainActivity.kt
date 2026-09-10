@@ -326,9 +326,9 @@ fun AppContent(
                         initial = onboardingState.filledFor(OnboardingStep.SETUP, editing),
                         isEditing = editing,
                         stockedEquipment = onboardingViewModel.stockedEquipment,
-                        onNextClick = { location, equipment, liftingUnits, days, duration ->
+                        onNextClick = { equipment, liftingUnits, days, duration ->
                             onboardingViewModel.updateWorkoutSetup(
-                                location, equipment, liftingUnits, days, duration
+                                equipment, liftingUnits, days, duration
                             )
                             if (editing) {
                                 navController.popBackStack()

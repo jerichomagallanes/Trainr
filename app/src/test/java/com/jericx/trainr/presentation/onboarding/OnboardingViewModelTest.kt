@@ -13,7 +13,6 @@ import com.jericx.trainr.domain.model.FitnessGoal
 import com.jericx.trainr.domain.model.Gender
 import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
-import com.jericx.trainr.domain.model.WorkoutLocation
 import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.presentation.onboarding.OnboardingStep
 import com.jericx.trainr.domain.model.UnitSystem
@@ -134,7 +133,6 @@ class OnboardingViewModelTest {
         val equipment = listOf(Equipment.DUMBBELL, Equipment.OTHER)
 
         viewModel.updateWorkoutSetup(
-            location = WorkoutLocation.HOME,
             equipment = equipment,
             liftingUnits = UnitSystem.IMPERIAL,
             daysPerWeek = 4,
@@ -142,7 +140,6 @@ class OnboardingViewModelTest {
         )
 
         val profile = viewModel.onboardingState.value.userProfile
-        assertThat(profile.workoutLocation).isEqualTo(WorkoutLocation.HOME)
         assertThat(profile.availableEquipment).containsExactlyElementsIn(equipment)
         assertThat(profile.workoutDaysPerWeek).isEqualTo(4)
         assertThat(profile.workoutDuration).isEqualTo(45)
@@ -153,7 +150,6 @@ class OnboardingViewModelTest {
     fun `body units and lifting units are kept apart`() {
         viewModel.updateBodyMetrics(178f, 75f, UnitSystem.IMPERIAL)
         viewModel.updateWorkoutSetup(
-            location = WorkoutLocation.GYM,
             equipment = listOf(Equipment.BARBELL),
             liftingUnits = UnitSystem.METRIC,
             daysPerWeek = 4,
@@ -170,7 +166,6 @@ class OnboardingViewModelTest {
     fun `without loaded equipment the sets follow the body units`() {
         viewModel.updateBodyMetrics(178f, 75f, UnitSystem.IMPERIAL)
         viewModel.updateWorkoutSetup(
-            location = WorkoutLocation.HOME,
             equipment = listOf(Equipment.NONE),
             liftingUnits = null,
             daysPerWeek = 3,

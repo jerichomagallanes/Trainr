@@ -73,10 +73,6 @@
     
     <!-- Workout Setup Screen -->
     <string name="set_up_your_workout">SET UP YOUR WORKOUT</string>
-    <string name="where_will_you_work_out">Where will you work out?</string>
-    <string name="home">Home</string>
-    <string name="gym">Gym</string>
-    <string name="both">Both</string>
     <string name="available_equipment">Available Equipment</string>
     <string name="weights_marked_in">What are the weights marked in?</string>
     <string name="bodyweight_only">Bodyweight only</string>
@@ -245,7 +241,6 @@
     <string name="fitness_goals_label">Fitness Goals</string>
     <string name="main_goal_label">Main Goal</string>
     <string name="workout_setup_label">Workout Setup</string>
-    <string name="location_label">Location</string>
     <string name="equipment_label_full">Equipment</string>
     <string name="weights_in_label">Weights in</string>
     <string name="schedule_label">Schedule</string>
@@ -303,9 +298,6 @@
     <string name="goal_focus_flexibility">flexibility and mobility</string>
     
     <!-- Workout Locations -->
-    <string name="home_location">Home</string>
-    <string name="gym_location">Gym</string>
-    <string name="both_location">Both</string>
     
     <!-- Workout Styles -->
     

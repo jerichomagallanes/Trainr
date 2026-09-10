@@ -4,7 +4,6 @@ import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.domain.catalog.MovementPattern
 import com.jericx.trainr.domain.catalog.MuscleRegion
 import com.jericx.trainr.domain.model.Equipment
-import com.jericx.trainr.domain.model.WorkoutLocation
 import com.jericx.trainr.domain.model.equipmentFor
 import com.jericx.trainr.presentation.workout.model.ExerciseVideoCatalog
 import java.io.File
@@ -59,12 +58,10 @@ class ExerciseCatalogIntegrityTest {
     fun everyCategoryTheSetupScreenOffersCanTrainEveryRegion() {
         val stocked = catalog.all.map { it.equipment }.toSet()
 
-        WorkoutLocation.entries.forEach { location ->
-            val offered = equipmentFor(location, stocked)
-            assertThat(offered).isNotEmpty()
-            offered.forEach { kit ->
-                assertThat(catalog.availableWith(setOf(kit))).isNotEmpty()
-            }
+        val offered = equipmentFor(stocked)
+        assertThat(offered).isNotEmpty()
+        offered.forEach { kit ->
+            assertThat(catalog.availableWith(setOf(kit))).isNotEmpty()
         }
     }
 
@@ -186,9 +183,7 @@ class ExerciseCatalogIntegrityTest {
         val empty = Equipment.entries - stocked
 
         empty.forEach { kit ->
-            WorkoutLocation.entries.forEach { location ->
-                assertThat(equipmentFor(location, stocked)).doesNotContain(kit)
-            }
+            assertThat(equipmentFor(stocked)).doesNotContain(kit)
         }
     }
 
