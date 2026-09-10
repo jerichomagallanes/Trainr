@@ -432,7 +432,7 @@
     <string name="pro_compare_rewrite">Rewrite a week</string>
     <string name="pro_compare_fresh">Start a fresh plan</string>
     <string name="pro_compare_one">1</string>
-    <string name="pro_compare_unlimited">Unlimited</string>
+    <string name="pro_compare_every_week">Every week</string>
     <string name="pro_questions">Any questions?</string>
     <string name="pro_faq_includes_q">What does Trainr Pro include?</string>
     <string name="pro_faq_includes_a">Pro unlocks new AI-written weeks: generate next week from what you lifted, rewrite a week that does not suit you, and start a fresh plan whenever your goal changes.</string>

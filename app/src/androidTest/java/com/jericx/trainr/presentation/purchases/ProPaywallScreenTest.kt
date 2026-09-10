@@ -173,8 +173,10 @@ class ProPaywallScreenTest {
             .performScrollTo()
             .assertIsDisplayed()
         composeTestRule.onNodeWithText(string(R.string.pro_compare_one)).assertIsDisplayed()
-        composeTestRule.onAllNodesWithText(string(R.string.pro_compare_unlimited))
-            .assertCountEquals(3)
+        // "Every week" and not "Unlimited": what Pro gets is a new week once the
+        // current one is finished, which is a promise the plan screen keeps.
+        composeTestRule.onNodeWithText(string(R.string.pro_compare_every_week))
+            .assertIsDisplayed()
     }
 
     // Answers are hidden until asked for, or the paywall becomes a wall of text.

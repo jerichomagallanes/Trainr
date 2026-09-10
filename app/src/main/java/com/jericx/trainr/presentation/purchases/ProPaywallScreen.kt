@@ -212,6 +212,11 @@ private sealed interface Mark {
     data class Count(@StringRes val res: Int) : Mark
 }
 
+// "Unlimited" was three promises the app does not keep. A new week is offered
+// once the current one is finished or over, so "every week" is exactly what Pro
+// gets and is what the plan screen already enforces. Rewriting and starting
+// again are things Pro can do, which a tick says without promising infinity —
+// and without it, a fair-use limit later would be retracting a promise.
 private val COMPARISON = listOf(
     ComparisonRow(R.string.pro_compare_logging, Mark.Yes, Mark.Yes),
     ComparisonRow(R.string.pro_compare_timer, Mark.Yes, Mark.Yes),
@@ -220,18 +225,10 @@ private val COMPARISON = listOf(
     ComparisonRow(
         R.string.pro_compare_generated,
         Mark.Count(R.string.pro_compare_one),
-        Mark.Count(R.string.pro_compare_unlimited)
+        Mark.Count(R.string.pro_compare_every_week)
     ),
-    ComparisonRow(
-        R.string.pro_compare_rewrite,
-        Mark.No,
-        Mark.Count(R.string.pro_compare_unlimited)
-    ),
-    ComparisonRow(
-        R.string.pro_compare_fresh,
-        Mark.No,
-        Mark.Count(R.string.pro_compare_unlimited)
-    )
+    ComparisonRow(R.string.pro_compare_rewrite, Mark.No, Mark.Yes),
+    ComparisonRow(R.string.pro_compare_fresh, Mark.No, Mark.Yes)
 )
 
 @Composable
