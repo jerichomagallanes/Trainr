@@ -8,6 +8,10 @@ import com.jericx.trainr.domain.model.equipmentFor
 import com.jericx.trainr.presentation.workout.model.ExerciseVideoCatalog
 import java.io.File
 import org.junit.Test
+import com.jericx.trainr.domain.catalog.ExerciseRole
+import com.jericx.trainr.domain.catalog.isLoadable
+import com.jericx.trainr.domain.catalog.role
+import com.jericx.trainr.domain.model.ExerciseMeasure
 
 // The catalog is data, and data that ships wrong is a plan that reads wrong.
 // These hold the file itself to account rather than the code that reads it.
@@ -151,6 +155,48 @@ class ExerciseCatalogIntegrityTest {
     }
 
     private companion object {
+        val ReviewedUnilateral = listOf(
+            "assisted_pistol_squats",
+            "barbell_bulgarian_split_squat",
+            "barbell_single_arm_landmine_press",
+            "barbell_single_leg_romanian_deadlift",
+            "barbell_single_leg_standing_calf_raise",
+            "cable_reverse_fly_single_arm",
+            "cable_single_arm_curl",
+            "cable_single_arm_lateral_raise",
+            "cable_single_arm_triceps_pushdown",
+            "cable_triceps_kickback",
+            "concentration_curl",
+            "dumbbell_bulgarian_split_squat",
+            "dumbbell_side_bend",
+            "dumbbell_single_arm_tricep_extension",
+            "dumbbell_single_leg_hip_thrust",
+            "dumbbell_single_leg_romanian_deadlift",
+            "dumbbell_single_leg_standing_calf_raise",
+            "dumbbell_split_squat",
+            "dumbbell_step_up",
+            "dumbbell_suitcase_carry",
+            "dumbbell_triceps_kickback",
+            "glute_kickback_on_floor",
+            "kettlebell_turkish_get_up",
+            "machine_glute_kickback",
+            "machine_single_leg_press",
+            "machine_single_leg_standing_calf_raise",
+            "one_arm_push_up",
+            "pistol_squat",
+            "reverse_grip_concentration_curl",
+            "side_bend",
+            "side_plank",
+            "single_arm_cable_crossover",
+            "single_arm_cable_row",
+            "single_arm_lat_pulldown",
+            "single_leg_extensions",
+            "single_leg_glute_bridge",
+            "single_leg_hip_thrust",
+            "single_leg_standing_calf_raise",
+            "standing_cable_glute_kickbacks",
+            "step_up"
+        )
         // What each category holds in the source's own equipment filter.
         val CATALOG_SIZE = mapOf(
             Equipment.NONE to 105,
@@ -205,5 +251,54 @@ class ExerciseCatalogIntegrityTest {
     @Test
     fun everyMovementIsNamed() {
         assertThat(catalog.all.filter { it.name.isBlank() }).isEmpty()
+    }
+
+    // Pinned rather than matched on the name, because the name does not
+    // settle it: a walking lunge alternates inside the set and a dumbbell row
+    // does not say which arm. Where the name is ambiguous the movement is left
+    // bilateral, so the chip understates the work rather than doubling it.
+    @Test
+    fun onlyTheMovementsReviewedAsPerSideAreMarkedUnilateral() {
+        val marked = catalog.all.filter { it.unilateral }.map { it.key }.sorted()
+
+        assertThat(marked).containsExactlyElementsIn(ReviewedUnilateral.sorted()).inOrder()
+    }
+
+    // A movement worked one side at a time is never one the client could not
+    // hold on one side.
+    @Test
+    fun everyUnilateralMovementStillExistsAndIsPerformable() {
+        ReviewedUnilateral.forEach { key ->
+            assertThat(catalog[key]).isNotNull()
+        }
+    }
+
+    // The load rules only ever run on movements that carry a weight, so the
+    // measure has to be what decides it: assisted work is on a machine and has
+    // no weight to choose.
+    @Test
+    fun onlyWeightedMovementsAreLoadable() {
+        val loadable = catalog.all.filter { it.isLoadable }
+
+        assertThat(loadable).isNotEmpty()
+        assertThat(loadable.map { it.measure }.distinct())
+            .containsExactly(ExerciseMeasure.WEIGHT_AND_REPS)
+        assertThat(catalog.all.filter { it.key.startsWith("assisted_") }.filter { it.isLoadable })
+            .isEmpty()
+    }
+
+    // Rep windows and rest are chosen by role, so the role has to follow the
+    // measure: a clean is tagged CONDITIONING and is still a loaded lift that
+    // would be nonsense prescribed in seconds.
+    @Test
+    fun aMovementIsTimedOnlyWhenItIsMeasuredInSeconds() {
+        val timed = catalog.all.filter { it.role == ExerciseRole.TIMED }
+
+        assertThat(timed.map { it.measure }.distinct()).containsExactly(ExerciseMeasure.DURATION)
+        assertThat(catalog.all.filter { it.measure == ExerciseMeasure.DURATION }.map { it.role })
+            .doesNotContain(ExerciseRole.COMPOUND)
+        assertThat(catalog["clean"]?.role).isEqualTo(ExerciseRole.COMPOUND)
+        assertThat(catalog.all.map { it.role }.distinct())
+            .containsAtLeast(ExerciseRole.COMPOUND, ExerciseRole.ISOLATION, ExerciseRole.TIMED)
     }
 }
