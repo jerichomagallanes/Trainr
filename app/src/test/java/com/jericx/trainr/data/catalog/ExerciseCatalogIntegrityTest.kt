@@ -15,9 +15,26 @@ class ExerciseCatalogIntegrityTest {
     private val source = File("src/main/assets/exercise-catalog.json").readText()
     private val catalog = ExerciseCatalogReader.read(source)
 
+    // The size of each category is the source's own, so a movement quietly
+    // added or lost shows up here rather than in someone's plan.
     @Test
-    fun theFileParsesAndIsWorthShipping() {
-        assertThat(catalog.all.size).isAtLeast(450)
+    fun eachCategoryHoldsExactlyTheMovementsItShould() {
+        val counted = catalog.all.groupingBy { it.equipment }.eachCount()
+
+        assertThat(counted).containsExactlyEntriesIn(
+            mapOf(
+                Equipment.NONE to 105,
+                Equipment.BARBELL to 74,
+                Equipment.DUMBBELL to 70,
+                Equipment.KETTLEBELL to 13,
+                Equipment.MACHINE to 145,
+                Equipment.PLATE to 8,
+                Equipment.RESISTANCE_BAND to 13,
+                Equipment.SUSPENSION_BAND to 7,
+                Equipment.OTHER to 17
+            )
+        )
+        assertThat(catalog.all).hasSize(452)
     }
 
     // A dropped entry is silent: the reader skips what it cannot understand,

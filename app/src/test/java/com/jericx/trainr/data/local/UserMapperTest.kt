@@ -73,4 +73,18 @@ class UserMapperTest {
 
         assertThat(domain.availableEquipment).containsExactly(Equipment.DUMBBELL)
     }
+
+    // Nine categories replaced a longer list, and a profile saved under the
+    // old names must not come back with no equipment at all.
+    @Test
+    fun `equipment saved under the old names still reads back`() {
+        val entity = mapper.mapToEntity(sampleProfile()).copy(
+            availableEquipment = listOf(
+                "DUMBBELLS", "CABLE_MACHINE", "PULL_UP_BAR", "SQUAT_RACK", "ANTIGRAVITY_BOOTS"
+            )
+        )
+
+        assertThat(mapper.mapToDomain(entity).availableEquipment)
+            .containsExactly(Equipment.DUMBBELL, Equipment.MACHINE, Equipment.BARBELL)
+    }
 }
