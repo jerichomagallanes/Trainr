@@ -14,6 +14,8 @@ import androidx.room.TypeConverters
         WorkoutExerciseEntity::class,
         ExerciseSetEntity::class
     ],
+    // Bumped without a migration on purpose: the version has to move for the
+    // destructive fallback to fire, or an old file fails its identity check.
     version = 2,
     exportSchema = false
 )

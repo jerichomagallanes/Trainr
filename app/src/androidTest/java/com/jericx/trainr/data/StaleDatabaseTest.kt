@@ -5,21 +5,17 @@ import androidx.room.Room
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
-import com.jericx.trainr.data.local.MIGRATION_1_2
 import com.jericx.trainr.data.local.TrainrDatabase
-import com.jericx.trainr.data.local.UserMapper
-import com.jericx.trainr.domain.model.Equipment
-import com.jericx.trainr.domain.model.FitnessGoal
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
 
-// A migration that does not open is every existing client's app crashing on
-// update, so this walks the real path: a version 1 file with a profile in it,
-// opened by the version 2 schema.
+// Before release a schema change resets the local database instead of earning
+// a migration. What must not happen is the app refusing to open: a stale file
+// is dropped, and the client starts over rather than seeing a crash.
 @RunWith(AndroidJUnit4::class)
-class UserMigrationTest {
+class StaleDatabaseTest {
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
     private val name = "migration_test.db"
@@ -30,29 +26,21 @@ class UserMigrationTest {
     }
 
     @Test
-    fun aProfileSavedBeforeTheStyleAndTimeQuestionsWereDroppedStillOpens() = runTest {
+    fun aFileFromTheOldSchemaOpensEmptyRatherThanRefusingToOpen() = runTest {
         context.deleteDatabase(name)
         writeVersionOne()
 
         val database = Room.databaseBuilder(context, TrainrDatabase::class.java, name)
-            .addMigrations(MIGRATION_1_2)
+            .fallbackToDestructiveMigration(dropAllTables = true)
             .build()
 
-        val user = UserMapper().mapToDomain(database.userDao.getCurrentUser()!!)
-
-        assertThat(user.id).isEqualTo(1L)
-        assertThat(user.firstName).isEqualTo("Jeco")
-        assertThat(user.fitnessGoal).isEqualTo(FitnessGoal.MUSCLE_GAIN)
-        assertThat(user.availableEquipment).containsExactly(Equipment.DUMBBELL)
-        assertThat(user.workoutDaysPerWeek).isEqualTo(3)
-        assertThat(user.workoutDuration).isEqualTo(45)
+        assertThat(database.userDao.getCurrentUser()).isNull()
 
         database.close()
     }
 
-    // Room builds the tables this version shares with the last one, then the
-    // users table is put back the shape it had. Hand-writing all five would
-    // be five chances to describe them wrongly and call it a passing test.
+    // Room builds the tables, then the users table is put back the shape it
+    // had before the style and preferred-time questions went.
     private fun writeVersionOne() {
         Room.databaseBuilder(context, TrainrDatabase::class.java, name).build().apply {
             openHelper.writableDatabase
