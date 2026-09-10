@@ -130,7 +130,7 @@ class CannedPlanGeneratorTest {
         val keys = plan(equipment = listOf(Equipment.BARBELL))
             .workoutDays.flatMap { it.exercises }.map { it.exerciseKey }.distinct()
 
-        assertThat(keys).contains("bent_over_row")
+        assertThat(keys).contains("barbell_bent_over_row")
     }
 
     @Test
@@ -138,7 +138,7 @@ class CannedPlanGeneratorTest {
         val loaded = plan(
             equipment = listOf(Equipment.DUMBBELL, Equipment.MACHINE)
         ).workoutDays.first()
-        assertThat(loaded.equipment).containsExactly("Dumbbells")
+        assertThat(loaded.equipment).containsExactly("Dumbbell")
 
         val bodyweight = plan(equipment = listOf(Equipment.NONE)).workoutDays.first()
         assertThat(bodyweight.equipment).containsExactly("Bodyweight")

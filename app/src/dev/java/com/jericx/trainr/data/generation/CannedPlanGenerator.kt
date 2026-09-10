@@ -171,7 +171,7 @@ class CannedPlanGenerator : PlanGenerator {
             Candidate(
                 needs = emptySet(),
                 exercise = WorkoutExercise(
-                    exerciseKey = "warm_up_jog",
+                    exerciseKey = "warm_up",
                     name = "Warm-up Jog in Place",
                     measure = ExerciseMeasure.DURATION,
                     durationMinutes = WARM_UP_MINUTES,
@@ -211,7 +211,7 @@ class CannedPlanGenerator : PlanGenerator {
             Candidate(
                 needs = setOf(Equipment.DUMBBELL, Equipment.BARBELL),
                 exercise = WorkoutExercise(
-                    exerciseKey = "bent_over_row",
+                    exerciseKey = "barbell_bent_over_row",
                     name = "Bent Over Row",
                     measure = ExerciseMeasure.WEIGHT_AND_REPS,
                     durationMinutes = 10,
@@ -225,7 +225,7 @@ class CannedPlanGenerator : PlanGenerator {
             Candidate(
                 needs = setOf(Equipment.DUMBBELL, Equipment.BARBELL),
                 exercise = WorkoutExercise(
-                    exerciseKey = "romanian_deadlift",
+                    exerciseKey = "barbell_romanian_deadlift",
                     name = "Romanian Deadlift",
                     measure = ExerciseMeasure.WEIGHT_AND_REPS,
                     durationMinutes = 10,
@@ -239,7 +239,7 @@ class CannedPlanGenerator : PlanGenerator {
             Candidate(
                 needs = setOf(Equipment.DUMBBELL, Equipment.BARBELL),
                 exercise = WorkoutExercise(
-                    exerciseKey = "overhead_press",
+                    exerciseKey = "barbell_overhead_press",
                     name = "Overhead Press",
                     measure = ExerciseMeasure.WEIGHT_AND_REPS,
                     durationMinutes = 10,
