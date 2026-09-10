@@ -112,6 +112,47 @@ class ExerciseCatalogIntegrityTest {
         assertThat(source - catalogued).isEmpty()
     }
 
+    // Read one-handed between sets, so the shape matters as much as the
+    // content: a wall of text is a step nobody reads.
+    @Test
+    fun howToStepsFitOnAPhoneScreen() {
+        val described = catalog.all.filter { it.steps.isNotEmpty() }
+
+        assertThat(described.filter { it.steps.size !in 4..7 }.map { it.key }).isEmpty()
+        assertThat(
+            described.flatMap { it.steps }.filter { it.split(" ").size > 16 }
+        ).isEmpty()
+    }
+
+    // The list is numbered by the UI, so a step that numbers itself renders
+    // as "1. 1. Lie back".
+    @Test
+    fun stepsCarryNoNumberingOfTheirOwn() {
+        val numbered = catalog.all
+            .flatMap { it.steps }
+            .filter { Regex("^\\s*\\d+[.)]").containsMatchIn(it) }
+
+        assertThat(numbered).isEmpty()
+    }
+
+    // A step is an instruction, so it opens with the thing to do.
+    @Test
+    fun everyStepStartsWithACapitalAndEndsWithAStop() {
+        val malformed = catalog.all
+            .flatMap { it.steps }
+            .filter { !it.first().isUpperCase() || !it.endsWith(".") }
+
+        assertThat(malformed).isEmpty()
+    }
+
+    // A movement assists muscles; it cannot assist the one it already trains.
+    @Test
+    fun secondaryMusclesNeverRepeatThePrimary() {
+        val confused = catalog.all.filter { it.primary in it.secondary }
+
+        assertThat(confused.map { it.key }).isEmpty()
+    }
+
     private companion object {
         // What each category holds in the source's own equipment filter.
         val CATALOG_SIZE = mapOf(
