@@ -27,7 +27,8 @@ class ExerciseCardTest {
     private fun string(id: Int) = composeTestRule.activity.getString(id)
 
     private val sampleExercises = SampleWorkoutData
-        .dayFor(SampleWorkoutData.DEFAULT_DAY_NUMBER).toRoutineUi().exercises
+        .dayFor(SampleWorkoutData.DEFAULT_DAY_NUMBER)
+        .toRoutineUi(catalog = SampleWorkoutData.catalog).exercises
 
     private fun setCard(exercise: ExerciseUi, onToggle: () -> Unit = {}) {
         composeTestRule.setContent {
@@ -92,5 +93,31 @@ class ExerciseCardTest {
             .performClick()
 
         assertThat(toggled).isTrue()
+    }
+
+    // What the movement trains is the catalog's to say, and it reads at a
+    // glance rather than as two labelled lines on every card of the day.
+    @Test
+    fun theMuscleLineNamesWhatTheMovementTrains() {
+        val squat = sampleExercises.first { it.primaryMuscle.isNotBlank() }
+
+        setCard(squat)
+
+        composeTestRule.onNodeWithText(squat.primaryMuscle, substring = true)
+            .assertIsDisplayed()
+        squat.secondaryMuscles.forEach { muscle ->
+            composeTestRule.onNodeWithText(muscle, substring = true).assertIsDisplayed()
+        }
+    }
+
+    // A movement the catalog has nothing to say about must not leave a stray
+    // separator sitting under its name.
+    @Test
+    fun aMovementWithNoMusclesShowsNoMuscleLine() {
+        val unknown = sampleExercises[0].copy(primaryMuscle = "", secondaryMuscles = emptyList())
+
+        setCard(unknown)
+
+        composeTestRule.onNodeWithText("\u00b7", substring = true).assertDoesNotExist()
     }
 }

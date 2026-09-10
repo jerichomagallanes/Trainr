@@ -61,7 +61,8 @@ class RoutineDetailViewModelTest {
                 Screen.RoutineDetail.ARG_WEEK_NUMBER to weekNumber
             )
         ),
-        repository
+        repository,
+        SampleWorkoutData.catalog
     )
 
     // The routine screen holds nothing until the stored week has been read, so tests must let that happen first

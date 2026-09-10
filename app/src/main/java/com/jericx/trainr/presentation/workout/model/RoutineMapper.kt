@@ -1,5 +1,7 @@
 package com.jericx.trainr.presentation.workout.model
 
+import com.jericx.trainr.domain.catalog.ExerciseCatalog
+import com.jericx.trainr.domain.catalog.MuscleGroup
 import com.jericx.trainr.domain.model.ExerciseSet
 import com.jericx.trainr.domain.model.UnitSystem
 import com.jericx.trainr.domain.model.WeightUnit
@@ -10,10 +12,12 @@ import com.jericx.trainr.domain.model.WorkoutDay
 // only for display would be stored raw and read back as a different number.
 fun WorkoutDay.toRoutineUi(
     previousByKey: Map<String, List<ExerciseSet>> = emptyMap(),
-    units: UnitSystem = UnitSystem.Default
+    units: UnitSystem = UnitSystem.Default,
+    catalog: ExerciseCatalog? = null
 ): RoutineUi = RoutineUi(
     title = title,
     exercises = exercises.mapIndexed { index, exercise ->
+        val movement = catalog?.get(exercise.exerciseKey)
         ExerciseUi(
             position = index + 1,
             name = exercise.name,
@@ -29,7 +33,17 @@ fun WorkoutDay.toRoutineUi(
             previousSets = previousByKey[exercise.exerciseKey].orEmpty(),
             videoUrl = exercise.videoTutorialUrl
                 ?: ExerciseVideoCatalog.urlFor(exercise.exerciseKey),
+            primaryMuscle = movement?.primary?.asDisplayText().orEmpty(),
+            secondaryMuscles = movement?.secondary?.map { it.asDisplayText() }.orEmpty(),
+            steps = movement?.steps.orEmpty(),
             isCompleted = exercise.isCompleted
         )
     }
 )
+
+// Anatomy read off a controlled vocabulary, the same way the day's equipment
+// is: LOWER_BACK is Lower Back everywhere, so there is nothing to translate
+// that the enum does not already say.
+private fun MuscleGroup.asDisplayText(): String = name.lowercase()
+    .split('_')
+    .joinToString(" ") { part -> part.replaceFirstChar { it.uppercase() } }

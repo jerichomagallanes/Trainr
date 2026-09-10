@@ -17,5 +17,10 @@ data class ExerciseUi(
     // Sets from the last completed day with this movement, matched on exerciseKey.
     val previousSets: List<ExerciseSet> = emptyList(),
     val videoUrl: String? = null,
+    // What the movement trains and how to perform it, both owned by the
+    // catalog rather than the model that wrote the week.
+    val primaryMuscle: String = "",
+    val secondaryMuscles: List<String> = emptyList(),
+    val steps: List<String> = emptyList(),
     val isCompleted: Boolean = false
 )

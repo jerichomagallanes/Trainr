@@ -35,6 +35,10 @@ import com.jericx.trainr.domain.model.UnitSystem
 import com.jericx.trainr.presentation.workout.model.ExerciseUi
 import com.jericx.trainr.presentation.workout.model.toRoutineUi
 import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.SpanStyle
 
 @Composable
 fun ExerciseCard(
@@ -118,11 +122,33 @@ fun ExerciseCard(
             ),
             verticalArrangement = Arrangement.spacedBy(Spacing.screen)
         ) {
-            Text(
-                text = exercise.description,
-                style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 18.sp),
-                color = colors.onSurface
-            )
+            // The muscles belong to the movement's name, not to the coaching
+            // note under it, so the pair sits closer than the card's rhythm.
+            Column(verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
+                if (exercise.primaryMuscle.isNotBlank()) {
+                    Text(
+                        text = buildAnnotatedString {
+                            withStyle(
+                                SpanStyle(color = accentInk, fontWeight = FontWeight.Medium)
+                            ) {
+                                append(exercise.primaryMuscle)
+                            }
+                            if (exercise.secondaryMuscles.isNotEmpty()) {
+                                append(MUSCLE_SEPARATOR)
+                                append(exercise.secondaryMuscles.joinToString(", "))
+                            }
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.onSurfaceMuted
+                    )
+                }
+
+                Text(
+                    text = exercise.description,
+                    style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 18.sp),
+                    color = colors.onSurface
+                )
+            }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
@@ -170,6 +196,11 @@ fun ExerciseCard(
     }
 }
 
+// A middot rather than a label on each side: the line is read at a glance
+// twelve times down a day, and "Primary:"/"Secondary:" twice per card is more
+// words than the names themselves.
+private const val MUSCLE_SEPARATOR = "  \u00b7  "
+
 @Preview(showBackground = true, heightDp = 700)
 @Composable
 private fun ExerciseCardPreview() {
@@ -179,7 +210,7 @@ private fun ExerciseCardPreview() {
             modifier = Modifier.padding(Spacing.screen)
         ) {
             SampleWorkoutData.dayFor(SampleWorkoutData.DEFAULT_DAY_NUMBER)
-                .toRoutineUi().exercises.take(3).forEach { exercise ->
+                .toRoutineUi(catalog = SampleWorkoutData.catalog).exercises.take(3).forEach { exercise ->
                 ExerciseCard(exercise = exercise, onToggleCompleted = {})
             }
         }
