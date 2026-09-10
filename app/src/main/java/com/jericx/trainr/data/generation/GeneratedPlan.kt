@@ -23,7 +23,6 @@ data class GeneratedExercise(
     val exerciseKey: String,
     val name: String,
     val measure: String,
-    val durationMinutes: Int,
     val prescription: String,
     val instructions: String,
     val restSeconds: Int? = null,

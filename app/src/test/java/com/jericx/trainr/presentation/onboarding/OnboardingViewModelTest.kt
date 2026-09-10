@@ -1,6 +1,7 @@
 package com.jericx.trainr.presentation.onboarding
 
 import com.google.common.truth.Truth.assertThat
+import com.jericx.trainr.domain.model.Injury
 import com.jericx.trainr.domain.model.Equipment
 import com.jericx.trainr.domain.model.ExperienceLevel
 import com.jericx.trainr.domain.model.FitnessGoal
@@ -174,7 +175,7 @@ class OnboardingViewModelTest {
 
     @Test
     fun `updateLimitations sets injuries`() {
-        val injuries = listOf("Lower back", "Right knee")
+        val injuries = listOf(Injury.LOWER_BACK, Injury.KNEE)
 
         viewModel.updateLimitations(injuries)
 
@@ -186,7 +187,7 @@ class OnboardingViewModelTest {
     fun `updateLimitations leaves the workout style alone`() {
         viewModel.updateFitnessGoal(FitnessGoal.ENDURANCE, WorkoutType.CARDIO)
 
-        viewModel.updateLimitations(listOf("Right knee"))
+        viewModel.updateLimitations(listOf(Injury.KNEE))
 
         assertThat(viewModel.onboardingState.value.userProfile.workoutType)
             .isEqualTo(WorkoutType.CARDIO)

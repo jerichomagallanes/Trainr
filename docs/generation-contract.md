@@ -18,11 +18,13 @@ knows better**, as parameters to `GeneratedPlanParser.parse()`:
 | `startDateMillis` (local midnight of the plan's Monday) | The model has no clock; dates it writes are guesses. |
 | Video tutorial URLs | Model-written URLs are routinely dead or wrong. Resolved at render time from the hand-verified `ExerciseVideoCatalog`, keyed on `exerciseKey`. |
 | Completion state, actuals, notes, ids | A new plan has no history, and only the user logs work. |
+| `durationMinutes` | Arithmetic on the prescription, not a fourth number the model has to keep in agreement with sets, reps and rest. |
 
 Derived rather than accepted, so the app can never contradict itself on
-screen: a day's `duration` is the **sum** of its exercises' `durationMinutes`,
-`exerciseCount` is the size of its exercise list, and set numbers are the
-order the sets arrive in.
+screen: an exercise's `durationMinutes` is its prescribed work plus its rest
+(a repetition costs about three seconds at the moderate velocity ACSM asks
+for), a day's `duration` is the sum of those, `exerciseCount` is the size of
+its exercise list, and set numbers are the order the sets arrive in.
 
 ## Schema
 
@@ -53,14 +55,13 @@ order the sets arrive in.
               "type": "object",
               "additionalProperties": false,
               "required": [
-                "exerciseKey", "name", "measure", "durationMinutes",
+                "exerciseKey", "name", "measure",
                 "prescription", "instructions", "sets"
               ],
               "properties": {
                 "exerciseKey": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
                 "name": { "type": "string", "minLength": 1 },
                 "measure": { "enum": ["WEIGHT_AND_REPS", "REPS", "DURATION"] },
-                "durationMinutes": { "type": "integer", "minimum": 1 },
                 "prescription": { "type": "string", "minLength": 1 },
                 "instructions": { "type": "string", "minLength": 1 },
                 "restSeconds": { "type": ["integer", "null"], "minimum": 1 },
@@ -102,7 +103,6 @@ order the sets arrive in.
           "exerciseKey": "goblet_squat",
           "name": "Goblet Squats",
           "measure": "WEIGHT_AND_REPS",
-          "durationMinutes": 8,
           "prescription": "3 sets of 12 reps",
           "instructions": "Squat holding a dumbbell at your chest to build the legs and brace the core.",
           "restSeconds": 60,
@@ -116,7 +116,6 @@ order the sets arrive in.
           "exerciseKey": "plank",
           "name": "Plank",
           "measure": "DURATION",
-          "durationMinutes": 6,
           "prescription": "3 sets of 45 seconds",
           "instructions": "Hold a straight line from head to heels to brace the whole core.",
           "sets": [
@@ -152,9 +151,8 @@ order the sets arrive in.
   so nothing lingers invisibly in the log. An unknown `measure` value
   degrades to `REPS`, matching the database mapper's fallback — and the plan
   is then rejected anyway if its sets carry no reps.
-- **`durationMinutes` vs `prescription`** — both shown on the card, and
-  independent: ten allotted minutes of "5 sets of 1 minute" is not five
-  minutes. Neither derives from the other.
+- **`durationMinutes`** — computed, not written. The card shows it beside
+  the prescription, and it is the prescribed work plus the rest between sets.
 - **`restSeconds`** — optional, maps to the domain's `restTime`, which is in
   seconds.
 - **`dayNumber`** — ISO day of week, 1 = Monday. Weeks start Monday. Each day
@@ -169,8 +167,12 @@ The parser returns `Parsed(plan)` or `Invalid(errors)` — every problem, not
 just the first, so a retry prompt can quote the full list. It never throws on
 model output. Rejected: malformed JSON, blank required text, duplicate or
 out-of-range day numbers, malformed or duplicated (within a day) exercise
-keys, empty day/exercise/set lists, non-positive `durationMinutes`,
-`restSeconds`, `weightKg`, or a set missing the target its measure requires.
+keys, empty day/exercise/set lists, and numbers no client could perform: reps
+outside 1–100, seconds outside 5–5400, `restSeconds` outside 5–600, `weightKg`
+outside 0.5–500 kg, more than 12 exercises in a day or 10 sets in an exercise,
+or a day whose total sets exceed what the client's session length pays for
+(see `SessionBudget`). A set missing the target its measure requires is
+rejected too.
 Tolerated: unknown JSON keys (ignored), unknown `measure` (degrades to
 `REPS`), stray set targets (stripped).
 
@@ -191,3 +193,6 @@ The prompt that requests a plan must tell the model, alongside this schema:
 - `WEIGHT_AND_REPS` only where the user has the kit to load the movement;
   bodyweight work is `REPS`, timed work is `DURATION`. Distance work (a 5 km
   run) has no representation yet — prescribe cardio by time.
+- The session's set cap and the weekly set target per muscle group, both
+  computed by `SessionBudget` from the user's answers. What the rules
+  themselves rest on is in docs/programming-evidence.md.

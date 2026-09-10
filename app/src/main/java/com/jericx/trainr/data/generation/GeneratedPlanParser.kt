@@ -6,7 +6,16 @@ import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
 import com.jericx.trainr.domain.model.withoutWeekNumber
 import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.model.WorkoutExercise
+import kotlin.math.ceil
 import kotlinx.serialization.json.Json
+
+// What the client's own answers make possible, so a plan that cannot be
+// performed is rejected while the model still has an attempt left to fix it.
+data class PlanLimits(val maxSetsPerSession: Int) {
+    companion object {
+        val Unbounded = PlanLimits(maxSetsPerSession = Int.MAX_VALUE)
+    }
+}
 
 sealed interface PlanParseResult {
     data class Parsed(val plan: WeeklyWorkoutPlan) : PlanParseResult
@@ -23,7 +32,8 @@ class GeneratedPlanParser {
         json: String,
         userId: Long,
         weekNumber: Int,
-        startDateMillis: Long
+        startDateMillis: Long,
+        limits: PlanLimits = PlanLimits.Unbounded
     ): PlanParseResult {
         val generated = try {
             decoder.decodeFromString<GeneratedPlan>(json)
@@ -31,7 +41,7 @@ class GeneratedPlanParser {
             return PlanParseResult.Invalid(listOf("not a generated plan: ${e.message}"))
         }
 
-        val errors = buildList { check(generated) }
+        val errors = buildList { check(generated, limits) }
         if (errors.isNotEmpty()) return PlanParseResult.Invalid(errors)
 
         return PlanParseResult.Parsed(
@@ -47,20 +57,30 @@ class GeneratedPlanParser {
 
     private val keyShape = Regex("[a-z][a-z0-9_]*")
 
-    private fun MutableList<String>.check(plan: GeneratedPlan) {
+    private fun MutableList<String>.check(plan: GeneratedPlan, limits: PlanLimits) {
         if (plan.title.isBlank()) add("plan: title is blank")
         if (plan.days.isEmpty()) add("plan: has no days")
         plan.days.groupingBy { it.dayNumber }.eachCount()
             .filterValues { it > 1 }
             .keys.forEach { add("plan: day $it appears more than once") }
-        plan.days.forEach { check(it) }
+        plan.days.forEach { check(it, limits) }
     }
 
-    private fun MutableList<String>.check(day: GeneratedDay) {
+    private fun MutableList<String>.check(day: GeneratedDay, limits: PlanLimits) {
         val where = "day ${day.dayNumber}"
         if (day.dayNumber !in 1..7) add("$where: dayNumber must be 1..7, Monday to Sunday")
         if (day.title.isBlank()) add("$where: title is blank")
         if (day.exercises.isEmpty()) add("$where: has no exercises")
+        if (day.exercises.size > MAX_EXERCISES_PER_DAY) {
+            add("$where: has ${day.exercises.size} exercises, more than $MAX_EXERCISES_PER_DAY")
+        }
+        val sets = day.exercises.sumOf { it.sets.size }
+        if (sets > limits.maxSetsPerSession) {
+            add(
+                "$where: has $sets sets but the client's session length allows at most " +
+                    "${limits.maxSetsPerSession}, warm-up included"
+            )
+        }
         day.exercises.groupingBy { it.exerciseKey }.eachCount()
             .filterValues { it > 1 }
             .keys.forEach { add("$where: exerciseKey '$it' appears more than once") }
@@ -75,25 +95,48 @@ class GeneratedPlanParser {
         if (exercise.name.isBlank()) add("$where: name is blank")
         if (exercise.prescription.isBlank()) add("$where: prescription is blank")
         if (exercise.instructions.isBlank()) add("$where: instructions are blank")
-        if (exercise.durationMinutes <= 0) add("$where: durationMinutes must be above zero")
-        if (exercise.restSeconds != null && exercise.restSeconds <= 0) {
-            add("$where: restSeconds must be above zero")
+        if (exercise.restSeconds != null && exercise.restSeconds !in MIN_REST..MAX_REST) {
+            add("$where: restSeconds must be $MIN_REST..$MAX_REST")
         }
         if (exercise.sets.isEmpty()) add("$where: has no sets")
+        if (exercise.sets.size > MAX_SETS_PER_EXERCISE) {
+            add("$where: has ${exercise.sets.size} sets, more than $MAX_SETS_PER_EXERCISE")
+        }
         exercise.sets.forEachIndexed { index, set ->
             check("$where, set ${index + 1}", set, exercise.resolvedMeasure)
         }
     }
 
+    // Bounds, not tastes: a number outside these is one no client could
+    // perform, and it costs less to ask again than to show it to them.
     private fun MutableList<String>.check(where: String, set: GeneratedSet, measure: ExerciseMeasure) {
         when (measure) {
             ExerciseMeasure.WEIGHT_AND_REPS, ExerciseMeasure.REPS ->
-                if ((set.reps ?: 0) <= 0) add("$where: needs reps above zero")
+                if ((set.reps ?: 0) !in MIN_REPS..MAX_REPS) {
+                    add("$where: needs reps between $MIN_REPS and $MAX_REPS")
+                }
             ExerciseMeasure.DURATION ->
-                if ((set.seconds ?: 0) <= 0) add("$where: needs seconds above zero")
+                if ((set.seconds ?: 0) !in MIN_SECONDS..MAX_SECONDS) {
+                    add("$where: needs seconds between $MIN_SECONDS and $MAX_SECONDS")
+                }
         }
-        if (set.weightKg != null && set.weightKg <= 0f) add("$where: weightKg must be above zero")
+        if (set.weightKg != null && set.weightKg !in MIN_WEIGHT_KG..MAX_WEIGHT_KG) {
+            add("$where: weightKg must be between $MIN_WEIGHT_KG and $MAX_WEIGHT_KG")
+        }
     }
+
+    // How long the exercise takes is arithmetic on what was prescribed, not a
+    // fourth number for the model to keep in agreement with the other three.
+    // A rep is about three seconds at the moderate velocity ACSM asks for.
+    private val GeneratedExercise.minutes: Int
+        get() {
+            val perSet = when (resolvedMeasure) {
+                ExerciseMeasure.DURATION -> sets.map { it.seconds ?: 0 }
+                else -> sets.map { (it.reps ?: 0) * SECONDS_PER_REP }
+            }
+            val rest = (restSeconds ?: 0) * (sets.size - 1).coerceAtLeast(0)
+            return ceil((perSet.sum() + rest) / 60.0).toInt().coerceAtLeast(1)
+        }
 
     // Unknown measures degrade to REPS, the same fallback the database mapper uses.
     private val GeneratedExercise.resolvedMeasure: ExerciseMeasure
@@ -103,7 +146,7 @@ class GeneratedPlanParser {
     private fun GeneratedDay.toDomain() = WorkoutDay(
         dayNumber = dayNumber,
         title = title,
-        duration = exercises.sumOf { it.durationMinutes },
+        duration = exercises.sumOf { it.minutes },
         exerciseCount = exercises.size,
         equipment = equipment,
         exercises = exercises.map { it.toDomain() }
@@ -117,7 +160,7 @@ class GeneratedPlanParser {
             measure = resolved,
             sets = sets.mapIndexed { index, set -> set.toDomain(index + 1, resolved) },
             setCount = sets.size,
-            durationMinutes = durationMinutes,
+            durationMinutes = minutes,
             prescription = prescription,
             restTime = restSeconds,
             instructions = instructions
@@ -131,5 +174,19 @@ class GeneratedPlanParser {
             ExerciseSet(setNumber = setNumber, targetReps = reps, targetWeightKg = weightKg)
         ExerciseMeasure.REPS -> ExerciseSet(setNumber = setNumber, targetReps = reps)
         ExerciseMeasure.DURATION -> ExerciseSet(setNumber = setNumber, targetSeconds = seconds)
+    }
+
+    private companion object {
+        const val SECONDS_PER_REP = 3
+        const val MAX_EXERCISES_PER_DAY = 12
+        const val MAX_SETS_PER_EXERCISE = 10
+        const val MIN_REPS = 1
+        const val MAX_REPS = 100
+        const val MIN_SECONDS = 5
+        const val MAX_SECONDS = 5_400
+        const val MIN_REST = 5
+        const val MAX_REST = 600
+        const val MIN_WEIGHT_KG = 0.5f
+        const val MAX_WEIGHT_KG = 500f
     }
 }

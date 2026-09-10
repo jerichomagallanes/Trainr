@@ -28,10 +28,12 @@ import com.jericx.trainr.R
 import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.common.Constants
 import com.jericx.trainr.domain.model.Equipment
+import com.jericx.trainr.domain.model.equipmentFor
 import com.jericx.trainr.domain.model.LoadedEquipment
 import com.jericx.trainr.domain.model.UnitSystem
 import com.jericx.trainr.domain.model.WorkoutLocation
 import com.jericx.trainr.domain.model.WorkoutTime
+import com.jericx.trainr.presentation.common.getLocalizedName
 import com.jericx.trainr.presentation.common.components.cards.TrainrLocationCard
 import com.jericx.trainr.presentation.common.components.cards.TrainrSelectionCard
 import com.jericx.trainr.presentation.common.components.core.TrainrButton
@@ -190,25 +192,10 @@ fun WorkoutSetupScreen(
                         verticalPadding = 0.dp,
                         titleGap = Spacing.card
                     ) {
-                        val equipmentOptions = when (selectedLocation) {
-                            WorkoutLocation.HOME -> listOf(
-                                Equipment.NONE to stringResource(R.string.bodyweight_only),
-                                Equipment.DUMBBELLS to stringResource(R.string.dumbbells),
-                                Equipment.RESISTANCE_BANDS to stringResource(R.string.resistance_bands),
-                                Equipment.PULL_UP_BAR to stringResource(R.string.pull_up_bar),
-                                Equipment.KETTLEBELLS to stringResource(R.string.kettlebells)
-                            )
-                            WorkoutLocation.GYM, WorkoutLocation.BOTH -> listOf(
-                                Equipment.BARBELL to stringResource(R.string.barbell_plates),
-                                Equipment.BENCH to stringResource(R.string.bench),
-                                Equipment.CARDIO_MACHINES to stringResource(R.string.cardio_equipment),
-                                Equipment.CABLE_MACHINE to stringResource(R.string.cable_machine),
-                                Equipment.DUMBBELLS to stringResource(R.string.dumbbells),
-                                Equipment.SQUAT_RACK to stringResource(R.string.squat_rack),
-                                Equipment.OTHERS to stringResource(R.string.others)
-                            )
-                            else -> emptyList()
-                        }
+                        val equipmentOptions = selectedLocation
+                            ?.let { equipmentFor(it) }
+                            .orEmpty()
+                            .map { it to it.getLocalizedName() }
 
                         FlowRow(
                             modifier = Modifier.fillMaxWidth(),

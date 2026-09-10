@@ -90,7 +90,9 @@
     <string name="cardio_equipment">Cardio equipment</string>
     <string name="cable_machine">Cable machine</string>
     <string name="squat_rack">Squat rack</string>
-    <string name="others">Iba pa</string>
+    <string name="weight_machines">Weight machines</string>
+    <string name="exercise_mat">Exercise mat</string>
+    <string name="jump_rope">Jump rope</string>
     <string name="workout_days_per_week">Ilang araw sa isang linggo ninyo magagawa ang workout?</string>
     <string name="session_duration">Tagal ng Session</string>
     <string name="preferred_workout_time">Preferred na Workout Time</string>
@@ -108,7 +110,6 @@
     <string name="lets_keep_you_safe">PANATILIHIN NATIN KAYONG LIGTAS</string>
     <string name="limitations_description">Sabihin ninyo sa amin ang mga limitations para ma-adapt namin ang inyong mga workout</string>
     <string name="any_injuries_or_areas">May mga injury ba o mga part na dapat mag-ingat?</string>
-    <string name="none">Wala</string>
     <string name="preferred_workout_style">Preferred na Workout Style</string>
     <string name="strength_training">Strength Training</string>
     <string name="strength_training_description">Focus sa pagbuo ng muscle at lakas.</string>
@@ -117,6 +118,8 @@
     <string name="hiit">HIIT</string>
     <string name="hiit_description">High intensity interval training.</string>
     <string name="mixed_balanced">Mixed/Balanced</string>
+    <string name="mobility_yoga">Mobility at Yoga</string>
+    <string name="mobility_yoga_description">Stretching, mobility at yoga.</string>
     <string name="mixed_balanced_description">Kombinasyon ng iba\'t ibang training styles.</string>
     
     <!-- Review Screen -->

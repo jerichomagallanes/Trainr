@@ -20,7 +20,8 @@ val LoadedEquipment = setOf(
     Equipment.DUMBBELLS,
     Equipment.BARBELL,
     Equipment.KETTLEBELLS,
-    Equipment.CABLE_MACHINE
+    Equipment.CABLE_MACHINE,
+    Equipment.MACHINES
 )
 
 // Loads are stored in kilograms, which is what the model prescribes and what

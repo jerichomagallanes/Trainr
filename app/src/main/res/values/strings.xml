@@ -89,7 +89,9 @@
     <string name="cardio_equipment">Cardio equipment</string>
     <string name="cable_machine">Cable machine</string>
     <string name="squat_rack">Squat rack</string>
-    <string name="others">Others</string>
+    <string name="weight_machines">Weight machines</string>
+    <string name="exercise_mat">Exercise mat</string>
+    <string name="jump_rope">Jump rope</string>
     <string name="workout_days_per_week">How many days per week can you work out?</string>
     <string name="session_duration">Session Duration</string>
     <string name="preferred_workout_time">Preferred Workout Time</string>
@@ -107,7 +109,6 @@
     <string name="lets_keep_you_safe">LET\'S KEEP YOU SAFE</string>
     <string name="limitations_description">Tell us about any limitations so we can adapt your workouts</string>
     <string name="any_injuries_or_areas">Any injuries or areas to be careful with?</string>
-    <string name="none">None</string>
     <string name="preferred_workout_style">Preferred Workout Style</string>
     <string name="strength_training">Strength Training</string>
     <string name="strength_training_description">Focus on building muscle and strength.</string>
@@ -116,6 +117,8 @@
     <string name="hiit">HIIT</string>
     <string name="hiit_description">High intensity interval training.</string>
     <string name="mixed_balanced">Mixed/Balanced</string>
+    <string name="mobility_yoga">Mobility &amp; Yoga</string>
+    <string name="mobility_yoga_description">Stretching, mobility and yoga work.</string>
     <string name="mixed_balanced_description">Combination of different training styles.</string>
     
     <!-- Review Screen -->

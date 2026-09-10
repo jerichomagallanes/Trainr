@@ -2,6 +2,7 @@ package com.jericx.trainr.data.generation
 
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.domain.generation.PlanRequest
+import com.jericx.trainr.domain.model.Injury
 import com.jericx.trainr.domain.model.Equipment
 import com.jericx.trainr.domain.model.ExerciseMeasure
 import com.jericx.trainr.domain.model.ExerciseSet
@@ -32,7 +33,7 @@ class PlanPromptBuilderTest {
             availableEquipment = listOf(Equipment.DUMBBELLS, Equipment.PULL_UP_BAR),
             workoutDaysPerWeek = 3,
             workoutDuration = 45,
-            injuries = listOf("Lower Back Pain"),
+            injuries = listOf(Injury.LOWER_BACK),
             bodyUnitSystem = units
         ),
         weekNumber = if (previousWeek == null) 1 else 2,
@@ -46,10 +47,10 @@ class PlanPromptBuilderTest {
         val prompt = builder.userPrompt(request())
 
         assertThat(prompt).contains("build muscle")
-        assertThat(prompt).contains("dumbbells, pull up bar")
+        assertThat(prompt).contains("dumbbells, pull-up bar")
         assertThat(prompt).contains("3 (plan EXACTLY this many days)")
         assertThat(prompt).contains("about 45 minutes")
-        assertThat(prompt).contains("Lower Back Pain")
+        assertThat(prompt).contains("lower back pain")
         assertThat(prompt).contains("English")
     }
 

@@ -31,7 +31,6 @@ private fun exerciseSchema(): Schema = Schema.obj(
         "measure" to Schema.enumeration(
             values = listOf("WEIGHT_AND_REPS", "REPS", "DURATION")
         ),
-        "durationMinutes" to Schema.integer(),
         "prescription" to Schema.string(),
         "instructions" to Schema.string(),
         "restSeconds" to Schema.integer(nullable = true),

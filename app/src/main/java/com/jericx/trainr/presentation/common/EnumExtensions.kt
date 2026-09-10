@@ -70,8 +70,21 @@ fun Equipment.getLocalizedName(): String = when (this) {
     Equipment.KETTLEBELLS -> stringResource(R.string.kettlebells)
     Equipment.SQUAT_RACK -> stringResource(R.string.squat_rack)
     Equipment.CABLE_MACHINE -> stringResource(R.string.cable_machine)
+    Equipment.MACHINES -> stringResource(R.string.weight_machines)
     Equipment.CARDIO_MACHINES -> stringResource(R.string.cardio_equipment)
-    Equipment.OTHERS -> stringResource(R.string.others)
+    Equipment.MAT -> stringResource(R.string.exercise_mat)
+    Equipment.JUMP_ROPE -> stringResource(R.string.jump_rope)
+}
+
+@Composable
+fun Injury.getLocalizedName(): String = when (this) {
+    Injury.LOWER_BACK -> stringResource(R.string.lower_back_pain_injury)
+    Injury.KNEE -> stringResource(R.string.knee_problems_injury)
+    Injury.SHOULDER -> stringResource(R.string.shoulder_injury_injury)
+    Injury.WRIST -> stringResource(R.string.wrist_pain_injury)
+    Injury.ANKLE -> stringResource(R.string.ankle_issues_injury)
+    Injury.HIP -> stringResource(R.string.hip_problems_injury)
+    Injury.NECK -> stringResource(R.string.neck_pain_injury)
 }
 
 @Composable

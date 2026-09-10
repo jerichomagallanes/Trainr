@@ -16,7 +16,7 @@ data class UserProfile(
     val workoutDaysPerWeek: Int = Constants.Workout.DEFAULT_WORKOUT_DAYS_PER_WEEK,
     val workoutDuration: Int = Constants.Workout.DEFAULT_WORKOUT_DURATION,
     val preferredWorkoutTime: WorkoutTime = WorkoutTime.ANYTIME,
-    val injuries: List<String> = emptyList(),
+    val injuries: List<Injury> = emptyList(),
     val workoutType: WorkoutType = WorkoutType.MIXED,
     // How the client reads their own body; storage stays metric either way.
     val bodyUnitSystem: UnitSystem = UnitSystem.Default,
@@ -66,8 +66,48 @@ enum class Equipment {
     KETTLEBELLS,
     SQUAT_RACK,
     CABLE_MACHINE,
+    MACHINES,
     CARDIO_MACHINES,
-    OTHERS
+    MAT,
+    JUMP_ROPE
+}
+
+// Everything a gym has that a home might not, and the other way round. A
+// client who trains in both places has both, which is why BOTH is the union
+// and not the gym list.
+val HomeEquipment = listOf(
+    Equipment.NONE,
+    Equipment.DUMBBELLS,
+    Equipment.KETTLEBELLS,
+    Equipment.RESISTANCE_BANDS,
+    Equipment.PULL_UP_BAR,
+    Equipment.BENCH,
+    Equipment.MAT,
+    Equipment.JUMP_ROPE,
+    Equipment.BARBELL,
+    Equipment.SQUAT_RACK,
+    Equipment.CARDIO_MACHINES
+)
+
+val GymEquipment = listOf(
+    Equipment.BARBELL,
+    Equipment.SQUAT_RACK,
+    Equipment.BENCH,
+    Equipment.DUMBBELLS,
+    Equipment.KETTLEBELLS,
+    Equipment.CABLE_MACHINE,
+    Equipment.MACHINES,
+    Equipment.PULL_UP_BAR,
+    Equipment.RESISTANCE_BANDS,
+    Equipment.CARDIO_MACHINES,
+    Equipment.MAT
+)
+
+fun equipmentFor(location: WorkoutLocation): List<Equipment> = when (location) {
+    WorkoutLocation.HOME -> HomeEquipment
+    WorkoutLocation.GYM -> GymEquipment
+    WorkoutLocation.BOTH -> HomeEquipment.filterNot { it == Equipment.NONE } +
+        GymEquipment.filterNot { it in HomeEquipment }
 }
 
 enum class WorkoutType {
@@ -76,6 +116,19 @@ enum class WorkoutType {
     HIIT,
     YOGA,
     MIXED
+}
+
+// Stored and sent as these constants, never as the words on the chip: a
+// profile filled in Japanese used to reach the model as Japanese injury names,
+// and stopped matching its own chips the moment the phone changed language.
+enum class Injury {
+    LOWER_BACK,
+    KNEE,
+    SHOULDER,
+    WRIST,
+    ANKLE,
+    HIP,
+    NECK
 }
 
 enum class WorkoutTime {

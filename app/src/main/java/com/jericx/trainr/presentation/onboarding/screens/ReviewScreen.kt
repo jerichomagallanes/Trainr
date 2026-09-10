@@ -120,6 +120,9 @@ fun ReviewScreen(
 
                 val genderText = userProfile.gender.getLocalizedName()
                 val experienceText = userProfile.experienceLevel.getLocalizedName()
+                val injuryText = userProfile.injuries
+                    .map { it.getLocalizedName() }
+                    .joinToString(", ")
 
                 // Read back in the units they were entered in: the profile
                 // stores centimetres and kilograms whichever was typed.
@@ -233,7 +236,7 @@ fun ReviewScreen(
                             if (userProfile.injuries.isEmpty()) {
                                 stringResource(R.string.none_label)
                             } else {
-                                userProfile.injuries.joinToString(", ")
+                                injuryText
                             }
                     )
                 )
