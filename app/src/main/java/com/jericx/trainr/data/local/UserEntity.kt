@@ -21,9 +21,7 @@ data class UserEntity(
     val availableEquipment: List<String>,
     val workoutDaysPerWeek: Int,
     val workoutDuration: Int,
-    val preferredWorkoutTime: String,
     val injuries: List<String>,
-    val workoutType: String,
     val bodyUnitSystem: String = "METRIC",
     val liftingUnitSystem: String? = null,
     val createdAt: Long

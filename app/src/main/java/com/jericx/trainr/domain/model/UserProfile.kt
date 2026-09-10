@@ -15,9 +15,7 @@ data class UserProfile(
     val availableEquipment: List<Equipment> = emptyList(),
     val workoutDaysPerWeek: Int = Constants.Workout.DEFAULT_WORKOUT_DAYS_PER_WEEK,
     val workoutDuration: Int = Constants.Workout.DEFAULT_WORKOUT_DURATION,
-    val preferredWorkoutTime: WorkoutTime = WorkoutTime.ANYTIME,
     val injuries: List<Injury> = emptyList(),
-    val workoutType: WorkoutType = WorkoutType.MIXED,
     // How the client reads their own body; storage stays metric either way.
     val bodyUnitSystem: UnitSystem = UnitSystem.Default,
     // What the plates in their gym are marked in, a separate question from the
@@ -116,14 +114,6 @@ fun equipmentFor(
     .filter { it in stocked }
     .filterNot { it == Equipment.NONE && location != WorkoutLocation.HOME }
 
-enum class WorkoutType {
-    STRENGTH,
-    CARDIO,
-    HIIT,
-    YOGA,
-    MIXED
-}
-
 // Stored and sent as these constants, never as the words on the chip: a
 // profile filled in Japanese used to reach the model as Japanese injury names,
 // and stopped matching its own chips the moment the phone changed language.
@@ -135,12 +125,4 @@ enum class Injury {
     ANKLE,
     HIP,
     NECK
-}
-
-enum class WorkoutTime {
-    EARLY_MORNING,
-    MORNING,
-    AFTERNOON,
-    EVENING,
-    ANYTIME
 }

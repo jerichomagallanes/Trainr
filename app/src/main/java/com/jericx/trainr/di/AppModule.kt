@@ -3,6 +3,7 @@ package com.jericx.trainr.di
 import android.content.Context
 import androidx.room.Room
 import com.jericx.trainr.common.Constants
+import com.jericx.trainr.data.local.MIGRATION_1_2
 import com.jericx.trainr.data.local.TrainrDatabase
 import com.jericx.trainr.data.local.UserDao
 import com.jericx.trainr.data.local.UserMapper
@@ -39,7 +40,7 @@ object AppModule {
             context,
             TrainrDatabase::class.java,
             Constants.DATABASE_NAME
-        ).build()
+        ).addMigrations(MIGRATION_1_2).build()
     }
 
     @Provides

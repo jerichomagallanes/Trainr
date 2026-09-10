@@ -305,8 +305,8 @@ fun AppContent(
                     FitnessGoalScreen(
                         initial = onboardingState.filledFor(OnboardingStep.GOALS, editing),
                         isEditing = editing,
-                        onNextClick = { goal, workoutType ->
-                            onboardingViewModel.updateFitnessGoal(goal, workoutType)
+                        onNextClick = { goal ->
+                            onboardingViewModel.updateFitnessGoal(goal)
                             if (editing) {
                                 navController.popBackStack()
                             } else {
@@ -326,9 +326,9 @@ fun AppContent(
                         initial = onboardingState.filledFor(OnboardingStep.SETUP, editing),
                         isEditing = editing,
                         stockedEquipment = onboardingViewModel.stockedEquipment,
-                        onNextClick = { location, equipment, liftingUnits, days, duration, time ->
+                        onNextClick = { location, equipment, liftingUnits, days, duration ->
                             onboardingViewModel.updateWorkoutSetup(
-                                location, equipment, liftingUnits, days, duration, time
+                                location, equipment, liftingUnits, days, duration
                             )
                             if (editing) {
                                 navController.popBackStack()

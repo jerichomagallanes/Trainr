@@ -18,9 +18,7 @@ class UserMapper {
             availableEquipment = user.availableEquipment.map { it.name },
             workoutDaysPerWeek = user.workoutDaysPerWeek,
             workoutDuration = user.workoutDuration,
-            preferredWorkoutTime = user.preferredWorkoutTime.name,
             injuries = user.injuries.map { it.name },
-            workoutType = user.workoutType.name,
             bodyUnitSystem = user.bodyUnitSystem.name,
             liftingUnitSystem = user.liftingUnitSystem?.name,
             createdAt = user.createdAt
@@ -41,11 +39,9 @@ class UserMapper {
             availableEquipment = entity.availableEquipment.mapNotNull(::storedEquipment).distinct(),
             workoutDaysPerWeek = entity.workoutDaysPerWeek,
             workoutDuration = entity.workoutDuration,
-            preferredWorkoutTime = WorkoutTime.valueOf(entity.preferredWorkoutTime),
             injuries = entity.injuries.mapNotNull {
                 try { Injury.valueOf(it) } catch (e: Exception) { null }
             },
-            workoutType = WorkoutType.valueOf(entity.workoutType),
             bodyUnitSystem = runCatching { UnitSystem.valueOf(entity.bodyUnitSystem) }
                 .getOrDefault(UnitSystem.Default),
             liftingUnitSystem = entity.liftingUnitSystem

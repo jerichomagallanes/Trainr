@@ -44,15 +44,6 @@ fun FitnessGoal.getFocusPhrase(): String = when (this) {
 }
 
 @Composable
-fun WorkoutType.getProgramPhrase(): String = when (this) {
-    WorkoutType.STRENGTH -> stringResource(R.string.program_strength)
-    WorkoutType.CARDIO -> stringResource(R.string.program_cardio)
-    WorkoutType.HIIT -> stringResource(R.string.program_hiit)
-    WorkoutType.YOGA -> stringResource(R.string.program_flexibility)
-    WorkoutType.MIXED -> stringResource(R.string.program_mixed)
-}
-
-@Composable
 fun WorkoutLocation.getLocalizedName(): String = when (this) {
     WorkoutLocation.HOME -> stringResource(R.string.home_location)
     WorkoutLocation.GYM -> stringResource(R.string.gym_location)
@@ -81,22 +72,4 @@ fun Injury.getLocalizedName(): String = when (this) {
     Injury.ANKLE -> stringResource(R.string.ankle_issues_injury)
     Injury.HIP -> stringResource(R.string.hip_problems_injury)
     Injury.NECK -> stringResource(R.string.neck_pain_injury)
-}
-
-@Composable
-fun WorkoutType.getLocalizedName(): String = when (this) {
-    WorkoutType.STRENGTH -> stringResource(R.string.strength_training_style)
-    WorkoutType.CARDIO -> stringResource(R.string.cardio_style)
-    WorkoutType.HIIT -> stringResource(R.string.hiit_style)
-    WorkoutType.YOGA -> stringResource(R.string.flexibility_mobility_style)
-    WorkoutType.MIXED -> stringResource(R.string.mixed_balanced_style)
-}
-
-@Composable
-fun WorkoutTime.getLocalizedName(): String = when (this) {
-    WorkoutTime.EARLY_MORNING -> stringResource(R.string.early_morning)
-    WorkoutTime.MORNING -> stringResource(R.string.morning)
-    WorkoutTime.AFTERNOON -> stringResource(R.string.afternoon)
-    WorkoutTime.EVENING -> stringResource(R.string.evening)
-    WorkoutTime.ANYTIME -> stringResource(R.string.flexible_anytime_time)
 }

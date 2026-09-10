@@ -15,7 +15,6 @@ import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
 import com.jericx.trainr.domain.model.WorkoutExercise
 import com.jericx.trainr.domain.model.WorkoutLocation
 import com.jericx.trainr.domain.model.WorkoutStatus
-import com.jericx.trainr.domain.model.WorkoutType
 
 class PlanPromptBuilder {
 
@@ -27,9 +26,8 @@ class PlanPromptBuilder {
 
         When the client's answers pull against each other, this is the order that
         decides: injuries first, then the equipment they actually have, then the
-        time they have, then their goal, then their preferred style. The style
-        decides what the sessions are made of; the goal decides how they are
-        loaded.
+        time they have, then their goal. The goal decides both what the sessions
+        are made of and how they are loaded.
 
         Program design rules:
         - Plan exactly the number of training days requested, placed across the
@@ -129,7 +127,6 @@ class PlanPromptBuilder {
             appendLine("- Age ${user.age}, height ${user.height} cm, weight ${user.weight} kg")
             appendLine("- Goal: ${user.fitnessGoal.asText()}")
             appendLine("- Experience: ${user.experienceLevel.asText()}")
-            appendLine("- Preferred training style: ${user.workoutType.asText()}")
             appendLine("- Trains at: ${user.workoutLocation.asText()}")
             appendLine("- Available equipment: ${user.availableEquipment.asText()}")
             appendLine("- Days per week: ${user.workoutDaysPerWeek} (plan EXACTLY this many days)")
@@ -273,14 +270,6 @@ class PlanPromptBuilder {
     }
 
     private fun ExperienceLevel.asText() = name.lowercase()
-
-    private fun WorkoutType.asText() = when (this) {
-        WorkoutType.STRENGTH -> "resistance training"
-        WorkoutType.CARDIO -> "cardio"
-        WorkoutType.HIIT -> "high-intensity intervals"
-        WorkoutType.YOGA -> "mobility and yoga"
-        WorkoutType.MIXED -> "a mix of resistance and conditioning"
-    }
 
     private fun WorkoutLocation.asText() = name.lowercase()
 

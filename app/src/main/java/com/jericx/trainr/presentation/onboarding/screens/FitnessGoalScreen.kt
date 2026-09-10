@@ -16,7 +16,6 @@ import androidx.compose.ui.res.stringResource
 import com.jericx.trainr.R
 import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.model.FitnessGoal
-import com.jericx.trainr.domain.model.WorkoutType
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.components.cards.TrainrIconCard
 import com.jericx.trainr.presentation.common.components.core.TrainrButton
@@ -27,20 +26,14 @@ import com.jericx.trainr.presentation.common.components.layout.TrainrScreenConte
 import com.jericx.trainr.presentation.common.components.typography.TrainrScreenTitle
 import com.jericx.trainr.presentation.common.components.typography.TrainrSubtitle
 
-// Goal and style share one card on the review, so they are asked together and
-// that card's Edit can reach both.
 @Composable
 fun FitnessGoalScreen(
     initial: UserProfile? = null,
     isEditing: Boolean = false,
-    onNextClick: (FitnessGoal, WorkoutType) -> Unit,
+    onNextClick: (FitnessGoal) -> Unit,
     onBackClick: () -> Unit
 ) {
     var selectedGoal by remember { mutableStateOf(initial?.fitnessGoal) }
-
-    // Nothing pre-chosen: the profile falls back to mixed, and a list that
-    // opens already answered is the app deciding rather than the client.
-    var selectedStyle by remember { mutableStateOf(initial?.workoutType) }
 
     TrainrScaffold(
         onBackClick = onBackClick,
@@ -48,12 +41,8 @@ fun FitnessGoalScreen(
         bottomButton = {
             TrainrButton(
                 text = stringResource(if (isEditing) R.string.save else R.string.next),
-                onClick = {
-                    val goal = selectedGoal
-                    val style = selectedStyle
-                    if (goal != null && style != null) onNextClick(goal, style)
-                },
-                enabled = selectedGoal != null && selectedStyle != null
+                onClick = { selectedGoal?.let(onNextClick) },
+                enabled = selectedGoal != null
             )
         }
     ) { paddingValues ->
@@ -133,54 +122,6 @@ fun FitnessGoalScreen(
                             description = stringResource(R.string.flexibility_mobility_description),
                             isSelected = selectedGoal == FitnessGoal.FLEXIBILITY,
                             onClick = { selectedGoal = FitnessGoal.FLEXIBILITY }
-                        )
-                    }
-                }
-
-                TrainrFormSection(
-                    title = stringResource(R.string.preferred_workout_style)
-                ) {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(Spacing.card)
-                    ) {
-                        TrainrIconCard(
-                            iconRes = R.drawable.ic_exercise,
-                            title = stringResource(R.string.strength_training),
-                            description = stringResource(R.string.strength_training_description),
-                            isSelected = selectedStyle == WorkoutType.STRENGTH,
-                            onClick = { selectedStyle = WorkoutType.STRENGTH }
-                        )
-
-                        TrainrIconCard(
-                            iconRes = R.drawable.ic_directions_run,
-                            title = stringResource(R.string.cardio),
-                            description = stringResource(R.string.cardio_description),
-                            isSelected = selectedStyle == WorkoutType.CARDIO,
-                            onClick = { selectedStyle = WorkoutType.CARDIO }
-                        )
-
-                        TrainrIconCard(
-                            iconRes = R.drawable.ic_electric_bolt,
-                            title = stringResource(R.string.hiit),
-                            description = stringResource(R.string.hiit_description),
-                            isSelected = selectedStyle == WorkoutType.HIIT,
-                            onClick = { selectedStyle = WorkoutType.HIIT }
-                        )
-
-                        TrainrIconCard(
-                            iconRes = R.drawable.ic_self_improvement,
-                            title = stringResource(R.string.mobility_yoga),
-                            description = stringResource(R.string.mobility_yoga_description),
-                            isSelected = selectedStyle == WorkoutType.YOGA,
-                            onClick = { selectedStyle = WorkoutType.YOGA }
-                        )
-
-                        TrainrIconCard(
-                            iconRes = R.drawable.ic_emoji_people,
-                            title = stringResource(R.string.mixed_balanced),
-                            description = stringResource(R.string.mixed_balanced_description),
-                            isSelected = selectedStyle == WorkoutType.MIXED,
-                            onClick = { selectedStyle = WorkoutType.MIXED }
                         )
                     }
                 }

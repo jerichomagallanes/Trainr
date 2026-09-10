@@ -12,8 +12,6 @@ import com.jericx.trainr.domain.model.Gender
 import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.model.WorkoutLocation
 import com.jericx.trainr.domain.model.WorkoutStatus
-import com.jericx.trainr.domain.model.WorkoutTime
-import com.jericx.trainr.domain.model.WorkoutType
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -47,9 +45,7 @@ class UserRepositoryImplTest {
         availableEquipment = listOf(Equipment.DUMBBELL),
         workoutDaysPerWeek = 4,
         workoutDuration = 60,
-        preferredWorkoutTime = WorkoutTime.EVENING,
         injuries = emptyList(),
-        workoutType = WorkoutType.STRENGTH
     )
 
     private fun planEntity(id: Long = 1L) = WeeklyWorkoutPlanEntity(
