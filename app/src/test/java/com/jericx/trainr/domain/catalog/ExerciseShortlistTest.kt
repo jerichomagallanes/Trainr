@@ -18,7 +18,8 @@ class ExerciseShortlistTest {
         key = key,
         name = key,
         nameJa = key,
-        muscle = muscle,
+        primary = muscle,
+        secondary = null,
         equipment = equipment,
         measure = ExerciseMeasure.REPS,
         pattern = pattern,
@@ -96,8 +97,8 @@ class ExerciseShortlistTest {
 
         val offered = ExerciseShortlist.forRequest(catalog, profile(Equipment.NONE))
 
-        assertThat(offered.count { it.muscle == MuscleGroup.QUADRICEPS }).isEqualTo(40)
-        assertThat(offered.count { it.muscle == MuscleGroup.CHEST }).isEqualTo(40)
+        assertThat(offered.count { it.primary == MuscleGroup.QUADRICEPS }).isEqualTo(40)
+        assertThat(offered.count { it.primary == MuscleGroup.CHEST }).isEqualTo(40)
     }
 
     @Test

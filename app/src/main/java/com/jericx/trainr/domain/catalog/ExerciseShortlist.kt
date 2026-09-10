@@ -32,7 +32,7 @@ object ExerciseShortlist {
         val queues = available
             .filterNot { it in kept }
             .sortedWith(compareByDescending<CatalogExercise> { it.staple }.thenBy { it.key })
-            .groupBy { it.muscle.region }
+            .groupBy { it.primary.region }
             .mapValues { (_, list) -> ArrayDeque(list) }
 
         val order = MuscleRegion.entries.filter { queues.containsKey(it) }

@@ -9,7 +9,9 @@ data class CatalogExercise(
     val key: String,
     val name: String,
     val nameJa: String,
-    val muscle: MuscleGroup,
+    val primary: MuscleGroup,
+    // The source names one too; unread for now, so null rather than a guess.
+    val secondary: MuscleGroup?,
     val equipment: Equipment,
     val measure: ExerciseMeasure,
     val pattern: MovementPattern,

@@ -23,7 +23,8 @@ internal data class CatalogEntry(
     val key: String = "",
     val name: String = "",
     val nameJa: String = "",
-    val muscle: String = "",
+    val primary: String = "",
+    val secondary: String? = null,
     val equipment: String = "",
     val measure: String = "",
     val pattern: String = "",
@@ -42,12 +43,15 @@ object ExerciseCatalogReader {
         )
 
     private fun CatalogEntry.toDomain(): CatalogExercise? {
-        val muscle = enumOrNull<MuscleGroup>(muscle) ?: return null
+        val prime = enumOrNull<MuscleGroup>(primary) ?: return null
         val measure = enumOrNull<ExerciseMeasure>(measure) ?: return null
         val pattern = enumOrNull<MovementPattern>(pattern) ?: return null
         val kit = enumOrNull<Equipment>(equipment) ?: return null
         if (key.isBlank() || name.isBlank()) return null
-        return CatalogExercise(key, name, nameJa, muscle, kit, measure, pattern, staple)
+        return CatalogExercise(
+            key, name, nameJa, prime, secondary?.let { enumOrNull<MuscleGroup>(it) },
+            kit, measure, pattern, staple
+        )
     }
 
     private inline fun <reified T : Enum<T>> enumOrNull(value: String): T? =
