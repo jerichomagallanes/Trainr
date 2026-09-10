@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -93,7 +93,10 @@ fun TrainrButton(
             onClick = onClick,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(ComponentHeight.Large)
+                // A floor, not a fixed height, so a larger text setting grows
+                // the button instead of truncating it. iOS says the same thing
+                // with .frame(minHeight:).
+                .heightIn(min = ComponentHeight.Large)
                 .shadow(
                     elevation = shadowElevation,
                     shape = MaterialTheme.shapes.medium,
