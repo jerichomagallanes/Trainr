@@ -17,7 +17,6 @@ class ExerciseShortlistTest {
     ) = CatalogExercise(
         key = key,
         name = key,
-        nameJa = key,
         primary = muscle,
         secondary = emptyList(),
         equipment = equipment,

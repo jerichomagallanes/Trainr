@@ -2,7 +2,6 @@ package com.jericx.trainr.presentation.workout
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.jericx.trainr.data.preferences.LanguageCodeProvider
 import com.jericx.trainr.domain.generation.PlanGenerationResult
 import com.jericx.trainr.domain.generation.PlanGenerator
 import com.jericx.trainr.domain.generation.PlanRequest
@@ -24,8 +23,7 @@ import javax.inject.Inject
 @HiltViewModel
 class NextWeekViewModel @Inject constructor(
     private val userRepository: UserRepository,
-    private val planGenerator: PlanGenerator,
-    private val languageCode: LanguageCodeProvider
+    private val planGenerator: PlanGenerator
 ) : ViewModel() {
 
     private val _failure = MutableStateFlow<PlanGenerationResult.Failure?>(null)
@@ -93,7 +91,6 @@ class NextWeekViewModel @Inject constructor(
                         user = user,
                         weekNumber = current.weekNumber,
                         startDateMillis = current.startDateMillis ?: WorkoutWeek.startOfDay(),
-                        languageCode = languageCode.current(),
                         // The week before this one, so a replacement still
                         // progresses from what was actually lifted.
                         previousWeek = plans.firstOrNull {
@@ -143,7 +140,6 @@ class NextWeekViewModel @Inject constructor(
                     user = user,
                     weekNumber = nextNumber,
                     startDateMillis = start,
-                    languageCode = languageCode.current(),
                     previousWeek = latest
                 )
             )

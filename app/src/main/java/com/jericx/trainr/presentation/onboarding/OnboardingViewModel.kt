@@ -13,7 +13,6 @@ import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.model.WorkoutLocation
 import com.jericx.trainr.domain.model.WorkoutTime
 import com.jericx.trainr.domain.model.WorkoutType
-import com.jericx.trainr.data.preferences.LanguageCodeProvider
 import com.jericx.trainr.domain.generation.PlanGenerationResult
 import com.jericx.trainr.domain.generation.PlanGenerator
 import com.jericx.trainr.domain.generation.PlanRequest
@@ -30,7 +29,6 @@ import javax.inject.Inject
 class OnboardingViewModel @Inject constructor(
     private val userRepository: UserRepository,
     private val planGenerator: PlanGenerator,
-    private val languageCode: LanguageCodeProvider,
     catalog: ExerciseCatalog
 ) : ViewModel() {
 
@@ -166,8 +164,7 @@ class OnboardingViewModel @Inject constructor(
                     PlanRequest(
                         user = profile,
                         weekNumber = FIRST_WEEK,
-                        startDateMillis = start,
-                        languageCode = languageCode.current()
+                        startDateMillis = start
                     )
                 )
 

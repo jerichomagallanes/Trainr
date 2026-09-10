@@ -134,9 +134,9 @@ its exercise list, and set numbers are the order the sets arrive in.
   one week, "Dumbbell Goblet Squat" the next) and a drifted name breaks
   history silently. Unique within a day; recurring across days is normal.
 - **`name`, `prescription`, `instructions`, titles** — display copy, written
-  in the user's language. `prescription` is free text ("3 sets of 12 reps",
-  "5 minutes"), not assembled from the sets: assembling it would mean
-  inventing and translating a unit vocabulary for text the generator writes
+  in English, the only language the app ships. `prescription` is free text
+  ("3 sets of 12 reps", "5 minutes"), not assembled from the sets: assembling
+  it would mean inventing a unit vocabulary for text the generator writes
   anyway.
 - **`measure`** — decides which columns a set row renders and which target
   each set must carry: `WEIGHT_AND_REPS` and `REPS` require `reps` (weight
@@ -179,8 +179,7 @@ Tolerated: unknown JSON keys (ignored), unknown `measure` (degrades to
 
 The prompt that requests a plan must tell the model, alongside this schema:
 
-- Write all display copy in the user's language (en / ja / tl). Keep
-  `exerciseKey` English slugs regardless of locale.
+- Write all display copy in English. Keep `exerciseKey` a lowercase slug.
 - Use the same `exerciseKey` for the same movement every week. When
   regenerating, the keys from previous weeks arrive in the prompt — reuse
   them for recurring movements rather than minting near-duplicates.

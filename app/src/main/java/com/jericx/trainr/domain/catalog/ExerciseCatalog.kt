@@ -8,7 +8,6 @@ import com.jericx.trainr.domain.model.ExerciseMeasure
 data class CatalogExercise(
     val key: String,
     val name: String,
-    val nameJa: String,
     val primary: MuscleGroup,
     // A movement can assist several; Around The World names three.
     val secondary: List<MuscleGroup>,
@@ -20,16 +19,9 @@ data class CatalogExercise(
     // the movement is an activity with no technique to describe.
     val steps: List<String> = emptyList()
 ) {
-    fun displayName(languageCode: String): String =
-        if (languageCode == JAPANESE) nameJa.ifBlank { name } else name
-
     // Bodyweight needs nothing, so it is available to everyone.
     fun isAvailableWith(owned: Set<Equipment>): Boolean =
         equipment == Equipment.NONE || equipment in owned
-
-    private companion object {
-        const val JAPANESE = "ja"
-    }
 }
 
 interface ExerciseCatalog {

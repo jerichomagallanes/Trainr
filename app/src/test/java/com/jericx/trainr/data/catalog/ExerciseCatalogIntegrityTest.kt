@@ -208,7 +208,7 @@ class ExerciseCatalogIntegrityTest {
     }
 
     @Test
-    fun everyMovementIsNamedInBothLanguagesTheCatalogCarries() {
-        assertThat(catalog.all.filter { it.name.isBlank() || it.nameJa.isBlank() }).isEmpty()
+    fun everyMovementIsNamed() {
+        assertThat(catalog.all.filter { it.name.isBlank() }).isEmpty()
     }
 }

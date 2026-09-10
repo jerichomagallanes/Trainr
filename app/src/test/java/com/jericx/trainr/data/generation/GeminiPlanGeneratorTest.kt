@@ -72,7 +72,7 @@ class GeminiPlanGeneratorTest {
     private val catalog = InMemoryExerciseCatalog(
         listOf(
             CatalogExercise(
-                "goblet_squat", "Goblet Squat", "ゴブレットスクワット",
+                "goblet_squat", "Goblet Squat",
                 MuscleGroup.QUADRICEPS, emptyList(), Equipment.NONE,
                 ExerciseMeasure.WEIGHT_AND_REPS, MovementPattern.SQUAT, staple = true
             )
@@ -82,8 +82,7 @@ class GeminiPlanGeneratorTest {
     private fun request(daysPerWeek: Int = 1) = PlanRequest(
         user = UserProfile(id = 7, firstName = "Jericho", age = 30, workoutDaysPerWeek = daysPerWeek),
         weekNumber = 1,
-        startDateMillis = 1_000L,
-        languageCode = "en"
+        startDateMillis = 1_000L
     )
 
     private val validPlanJson = """
@@ -336,8 +335,7 @@ class GeminiPlanGeneratorTest {
             PlanRequest(
                 user = profile,
                 weekNumber = 1,
-                startDateMillis = 0L,
-                languageCode = "en"
+                startDateMillis = 0L
             )
         )
 

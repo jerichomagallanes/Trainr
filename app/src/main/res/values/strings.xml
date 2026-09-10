@@ -353,31 +353,6 @@
     <string name="neck_pain_injury">Neck Pain</string>
     <string name="none_injury">None</string>
     
-    <!-- Language Selection -->
-    <string name="language_english">English</string>
-    <string name="language_tagalog">Tagalog</string>
-    <string name="language_japanese">日本語</string>
-    
-    <!-- String Arrays -->
-    
-    <string-array name="language_codes">
-        <item>en</item>
-        <item>tl</item>
-        <item>ja</item>
-    </string-array>
-    
-    <string-array name="language_display_names">
-        <item>@string/language_english</item>
-        <item>@string/language_tagalog</item>
-        <item>@string/language_japanese</item>
-    </string-array>
-    
-    <string-array name="language_native_names">
-        <item>English</item>
-        <item>Tagalog</item>
-        <item>日本語</item>
-    </string-array>
-
     <!-- Trainr Pro -->
     <string name="pro_name">Trainr Pro</string>
     <string name="pro_headline">Keep the coach writing</string>

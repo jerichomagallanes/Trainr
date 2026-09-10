@@ -45,7 +45,7 @@ class OnboardingViewModelTest {
     private val catalog = InMemoryExerciseCatalog(
         listOf(
             CatalogExercise(
-                "push_up", "Push Up", "プッシュアップ", MuscleGroup.CHEST, emptyList(),
+                "push_up", "Push Up", MuscleGroup.CHEST, emptyList(),
                 Equipment.NONE, ExerciseMeasure.REPS,
                 MovementPattern.HORIZONTAL_PUSH, staple = true
             )
@@ -75,7 +75,7 @@ class OnboardingViewModelTest {
                 )
             )
         }
-        viewModel = OnboardingViewModel(userRepository, planGenerator, { "en" }, catalog)
+        viewModel = OnboardingViewModel(userRepository, planGenerator, catalog)
     }
 
     @After
@@ -307,7 +307,6 @@ class OnboardingViewModelTest {
             // Generation runs before the user row exists, so a new client's id is still 0
             assertThat(user.id).isEqualTo(0L)
             assertThat(weekNumber).isEqualTo(1)
-            assertThat(languageCode).isEqualTo("en")
             assertThat(previousWeek).isNull()
         }
     }
@@ -315,7 +314,7 @@ class OnboardingViewModelTest {
     @Test
     fun `a stored profile is loaded so editing starts from saved answers`() = runTest(testDispatcher) {
         coEvery { userRepository.getCurrentUser() } returns UserProfile(id = 7L, firstName = "Jeco", age = 26)
-        val loaded = OnboardingViewModel(userRepository, planGenerator, { "en" }, catalog)
+        val loaded = OnboardingViewModel(userRepository, planGenerator, catalog)
 
         advanceUntilIdle()
 
@@ -353,7 +352,7 @@ class OnboardingViewModelTest {
     fun `updateProfileOnly saves the profile and leaves the plan alone`() = runTest {
         val stored = UserProfile(id = 4, firstName = "Jet", age = 28)
         coEvery { userRepository.getCurrentUser() } returns stored
-        val viewModel = OnboardingViewModel(userRepository, planGenerator, { "en" }, catalog)
+        val viewModel = OnboardingViewModel(userRepository, planGenerator, catalog)
         advanceUntilIdle()
         viewModel.updateFitnessGoal(FitnessGoal.STRENGTH, WorkoutType.MIXED)
 

@@ -22,7 +22,6 @@ internal data class CatalogFile(
 internal data class CatalogEntry(
     val key: String = "",
     val name: String = "",
-    val nameJa: String = "",
     val primary: String = "",
     val secondary: List<String> = emptyList(),
     val equipment: String = "",
@@ -50,7 +49,7 @@ object ExerciseCatalogReader {
         val kit = enumOrNull<Equipment>(equipment) ?: return null
         if (key.isBlank() || name.isBlank()) return null
         return CatalogExercise(
-            key, name, nameJa, prime, secondary.mapNotNull { enumOrNull<MuscleGroup>(it) },
+            key, name, prime, secondary.mapNotNull { enumOrNull<MuscleGroup>(it) },
             kit, measure, pattern, staple, steps
         )
     }
