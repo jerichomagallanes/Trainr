@@ -308,6 +308,46 @@ class GeneratedPlanParserTest {
         )
     }
 
+    // The set cap is a proxy for time and a timed set breaks it: three
+    // half-hour walks are three sets and a ninety-minute day.
+    @Test
+    fun aDayLongerThanTheAnsweredSessionIsRejected() {
+        val walk = """
+            {
+              "title": "Conditioning",
+              "days": [{
+                "dayNumber": 1,
+                "title": "Easy Miles",
+                "exercises": [{
+                  "exerciseKey": "warm_up_jog",
+                  "prescription": "3 x 30 minutes",
+                  "instructions": "Keep the pace conversational throughout.",
+                  "restSeconds": 60,
+                  "sets": [
+                    { "seconds": 1800 }, { "seconds": 1800 }, { "seconds": 1800 }
+                  ]
+                }]
+              }]
+            }
+        """.trimIndent()
+
+        val result = parser.parse(
+            walk,
+            userId = 7,
+            weekNumber = 1,
+            startDateMillis = 1_753_056_000_000L,
+            limits = PlanLimits(
+                maxSetsPerSession = 20,
+                sessionMinutes = 45,
+                sessionCeilingMinutes = 67
+            )
+        )
+
+        assertThat((result as PlanParseResult.Invalid).errors).containsExactly(
+            "day 1: runs about 92 minutes of work and rest, and the client asked for about 45"
+        )
+    }
+
     @Test
     fun anExerciseWithNoSetsIsRejected() {
         val errors = errorsOf(goodJsonWith("\"sets\": [{ \"seconds\": 300 }]", "\"sets\": []"))

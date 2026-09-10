@@ -117,7 +117,9 @@ class GeminiPlanGenerator(
                     PlanLimits(
                         maxSetsPerSession = SessionBudget.maxSetsPerSession(request.user),
                         allowedKeys = exerciseKeys.toSet(),
-                        requiredPatterns = ExerciseShortlist.requiredPatterns(shortlist)
+                        requiredPatterns = ExerciseShortlist.requiredPatterns(shortlist, request.user.fitnessGoal),
+                        sessionMinutes = request.user.workoutDuration,
+                        sessionCeilingMinutes = SessionBudget.sessionCeilingMinutes(request.user)
                     )
                 )
             ) {
