@@ -64,7 +64,11 @@ object AppModule {
     fun provideProGate(
         entitlements: Entitlements,
         allowance: FreeGenerationAllowance
-    ): ProGate = ProGate(isPro = { entitlements.isPro.value }, allowance = allowance)
+    ): ProGate = ProGate(
+        isPro = { entitlements.isPro.value },
+        canSell = { entitlements.canSell },
+        allowance = allowance
+    )
 
     @Provides
     @Singleton

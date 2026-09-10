@@ -106,3 +106,7 @@ __pycache__/
 *.temp
 
 # End of .gitignore
+
+# Worktrees a background agent creates while working on this repo. They are
+# whole checkouts, so a plain "git add -A" commits them as embedded repositories.
+.claude/worktrees/

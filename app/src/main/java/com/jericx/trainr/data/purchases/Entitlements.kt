@@ -30,11 +30,18 @@ class Entitlements(
     var offering: Offering? = null
         private set
 
+    // Whether anything can actually be sold. The comment below used to claim the
+    // paid paths were left open when the key was unusable; nothing implemented
+    // that, so the free week simply ran out against a paywall with nothing on
+    // it. ProGate reads this and lets generation through instead.
+    val canSell: Boolean
+        get() = Purchases.isConfigured
+
     fun configure() {
         if (!keyIsShippable) {
             // A release built against a key that validates nothing would take
-            // money it cannot verify. Leaving every paid path open charges
-            // nobody and breaks nothing.
+            // money it cannot verify. Everything paid stays free instead, which
+            // charges nobody and leaves nobody stuck.
             breadcrumbs.record("purchases_not_configured")
             return
         }
