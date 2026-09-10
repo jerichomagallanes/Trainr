@@ -67,3 +67,10 @@ val CatalogExercise.role: ExerciseRole
 // choose.
 val CatalogExercise.isLoadable: Boolean
     get() = measure == ExerciseMeasure.WEIGHT_AND_REPS
+
+// Legs tolerate a bigger weekly jump than arms do, which is the only reason
+// the distinction is drawn here.
+val CatalogExercise.isLowerBody: Boolean
+    get() = primary.region in setOf(
+        MuscleRegion.QUADS, MuscleRegion.HAMSTRINGS, MuscleRegion.HIPS, MuscleRegion.CALVES
+    )
