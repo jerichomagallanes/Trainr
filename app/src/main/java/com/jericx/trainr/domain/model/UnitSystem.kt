@@ -17,11 +17,11 @@ enum class UnitSystem {
 // Kit with its weight written on it, and so worth asking which units the
 // client's gym marks it in.
 val LoadedEquipment = setOf(
-    Equipment.DUMBBELLS,
     Equipment.BARBELL,
-    Equipment.KETTLEBELLS,
-    Equipment.CABLE_MACHINE,
-    Equipment.MACHINES
+    Equipment.DUMBBELL,
+    Equipment.KETTLEBELL,
+    Equipment.MACHINE,
+    Equipment.PLATE
 )
 
 // Loads are stored in kilograms, which is what the model prescribes and what

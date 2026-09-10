@@ -24,7 +24,7 @@ internal data class CatalogEntry(
     val name: String = "",
     val nameJa: String = "",
     val muscle: String = "",
-    val requires: List<String> = emptyList(),
+    val equipment: String = "",
     val measure: String = "",
     val pattern: String = "",
     val staple: Boolean = false
@@ -45,8 +45,8 @@ object ExerciseCatalogReader {
         val muscle = enumOrNull<MuscleGroup>(muscle) ?: return null
         val measure = enumOrNull<ExerciseMeasure>(measure) ?: return null
         val pattern = enumOrNull<MovementPattern>(pattern) ?: return null
-        val kit = requires.mapNotNull { enumOrNull<Equipment>(it) }.toSet()
-        if (key.isBlank() || name.isBlank() || kit.size != requires.size) return null
+        val kit = enumOrNull<Equipment>(equipment) ?: return null
+        if (key.isBlank() || name.isBlank()) return null
         return CatalogExercise(key, name, nameJa, muscle, kit, measure, pattern, staple)
     }
 

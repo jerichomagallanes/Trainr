@@ -62,18 +62,14 @@ fun WorkoutLocation.getLocalizedName(): String = when (this) {
 @Composable
 fun Equipment.getLocalizedName(): String = when (this) {
     Equipment.NONE -> stringResource(R.string.bodyweight_only)
-    Equipment.DUMBBELLS -> stringResource(R.string.dumbbells)
-    Equipment.BARBELL -> stringResource(R.string.barbell_plates)
-    Equipment.BENCH -> stringResource(R.string.bench)
-    Equipment.RESISTANCE_BANDS -> stringResource(R.string.resistance_bands)
-    Equipment.PULL_UP_BAR -> stringResource(R.string.pull_up_bar)
-    Equipment.KETTLEBELLS -> stringResource(R.string.kettlebells)
-    Equipment.SQUAT_RACK -> stringResource(R.string.squat_rack)
-    Equipment.CABLE_MACHINE -> stringResource(R.string.cable_machine)
-    Equipment.MACHINES -> stringResource(R.string.weight_machines)
-    Equipment.CARDIO_MACHINES -> stringResource(R.string.cardio_equipment)
-    Equipment.MAT -> stringResource(R.string.exercise_mat)
-    Equipment.JUMP_ROPE -> stringResource(R.string.jump_rope)
+    Equipment.BARBELL -> stringResource(R.string.equipment_barbell)
+    Equipment.DUMBBELL -> stringResource(R.string.equipment_dumbbell)
+    Equipment.KETTLEBELL -> stringResource(R.string.equipment_kettlebell)
+    Equipment.MACHINE -> stringResource(R.string.equipment_machine)
+    Equipment.PLATE -> stringResource(R.string.equipment_plate)
+    Equipment.RESISTANCE_BAND -> stringResource(R.string.equipment_resistance_band)
+    Equipment.SUSPENSION_BAND -> stringResource(R.string.equipment_suspension_band)
+    Equipment.OTHER -> stringResource(R.string.equipment_other)
 }
 
 @Composable

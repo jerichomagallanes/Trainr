@@ -56,58 +56,39 @@ enum class WorkoutLocation {
     BOTH
 }
 
+// The equipment vocabulary the exercise catalog is categorised by, and the
+// only vocabulary the setup screen asks about. One tag per movement: what a
+// bench press is done with is the bar, and the bench is part of doing it.
 enum class Equipment {
     NONE,
-    DUMBBELLS,
     BARBELL,
-    BENCH,
-    RESISTANCE_BANDS,
-    PULL_UP_BAR,
-    KETTLEBELLS,
-    SQUAT_RACK,
-    CABLE_MACHINE,
-    MACHINES,
-    CARDIO_MACHINES,
-    MAT,
-    JUMP_ROPE
+    DUMBBELL,
+    KETTLEBELL,
+    MACHINE,
+    PLATE,
+    RESISTANCE_BAND,
+    SUSPENSION_BAND,
+    OTHER
 }
 
-// Everything a gym has that a home might not, and the other way round. A
-// client who trains in both places has both, which is why BOTH is the union
-// and not the gym list.
-val HomeEquipment = listOf(
+// Asked in the catalog's own order. "No equipment" is an answer only where
+// there might be none; at a gym it is not a thing anyone means.
+val EquipmentChoices = listOf(
     Equipment.NONE,
-    Equipment.DUMBBELLS,
-    Equipment.KETTLEBELLS,
-    Equipment.RESISTANCE_BANDS,
-    Equipment.PULL_UP_BAR,
-    Equipment.BENCH,
-    Equipment.MAT,
-    Equipment.JUMP_ROPE,
     Equipment.BARBELL,
-    Equipment.SQUAT_RACK,
-    Equipment.CARDIO_MACHINES
-)
-
-val GymEquipment = listOf(
-    Equipment.BARBELL,
-    Equipment.SQUAT_RACK,
-    Equipment.BENCH,
-    Equipment.DUMBBELLS,
-    Equipment.KETTLEBELLS,
-    Equipment.CABLE_MACHINE,
-    Equipment.MACHINES,
-    Equipment.PULL_UP_BAR,
-    Equipment.RESISTANCE_BANDS,
-    Equipment.CARDIO_MACHINES,
-    Equipment.MAT
+    Equipment.DUMBBELL,
+    Equipment.KETTLEBELL,
+    Equipment.MACHINE,
+    Equipment.PLATE,
+    Equipment.RESISTANCE_BAND,
+    Equipment.SUSPENSION_BAND,
+    Equipment.OTHER
 )
 
 fun equipmentFor(location: WorkoutLocation): List<Equipment> = when (location) {
-    WorkoutLocation.HOME -> HomeEquipment
-    WorkoutLocation.GYM -> GymEquipment
-    WorkoutLocation.BOTH -> HomeEquipment.filterNot { it == Equipment.NONE } +
-        GymEquipment.filterNot { it in HomeEquipment }
+    WorkoutLocation.HOME -> EquipmentChoices
+    WorkoutLocation.GYM, WorkoutLocation.BOTH ->
+        EquipmentChoices.filterNot { it == Equipment.NONE }
 }
 
 enum class WorkoutType {

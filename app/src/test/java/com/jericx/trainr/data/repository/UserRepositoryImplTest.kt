@@ -44,7 +44,7 @@ class UserRepositoryImplTest {
         fitnessGoal = FitnessGoal.MUSCLE_GAIN,
         experienceLevel = ExperienceLevel.INTERMEDIATE,
         workoutLocation = WorkoutLocation.GYM,
-        availableEquipment = listOf(Equipment.DUMBBELLS),
+        availableEquipment = listOf(Equipment.DUMBBELL),
         workoutDaysPerWeek = 4,
         workoutDuration = 60,
         preferredWorkoutTime = WorkoutTime.EVENING,

@@ -16,7 +16,7 @@ class CannedPlanGeneratorTest {
         daysPerWeek: Int = 3,
         weekNumber: Int = 1,
         duration: Int = 45,
-        equipment: List<Equipment> = listOf(Equipment.DUMBBELLS)
+        equipment: List<Equipment> = listOf(Equipment.DUMBBELL)
     ) = PlanRequest(
         user = UserProfile(
             id = 1,
@@ -33,7 +33,7 @@ class CannedPlanGeneratorTest {
     private suspend fun plan(
         daysPerWeek: Int = 3,
         duration: Int = 45,
-        equipment: List<Equipment> = listOf(Equipment.DUMBBELLS)
+        equipment: List<Equipment> = listOf(Equipment.DUMBBELL)
     ) = (
         CannedPlanGenerator().generate(request(daysPerWeek, duration = duration, equipment = equipment))
             as PlanGenerationResult.Generated
@@ -82,7 +82,7 @@ class CannedPlanGeneratorTest {
                     user = UserProfile(
                         id = 1,
                         workoutDaysPerWeek = 3,
-                        availableEquipment = listOf(Equipment.DUMBBELLS)
+                        availableEquipment = listOf(Equipment.DUMBBELL)
                     ),
                     weekNumber = 2,
                     startDateMillis = 2_000L,
@@ -136,7 +136,7 @@ class CannedPlanGeneratorTest {
     @Test
     fun itNamesOnlyTheEquipmentTheDayActuallyNeeds() = runTest {
         val loaded = plan(
-            equipment = listOf(Equipment.DUMBBELLS, Equipment.SQUAT_RACK)
+            equipment = listOf(Equipment.DUMBBELL, Equipment.MACHINE)
         ).workoutDays.first()
         assertThat(loaded.equipment).containsExactly("Dumbbells")
 

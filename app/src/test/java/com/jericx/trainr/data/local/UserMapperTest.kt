@@ -26,7 +26,7 @@ class UserMapperTest {
         fitnessGoal = FitnessGoal.MUSCLE_GAIN,
         experienceLevel = ExperienceLevel.INTERMEDIATE,
         workoutLocation = WorkoutLocation.GYM,
-        availableEquipment = listOf(Equipment.DUMBBELLS, Equipment.BARBELL),
+        availableEquipment = listOf(Equipment.DUMBBELL, Equipment.BARBELL),
         workoutDaysPerWeek = 4,
         workoutDuration = 60,
         preferredWorkoutTime = WorkoutTime.EVENING,
@@ -49,7 +49,7 @@ class UserMapperTest {
         assertThat(entity.workoutLocation).isEqualTo("GYM")
         assertThat(entity.preferredWorkoutTime).isEqualTo("EVENING")
         assertThat(entity.workoutType).isEqualTo("STRENGTH")
-        assertThat(entity.availableEquipment).containsExactly("DUMBBELLS", "BARBELL").inOrder()
+        assertThat(entity.availableEquipment).containsExactly("DUMBBELL", "BARBELL").inOrder()
         assertThat(entity.injuries).containsExactly("LOWER_BACK")
         assertThat(entity.createdAt).isEqualTo(1_700_000_000_000L)
     }
@@ -66,11 +66,11 @@ class UserMapperTest {
     @Test
     fun `mapToDomain drops unknown equipment names instead of throwing`() {
         val entity = mapper.mapToEntity(sampleProfile()).copy(
-            availableEquipment = listOf("DUMBBELLS", "OBSOLETE_GADGET")
+            availableEquipment = listOf("DUMBBELL", "OBSOLETE_GADGET")
         )
 
         val domain = mapper.mapToDomain(entity)
 
-        assertThat(domain.availableEquipment).containsExactly(Equipment.DUMBBELLS)
+        assertThat(domain.availableEquipment).containsExactly(Equipment.DUMBBELL)
     }
 }

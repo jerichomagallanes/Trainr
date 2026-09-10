@@ -25,13 +25,13 @@ class PlanPromptBuilderTest {
         muscle: MuscleGroup,
         measure: ExerciseMeasure,
         pattern: MovementPattern,
-        requires: Set<Equipment> = setOf(Equipment.NONE)
-    ) = CatalogExercise(key, key, key, muscle, requires, measure, pattern, staple = true)
+        equipment: Equipment = Equipment.NONE
+    ) = CatalogExercise(key, key, key, muscle, equipment, measure, pattern, staple = true)
 
     private val shortlist = listOf(
         catalogExercise(
             "goblet_squat", MuscleGroup.QUADRICEPS,
-            ExerciseMeasure.WEIGHT_AND_REPS, MovementPattern.SQUAT, setOf(Equipment.DUMBBELLS)
+            ExerciseMeasure.WEIGHT_AND_REPS, MovementPattern.SQUAT, Equipment.DUMBBELL
         ),
         catalogExercise("push_up", MuscleGroup.CHEST, ExerciseMeasure.REPS, MovementPattern.HORIZONTAL_PUSH),
         catalogExercise("plank", MuscleGroup.ABDOMINALS, ExerciseMeasure.DURATION, MovementPattern.CORE)
@@ -50,7 +50,7 @@ class PlanPromptBuilderTest {
             height = 170f,
             weight = 70f,
             fitnessGoal = FitnessGoal.MUSCLE_GAIN,
-            availableEquipment = listOf(Equipment.DUMBBELLS, Equipment.PULL_UP_BAR),
+            availableEquipment = listOf(Equipment.DUMBBELL, Equipment.MACHINE),
             workoutDaysPerWeek = 3,
             workoutDuration = 45,
             injuries = listOf(Injury.LOWER_BACK),
@@ -67,7 +67,7 @@ class PlanPromptBuilderTest {
         val prompt = builder.userPrompt(request(), shortlist)
 
         assertThat(prompt).contains("build muscle")
-        assertThat(prompt).contains("dumbbells, pull-up bar")
+        assertThat(prompt).contains("dumbbells, machines and cables")
         assertThat(prompt).contains("3 (plan EXACTLY this many days)")
         assertThat(prompt).contains("about 45 minutes")
         assertThat(prompt).contains("lower back pain")
