@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application>
+        <!-- Debug only: the host an instrumented test sets its content on. -->
+        <activity
+            android:name=".testing.HiltTestActivity"
+            android:exported="false"
+            tools:node="merge" />
+    </application>
+</manifest>

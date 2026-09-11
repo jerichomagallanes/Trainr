@@ -174,7 +174,11 @@ class MainActivity : ComponentActivity() {
 fun AppContent(
     versionName: String,
     themePreferences: ThemePreferences,
-    proGate: ProGate
+    proGate: ProGate,
+    // Where the app opens. Only a test starts anywhere else: the splash decides
+    // between the plan and the welcome on a timer, which a test would spend two
+    // seconds waiting out before it could reach what it came to check.
+    startDestination: String = Screen.SplashScreen.route
 ) {
     val context = LocalContext.current
     val navController = rememberNavController()
@@ -192,7 +196,7 @@ fun AppContent(
     val onboardingState by onboardingViewModel.onboardingState.collectAsStateWithLifecycle()
 
     val splashScreenDuration = 2000L
-    var showSplashScreen by remember { mutableStateOf(true) }
+    var showSplashScreen by remember { mutableStateOf(startDestination == Screen.SplashScreen.route) }
 
     LaunchedEffect(showSplashScreen) {
         if (showSplashScreen) {
@@ -244,7 +248,7 @@ fun AppContent(
                 )
             }
 
-            NavHost(navController = navController, startDestination = Screen.SplashScreen.route) {
+            NavHost(navController = navController, startDestination = startDestination) {
                 composable(route = Screen.SplashScreen.route) {
                     SplashScreen(versionName = versionName)
                 }
