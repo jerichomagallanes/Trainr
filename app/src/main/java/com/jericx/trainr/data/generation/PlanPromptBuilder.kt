@@ -1,292 +1,67 @@
 package com.jericx.trainr.data.generation
 
-import com.jericx.trainr.domain.catalog.CatalogExercise
-import com.jericx.trainr.domain.catalog.ExerciseShortlist
 import com.jericx.trainr.domain.generation.PlanRequest
-import com.jericx.trainr.domain.generation.SessionBudget
-import com.jericx.trainr.domain.model.Equipment
-import com.jericx.trainr.domain.model.ExerciseMeasure
+import com.jericx.trainr.domain.generation.PlanSkeleton
 import com.jericx.trainr.domain.model.ExperienceLevel
 import com.jericx.trainr.domain.model.FitnessGoal
-import com.jericx.trainr.domain.model.Injury
-import com.jericx.trainr.domain.model.UnitSystem
-import com.jericx.trainr.domain.model.UserProfile
-import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
-import com.jericx.trainr.domain.model.WorkoutExercise
-import com.jericx.trainr.domain.model.WorkoutStatus
 
+// Only what the choice needs. Everything the old brief asked for in words is
+// now decided before the model is asked or computed after it answers, so none
+// of it is a rule the model can break. Injuries are not mentioned at all: a
+// movement they rule out is on no slot's list.
 class PlanPromptBuilder {
 
     fun systemInstruction(): String = """
-        You are an experienced, certified strength and conditioning coach writing a
-        one-week training program for a real client. Program like a professional:
-        every choice must have a coaching reason, and the week must be one the
-        client can actually complete and recover from.
+        You are a strength coach choosing which movements a client trains this week.
 
-        When the client's answers pull against each other, this is the order that
-        decides: injuries first, then the equipment they actually have, then the
-        time they have, then their goal. The goal decides both what the sessions
-        are made of and how they are loaded.
+        The app has already decided the split, which days they train, how many slots
+        each day holds and what each slot is for, and it computes every set, load,
+        rest and instruction afterwards. Your job is which movement fills each slot,
+        and what to call each session.
 
-        Program design rules:
-        - Plan exactly the number of training days requested, placed across the
-          seven days of the week (1 = the first day of the week .. 7 = the last),
-          spacing hard sessions with at least one rest day where possible. The
-          week begins on the day the client starts, which may be any weekday.
-        - Split by days per week: 1-3 days full body; 4 days upper/lower; 5-6 days
-          push/pull/legs style. At 7 days, program at most 5 hard sessions and make
-          the others easy mobility or low-intensity work.
-        - Train every major muscle group at least twice in the week: the same work
-          split over two days beats all of it on one.
-        - Reach the weekly set target given below for each major muscle group, and
-          never exceed the session set cap or the session length given below. The
-          cap is what the client's session length pays for once warm-up and rest
-          are counted, so a session that exceeds it is a session they will not
-          finish. A timed set spends its own seconds, not one set's worth: three
-          thirty-minute walks are a ninety-minute day whatever the set count says.
-        - Cover every pattern the request names as required, and order each
-          session large muscle groups before small, multi-joint before
-          single-joint.
-        - Each day starts with a short warm-up exercise (DURATION measure): easy
-          versions of the movements that follow, not a generic routine and not
-          static stretching.
-        - Load and reps follow the goal: strength 3-6 reps and 180s rest, heavy;
-          muscle gain 6-12 reps, 90-120s rest on multi-joint work and 60-90s on
-          isolation; endurance and weight loss 12-20 reps or timed work with
-          30-60s rest; general fitness 8-12 reps with 60-90s rest; flexibility
-          timed holds of about 60 seconds per muscle group.
-        - Leave 1-3 repetitions in reserve on every working set and never program
-          a set to failure: failure is not needed for strength or size. A beginner
-          or a first week stays at 2-3 in reserve, and technique comes before load.
-        - Where no external load is available, a strength goal is served by harder
-          leverage - slower tempo, fuller range, one-limb versions - never by
-          prescribing a low-rep maximum the client has no weight to reach.
-        - Prescribe conditioning by time, never by distance, and meet the weekly
-          conditioning minutes given below where there are any. Where the goal is
-          muscle or strength, keep conditioning short and low-impact and keep it
-          off the day before a hard leg session: running blunts strength and size
-          gains where cycling does not.
-        - The movement list is already filtered to what this client owns, so
-          every key in it is one they can perform. Give each set the targets its
-          group asks for: weighted movements take reps and weightKg, bodyweight
-          movements take reps, timed movements take seconds.
-        - Weights are kilograms, whatever the client reads them in. Every
-          weightKg must be a multiple of the client's smallest loadable
-          increment, given below, or the plan asks for a weight they cannot
-          make. For a first week or a beginner, choose conservative loads the
-          client can complete with three reps in reserve; progress comes later.
-        - Respect injuries strictly: avoid movements that load the injured area
-          (e.g. lower back pain: no loaded spinal flexion or heavy hinging from the
-          floor; knee problems: no jumps or deep loaded knee flexion; shoulder
-          injury: no overhead pressing or dips), substitute a safe alternative, and
-          put the relevant form cue in that exercise's instructions.
-        - Scale volume to experience: beginners 2-3 sets of simple movements with
-          clear form cues; intermediate moderate volume; advanced higher volume and
-          intensity.
-        - Age 65 and over: include balance work in every session, prefer supported
-          or machine versions of each movement, and program no maximal attempts.
-          Under 18: bodyweight competence and technique first, moderate loads, and
-          no maximal attempts.
+        Every slot offers only movements this client can perform, with the kit they
+        own, that are safe for them. Choose one of them for each slot.
 
-        Progression rules when a previous week is provided:
-        - Reuse the same exerciseKey for the same movement so history carries over.
-        - If every set hit its target, add load: one increment at minimum, and
-          2-10% where that is more. An increase smaller than one increment is not
-          an increase, because the client cannot load it. Where there is no load,
-          add 1-2 reps or 5-10 seconds instead.
-        - If a set missed its target by 2 or more reps, keep or reduce the target
-          by about 10%.
-        - If an exercise was skipped, repeat its week unchanged.
-
-        Output rules:
-        - exerciseKey is chosen from the movement list in the request and never
-          invented. The app owns each movement's name, the muscle it trains and
-          how it is measured, so all you choose is which movement and how much.
-        - Day titles, prescription and instructions are display copy, written
-          in English.
-        - Day titles are short and name the session's focus ("Full Body
-          Strength", "Lower Body Power") - never letter or index labels like
-          "Full Body A" or "Day 1".
-        - The plan title names the block, not its position: "Beginner Muscle
-          Building", never "... - Week 2". The app shows which week it is.
-        - prescription is a short chip under about 25 characters, shaped like
-          "3 sets of 12 reps", "3 sets of 45 seconds" or "5 minutes". Per-side,
-          tempo or pacing detail belongs in instructions, never the prescription.
-        - instructions are 1-2 sentences of how and why with one form cue.
-        - Respond with JSON only, exactly matching the provided schema.
+        - Take the candidate that best does that slot's job for this client. Where
+          two do it equally well, prefer the one their experience and age suit.
+        - A day is one session, not six separate choices: no two slots should take
+          near-versions of the same movement, and a day of free weights should not
+          send the client across four machines to finish it.
+        - Titles are English, two to four words, and name the region and the focus:
+          "Upper Body Strength", "Legs and Core" - never "Day 2", "Week 3" or
+          "Full Body A".
+        - Answer with JSON only, in the shape given.
     """.trimIndent()
 
-    fun userPrompt(request: PlanRequest, shortlist: List<CatalogExercise>): String {
+    fun userPrompt(request: PlanRequest, skeleton: PlanSkeleton): String {
         val user = request.user
-
         return buildString {
-            appendLine("Write week ${request.weekNumber} for this client.")
+            appendLine("Choose the movements for week ${request.weekNumber}.")
             appendLine()
-            appendLine("Client profile:")
-            appendLine("- Age ${user.age}, height ${user.height} cm, weight ${user.weight} kg")
-            appendLine("- Goal: ${user.fitnessGoal.asText()}")
-            appendLine("- Experience: ${user.experienceLevel.asText()}")
-            appendLine("- Available equipment: ${user.availableEquipment.asText()}")
-            appendLine("- Days per week: ${user.workoutDaysPerWeek} (plan EXACTLY this many days)")
             appendLine(
-                "- Session length: about ${user.workoutDuration} minutes, and never past " +
-                    "${SessionBudget.sessionCeilingMinutes(user)} once every set and rest is counted"
+                "Client: ${user.age}, ${user.experienceLevel.asText()}, " +
+                    "training to ${user.fitnessGoal.asText()}."
             )
-            appendLine(
-                "- Session set cap: at most ${SessionBudget.maxSetsPerSession(user)} sets in " +
-                    "one day, warm-up included"
-            )
-            appendLine(
-                "- Weekly set target: about ${SessionBudget.weeklySetsPerMuscle(user)} hard sets " +
-                    "per major muscle group across the week. The groups are chest, back, " +
-                    "shoulders, arms, core, quads, hamstrings, glutes and hips, calves. A set " +
-                    "counts once for the muscle its movement trains and half for each muscle " +
-                    "that movement assists"
-            )
-            if (!SessionBudget.coversEveryRegion(user)) {
-                appendLine(
-                    "- This week cannot reach the minimum useful dose for every group, so " +
-                        "prefer compound movements that train several at once over isolation work"
-                )
-            }
-            weeklyConditioningMinutes(user)?.let {
-                appendLine("- Weekly conditioning: $it")
-            }
-            appendLine(
-                "- Reads weights in ${user.weightUnits.asWeightWord()}; smallest loadable " +
-                    "increment ${incrementKg(user.weightUnits)} kg"
-            )
-            if (user.injuries.isNotEmpty()) {
-                appendLine("- Injuries or areas to protect: ${user.injuries.joinToString { it.asText() }}")
-            }
-            appendLine("- Write all display copy in: English")
-            appendRequiredPatterns(shortlist, user.fitnessGoal)
-            request.previousWeek?.let { appendHistory(it) }
-            appendVocabulary(shortlist)
-        }
-    }
-
-
-    // Public-health dose, so the plan reaches it rather than leaving the client
-    // to guess: 150-300 minutes a week for health, and more than 250 before
-    // weight loss becomes clinically meaningful (WHO 2020; ACSM 2009).
-    private fun weeklyConditioningMinutes(user: UserProfile): String? =
-        when (user.fitnessGoal) {
-            FitnessGoal.WEIGHT_LOSS -> "at least 250 minutes of moderate work across the week"
-            FitnessGoal.ENDURANCE -> "150-300 minutes of moderate work across the week"
-            FitnessGoal.GENERAL_FITNESS -> "at least 150 minutes of moderate work across the week"
-            else -> null
-        }
-
-    private fun StringBuilder.appendRequiredPatterns(
-        shortlist: List<CatalogExercise>,
-        goal: FitnessGoal
-    ) {
-        val required = ExerciseShortlist.requiredPatterns(shortlist, goal)
-        if (required.isEmpty()) return
-        appendLine("- The week must include " + required.joinToString(", ") { it.label })
-    }
-
-    // Grouped by what a set of it looks like, then by the muscle it trains, so
-    // the model reads off which targets to write rather than inferring them
-    // from a slug. Already filtered to this client's equipment.
-    private fun StringBuilder.appendVocabulary(shortlist: List<CatalogExercise>) {
-        if (shortlist.isEmpty()) return
-        appendLine()
-        appendLine("Movements you may prescribe. Use these keys exactly, and no others.")
-        ExerciseMeasure.entries.forEach { measure ->
-            val group = shortlist.filter { it.measure == measure }
-            if (group.isEmpty()) return@forEach
             appendLine()
-            appendLine(measure.asHeading())
-            group.groupBy { it.primary }
-                .toSortedMap()
-                .forEach { (muscle, exercises) ->
-                    appendLine("  $muscle: ${exercises.joinToString(", ") { it.key }}")
-                }
-        }
-    }
-
-    private fun ExerciseMeasure.asHeading() = when (this) {
-        ExerciseMeasure.WEIGHT_AND_REPS -> "Weighted - every set needs reps and weightKg:"
-        ExerciseMeasure.REPS -> "Bodyweight - every set needs reps:"
-        ExerciseMeasure.DURATION -> "Timed - every set needs seconds:"
-    }
-
-    private fun StringBuilder.appendHistory(week: WeeklyWorkoutPlan) {
-        appendLine()
-        appendLine("Last week (week ${week.weekNumber}) and what was actually done:")
-        week.workoutDays.forEach { day ->
-            val outcome = if (day.status == WorkoutStatus.COMPLETED) "completed" else "skipped"
-            appendLine("- ${day.title} ($outcome):")
-            day.exercises.forEach { appendLine("  - ${it.asHistoryLine()}") }
-        }
-        appendLine("Apply the progression rules to this history, reusing each exerciseKey.")
-    }
-
-    private fun WorkoutExercise.asHistoryLine(): String {
-        val done = sets.joinToString { set ->
-            when {
-                !set.isCompleted -> "skipped"
-                measure == ExerciseMeasure.DURATION -> "${set.actualSeconds ?: 0}s"
-                set.actualWeightKg != null -> "${set.actualWeightKg}kg x ${set.actualReps ?: 0}"
-                else -> "${set.actualReps ?: 0}"
+            appendLine("Sessions, in the order they are trained:")
+            skeleton.days.filter { it.openSlots.isNotEmpty() }.forEach { day ->
+                val count = day.openSlots.size
+                appendLine("- ${day.id}, ${day.focus.title.lowercase()}, $count ${if (count == 1) "slot" else "slots"}")
             }
+            appendLine()
+            appendLine("Each slot names the job it does and carries its own list of movements.")
+            appendLine("Slots that are already settled are not shown; leave the rest of the week alone.")
         }
-        return "$exerciseKey: prescribed \"$prescription\", did: $done"
     }
 
     private fun FitnessGoal.asText() = when (this) {
         FitnessGoal.WEIGHT_LOSS -> "lose weight"
         FitnessGoal.MUSCLE_GAIN -> "build muscle"
         FitnessGoal.STRENGTH -> "get stronger"
-        FitnessGoal.ENDURANCE -> "improve endurance"
-        FitnessGoal.GENERAL_FITNESS -> "general fitness"
-        FitnessGoal.FLEXIBILITY -> "flexibility and mobility"
-    }
-
-    private fun UnitSystem.asWeightWord() = when (this) {
-        UnitSystem.METRIC -> "kilograms"
-        UnitSystem.IMPERIAL -> "pounds"
-    }
-
-    // Kilograms, the unit the contract speaks: 2.27 kg is five pounds, so a
-    // client in pounds gets multiples that land on real plates.
-    private fun incrementKg(units: UnitSystem): String = when (units) {
-        UnitSystem.METRIC -> "2.5"
-        UnitSystem.IMPERIAL -> "2.27"
-    }
-
-    private fun Injury.asText() = when (this) {
-        Injury.LOWER_BACK -> "lower back pain"
-        Injury.KNEE -> "knee problems"
-        Injury.SHOULDER -> "shoulder injury"
-        Injury.WRIST -> "wrist pain"
-        Injury.ANKLE -> "ankle issues"
-        Injury.HIP -> "hip problems"
-        Injury.NECK -> "neck pain"
+        FitnessGoal.ENDURANCE -> "build endurance"
+        FitnessGoal.GENERAL_FITNESS -> "get generally fitter"
+        FitnessGoal.FLEXIBILITY -> "move more freely"
     }
 
     private fun ExperienceLevel.asText() = name.lowercase()
-
-    // Named the way a coach would name them, so the model knows what a
-    // machine is for rather than guessing from an enum constant.
-    private fun List<Equipment>.asText() =
-        if (isEmpty() || this == listOf(Equipment.NONE)) {
-            "none - bodyweight only"
-        } else {
-            filterNot { it == Equipment.NONE }.joinToString { it.asText() }
-        }
-
-    private fun Equipment.asText() = when (this) {
-        Equipment.NONE -> "bodyweight only"
-        Equipment.BARBELL -> "barbell"
-        Equipment.DUMBBELL -> "dumbbells"
-        Equipment.KETTLEBELL -> "kettlebells"
-        Equipment.MACHINE -> "machines and cables"
-        Equipment.PLATE -> "weight plates"
-        Equipment.RESISTANCE_BAND -> "resistance bands"
-        Equipment.SUSPENSION_BAND -> "a suspension trainer"
-        Equipment.OTHER -> "other gym kit (ab wheel, box, sled, rings, jump rope)"
-    }
 }

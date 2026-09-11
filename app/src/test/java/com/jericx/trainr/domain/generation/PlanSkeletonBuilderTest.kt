@@ -132,6 +132,20 @@ class PlanSkeletonBuilderTest {
         }
     }
 
+    // The prompt no longer says a word about injuries, so the filter is the
+    // whole mechanism and every injury needs its own proof.
+    @Test
+    fun noCandidateListContainsAMovementContraindicatedForTheClientsInjuries() {
+        Injury.entries.forEach { injury ->
+            FitnessGoal.entries.forEach { goal ->
+                build(user(goal = goal, days = 5, minutes = 60, injuries = listOf(injury))).allowedKeys.forEach { key ->
+                    assertWithMessage("$injury $goal $key")
+                        .that(InjuryGuard.excludes(catalog[key]!!, listOf(injury))).isFalse()
+                }
+            }
+        }
+    }
+
     // The two limits the parser checks are built in before anything is
     // generated, priced at the top of every rep window.
     @Test

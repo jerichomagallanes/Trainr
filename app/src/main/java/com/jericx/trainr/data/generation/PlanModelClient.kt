@@ -1,5 +1,7 @@
 package com.jericx.trainr.data.generation
 
+import com.jericx.trainr.domain.generation.PlanSkeleton
+
 sealed interface GeminiResponse {
     data class Text(val value: String) : GeminiResponse
     data object Unreachable : GeminiResponse
@@ -16,13 +18,15 @@ sealed interface GeminiResponse {
 // One request to one model. The generator owns the retries and the model list.
 interface PlanModelClient {
 
-    // The movement keys become the schema's exerciseKey enum, so an answer
-    // naming a movement this client cannot perform is not representable.
+    // The skeleton becomes the response schema, each open slot an enum of its
+    // own candidates, so an answer naming a movement the slot does not offer
+    // is not representable. The domain type rather than the SDK's, so an
+    // on-device model can build its own grammar from the same thing.
     suspend fun generate(
         model: String,
         systemInstruction: String,
         userPrompt: String,
-        exerciseKeys: List<String>
+        skeleton: PlanSkeleton
     ): GeminiResponse
 
     companion object {

@@ -12,7 +12,6 @@ internal fun planGenerator(
     breadcrumbs: Breadcrumbs
 ): PlanGenerator = GeminiPlanGenerator(
     client = FirebaseAiClient(),
-    parser = GeneratedPlanParser(catalog),
     promptBuilder = PlanPromptBuilder(),
     catalog = catalog,
     spentModels = spentModels,
