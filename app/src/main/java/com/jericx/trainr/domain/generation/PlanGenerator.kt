@@ -7,8 +7,12 @@ data class PlanRequest(
     val user: UserProfile,
     val weekNumber: Int,
     val startDateMillis: Long,
-    val previousWeek: WeeklyWorkoutPlan? = null
-)
+    // Newest first. A stall is two short weeks and a ramp back spans three,
+    // so one previous week is not enough to progress from.
+    val history: List<WeeklyWorkoutPlan> = emptyList()
+) {
+    val previousWeek: WeeklyWorkoutPlan? get() = history.firstOrNull()
+}
 
 sealed interface PlanGenerationResult {
     data class Generated(val plan: WeeklyWorkoutPlan) : PlanGenerationResult

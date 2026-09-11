@@ -46,7 +46,7 @@ class PlanSkeletonBuilderTest {
     )
 
     private fun build(user: UserProfile, previous: WeeklyWorkoutPlan? = null) =
-        builder.build(PlanRequest(user = user, weekNumber = 1, startDateMillis = 0L, previousWeek = previous))
+        builder.build(PlanRequest(user = user, weekNumber = 1, startDateMillis = 0L, history = listOfNotNull(previous)))
 
     // Every answer the setup screen allows, so no combination can slip past.
     private fun everyAnswer(): List<UserProfile> = FitnessGoal.entries.flatMap { goal ->

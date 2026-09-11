@@ -39,6 +39,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.SpanStyle
+import com.jericx.trainr.presentation.workout.util.asText
+import com.jericx.trainr.domain.generation.Prescription
 
 @Composable
 fun ExerciseCard(
@@ -167,16 +169,23 @@ fun ExerciseCard(
                     color = colors.onSurface,
                     modifier = Modifier.padding(start = Spacing.extraSmall)
                 )
-                Text(
-                    text = exercise.detail,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = colors.onSurfaceEmphasis,
-                    modifier = Modifier
-                        .weight(1f, fill = false)
-                        .padding(start = Spacing.small)
-                        .background(colors.surfaceEmphasis, MaterialTheme.shapes.medium)
-                        .padding(horizontal = Spacing.tight, vertical = 3.dp)
-                )
+                // A plan the app wrote itself carries no chip text; the sets
+                // below it say what it would have said.
+                val chip = exercise.detail.ifBlank {
+                    Prescription.of(exercise.sets, exercise.measure).asText()
+                }
+                if (chip.isNotBlank()) {
+                    Text(
+                        text = chip,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colors.onSurfaceEmphasis,
+                        modifier = Modifier
+                            .weight(1f, fill = false)
+                            .padding(start = Spacing.small)
+                            .background(colors.surfaceEmphasis, MaterialTheme.shapes.medium)
+                            .padding(horizontal = Spacing.tight, vertical = 3.dp)
+                    )
+                }
             }
 
             // Drawn even when empty: gating it on sets takes away the only

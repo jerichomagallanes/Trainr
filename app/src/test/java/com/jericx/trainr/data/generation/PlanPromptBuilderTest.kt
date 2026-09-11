@@ -57,7 +57,7 @@ class PlanPromptBuilderTest {
         ),
         weekNumber = if (previousWeek == null) 1 else 2,
         startDateMillis = 0L,
-        previousWeek = previousWeek
+        history = listOfNotNull(previousWeek)
     )
 
     @Test
