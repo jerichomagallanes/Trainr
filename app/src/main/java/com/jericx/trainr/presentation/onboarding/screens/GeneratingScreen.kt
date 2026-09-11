@@ -23,6 +23,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,6 +49,10 @@ fun GeneratingScreen(
     onStart: () -> Unit,
     onDone: () -> Unit,
     failure: PlanGenerationResult.Failure? = null,
+    // What the coach failed with, when the week handed over was built in its
+    // place. Said here, once, and waited on: a note that leaves by itself is
+    // one nobody reads.
+    builtInsteadOf: PlanGenerationResult.Failure? = null,
     onRetry: () -> Unit = {},
     onGiveUp: () -> Unit = {},
     @StringRes giveUpLabel: Int = R.string.cancel
@@ -55,6 +60,7 @@ fun GeneratingScreen(
     var activeIndicator by remember { mutableIntStateOf(0) }
     val totalIndicators = 14
     val shownAt = remember { System.currentTimeMillis() }
+    val currentOnDone by rememberUpdatedState(onDone)
 
     LaunchedEffect(Unit) {
         while (true) {
@@ -77,11 +83,11 @@ fun GeneratingScreen(
         )
     }
 
-    LaunchedEffect(isReady) {
-        if (!isReady) return@LaunchedEffect
+    LaunchedEffect(isReady, builtInsteadOf) {
+        if (!isReady || builtInsteadOf != null) return@LaunchedEffect
         val shown = System.currentTimeMillis() - shownAt
         delay((MINIMUM_VISIBLE_MILLIS - shown).coerceAtLeast(0L))
-        onDone()
+        currentOnDone()
     }
     
     Box(
@@ -106,20 +112,61 @@ fun GeneratingScreen(
             
             Spacer(modifier = Modifier.height(Spacing.extraLarge * 2))
 
-            Text(
-                text = stringResource(R.string.generating_your_workout_routine),
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.trainrColors.onSurface,
-                textAlign = TextAlign.Center
-            )
-            
-            Spacer(modifier = Modifier.height(Spacing.extraLarge))
+            if (isReady && builtInsteadOf != null) {
+                BuiltInsteadNote(reason = builtInsteadOf, onContinue = onDone)
+            } else {
+                Text(
+                    text = stringResource(R.string.generating_your_workout_routine),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.trainrColors.onSurface,
+                    textAlign = TextAlign.Center
+                )
 
-            LoadingIndicator(
-                activeIndex = activeIndicator,
-                totalCount = totalIndicators
-            )
+                Spacer(modifier = Modifier.height(Spacing.extraLarge))
+
+                LoadingIndicator(
+                    activeIndex = activeIndicator,
+                    totalCount = totalIndicators
+                )
+            }
         }
+    }
+}
+
+@Composable
+private fun BuiltInsteadNote(
+    reason: PlanGenerationResult.Failure,
+    onContinue: () -> Unit
+) {
+    Text(
+        text = stringResource(R.string.generation_built_instead_title),
+        style = MaterialTheme.typography.titleSmall,
+        color = MaterialTheme.trainrColors.onSurface,
+        textAlign = TextAlign.Center
+    )
+
+    Spacer(modifier = Modifier.height(Spacing.large))
+
+    Text(
+        text = stringResource(
+            when (reason) {
+                PlanGenerationResult.Offline -> R.string.generation_built_instead_offline
+                PlanGenerationResult.Failed -> R.string.generation_built_instead_failed
+                PlanGenerationResult.DailyLimitReached -> R.string.generation_built_instead_limit
+            }
+        ),
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.trainrColors.onSurface,
+        textAlign = TextAlign.Center
+    )
+
+    Spacer(modifier = Modifier.height(Spacing.extraLarge))
+
+    TextButton(onClick = onContinue) {
+        Text(
+            text = stringResource(R.string.see_my_plan),
+            color = MaterialTheme.trainrColors.brandStrong
+        )
     }
 }
 

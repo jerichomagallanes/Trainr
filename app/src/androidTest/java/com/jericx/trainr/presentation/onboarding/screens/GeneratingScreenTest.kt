@@ -234,4 +234,45 @@ class GeneratingScreenTest {
 
         composeTestRule.onNodeWithText(string(R.string.try_again)).assertIsDisplayed()
     }
+
+    // Handed over, but not passed off as the coach's: the reason is said and
+    // the screen waits until it has been read.
+    @Test
+    fun aWeekBuiltInsteadSaysWhyAndWaitsForTheClient() {
+        var done = false
+        composeTestRule.setContent {
+            TrainrTheme {
+                GeneratingScreen(
+                    isReady = true,
+                    onStart = {},
+                    onDone = { done = true },
+                    builtInsteadOf = PlanGenerationResult.DailyLimitReached
+                )
+            }
+        }
+
+        composeTestRule.mainClock.advanceTimeBy(10_000)
+
+        composeTestRule.onNodeWithText(string(R.string.generation_built_instead_limit)).assertIsDisplayed()
+        assertThat(done).isFalse()
+
+        composeTestRule.onNodeWithText(string(R.string.see_my_plan)).performClick()
+
+        assertThat(done).isTrue()
+    }
+
+    @Test
+    fun aCoachedWeekSaysNothingAndMovesOn() {
+        var done = false
+        composeTestRule.setContent {
+            TrainrTheme {
+                GeneratingScreen(isReady = true, onStart = {}, onDone = { done = true })
+            }
+        }
+
+        composeTestRule.mainClock.advanceTimeBy(10_000)
+
+        composeTestRule.onNodeWithText(string(R.string.see_my_plan)).assertDoesNotExist()
+        assertThat(done).isTrue()
+    }
 }

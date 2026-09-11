@@ -14,8 +14,18 @@ data class PlanRequest(
     val previousWeek: WeeklyWorkoutPlan? get() = history.firstOrNull()
 }
 
+// Who chose the movements: the model, last week's cast carried forward, or
+// the app's own ranking with no model at all.
+enum class PlanSource { COACH, PROGRESSED, TEMPLATE }
+
 sealed interface PlanGenerationResult {
-    data class Generated(val plan: WeeklyWorkoutPlan) : PlanGenerationResult
+    data class Generated(
+        val plan: WeeklyWorkoutPlan,
+        val source: PlanSource = PlanSource.COACH,
+        // What the coach failed with, when this week was built in its place.
+        // Null when nothing stood in for anything.
+        val insteadOf: Failure? = null
+    ) : PlanGenerationResult
 
     sealed interface Failure : PlanGenerationResult
 

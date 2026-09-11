@@ -4,6 +4,7 @@ import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.domain.generation.PlanGenerator
 import com.jericx.trainr.domain.generation.PlanGenerationResult
 import com.jericx.trainr.domain.generation.PlanRequest
+import com.jericx.trainr.domain.generation.PlanSource
 import com.jericx.trainr.domain.model.ExerciseSet
 import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
@@ -375,4 +376,45 @@ class NextWeekViewModelTest {
         coVerify(exactly = 1) { userRepository.saveWeeklyWorkoutPlan(any()) }
     }
 
+    // Regenerating is asked for to get a different week from the coach, so
+    // the app's own week is no answer to it.
+    @Test
+    fun aRegenerationTheCoachCouldNotAnswerLeavesTheWeekAndSaysWhy() = runTest {
+        val current = finishedWeek.copy(
+            workoutDays = finishedWeek.workoutDays.map {
+                it.copy(status = WorkoutStatus.NOT_STARTED, completedAt = null)
+            }
+        )
+        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(current))
+        coEvery { planGenerator.generate(any()) } returns PlanGenerationResult.Generated(
+            finishedWeek.copy(id = 0), PlanSource.TEMPLATE, PlanGenerationResult.Offline
+        )
+
+        val viewModel = viewModel()
+        viewModel.regenerateThisWeek()
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { userRepository.deleteWeeklyWorkoutPlan(any()) }
+        coVerify(exactly = 0) { userRepository.saveWeeklyWorkoutPlan(any()) }
+        assertThat(viewModel.failure.value).isEqualTo(PlanGenerationResult.Offline)
+        assertThat(viewModel.isReady.value).isFalse()
+    }
+
+    @Test
+    fun aNextWeekBuiltInPlaceOfTheCoachsIsSavedAndSaysWhy() = runTest {
+        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(finishedWeek))
+        val built = finishedWeek.copy(id = 0, weekNumber = 2, title = "Built")
+        coEvery { planGenerator.generate(any()) } returns
+            PlanGenerationResult.Generated(built, PlanSource.TEMPLATE, PlanGenerationResult.DailyLimitReached)
+
+        val viewModel = viewModel()
+        viewModel.generateNextWeek()
+        advanceUntilIdle()
+
+        coVerify { userRepository.saveWeeklyWorkoutPlan(built) }
+        assertThat(viewModel.isReady.value).isTrue()
+        assertThat(viewModel.failure.value).isNull()
+        assertThat(viewModel.source.value).isEqualTo(PlanSource.TEMPLATE)
+        assertThat(viewModel.builtInsteadOf.value).isEqualTo(PlanGenerationResult.DailyLimitReached)
+    }
 }
