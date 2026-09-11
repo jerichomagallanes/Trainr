@@ -19,6 +19,7 @@ import com.jericx.trainr.domain.model.UnitSystem
 import com.jericx.trainr.domain.generation.PlanGenerator
 import com.jericx.trainr.domain.generation.PlanGenerationResult
 import com.jericx.trainr.domain.generation.PlanRequest
+import com.jericx.trainr.domain.generation.PlanSource
 import com.jericx.trainr.domain.repository.UserRepository
 import com.jericx.trainr.presentation.workout.util.WorkoutWeek
 import io.mockk.coEvery
@@ -420,5 +421,37 @@ class OnboardingViewModelTest {
 
         assertThat(viewModel.onboardingState.value.answeredSteps)
             .containsExactly(OnboardingStep.BASIC_INFO, OnboardingStep.GOALS)
+    }
+
+    // Handed over rather than lost, but never passed off as the coach's.
+    @Test
+    fun `a week built in place of the coach's is kept and says why`() = runTest(testDispatcher) {
+        coEvery { planGenerator.generate(any()) } returns PlanGenerationResult.Generated(
+            WeeklyWorkoutPlan(userId = 0, weekNumber = 1, title = "Built week", workoutDays = emptyList()),
+            source = PlanSource.TEMPLATE,
+            insteadOf = PlanGenerationResult.Offline
+        )
+
+        viewModel.saveUserProfile()
+        advanceUntilIdle()
+
+        with(viewModel.onboardingState.value) {
+            assertThat(isCompleted).isTrue()
+            assertThat(generationFailure).isNull()
+            assertThat(planSource).isEqualTo(PlanSource.TEMPLATE)
+            assertThat(builtInsteadOf).isEqualTo(PlanGenerationResult.Offline)
+        }
+        coVerify { userRepository.saveWeeklyWorkoutPlan(any()) }
+    }
+
+    @Test
+    fun `a coached week says nothing was built instead`() = runTest(testDispatcher) {
+        viewModel.saveUserProfile()
+        advanceUntilIdle()
+
+        with(viewModel.onboardingState.value) {
+            assertThat(planSource).isEqualTo(PlanSource.COACH)
+            assertThat(builtInsteadOf).isNull()
+        }
     }
 }

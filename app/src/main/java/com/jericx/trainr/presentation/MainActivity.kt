@@ -50,6 +50,7 @@ import com.jericx.trainr.presentation.onboarding.OnboardingViewModel
 import com.jericx.trainr.presentation.onboarding.screens.BasicInfoScreen
 import com.jericx.trainr.presentation.onboarding.screens.BodyMetricsScreen
 import com.jericx.trainr.presentation.onboarding.screens.FitnessGoalScreen
+import com.jericx.trainr.domain.generation.PlanSource
 import com.jericx.trainr.domain.purchases.ProGate
 import com.jericx.trainr.presentation.onboarding.screens.GeneratingScreen
 import com.jericx.trainr.presentation.purchases.PaywallReason
@@ -419,15 +420,16 @@ fun AppContent(
                         isReady = onboardingState.isCompleted,
                         onStart = { onboardingViewModel.saveUserProfile() },
                         onDone = {
-                            // Spent here and nowhere earlier: a generation that
-                            // failed has taken nothing, so the free week is
-                            // still there to be used.
-                            proGate.spend()
+                            // Spent here and nowhere earlier, and only on a week
+                            // the coach wrote: a failed generation, or a week the
+                            // app built itself, has cost nothing.
+                            if (onboardingState.planSource == PlanSource.COACH) proGate.spend()
                             navController.navigate(Screen.Home.route) {
                                 popUpTo(0) { inclusive = true }
                             }
                         },
                         failure = onboardingState.generationFailure,
+                        builtInsteadOf = onboardingState.builtInsteadOf,
                         onRetry = { onboardingViewModel.saveUserProfile() },
                         onGiveUp = { navController.popBackStack() },
                         giveUpLabel = R.string.back_to_profile
@@ -573,14 +575,15 @@ fun AppContent(
                     val nextWeekViewModel: NextWeekViewModel = hiltViewModel()
                     val failure by nextWeekViewModel.failure.collectAsStateWithLifecycle()
                     val weekIsReady by nextWeekViewModel.isReady.collectAsStateWithLifecycle()
+                    val source by nextWeekViewModel.source.collectAsStateWithLifecycle()
                     GeneratingScreen(
                         isReady = weekIsReady,
                         onStart = { nextWeekViewModel.regenerateThisWeek() },
                         onDone = {
-                            // Spent here and nowhere earlier: a generation that
-                            // failed has taken nothing, so the free week is
-                            // still there to be used.
-                            proGate.spend()
+                            // Spent here and nowhere earlier, and only on a week
+                            // the coach wrote: a failed generation, or a week the
+                            // app built itself, has cost nothing.
+                            if (source == PlanSource.COACH) proGate.spend()
                             navController.navigate(Screen.Home.route) {
                                 popUpTo(0) { inclusive = true }
                             }
@@ -594,20 +597,23 @@ fun AppContent(
                 composable(Screen.GeneratingNextWeek.route) {
                     val nextWeekViewModel: NextWeekViewModel = hiltViewModel()
                     val nextWeekFailure by nextWeekViewModel.failure.collectAsStateWithLifecycle()
+                    val nextWeekBuiltInstead by nextWeekViewModel.builtInsteadOf.collectAsStateWithLifecycle()
                     val weekIsReady by nextWeekViewModel.isReady.collectAsStateWithLifecycle()
+                    val source by nextWeekViewModel.source.collectAsStateWithLifecycle()
                     GeneratingScreen(
                         isReady = weekIsReady,
                         onStart = { nextWeekViewModel.generateNextWeek() },
                         onDone = {
-                            // Spent here and nowhere earlier: a generation that
-                            // failed has taken nothing, so the free week is
-                            // still there to be used.
-                            proGate.spend()
+                            // Spent here and nowhere earlier, and only on a week
+                            // the coach wrote: a failed generation, or a week the
+                            // app built itself, has cost nothing.
+                            if (source == PlanSource.COACH) proGate.spend()
                             navController.navigate(Screen.Home.route) {
                                 popUpTo(0) { inclusive = true }
                             }
                         },
                         failure = nextWeekFailure,
+                        builtInsteadOf = nextWeekBuiltInstead,
                         onRetry = { nextWeekViewModel.generateNextWeek() },
                         onGiveUp = { navController.popBackStack() }
                     )

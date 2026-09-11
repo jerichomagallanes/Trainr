@@ -7,6 +7,7 @@ import com.jericx.trainr.domain.catalog.InMemoryExerciseCatalog
 import com.jericx.trainr.domain.catalog.PatternRequirement
 import com.jericx.trainr.domain.generation.PlanGenerationResult
 import com.jericx.trainr.domain.generation.PlanRequest
+import com.jericx.trainr.domain.generation.PlanSource
 import com.jericx.trainr.domain.model.Equipment
 import com.jericx.trainr.domain.model.ExperienceLevel
 import com.jericx.trainr.domain.model.FitnessGoal
@@ -177,5 +178,10 @@ class TemplatePlanGeneratorTest {
 
     private companion object {
         const val DAY = 86_400_000L
+    }
+
+    @Test
+    fun aWeekTheAppBuiltIsNamedForWhatItIs() {
+        assertThat((generate(user()) as PlanGenerationResult.Generated).source).isEqualTo(PlanSource.TEMPLATE)
     }
 }

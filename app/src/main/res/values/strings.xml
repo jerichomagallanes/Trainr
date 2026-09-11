@@ -212,6 +212,11 @@
     <string name="generation_limit_title">Daily limit reached</string>
     <string name="generation_limit_message">Trainr can only write a few plans a day at the moment. The limit resets each day, so trying again now will not help.\n\nYour answers are saved. Come back later and create your plan in one tap.</string>
     <string name="got_it">Got it</string>
+    <string name="generation_built_instead_title">Your plan is ready</string>
+    <string name="generation_built_instead_offline">Trainr is offline, so this week was built from your answers rather than written by the AI coach. It still progresses from what you log.</string>
+    <string name="generation_built_instead_failed">The AI coach did not come back with a week that held up, so this one was built from your answers. It still progresses from what you log.</string>
+    <string name="generation_built_instead_limit">You are out of AI-written plans for today, so this week was built from your answers. It still progresses from what you log.</string>
+    <string name="see_my_plan">See my plan</string>
     <string name="try_again">Try again</string>
     <string name="back_to_profile">Back to profile</string>
     <string name="missed">Missed</string>
