@@ -11,20 +11,18 @@ import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
 import com.jericx.trainr.domain.model.withoutWeekNumber
 import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.model.WorkoutExercise
-import kotlin.math.ceil
+import com.jericx.trainr.domain.model.asDisplayText
 import kotlinx.serialization.json.Json
 
-// What the client's own answers make possible, so a plan that cannot be
-// performed is rejected while the model still has an attempt left to fix it.
+// What the client's own answers make possible: rejects a week the app's own
+// arithmetic should never produce.
 data class PlanLimits(
     val maxSetsPerSession: Int,
-    // Empty means the vocabulary is not being enforced, which is only true in
-    // tests: a real request always has a shortlist.
+    // Empty means unchecked, which only tests use.
     val allowedKeys: Set<String> = emptySet(),
     val requiredPatterns: Set<PatternRequirement> = emptySet(),
-    // Zero means unchecked, which is only true in tests: the set cap is a
-    // proxy for time and a timed set breaks it, so the minutes are what
-    // actually has to fit.
+    // Zero means unchecked, which only tests use: the set cap is a proxy for
+    // time and a timed set breaks it, so the minutes are what has to fit.
     val sessionMinutes: Int = 0,
     val sessionCeilingMinutes: Int = 0
 ) {
@@ -39,7 +37,7 @@ sealed interface PlanParseResult {
 }
 
 // The generator never writes ids, dates, week numbers or completion state, so
-// those arrive as parameters rather than JSON.
+// those arrive as parameters.
 class GeneratedPlanParser(private val catalog: ExerciseCatalog = InMemoryExerciseCatalog(emptyList())) {
 
     private val decoder = Json { ignoreUnknownKeys = true }
@@ -59,8 +57,6 @@ class GeneratedPlanParser(private val catalog: ExerciseCatalog = InMemoryExercis
         return parse(generated, userId, weekNumber, startDateMillis, limits)
     }
 
-    // The app's own plans take this door, so they are held to exactly the
-    // checks a model's answer is.
     fun parse(
         generated: GeneratedPlan,
         userId: Long,
@@ -166,8 +162,7 @@ class GeneratedPlanParser(private val catalog: ExerciseCatalog = InMemoryExercis
         }
     }
 
-    // Bounds, not tastes: a number outside these is one no client could
-    // perform, and it costs less to ask again than to show it to them.
+    // Bounds, not tastes: a number outside these is one no client could perform.
     private fun MutableList<String>.check(where: String, set: GeneratedSet, measure: ExerciseMeasure) {
         when (measure) {
             ExerciseMeasure.WEIGHT_AND_REPS, ExerciseMeasure.REPS ->
@@ -184,8 +179,6 @@ class GeneratedPlanParser(private val catalog: ExerciseCatalog = InMemoryExercis
         }
     }
 
-    // How long the exercise takes is arithmetic on what was prescribed, not a
-    // fourth number for the model to keep in agreement with the other three.
     // A rep is about three seconds at the moderate velocity ACSM asks for.
     private val GeneratedExercise.minutes: Int
         get() = SessionMinutes.forExercise(
@@ -204,13 +197,8 @@ class GeneratedPlanParser(private val catalog: ExerciseCatalog = InMemoryExercis
     private val GeneratedExercise.resolvedMeasure: ExerciseMeasure
         get() = catalog[exerciseKey]?.measure ?: ExerciseMeasure.REPS
 
-    private fun Equipment.asDisplayText() = name.lowercase()
-        .split('_')
-        .joinToString(" ") { part -> part.replaceFirstChar { it.uppercase() } }
-
     // The day's kit is the union of what its movements need, which the
-    // catalog already knows; asking a model to restate it only gave it a way
-    // to name equipment the client does not own.
+    // catalog already knows.
     private fun GeneratedDay.toDomain() = WorkoutDay(
         dayNumber = dayNumber,
         title = title,
@@ -250,7 +238,6 @@ class GeneratedPlanParser(private val catalog: ExerciseCatalog = InMemoryExercis
     }
 
     private companion object {
-        const val SECONDS_PER_REP = 3
         const val MAX_EXERCISES_PER_DAY = 12
         const val MAX_SETS_PER_EXERCISE = 10
         const val MIN_REPS = 1

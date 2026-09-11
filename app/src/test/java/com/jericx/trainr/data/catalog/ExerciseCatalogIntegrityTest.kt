@@ -222,7 +222,7 @@ class ExerciseCatalogIntegrityTest {
     }
 
     // A movement listing kit that is never offered on the setup screen can
-    // never be selected, so it is dead weight in every schema that carries it.
+    // never be selected, so it is dead weight in the catalog.
     @Test
     fun nothingRequiresEquipmentTheAppNeverAsksAbout() {
         val askedAbout = Equipment.entries.toSet()

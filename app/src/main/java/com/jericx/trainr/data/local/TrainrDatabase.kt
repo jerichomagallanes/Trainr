@@ -4,8 +4,6 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 
-// Version 1 with no migrations because nothing has shipped. From the first
-// upload onward, every schema change needs a migration and this number climbs.
 @Database(
     entities = [
         UserEntity::class,

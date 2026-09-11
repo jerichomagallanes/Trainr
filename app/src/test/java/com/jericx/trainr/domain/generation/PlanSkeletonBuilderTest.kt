@@ -106,8 +106,8 @@ class PlanSkeletonBuilderTest {
         }
     }
 
-    // The model chooses one key per slot. Two slots offering the same key
-    // could put one movement in a session twice.
+    // One key per slot; two slots offering the same key could put one
+    // movement in a session twice.
     @Test
     fun candidatesWithinADayAreNeverEmptyAndNeverShared() {
         everyAnswer().forEach { user ->
@@ -132,8 +132,7 @@ class PlanSkeletonBuilderTest {
         }
     }
 
-    // The prompt no longer says a word about injuries, so the filter is the
-    // whole mechanism and every injury needs its own proof.
+    // The filter is the whole mechanism, so every injury needs its own proof.
     @Test
     fun noCandidateListContainsAMovementContraindicatedForTheClientsInjuries() {
         Injury.entries.forEach { injury ->

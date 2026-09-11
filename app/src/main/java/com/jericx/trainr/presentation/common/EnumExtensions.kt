@@ -1,6 +1,5 @@
 package com.jericx.trainr.presentation.common
 
-import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.jericx.trainr.R

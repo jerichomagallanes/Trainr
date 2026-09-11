@@ -12,7 +12,6 @@ import kotlinx.serialization.json.Json
 
 @Serializable
 internal data class CatalogFile(
-    val version: Int = 1,
     // Read loosely on purpose: a row missing a field is one movement lost, not
     // a catalog, and the integrity test is what keeps the file honest.
     val exercises: List<CatalogEntry> = emptyList()

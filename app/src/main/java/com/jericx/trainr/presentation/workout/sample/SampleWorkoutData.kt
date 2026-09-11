@@ -35,39 +35,6 @@ object SampleWorkoutData {
         weekOne.workoutDays.firstOrNull { it.dayNumber == dayNumber }
             ?: weekOne.workoutDays.first()
 
-    fun freshWeekOne(userId: Long, startDateMillis: Long): WeeklyWorkoutPlan {
-        val now = System.currentTimeMillis()
-        return weekOne.copy(
-            id = 0,
-            userId = userId,
-            startDateMillis = startDateMillis,
-            workoutDays = weekOne.workoutDays.map { day ->
-                day.copy(
-                    id = 0,
-                    status = WorkoutStatus.NOT_STARTED,
-                    completedAt = null,
-                    exercises = day.exercises.map { exercise ->
-                        exercise.copy(
-                            id = 0,
-                            isCompleted = false,
-                            sets = exercise.sets.map {
-                                it.copy(
-                                    id = 0,
-                                    actualReps = null,
-                                    actualWeightKg = null,
-                                    actualSeconds = null,
-                                    isCompleted = false
-                                )
-                            }
-                        )
-                    }
-                )
-            },
-            createdAt = now,
-            updatedAt = now
-        )
-    }
-
     val weekOne: WeeklyWorkoutPlan
         get() = WeeklyWorkoutPlan(
             id = 1,

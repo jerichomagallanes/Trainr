@@ -13,8 +13,4 @@ class CrashlyticsBreadcrumbs : Breadcrumbs {
     override fun record(event: String) {
         crashlytics.log(event)
     }
-
-    override fun state(key: String, value: String) {
-        crashlytics.setCustomKey(key, value)
-    }
 }

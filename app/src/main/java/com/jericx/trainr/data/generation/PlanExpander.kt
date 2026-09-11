@@ -16,8 +16,7 @@ import com.jericx.trainr.domain.generation.SkeletonSlot
 
 // A skeleton plus whatever was chosen for it becomes a plan: the catalog says
 // what each movement is and how it is done, the engine says how much, and the
-// skeleton says how many sets and how long between them. Nothing here is
-// written by a model, so nothing here can be invented.
+// skeleton says how many sets and how long between them.
 class PlanExpander(private val catalog: ExerciseCatalog) {
 
     fun expand(skeleton: PlanSkeleton, selection: PlanSelection, request: PlanRequest): GeneratedPlan {
@@ -36,8 +35,8 @@ class PlanExpander(private val catalog: ExerciseCatalog) {
     ): GeneratedDay {
         val taken = mutableSetOf<String>()
         val exercises = day.slots.mapNotNull { slot ->
-            // A choice from outside the slot's list is not a choice the
-            // skeleton offered, so it is quietly the list's own first.
+            // A key the slot never offered, or one already used today, falls
+            // back to the slot's own list.
             val pick = chosen?.slots?.get(slot.id)?.takeIf { it in slot.candidates && it !in taken }
             val order = listOfNotNull(pick) + slot.candidates.filter { it != pick && it !in taken }
             fill(slot, order, day.dayNumber, request, deload)?.also { taken += it.exerciseKey }

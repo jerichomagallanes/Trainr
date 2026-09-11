@@ -2,14 +2,14 @@ package com.jericx.trainr.presentation.workout.model
 
 import com.jericx.trainr.domain.catalog.ExerciseCatalog
 import com.jericx.trainr.domain.catalog.InjuryGuard
-import com.jericx.trainr.domain.catalog.MuscleGroup
 import com.jericx.trainr.domain.model.ExerciseSet
 import com.jericx.trainr.domain.model.Injury
 import com.jericx.trainr.domain.model.WorkoutDay
+import com.jericx.trainr.domain.model.asDisplayText
 
 // What a movement is and how it is done come from the catalog; a stored week
-// only says which movement and how much. Copy a model once wrote is read only
-// where the catalog has nothing to say.
+// only says which movement and how much. Copy stored with the week is read
+// only where the catalog has nothing to say.
 fun WorkoutDay.toRoutineUi(
     previousByKey: Map<String, List<ExerciseSet>> = emptyMap(),
     catalog: ExerciseCatalog? = null,
@@ -37,10 +37,3 @@ fun WorkoutDay.toRoutineUi(
         )
     }
 )
-
-// Anatomy read off a controlled vocabulary, the same way the day's equipment
-// is: LOWER_BACK is Lower Back everywhere, so there is nothing to translate
-// that the enum does not already say.
-private fun MuscleGroup.asDisplayText(): String = name.lowercase()
-    .split('_')
-    .joinToString(" ") { part -> part.replaceFirstChar { it.uppercase() } }

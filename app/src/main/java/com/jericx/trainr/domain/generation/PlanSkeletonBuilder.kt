@@ -17,9 +17,7 @@ import com.jericx.trainr.domain.model.UserProfile
 
 // The shape of a week before anything picks a movement: which days, what each
 // session is for, how many movements, in what order, with how many sets and
-// what rest, and which movements could fill each place. A model then only
-// chooses among a handful of keys per slot, and with no model at all the top
-// of each list is already a week a coach would sign.
+// what rest, and which movements could fill each place.
 class PlanSkeletonBuilder(private val catalog: ExerciseCatalog) {
 
     fun build(request: PlanRequest): PlanSkeleton {
@@ -43,10 +41,8 @@ class PlanSkeletonBuilder(private val catalog: ExerciseCatalog) {
         return PlanSkeleton(
             title = titleFor(user),
             days = built,
-            units = user.weightUnits,
             maxSetsPerSession = SessionBudget.maxSetsPerSession(user),
             sessionCeilingMinutes = SessionBudget.sessionCeilingMinutes(user),
-            weeklySetsByRegion = week.setsByRegion(built),
             uncoveredPatterns = uncovered
         )
     }
@@ -168,18 +164,6 @@ class PlanSkeletonBuilder(private val catalog: ExerciseCatalog) {
                 focus = day.focus,
                 slots = day.slots.sortedBy { it.tier.ordinal }.map { it.toSlot() }
             )
-        }
-
-        fun setsByRegion(days: List<SkeletonDay>): Map<MuscleRegion, Float> {
-            val totals = mutableMapOf<MuscleRegion, Float>()
-            days.flatMap { it.slots }.forEach { slot ->
-                val top = slot.candidates.firstOrNull()?.let { catalog[it] } ?: return@forEach
-                top.primary.region.takeIf { it.isTrainable }?.let { totals.merge(it, slot.sets.toFloat(), Float::plus) }
-                top.secondary.map { it.region }.filter { it.isTrainable && it != top.primary.region }
-                    .distinct()
-                    .forEach { totals.merge(it, slot.sets * ASSIST_SHARE, Float::plus) }
-            }
-            return totals
         }
 
         private fun trimToCount(day: DayDraft, drop: List<String>) {
@@ -363,10 +347,7 @@ class PlanSkeletonBuilder(private val catalog: ExerciseCatalog) {
             val top = catalog[candidates.first()]
             return SkeletonSlot(
                 id = id,
-                label = labelOf(tier),
                 tier = tier,
-                patterns = patterns,
-                muscles = muscles,
                 candidates = candidates,
                 sets = sets,
                 restSeconds = restFor(this),
@@ -470,7 +451,7 @@ class PlanSkeletonBuilder(private val catalog: ExerciseCatalog) {
     }
 
     companion object {
-        const val MAX_CANDIDATES = 8
+        private const val MAX_CANDIDATES = 8
 
         private const val MAX_WEEKLY_USES = 3
         private const val MAX_SETS_PER_SLOT = 10
@@ -480,7 +461,6 @@ class PlanSkeletonBuilder(private val catalog: ExerciseCatalog) {
         private const val CONDITIONING_FLOOR_SECONDS = 300
         private const val CONDITIONING_STEP_SECONDS = 60
         private const val CONDITIONING_CEILING_SECONDS = 3600
-        private const val ASSIST_SHARE = 0.5f
         private const val WARM_UP_KEY = "warm_up"
 
         private val DayNumbers = mapOf(
@@ -594,17 +574,6 @@ class PlanSkeletonBuilder(private val catalog: ExerciseCatalog) {
             SlotTier.CORE -> "core"
             SlotTier.CONDITIONING -> "conditioning"
             SlotTier.MOBILITY -> "mobility_$instance"
-        }
-
-        private fun labelOf(tier: SlotTier): String = when (tier) {
-            SlotTier.WARM_UP -> "the warm-up"
-            SlotTier.PRIMARY_COMPOUND -> "the main lift"
-            SlotTier.SECONDARY_COMPOUND -> "the second lift"
-            SlotTier.ACCESSORY -> "the accessory lift"
-            SlotTier.ISOLATION -> "an isolation movement"
-            SlotTier.CORE -> "the core movement"
-            SlotTier.CONDITIONING -> "the conditioning"
-            SlotTier.MOBILITY -> "the cool-down"
         }
     }
 }

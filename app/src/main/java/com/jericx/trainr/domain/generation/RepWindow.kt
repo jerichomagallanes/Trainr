@@ -25,12 +25,6 @@ object RepWindow {
         return window.widenedFor(user)
     }
 
-    fun holdSeconds(user: UserProfile): IntRange = when (user.fitnessGoal) {
-        FitnessGoal.FLEXIBILITY -> 45..60
-        FitnessGoal.STRENGTH, FitnessGoal.MUSCLE_GAIN -> 30..45
-        else -> 30..60
-    }
-
     // How much load a successful week adds. Bigger muscles tolerate a bigger
     // jump than a lateral raise does.
     fun loadStepFraction(user: UserProfile, exercise: CatalogExercise): Float {

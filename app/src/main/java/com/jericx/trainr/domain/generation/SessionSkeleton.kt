@@ -1,10 +1,6 @@
 package com.jericx.trainr.domain.generation
 
-import com.jericx.trainr.domain.catalog.MovementPattern
-import com.jericx.trainr.domain.catalog.MuscleGroup
-import com.jericx.trainr.domain.catalog.MuscleRegion
 import com.jericx.trainr.domain.catalog.PatternRequirement
-import com.jericx.trainr.domain.model.UnitSystem
 
 // Session order. Whatever is trained first gains most (Nunes 2021), so the
 // tier a slot sits at is a fatigue rule, not a presentation choice.
@@ -30,12 +26,9 @@ enum class SessionFocus(val title: String, val isHard: Boolean = true) {
 }
 
 data class SkeletonSlot(
-    // Wire id, unique within its day: "primary", "isolation_2".
+    // Unique within its day: "primary", "isolation_2".
     val id: String,
-    val label: String,
     val tier: SlotTier,
-    val patterns: List<MovementPattern>,
-    val muscles: Set<MuscleGroup>,
     // Ranked, disjoint within the day, never empty.
     val candidates: List<String>,
     // The skeleton owns the set count and the rest. The engine may return
@@ -65,12 +58,8 @@ data class SkeletonDay(
 data class PlanSkeleton(
     val title: String,
     val days: List<SkeletonDay>,
-    val units: UnitSystem,
     val maxSetsPerSession: Int,
     val sessionCeilingMinutes: Int,
-    // What the week buys per region, counted the way SessionBudget counts:
-    // one for the muscle trained, half for each assisted.
-    val weeklySetsByRegion: Map<MuscleRegion, Float>,
     // Named so the caller stops asking for what the week cannot hold.
     val uncoveredPatterns: Set<PatternRequirement>
 ) {

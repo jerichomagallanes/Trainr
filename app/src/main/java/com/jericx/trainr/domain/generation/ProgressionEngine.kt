@@ -33,7 +33,6 @@ data class ProgressionRequest(
 
 data class ProgressionTarget(
     val sets: List<ExerciseSet>,
-    val repRange: IntRange? = null,
     // A guess the client's first session will correct, and the card says so.
     val isEstimate: Boolean = false,
     val outcome: ProgressionOutcome,
@@ -51,10 +50,9 @@ enum class ProgressionOutcome {
 // different exercise, not a harder one.
 enum class ProgressionNote { NEEDS_HARDER_VARIATION, LIGHTER_THAN_THE_BAR }
 
-// Next week's targets from what the client actually did. Every rule is here as
-// arithmetic because a model asked to do it in prose invents kilograms, and
-// because the default tick-off logs exactly the target: progression has to key
-// off hitting it, not beating it. docs/stage1-reshape.md section 2 is the table.
+// Next week's targets from what the client actually did. The default tick-off
+// logs exactly the target, so progression has to key off hitting it, not
+// beating it.
 object ProgressionEngine {
 
     fun next(request: ProgressionRequest): ProgressionTarget = Week(request).run {
@@ -343,7 +341,6 @@ object ProgressionEngine {
                 sets = setNumbers(sets).map {
                     ExerciseSet(setNumber = it, targetReps = reps.coerceIn(MIN_REPS, MAX_REPS), targetWeightKg = weight)
                 },
-                repRange = window,
                 isEstimate = estimate,
                 outcome = outcome,
                 notes = notes,
@@ -361,7 +358,6 @@ object ProgressionEngine {
             sets = setNumbers(sets).map {
                 ExerciseSet(setNumber = it, targetReps = reps.coerceIn(MIN_REPS, MAX_REPS))
             },
-            repRange = window,
             isEstimate = estimate,
             outcome = outcome,
             notes = notes

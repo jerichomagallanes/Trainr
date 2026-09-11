@@ -121,7 +121,6 @@ fun WeeklyPlanScreen(
     appearance: AppearanceMode = AppearanceMode.SYSTEM,
     onAppearanceChange: (AppearanceMode) -> Unit = {},
     onMoveDay: (Int, Int) -> Unit = { _, _ -> },
-    // Set only when a week was opened from Weekly Progress.
     onBackClick: (() -> Unit)? = null
 ) {
     // Any week but the newest is a record: its dates, order and contents are fixed.
@@ -174,7 +173,8 @@ fun WeeklyPlanScreen(
             }
         )
 
-        // A blank moment is honest where a stand-in week would read as the real thing.
+        // Nothing until the read lands: the state's sample defaults would
+        // otherwise draw as a real week.
         if (!state.hasLoaded) return@Column
 
         if (!state.hasPlan) {
@@ -622,10 +622,7 @@ private fun LeavePlanDialog(
 private fun WeeklyPlanScreenPreview() {
     TrainrTheme {
         WeeklyPlanScreen(
-            state = WeeklyPlanViewModel.stateFor(
-                plan = SampleWorkoutData.weekOne,
-                isSample = true
-            )
+            state = WeeklyPlanViewModel.stateFor(SampleWorkoutData.weekOne).copy(canAddWeek = false)
         )
     }
 }

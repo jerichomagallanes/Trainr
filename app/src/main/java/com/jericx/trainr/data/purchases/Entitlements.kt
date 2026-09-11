@@ -30,10 +30,8 @@ class Entitlements(
     var offering: Offering? = null
         private set
 
-    // Whether anything can actually be sold. The comment below used to claim the
-    // paid paths were left open when the key was unusable; nothing implemented
-    // that, so the free week simply ran out against a paywall with nothing on
-    // it. ProGate reads this and lets generation through instead.
+    // False when the store SDK never came up; ProGate lets generation through
+    // rather than sell nothing.
     val canSell: Boolean
         get() = Purchases.isConfigured
 
@@ -77,7 +75,7 @@ class Entitlements(
     }
 
     companion object {
-        const val ENTITLEMENT = "trainr_ai_workout_plans_pro"
+        private const val ENTITLEMENT = "trainr_ai_workout_plans_pro"
 
         // RevenueCat's test store key, and the same one iOS uses: it is
         // platform-agnostic and returns an offering without any Play products
@@ -86,9 +84,7 @@ class Entitlements(
         // secret key is never in the app.
         private const val API_KEY = "test_WMIQYjVmrPgWhTvqwpfnkobWhAB"
 
-        // A sandbox key validates nothing a real buyer does, so a release built
-        // against one refuses to configure and leaves every paid path open.
-        val keyIsShippable: Boolean
+        private val keyIsShippable: Boolean
             get() = BuildConfig.DEBUG || !API_KEY.startsWith("test_")
     }
 }

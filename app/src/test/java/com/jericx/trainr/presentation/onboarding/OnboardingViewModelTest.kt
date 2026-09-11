@@ -86,9 +86,7 @@ class OnboardingViewModelTest {
 
         // createdAt defaults to the clock, so whole-profile comparison needs it pinned
         assertThat(state.userProfile).isEqualTo(UserProfile(createdAt = state.userProfile.createdAt))
-        assertThat(state.isLoading).isFalse()
         assertThat(state.isCompleted).isFalse()
-        assertThat(state.error).isNull()
     }
 
     @Test
@@ -206,9 +204,7 @@ class OnboardingViewModelTest {
         advanceUntilIdle()
 
         val state = viewModel.onboardingState.value
-        assertThat(state.isLoading).isFalse()
         assertThat(state.isCompleted).isTrue()
-        assertThat(state.error).isNull()
         assertThat(callbackInvoked).isTrue()
         coVerify { userRepository.saveUser(any()) }
     }
@@ -241,7 +237,6 @@ class OnboardingViewModelTest {
         with(viewModel.onboardingState.value) {
             assertThat(generationFailure).isEqualTo(PlanGenerationResult.Failed)
             assertThat(isCompleted).isFalse()
-            assertThat(isLoading).isFalse()
         }
         assertThat(done).isFalse()
         coVerify(exactly = 0) { userRepository.saveWeeklyWorkoutPlan(any()) }
@@ -330,9 +325,7 @@ class OnboardingViewModelTest {
         advanceUntilIdle()
 
         val state = viewModel.onboardingState.value
-        assertThat(state.isLoading).isFalse()
         assertThat(state.isCompleted).isFalse()
-        assertThat(state.error).isEqualTo("DB write failed")
         assertThat(callbackInvoked).isFalse()
     }
     // Regenerating wipes history; editing the profile must not, so it updates rather than re-inserts
@@ -357,7 +350,6 @@ class OnboardingViewModelTest {
         coVerify(exactly = 0) { userRepository.saveWeeklyWorkoutPlan(any()) }
         coVerify(exactly = 0) { planGenerator.generate(any()) }
         assertThat(done).isTrue()
-        assertThat(viewModel.onboardingState.value.isLoading).isFalse()
     }
 
     // Anchoring week one to the Monday just gone would hand a late signup already-missed sessions

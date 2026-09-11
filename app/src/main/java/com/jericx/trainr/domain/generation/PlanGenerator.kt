@@ -20,8 +20,7 @@ sealed interface PlanGenerationResult {
     data class Generated(val plan: WeeklyWorkoutPlan) : PlanGenerationResult
 
     // Nothing to build from: an empty catalog, or a week the app's own checks
-    // turned down. Both are bugs rather than anything the client did, and
-    // neither depends on a network this no longer touches.
+    // turned down. Both are bugs rather than anything the client did.
     data object Failed : PlanGenerationResult
 }
 

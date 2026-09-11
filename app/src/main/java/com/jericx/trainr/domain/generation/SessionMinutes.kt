@@ -31,7 +31,6 @@ object SessionMinutes {
         return ceil((work * sides + rest) / 60.0).toInt().coerceAtLeast(1)
     }
 
-    // The day is its exercises plus the walk between them.
     fun forDay(exerciseMinutes: List<Int>): Int {
         if (exerciseMinutes.isEmpty()) return 0
         val transitions = (exerciseMinutes.size - 1) * TRANSITION_SECONDS

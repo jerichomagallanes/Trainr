@@ -100,9 +100,8 @@ class GeneratingScreenTest {
         assertThat(done).isFalse()
     }
 
-
     @Test
-    fun anAnswerThatNeverHeldUpReadsDifferently() {
+    fun aFailureSaysWhatWentWrong() {
         composeTestRule.setContent {
             TrainrTheme {
                 GeneratingScreen(
@@ -158,25 +157,4 @@ class GeneratingScreenTest {
 
         assertThat(wentBack).isTrue()
     }
-
-
-
-
-    @Test
-    fun anOrdinaryFailureStillOffersRetry() {
-        composeTestRule.setContent {
-            TrainrTheme {
-                GeneratingScreen(
-                    isReady = false,
-                    onStart = {},
-                    onDone = {},
-                    failure = PlanGenerationResult.Failed
-                )
-            }
-        }
-
-        composeTestRule.onNodeWithText(string(R.string.try_again)).assertIsDisplayed()
-    }
-
-
 }

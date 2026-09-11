@@ -1,7 +1,7 @@
 package com.jericx.trainr.presentation.workout.model
 
-// Hand-verified tutorials keyed by exerciseKey; the generator never writes video
-// URLs because a model can only invent ID-shaped strings.
+// Hand-verified tutorials keyed by exerciseKey; a stored week never carries
+// video URLs.
 object ExerciseVideoCatalog {
 
     fun urlFor(exerciseKey: String): String? =

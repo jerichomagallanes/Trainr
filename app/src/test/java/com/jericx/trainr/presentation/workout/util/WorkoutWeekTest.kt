@@ -35,7 +35,7 @@ class WorkoutWeekTest {
     fun aMidweekMomentBelongsToThatWeeksMonday() {
         val wednesdayNoon = millisOf(2026, Calendar.AUGUST, 26, hour = 12)
 
-        assertThat(WorkoutWeek.mondayOf(wednesdayNoon))
+        assertThat(mondayOf(wednesdayNoon))
             .isEqualTo(millisOf(2026, Calendar.AUGUST, 24))
     }
 
@@ -44,7 +44,7 @@ class WorkoutWeekTest {
     fun aSundayBelongsToTheMondayBeforeIt() {
         val sunday = millisOf(2026, Calendar.AUGUST, 30, hour = 23)
 
-        assertThat(WorkoutWeek.mondayOf(sunday))
+        assertThat(mondayOf(sunday))
             .isEqualTo(millisOf(2026, Calendar.AUGUST, 24))
     }
 
@@ -52,7 +52,7 @@ class WorkoutWeekTest {
     fun aMondayIsItsOwnWeekStart() {
         val mondayEvening = millisOf(2026, Calendar.AUGUST, 24, hour = 21)
 
-        assertThat(WorkoutWeek.mondayOf(mondayEvening))
+        assertThat(mondayOf(mondayEvening))
             .isEqualTo(millisOf(2026, Calendar.AUGUST, 24))
     }
 

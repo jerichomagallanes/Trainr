@@ -17,8 +17,6 @@ data class GeneratedDay(
     val exercises: List<GeneratedExercise>
 )
 
-// The chip and the copy default to blank: the app now works both out itself,
-// and only the remote model still writes them.
 @Serializable
 data class GeneratedExercise(
     val exerciseKey: String,

@@ -16,7 +16,7 @@ data class ExerciseUi(
     val previousSets: List<ExerciseSet> = emptyList(),
     val videoUrl: String? = null,
     // What the movement trains and how to perform it, both owned by the
-    // catalog rather than the model that wrote the week.
+    // catalog rather than stored with the week.
     val primaryMuscle: String = "",
     val secondaryMuscles: List<String> = emptyList(),
     val steps: List<String> = emptyList(),

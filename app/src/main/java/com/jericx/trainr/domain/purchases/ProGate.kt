@@ -1,8 +1,7 @@
 package com.jericx.trainr.domain.purchases
 
-// Whether a generation may start, kept apart from the navigation code so the
-// answer can be tested without a screen. A route that forgets to ask spends
-// real money on a model call.
+// Whether a generation may start, kept apart from navigation so the answer
+// can be tested without a screen.
 class ProGate(
     private val isPro: () -> Boolean,
     // False when the purchases layer never came up: no key it can validate, or
@@ -19,10 +18,11 @@ class ProGate(
         else -> Decision.ASK
     }
 
-    // Called once a week has actually arrived, whichever tier built it: the
-    // free week is a week of training, not a model call. Subscribers spend
-    // nothing, so their first week stays available if they ever lapse, and
-    // neither does anyone using a build that cannot sell them the alternative.
+    // Called once a week has actually arrived: the free week is a week of
+    // training, spent exactly once and only when something can be sold.
+    // Subscribers spend nothing, so their first week stays available if they
+    // ever lapse, and neither does anyone using a build that cannot sell them
+    // the alternative.
     fun spend() {
         if (canSell() && !isPro()) allowance.markUsed()
     }

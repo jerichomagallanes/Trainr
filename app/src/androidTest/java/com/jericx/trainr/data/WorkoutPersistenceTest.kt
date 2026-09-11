@@ -299,7 +299,7 @@ class WorkoutPersistenceTest {
     fun replacingAUserCascadesAwayTheirOldPlan() = runTest {
         val userId = seedSamplePlan()
 
-        repository.saveUser(repository.getUser(userId)!!.copy(firstName = "Again"))
+        repository.saveUser(repository.getCurrentUser()!!.copy(firstName = "Again"))
 
         assertThat(repository.getWeeklyWorkoutPlan(userId, 1)).isNull()
     }
