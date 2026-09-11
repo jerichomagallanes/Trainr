@@ -9,7 +9,7 @@ import com.jericx.trainr.domain.generation.PlanRequest
 import com.jericx.trainr.domain.generation.PlanSkeleton
 import com.jericx.trainr.domain.generation.PlanSkeletonBuilder
 import com.jericx.trainr.domain.generation.SkeletonSlot
-import kotlin.math.absoluteValue
+import kotlin.math.roundToInt
 
 // A whole week from the catalog: the skeleton, a movement for every slot, and
 // the engine's numbers.
@@ -82,7 +82,7 @@ class TemplatePlanGenerator(private val catalog: ExerciseCatalog) : PlanGenerato
         // Hashed together rather than xored: xor leaves the choice riding on the
         // seed's lowest bits, so with two candidates every slot in the week
         // turned on one bit and there were only ever two weeks to go round.
-        val offset = hash("$client:${slot.id}:$dayNumber").absoluteValue % best.size
+        val offset = (hash("$client:${slot.id}:$dayNumber").toUInt() % best.size.toUInt()).toInt()
         return best.drop(offset) + best.take(offset) + pool.drop(VARIETY_DEPTH)
     }
 
@@ -92,18 +92,21 @@ class TemplatePlanGenerator(private val catalog: ExerciseCatalog) : PlanGenerato
     // answer could then buy a shorter session.
     private fun seedOf(request: PlanRequest): Int {
         val user = request.user
-        val answers = listOf(
-            user.id, user.age, user.weight, user.gender, user.fitnessGoal, user.experienceLevel,
-            user.availableEquipment.sortedBy { it.name }, user.injuries.sortedBy { it.name }
-        ).joinToString("|")
-        // Regenerating is a request for a different cast. Folded into the text
-        // rather than xored onto the result: a low bit has to move, and the
-        // rotation only ever reads the low bits.
-        return hash(if (request.freshCast) "$answers|again:${request.weekNumber}" else answers)
+        val answers = buildString {
+            append(user.id).append(';').append(user.age).append(';')
+            append((user.weight * 10).roundToInt()).append(';')
+            append(user.gender.name).append(';').append(user.fitnessGoal.name).append(';')
+            append(user.experienceLevel.name).append(';')
+            append(user.availableEquipment.map { it.name }.sorted().joinToString(",")).append(';')
+            append(user.injuries.map { it.name }.sorted().joinToString(","))
+            // Regenerating is a request for a different cast.
+            if (request.freshCast) append(";again:").append(request.weekNumber)
+        }
+        return hash(answers)
     }
 
-    // Written out rather than String.hashCode() so both platforms rotate
-    // identically: Swift's hashing is seeded per process and would not agree.
+    // Written out so Swift can run the same algorithm: its own string hashing
+    // is seeded per process and would give a different week on every launch.
     private fun hash(text: String): Int {
         var h = FNV_OFFSET
         text.forEach { h = (h xor it.code) * FNV_PRIME }
