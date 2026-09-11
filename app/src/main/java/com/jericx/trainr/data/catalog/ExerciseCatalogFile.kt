@@ -29,6 +29,7 @@ internal data class CatalogEntry(
     val pattern: String = "",
     val staple: Boolean = false,
     val unilateral: Boolean = false,
+    val oneHanded: Boolean = false,
     val summary: String = "",
     val steps: List<String> = emptyList()
 )
@@ -60,6 +61,7 @@ object ExerciseCatalogReader {
             pattern = pattern,
             staple = staple,
             unilateral = unilateral,
+            oneHanded = oneHanded,
             summary = summary,
             steps = steps
         )

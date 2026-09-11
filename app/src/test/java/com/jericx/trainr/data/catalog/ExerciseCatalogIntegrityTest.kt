@@ -14,6 +14,14 @@ import com.jericx.trainr.domain.catalog.role
 import com.jericx.trainr.domain.model.ExerciseMeasure
 import com.jericx.trainr.domain.catalog.InjuryGuard
 import com.jericx.trainr.domain.model.Injury
+import com.google.common.truth.Truth.assertWithMessage
+import com.jericx.trainr.domain.generation.LoadStep
+import com.jericx.trainr.domain.generation.ProgressionEngine
+import com.jericx.trainr.domain.generation.ProgressionRequest
+import com.jericx.trainr.domain.model.ExperienceLevel
+import com.jericx.trainr.domain.model.FitnessGoal
+import com.jericx.trainr.domain.model.Gender
+import com.jericx.trainr.domain.model.UserProfile
 
 // The catalog is data, and data that ships wrong is a plan that reads wrong.
 // These hold the file itself to account rather than the code that reads it.
@@ -324,5 +332,43 @@ class ExerciseCatalogIntegrityTest {
         assertThat(left.any { it.pattern.isLowerPush }).isTrue()
         assertThat(left.any { it.pattern.isPush }).isTrue()
         assertThat(left.any { it.pattern.isPull }).isTrue()
+    }
+
+    // The engine calibrates every movement for whoever turns up; none of those
+    // first weeks may carry a number the parser would reject or the kit
+    // cannot make.
+    @Test
+    fun everyMovementCalibratesToNumbersTheParserAccepts() {
+        val people = listOf(
+            UserProfile(age = 30, gender = Gender.MALE, weight = 110f,
+                fitnessGoal = FitnessGoal.STRENGTH, experienceLevel = ExperienceLevel.ADVANCED),
+            UserProfile(age = 72, gender = Gender.FEMALE, weight = 45f,
+                fitnessGoal = FitnessGoal.ENDURANCE, experienceLevel = ExperienceLevel.BEGINNER),
+            UserProfile(age = 15, gender = Gender.PREFER_NOT_TO_SAY, weight = 55f,
+                fitnessGoal = FitnessGoal.FLEXIBILITY, experienceLevel = ExperienceLevel.BEGINNER)
+        )
+
+        catalog.all.forEach { movement ->
+            people.forEach { person ->
+                val target = ProgressionEngine.next(ProgressionRequest(person, movement, sets = 3))
+                val where = "${movement.key} for ${person.fitnessGoal}"
+
+                assertWithMessage(where).that(target.sets).isNotEmpty()
+                target.sets.forEach { set ->
+                    when (movement.measure) {
+                        ExerciseMeasure.DURATION ->
+                            assertWithMessage(where).that(set.targetSeconds in 5..5400).isTrue()
+                        else -> assertWithMessage(where).that(set.targetReps in 1..100).isTrue()
+                    }
+                    set.targetWeightKg?.let { kg ->
+                        assertWithMessage(where).that(kg).isAtLeast(0.5f)
+                        assertWithMessage(where).that(kg).isAtMost(LoadStep.ceilingKg(movement.equipment))
+                    }
+                    if (movement.measure == ExerciseMeasure.WEIGHT_AND_REPS) {
+                        assertWithMessage(where).that(set.targetWeightKg).isNotNull()
+                    }
+                }
+            }
+        }
     }
 }

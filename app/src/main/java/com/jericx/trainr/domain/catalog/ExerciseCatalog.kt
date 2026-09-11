@@ -19,6 +19,9 @@ data class CatalogExercise(
     // costs twice the time and the chip has to say so. A walking lunge
     // alternates inside the set and is not one of these.
     val unilateral: Boolean = false,
+    // One dumbbell rather than a pair. weightKg is always the one bell in the
+    // hand, so this is what says whether a seed for the whole load is halved.
+    val oneHanded: Boolean = false,
     // One line for the card and the how-to behind a tap, both owned by the
     // catalog so a form cue can never be generated. Empty where the movement
     // is an activity with no technique to describe.
