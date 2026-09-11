@@ -95,6 +95,40 @@ class TemplatePlanGeneratorTest {
         assertThat(second.workoutDays).isEqualTo(first.workoutDays)
     }
 
+    // Asking for more time never buys a shorter session. Where the catalog
+    // runs out of things to fill a long one it plateaus; it never shrinks.
+    @Test
+    fun aLongerAnswerNeverGetsAShorterSession() {
+        val kits = listOf(listOf(Equipment.NONE), listOf(Equipment.DUMBBELL), Equipment.entries.toList())
+        FitnessGoal.entries.forEach { goal ->
+            kits.forEach { kit ->
+                listOf(3, 5).forEach { days ->
+                    val shortest = listOf(30, 45, 60, 90).map { minutes ->
+                        planFor(user(goal, days, minutes, kit)).workoutDays.minOf { it.duration }
+                    }
+                    assertWithMessage("$goal $kit ${days}d").that(shortest).isInOrder()
+                }
+            }
+        }
+    }
+
+    // Weight loss and endurance take the rest of the session as conditioning,
+    // so their sessions are the length that was asked for, never past it and
+    // never a fraction of it.
+    @Test
+    fun aWeightLossSessionIsAboutTheLengthThatWasAskedFor() {
+        listOf(FitnessGoal.WEIGHT_LOSS, FitnessGoal.ENDURANCE).forEach { goal ->
+            listOf(listOf(Equipment.NONE), Equipment.entries.toList()).forEach { kit ->
+                listOf(30, 45, 60, 90).forEach { minutes ->
+                    planFor(user(goal, 3, minutes, kit)).workoutDays.forEach { day ->
+                        assertWithMessage("$goal $kit ${minutes}m day ${day.dayNumber}")
+                            .that(day.duration).isIn(minutes * 3 / 4..minutes)
+                    }
+                }
+            }
+        }
+    }
+
     // A week done in full is progressed from: the second week is not the
     // first week again.
     @Test
