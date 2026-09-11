@@ -4,6 +4,12 @@ import androidx.room.Room
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
+import com.jericx.trainr.data.catalog.ExerciseCatalogReader
+import com.jericx.trainr.data.generation.TemplatePlanGenerator
+import com.jericx.trainr.domain.generation.PlanGenerationResult
+import com.jericx.trainr.domain.generation.PlanRequest
+import com.jericx.trainr.domain.model.Equipment
+import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
 import com.jericx.trainr.data.local.TrainrDatabase
 import com.jericx.trainr.data.local.UserMapper
 import com.jericx.trainr.data.repository.UserRepositoryImpl
@@ -44,6 +50,33 @@ class WorkoutPersistenceTest {
         val plan = SampleWorkoutData.weekOne.copy(id = 0, userId = userId)
         repository.saveWeeklyWorkoutPlan(plan)
         return userId
+    }
+
+    // The week the app builds needs no column Room does not already have:
+    // every target it works out comes back exactly as it went in.
+    @Test
+    fun aWeekTheAppBuiltComesBackExactlyAsItWasSaved() = runTest {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val catalog = ExerciseCatalogReader.read(
+            context.assets.open("exercise-catalog.json").bufferedReader().readText()
+        )
+        val profile = UserProfile(firstName = "Jericho", age = 30, weight = 80f, availableEquipment = Equipment.entries.toList())
+        val userId = repository.saveUser(profile)
+        val built = (TemplatePlanGenerator(catalog).generate(PlanRequest(profile.copy(id = userId), 1, 0L))
+            as PlanGenerationResult.Generated).plan
+        repository.saveWeeklyWorkoutPlan(built.copy(userId = userId))
+
+        val stored = repository.getWeeklyWorkoutPlan(userId, weekNumber = 1)!!
+
+        fun shape(plan: WeeklyWorkoutPlan) = plan.workoutDays.map { day ->
+            listOf(day.dayNumber, day.title, day.exercises.map { exercise ->
+                listOf(
+                    exercise.exerciseKey, exercise.measure, exercise.instructions,
+                    exercise.sets.map { listOf(it.targetReps, it.targetWeightKg, it.targetSeconds) }
+                )
+            })
+        }
+        assertThat(shape(stored)).isEqualTo(shape(built))
     }
 
     @Test

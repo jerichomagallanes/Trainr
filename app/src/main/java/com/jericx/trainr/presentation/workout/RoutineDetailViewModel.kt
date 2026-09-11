@@ -114,7 +114,7 @@ class RoutineDetailViewModel @Inject constructor(
                     .filterValues { sets -> sets.isNotEmpty() }
                 _uiState.value = RoutineDetailUiState(
                     unitSystem = units,
-                    routine = day.toRoutineUi(previousByKey, units, catalog),
+                    routine = day.toRoutineUi(previousByKey, catalog, user?.injuries.orEmpty()),
                     equipment = day.equipment,
                     dateMillis = plan.startDateMillis
                         ?.let { WorkoutWeek.dateOfDay(it, day.dayNumber) }

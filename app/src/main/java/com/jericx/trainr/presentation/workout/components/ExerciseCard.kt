@@ -40,7 +40,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import com.jericx.trainr.presentation.workout.util.asText
-import com.jericx.trainr.domain.generation.Prescription
+import com.jericx.trainr.presentation.common.cautionText
 
 @Composable
 fun ExerciseCard(
@@ -145,11 +145,23 @@ fun ExerciseCard(
                     )
                 }
 
-                Text(
-                    text = exercise.description,
-                    style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 18.sp),
-                    color = colors.onSurface
-                )
+                if (exercise.description.isNotBlank()) {
+                    Text(
+                        text = exercise.description,
+                        style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 18.sp),
+                        color = colors.onSurface
+                    )
+                }
+
+                // One line, for the first injury the client declared that this
+                // movement asks care with.
+                exercise.caution?.let { injury ->
+                    Text(
+                        text = injury.cautionText(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.dangerInk
+                    )
+                }
             }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -169,11 +181,7 @@ fun ExerciseCard(
                     color = colors.onSurface,
                     modifier = Modifier.padding(start = Spacing.extraSmall)
                 )
-                // A plan the app wrote itself carries no chip text; the sets
-                // below it say what it would have said.
-                val chip = exercise.detail.ifBlank {
-                    Prescription.of(exercise.sets, exercise.measure).asText()
-                }
+                val chip = exercise.prescription.asText()
                 if (chip.isNotBlank()) {
                     Text(
                         text = chip,
@@ -183,6 +191,17 @@ fun ExerciseCard(
                             .weight(1f, fill = false)
                             .padding(start = Spacing.small)
                             .background(colors.surfaceEmphasis, MaterialTheme.shapes.medium)
+                            .padding(horizontal = Spacing.tight, vertical = 3.dp)
+                    )
+                }
+                if (exercise.isEstimated) {
+                    Text(
+                        text = stringResource(R.string.estimated_weight),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.onSurfaceMuted,
+                        modifier = Modifier
+                            .padding(start = Spacing.small)
+                            .border(1.dp, colors.cardEdge, MaterialTheme.shapes.medium)
                             .padding(horizontal = Spacing.tight, vertical = 3.dp)
                     )
                 }

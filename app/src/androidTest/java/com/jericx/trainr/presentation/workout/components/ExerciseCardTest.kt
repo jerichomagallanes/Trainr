@@ -10,6 +10,9 @@ import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.R
+import com.jericx.trainr.domain.model.Injury
+import com.jericx.trainr.domain.model.ExerciseSet
+import com.jericx.trainr.domain.model.ExerciseMeasure
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 import com.jericx.trainr.presentation.workout.model.ExerciseUi
 import com.jericx.trainr.presentation.workout.model.toRoutineUi
@@ -41,7 +44,7 @@ class ExerciseCardTest {
         setCard(sampleExercises[1])
 
         composeTestRule.onNodeWithText("High-Intensity Intervals").assertIsDisplayed()
-        composeTestRule.onNodeWithText("5 sets of 1 minute").assertIsDisplayed()
+        composeTestRule.onNodeWithText("5 sets of 60 seconds").assertIsDisplayed()
         composeTestRule.onNodeWithText("10 mins").assertIsDisplayed()
         // The set rows are numbered too, so the badge is not the only "2" on the card.
         assertThat(
@@ -119,5 +122,38 @@ class ExerciseCardTest {
         setCard(unknown)
 
         composeTestRule.onNodeWithText("\u00b7", substring = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun aMovementAnInjuryAsksCareWithSaysWhatToWatch() {
+        setCard(sampleExercises[0].copy(caution = Injury.KNEE))
+
+        composeTestRule.onNodeWithText(string(R.string.caution_knee)).assertIsDisplayed()
+    }
+
+    @Test
+    fun aWeightNeverLiftedBeforeIsMarkedAsAGuess() {
+        val weighted = sampleExercises[0].copy(
+            measure = ExerciseMeasure.WEIGHT_AND_REPS,
+            sets = listOf(ExerciseSet(setNumber = 1, targetReps = 10, targetWeightKg = 20f)),
+            previousSets = emptyList()
+        )
+
+        setCard(weighted)
+
+        composeTestRule.onNodeWithText(string(R.string.estimated_weight)).assertIsDisplayed()
+    }
+
+    @Test
+    fun aWeightLiftedBeforeIsNotCalledAGuess() {
+        val weighted = sampleExercises[0].copy(
+            measure = ExerciseMeasure.WEIGHT_AND_REPS,
+            sets = listOf(ExerciseSet(setNumber = 1, targetReps = 10, targetWeightKg = 20f)),
+            previousSets = listOf(ExerciseSet(setNumber = 1, actualReps = 10, actualWeightKg = 20f, isCompleted = true))
+        )
+
+        setCard(weighted)
+
+        composeTestRule.onNodeWithText(string(R.string.estimated_weight)).assertDoesNotExist()
     }
 }

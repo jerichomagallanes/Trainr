@@ -1,6 +1,7 @@
 package com.jericx.trainr.presentation.workout.model
 
 import com.google.common.truth.Truth.assertThat
+import com.jericx.trainr.domain.generation.Prescription
 import com.jericx.trainr.domain.model.ExerciseMeasure
 import com.jericx.trainr.domain.model.ExerciseSet
 import org.junit.Test
@@ -12,7 +13,6 @@ class RoutineUiTest {
         name = "Exercise $position",
         description = "Description $position",
         minutes = minutes,
-        detail = "$minutes minutes",
         isCompleted = isCompleted
     )
 
@@ -292,5 +292,22 @@ class RoutineUiTest {
         assertThat(routineWithSets().hasProgress).isFalse()
         assertThat(routineWithSets().completeAll().hasProgress).isTrue()
         assertThat(routineWithSets().completeAll().clearProgress().hasProgress).isFalse()
+    }
+
+    @Test
+    fun addingOrRemovingASetReReadsTheChip() {
+        val routine = routineWithSets()
+
+        assertThat((routine.addSet(1).exercises.first().prescription as Prescription.Fixed).setCount).isEqualTo(4)
+        assertThat((routine.removeSet(1, 3).exercises.first().prescription as Prescription.Fixed).setCount).isEqualTo(2)
+    }
+
+    @Test
+    fun clearingTheDaysProgressLeavesTheChipAlone() {
+        val untouched = routineWithSets().exercises.first().prescription
+
+        val cleared = routineWithSets().tickEverySetOf(1).toggleCompleted(1)
+
+        assertThat(cleared.exercises.first().prescription).isEqualTo(untouched)
     }
 }
