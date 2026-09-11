@@ -1,6 +1,7 @@
 package com.jericx.trainr.domain.purchases
 
 import com.google.common.truth.Truth.assertThat
+import com.jericx.trainr.domain.generation.PlanSource
 import org.junit.Test
 
 class ProGateTests {
@@ -39,7 +40,7 @@ class ProGateTests {
         val gate = ProGate(isPro = { false }, canSell = { true }, allowance = allowance)
 
         assertThat(gate.decide()).isEqualTo(ProGate.Decision.ALLOWED)
-        gate.spend()
+        gate.spend(PlanSource.COACH)
 
         assertThat(allowance.used).isTrue()
         assertThat(gate.decide()).isEqualTo(ProGate.Decision.ASK)
@@ -57,7 +58,7 @@ class ProGateTests {
     @Test
     fun `a build that cannot sell spends nothing`() {
         val allowance = FakeAllowance()
-        ProGate(isPro = { false }, canSell = { false }, allowance = allowance).spend()
+        ProGate(isPro = { false }, canSell = { false }, allowance = allowance).spend(PlanSource.COACH)
 
         assertThat(allowance.used).isFalse()
     }
@@ -66,8 +67,24 @@ class ProGateTests {
     @Test
     fun `a subscriber spends nothing`() {
         val allowance = FakeAllowance()
-        ProGate(isPro = { true }, canSell = { true }, allowance = allowance).spend()
+        ProGate(isPro = { true }, canSell = { true }, allowance = allowance).spend(PlanSource.COACH)
 
         assertThat(allowance.used).isFalse()
+    }
+
+    @Test
+    fun `a week built in place of the coach's spends nothing`() {
+        val allowance = FakeAllowance()
+        ProGate(isPro = { false }, canSell = { true }, allowance = allowance).spend(PlanSource.TEMPLATE)
+
+        assertThat(allowance.used).isFalse()
+    }
+
+    @Test
+    fun `a week carried forward spends the free week like a coached one`() {
+        val allowance = FakeAllowance()
+        ProGate(isPro = { false }, canSell = { true }, allowance = allowance).spend(PlanSource.PROGRESSED)
+
+        assertThat(allowance.used).isTrue()
     }
 }

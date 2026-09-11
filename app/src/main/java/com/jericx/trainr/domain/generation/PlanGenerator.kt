@@ -9,7 +9,9 @@ data class PlanRequest(
     val startDateMillis: Long,
     // Newest first. A stall is two short weeks and a ramp back spans three,
     // so one previous week is not enough to progress from.
-    val history: List<WeeklyWorkoutPlan> = emptyList()
+    val history: List<WeeklyWorkoutPlan> = emptyList(),
+    // New movements were asked for, so last week's are not carried into it.
+    val freshCast: Boolean = false
 ) {
     val previousWeek: WeeklyWorkoutPlan? get() = history.firstOrNull()
 }

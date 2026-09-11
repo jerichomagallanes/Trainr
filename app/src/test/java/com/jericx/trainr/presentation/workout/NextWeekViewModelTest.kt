@@ -107,6 +107,7 @@ class NextWeekViewModelTest {
         advanceUntilIdle()
 
         assertThat(request.captured.weekNumber).isEqualTo(2)
+        assertThat(request.captured.freshCast).isFalse()
         assertThat(request.captured.previousWeek).isEqualTo(finishedWeek)
         assertThat(request.captured.startDateMillis)
             .isEqualTo(WorkoutWeek.dateOfDay(weekOneStart, 8))
@@ -226,6 +227,7 @@ class NextWeekViewModelTest {
         assertThat(request.captured.weekNumber).isEqualTo(2)
         assertThat(request.captured.startDateMillis).isEqualTo(current.startDateMillis)
         assertThat(request.captured.previousWeek?.weekNumber).isEqualTo(1)
+        assertThat(request.captured.freshCast).isTrue()
         coVerify { userRepository.deleteWeeklyWorkoutPlan(10) }
         coVerify { userRepository.saveWeeklyWorkoutPlan(replacement) }
     }

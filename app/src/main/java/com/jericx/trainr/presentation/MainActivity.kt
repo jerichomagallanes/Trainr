@@ -50,7 +50,6 @@ import com.jericx.trainr.presentation.onboarding.OnboardingViewModel
 import com.jericx.trainr.presentation.onboarding.screens.BasicInfoScreen
 import com.jericx.trainr.presentation.onboarding.screens.BodyMetricsScreen
 import com.jericx.trainr.presentation.onboarding.screens.FitnessGoalScreen
-import com.jericx.trainr.domain.generation.PlanSource
 import com.jericx.trainr.domain.purchases.ProGate
 import com.jericx.trainr.presentation.onboarding.screens.GeneratingScreen
 import com.jericx.trainr.presentation.purchases.PaywallReason
@@ -420,10 +419,10 @@ fun AppContent(
                         isReady = onboardingState.isCompleted,
                         onStart = { onboardingViewModel.saveUserProfile() },
                         onDone = {
-                            // Spent here and nowhere earlier, and only on a week
-                            // the coach wrote: a failed generation, or a week the
-                            // app built itself, has cost nothing.
-                            if (onboardingState.planSource == PlanSource.COACH) proGate.spend()
+                            // Spent here and nowhere earlier, so a failed generation
+                            // costs nothing. What the week that arrived costs is
+                            // ProGate's to say.
+                            onboardingState.planSource?.let(proGate::spend)
                             navController.navigate(Screen.Home.route) {
                                 popUpTo(0) { inclusive = true }
                             }
@@ -580,10 +579,10 @@ fun AppContent(
                         isReady = weekIsReady,
                         onStart = { nextWeekViewModel.regenerateThisWeek() },
                         onDone = {
-                            // Spent here and nowhere earlier, and only on a week
-                            // the coach wrote: a failed generation, or a week the
-                            // app built itself, has cost nothing.
-                            if (source == PlanSource.COACH) proGate.spend()
+                            // Spent here and nowhere earlier, so a failed generation
+                            // costs nothing. What the week that arrived costs is
+                            // ProGate's to say.
+                            source?.let(proGate::spend)
                             navController.navigate(Screen.Home.route) {
                                 popUpTo(0) { inclusive = true }
                             }
@@ -604,10 +603,10 @@ fun AppContent(
                         isReady = weekIsReady,
                         onStart = { nextWeekViewModel.generateNextWeek() },
                         onDone = {
-                            // Spent here and nowhere earlier, and only on a week
-                            // the coach wrote: a failed generation, or a week the
-                            // app built itself, has cost nothing.
-                            if (source == PlanSource.COACH) proGate.spend()
+                            // Spent here and nowhere earlier, so a failed generation
+                            // costs nothing. What the week that arrived costs is
+                            // ProGate's to say.
+                            source?.let(proGate::spend)
                             navController.navigate(Screen.Home.route) {
                                 popUpTo(0) { inclusive = true }
                             }
