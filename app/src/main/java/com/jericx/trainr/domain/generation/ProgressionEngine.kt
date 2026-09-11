@@ -25,7 +25,10 @@ data class ProgressionRequest(
     val nowMillis: Long = 0L,
     val deload: Boolean = false,
     // The movement touches an injury the client declared.
-    val cautioned: Boolean = false
+    val cautioned: Boolean = false,
+    // What the day budgeted for a timed set. Conditioning starts there, so
+    // the block the session was fitted around is the block prescribed.
+    val secondsBudget: Int? = null
 )
 
 data class ProgressionTarget(
@@ -189,7 +192,8 @@ object ProgressionEngine {
                 return secondsTarget(seconds, askedSets, outcome)
             }
             val conditioning = exercise.primary == MuscleGroup.CARDIO
-            val seed = if (conditioning) SeedLoad.conditioningSeconds(user) else SeedLoad.holdSeconds(user)
+            val seed = if (conditioning) request.secondsBudget ?: SeedLoad.conditioningSeconds(user)
+            else SeedLoad.holdSeconds(user)
 
             if (sessions.isEmpty()) {
                 return secondsTarget(seed, askedSets, ProgressionOutcome.CALIBRATED, estimate = true)
