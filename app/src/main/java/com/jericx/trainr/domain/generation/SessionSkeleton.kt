@@ -75,4 +75,9 @@ data class PlanSkeleton(
     val uncoveredPatterns: Set<PatternRequirement>
 ) {
     val allowedKeys: Set<String> get() = days.flatMap { day -> day.slots.flatMap { it.candidates } }.toSet()
+
+    // The patterns the week was actually dealt, which is what a finished plan
+    // is held to.
+    val requiredPatterns: Set<PatternRequirement>
+        get() = days.flatMap { day -> day.slots.mapNotNull { it.required } }.toSet()
 }

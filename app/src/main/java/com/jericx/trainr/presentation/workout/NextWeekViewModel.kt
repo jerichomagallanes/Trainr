@@ -91,11 +91,10 @@ class NextWeekViewModel @Inject constructor(
                         user = user,
                         weekNumber = current.weekNumber,
                         startDateMillis = current.startDateMillis ?: WorkoutWeek.startOfDay(),
-                        // The week before this one, so a replacement still
+                        // The weeks before this one, so a replacement still
                         // progresses from what was actually lifted.
-                        previousWeek = plans.firstOrNull {
-                            it.weekNumber == current.weekNumber - 1
-                        }
+                        history = plans.filter { it.weekNumber < current.weekNumber }
+                            .sortedByDescending { it.weekNumber }
                     )
                 )
 
@@ -129,10 +128,11 @@ class NextWeekViewModel @Inject constructor(
     private suspend fun generate() {
             // Nothing to build on, or the week already exists: either way the
             // client is where they wanted to be.
-            val (user, latest) = nextWeekFrom() ?: run {
+            val (user, plans) = nextWeekFrom() ?: run {
                 _isReady.value = true
                 return
             }
+            val latest = plans.first()
             val nextNumber = latest.weekNumber + 1
             val start = startAfter(latest)
             val result = planGenerator.generate(
@@ -140,7 +140,7 @@ class NextWeekViewModel @Inject constructor(
                     user = user,
                     weekNumber = nextNumber,
                     startDateMillis = start,
-                    previousWeek = latest
+                    history = plans
                 )
             )
 
@@ -155,14 +155,17 @@ class NextWeekViewModel @Inject constructor(
 
     // Null when the week after this one already exists, so revisiting the
     // completion screen cannot stack duplicates.
-    private suspend fun nextWeekFrom(): Pair<UserProfile, WeeklyWorkoutPlan>? {
+    // Every stored week, newest first, so the next one can progress from more
+    // than the last.
+    private suspend fun nextWeekFrom(): Pair<UserProfile, List<WeeklyWorkoutPlan>>? {
         val user = userRepository.getCurrentUser() ?: return null
-        val latest = userRepository.getWeeklyWorkoutPlans(user.id).first()
-            .maxByOrNull { it.weekNumber } ?: return null
+        val plans = userRepository.getWeeklyWorkoutPlans(user.id).first()
+            .sortedByDescending { it.weekNumber }
+        val latest = plans.firstOrNull() ?: return null
         // Enforced at the write as well as shown: a screen may forget to ask.
         if (!latest.isReadyForTheNextWeek()) return null
         if (userRepository.getWeeklyWorkoutPlan(user.id, latest.weekNumber + 1) != null) return null
-        return user to latest
+        return user to plans
     }
 
     // Never overlaps the week it follows and never starts in the past: someone

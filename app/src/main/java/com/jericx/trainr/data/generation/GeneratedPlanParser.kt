@@ -56,7 +56,18 @@ class GeneratedPlanParser(private val catalog: ExerciseCatalog = InMemoryExercis
         } catch (e: IllegalArgumentException) {
             return PlanParseResult.Invalid(listOf("not a generated plan: ${e.message}"))
         }
+        return parse(generated, userId, weekNumber, startDateMillis, limits)
+    }
 
+    // The app's own plans take this door, so they are held to exactly the
+    // checks a model's answer is.
+    fun parse(
+        generated: GeneratedPlan,
+        userId: Long,
+        weekNumber: Int,
+        startDateMillis: Long,
+        limits: PlanLimits = PlanLimits.Unbounded
+    ): PlanParseResult {
         val errors = buildList { check(generated, limits) }
         if (errors.isNotEmpty()) return PlanParseResult.Invalid(errors)
 
@@ -143,8 +154,6 @@ class GeneratedPlanParser(private val catalog: ExerciseCatalog = InMemoryExercis
         if (catalog[exercise.exerciseKey] == null && limits.allowedKeys.isNotEmpty()) {
             add("$where: '${exercise.exerciseKey}' is not a movement the app knows")
         }
-        if (exercise.prescription.isBlank()) add("$where: prescription is blank")
-        if (exercise.instructions.isBlank()) add("$where: instructions are blank")
         if (exercise.restSeconds != null && exercise.restSeconds !in MIN_REST..MAX_REST) {
             add("$where: restSeconds must be $MIN_REST..$MAX_REST")
         }

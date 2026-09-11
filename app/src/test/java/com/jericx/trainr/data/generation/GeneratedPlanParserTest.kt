@@ -358,16 +358,18 @@ class GeneratedPlanParserTest {
         assertThat(errors).containsExactly("day 3, warm_up_jog: has no sets")
     }
 
+    // An answer is sent back with every problem it has, so one retry can fix
+    // them all rather than one each.
     @Test
     fun everyProblemIsReportedNotJustTheFirst() {
         val errors = errorsOf(
-            goodJsonWith("\"prescription\": \"5 minutes\"", "\"prescription\": \"\"")
-                .replace("\"instructions\": \"Alternate elbow to knee.\"", "\"instructions\": \" \"")
+            goodJsonWith("\"restSeconds\": 30,", "\"restSeconds\": -30,")
+                .replace("\"weightKg\": 22.5", "\"weightKg\": 0")
         )
 
         assertThat(errors).containsExactly(
-            "day 3, warm_up_jog: prescription is blank",
-            "day 3, bicycle_crunch: instructions are blank"
+            "day 1, goblet_squat, set 3: weightKg must be between 0.5 and 500.0",
+            "day 3, bicycle_crunch: restSeconds must be 5..600"
         )
     }
 
