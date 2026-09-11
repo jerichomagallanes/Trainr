@@ -10,14 +10,13 @@ import com.jericx.trainr.data.preferences.ThemePreferences
 import com.jericx.trainr.data.purchases.Entitlements
 import com.jericx.trainr.data.purchases.StoredGenerationAllowance
 import com.jericx.trainr.data.repository.UserRepositoryImpl
-import com.jericx.trainr.data.generation.planGenerator
+import com.jericx.trainr.data.generation.CarryForwardPlanGenerator
+import com.jericx.trainr.data.generation.TemplatePlanGenerator
 import com.jericx.trainr.domain.diagnostics.Breadcrumbs
 import com.jericx.trainr.data.diagnostics.CrashlyticsBreadcrumbs
 import com.jericx.trainr.domain.generation.PlanGenerator
-import com.jericx.trainr.data.generation.DailySpentModels
 import com.jericx.trainr.data.catalog.AssetExerciseCatalog
 import com.jericx.trainr.domain.catalog.ExerciseCatalog
-import com.jericx.trainr.domain.generation.SpentModels
 import com.jericx.trainr.domain.purchases.FreeGenerationAllowance
 import com.jericx.trainr.domain.purchases.ProGate
 import com.jericx.trainr.domain.repository.UserRepository
@@ -78,11 +77,6 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideSpentModels(@ApplicationContext context: Context): SpentModels =
-        DailySpentModels(context)
-
-    @Provides
-    @Singleton
     fun provideUserDao(database: TrainrDatabase): UserDao {
         return database.userDao
     }
@@ -104,13 +98,11 @@ object AppModule {
 
     @Provides
     @Singleton
-    // Which generator answers is a property of the build: see planGenerator()
-    // in the dev and prod source sets.
-    fun providePlanGenerator(
-        catalog: ExerciseCatalog,
-        spentModels: SpentModels,
-        breadcrumbs: Breadcrumbs
-    ): PlanGenerator = planGenerator(catalog, spentModels, breadcrumbs)
+    // Last week's movements carried forward wherever nothing forces a change,
+    // and a week built from the catalog otherwise. No model, so no network and
+    // nothing to attest or meter.
+    fun providePlanGenerator(catalog: ExerciseCatalog): PlanGenerator =
+        CarryForwardPlanGenerator(catalog, next = TemplatePlanGenerator(catalog))
 
     @Provides
     @Singleton

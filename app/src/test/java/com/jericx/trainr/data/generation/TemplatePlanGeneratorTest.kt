@@ -7,7 +7,7 @@ import com.jericx.trainr.domain.catalog.InMemoryExerciseCatalog
 import com.jericx.trainr.domain.catalog.PatternRequirement
 import com.jericx.trainr.domain.generation.PlanGenerationResult
 import com.jericx.trainr.domain.generation.PlanRequest
-import com.jericx.trainr.domain.generation.PlanSource
+import com.jericx.trainr.domain.generation.PlanSkeletonBuilder
 import com.jericx.trainr.domain.model.Equipment
 import com.jericx.trainr.domain.model.ExperienceLevel
 import com.jericx.trainr.domain.model.FitnessGoal
@@ -38,8 +38,14 @@ class TemplatePlanGeneratorTest {
         experienceLevel = experience, liftingUnitSystem = units
     )
 
-    private fun generate(user: UserProfile, history: List<WeeklyWorkoutPlan> = emptyList(), week: Int = 1) =
-        runBlocking { generator.generate(PlanRequest(user, week, (week - 1) * 7 * DAY, history)) }
+    private fun generate(
+        user: UserProfile,
+        history: List<WeeklyWorkoutPlan> = emptyList(),
+        week: Int = 1,
+        fresh: Boolean = false
+    ) = runBlocking {
+        generator.generate(PlanRequest(user, week, (week - 1) * 7 * DAY, history, freshCast = fresh))
+    }
 
     private fun planFor(user: UserProfile, history: List<WeeklyWorkoutPlan> = emptyList(), week: Int = 1) =
         (generate(user, history, week) as PlanGenerationResult.Generated).plan
@@ -180,8 +186,36 @@ class TemplatePlanGeneratorTest {
         const val DAY = 86_400_000L
     }
 
+    // Two people who answered the same way should not train the same week for
+    // ever, and one person rebuilding their own week should get it back.
     @Test
-    fun aWeekTheAppBuiltIsNamedForWhatItIs() {
-        assertThat((generate(user()) as PlanGenerationResult.Generated).source).isEqualTo(PlanSource.TEMPLATE)
+    fun twoClientsWhoAnsweredTheSameWayDoNotGetTheSameWeek() {
+        fun movements(user: UserProfile) =
+            planFor(user).workoutDays.flatMap { day -> day.exercises.map { it.exerciseKey } }
+
+        val alex = user()
+        val sam = user().copy(id = 2)
+
+        assertThat(movements(alex)).isEqualTo(movements(alex))
+        assertThat(movements(alex)).isNotEqualTo(movements(sam))
+    }
+
+    @Test
+    fun everyMovementChosenIsStillOneOfTheBestTheSlotOffered() {
+        val skeleton = PlanSkeletonBuilder(catalog).build(PlanRequest(user(), 1, 0L))
+        val chosen = planFor(user()).workoutDays.flatMap { day -> day.exercises.map { it.exerciseKey } }
+
+        val topThree = skeleton.days.flatMap { day -> day.slots.flatMap { it.candidates.take(3) } }.toSet()
+        chosen.forEach { assertThat(topThree).contains(it) }
+    }
+
+    // Asking again is asking for something different.
+    @Test
+    fun aFreshCastIsADifferentWeek() {
+        fun movements(fresh: Boolean) =
+            (generate(user(), week = 2, fresh = fresh) as PlanGenerationResult.Generated)
+                .plan.workoutDays.flatMap { day -> day.exercises.map { it.exerciseKey } }
+
+        assertThat(movements(fresh = true)).isNotEqualTo(movements(fresh = false))
     }
 }

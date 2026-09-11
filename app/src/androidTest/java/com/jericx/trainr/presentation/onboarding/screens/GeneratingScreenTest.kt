@@ -90,7 +90,7 @@ class GeneratingScreenTest {
                     isReady = false,
                     onStart = {},
                     onDone = { done = true },
-                    failure = PlanGenerationResult.Offline
+                    failure = PlanGenerationResult.Failed
                 )
             }
         }
@@ -100,23 +100,6 @@ class GeneratingScreenTest {
         assertThat(done).isFalse()
     }
 
-    @Test
-    fun beingOfflineIsSaidPlainly() {
-        composeTestRule.setContent {
-            TrainrTheme {
-                GeneratingScreen(
-                    isReady = false,
-                    onStart = {},
-                    onDone = {},
-                    failure = PlanGenerationResult.Offline
-                )
-            }
-        }
-
-        composeTestRule.onNodeWithText(string(R.string.generation_failed_title)).assertIsDisplayed()
-        composeTestRule.onNodeWithText(string(R.string.generation_failed_offline))
-            .assertIsDisplayed()
-    }
 
     @Test
     fun anAnswerThatNeverHeldUpReadsDifferently() {
@@ -144,7 +127,7 @@ class GeneratingScreenTest {
                     isReady = false,
                     onStart = {},
                     onDone = {},
-                    failure = PlanGenerationResult.Offline,
+                    failure = PlanGenerationResult.Failed,
                     onRetry = { retried = true }
                 )
             }
@@ -164,7 +147,7 @@ class GeneratingScreenTest {
                     isReady = false,
                     onStart = {},
                     onDone = {},
-                    failure = PlanGenerationResult.Offline,
+                    failure = PlanGenerationResult.Failed,
                     onGiveUp = { wentBack = true },
                     giveUpLabel = R.string.back_to_profile
                 )
@@ -177,47 +160,7 @@ class GeneratingScreenTest {
     }
 
 
-    @Test
-    fun theDailyLimitGetsItsOwnTitleAndReason() {
-        composeTestRule.setContent {
-            TrainrTheme {
-                GeneratingScreen(
-                    isReady = false,
-                    onStart = {},
-                    onDone = {},
-                    failure = PlanGenerationResult.DailyLimitReached
-                )
-            }
-        }
 
-        composeTestRule.onNodeWithText(string(R.string.generation_limit_title))
-            .assertIsDisplayed()
-        composeTestRule.onNodeWithText(string(R.string.generation_limit_message))
-            .assertIsDisplayed()
-        composeTestRule.onNodeWithText(string(R.string.generation_failed_title))
-            .assertDoesNotExist()
-    }
-
-    // Retrying a spent allowance cannot work, so nothing invites it.
-    @Test
-    fun theDailyLimitOffersNoRetry() {
-        var retried = false
-        composeTestRule.setContent {
-            TrainrTheme {
-                GeneratingScreen(
-                    isReady = false,
-                    onStart = {},
-                    onDone = {},
-                    failure = PlanGenerationResult.DailyLimitReached,
-                    onRetry = { retried = true }
-                )
-            }
-        }
-
-        composeTestRule.onNodeWithText(string(R.string.try_again)).assertDoesNotExist()
-        composeTestRule.onNodeWithText(string(R.string.got_it)).assertIsDisplayed()
-        assertThat(retried).isFalse()
-    }
 
     @Test
     fun anOrdinaryFailureStillOffersRetry() {
@@ -235,44 +178,5 @@ class GeneratingScreenTest {
         composeTestRule.onNodeWithText(string(R.string.try_again)).assertIsDisplayed()
     }
 
-    // Handed over, but not passed off as the coach's: the reason is said and
-    // the screen waits until it has been read.
-    @Test
-    fun aWeekBuiltInsteadSaysWhyAndWaitsForTheClient() {
-        var done = false
-        composeTestRule.setContent {
-            TrainrTheme {
-                GeneratingScreen(
-                    isReady = true,
-                    onStart = {},
-                    onDone = { done = true },
-                    builtInsteadOf = PlanGenerationResult.DailyLimitReached
-                )
-            }
-        }
 
-        composeTestRule.mainClock.advanceTimeBy(10_000)
-
-        composeTestRule.onNodeWithText(string(R.string.generation_built_instead_limit)).assertIsDisplayed()
-        assertThat(done).isFalse()
-
-        composeTestRule.onNodeWithText(string(R.string.see_my_plan)).performClick()
-
-        assertThat(done).isTrue()
-    }
-
-    @Test
-    fun aCoachedWeekSaysNothingAndMovesOn() {
-        var done = false
-        composeTestRule.setContent {
-            TrainrTheme {
-                GeneratingScreen(isReady = true, onStart = {}, onDone = { done = true })
-            }
-        }
-
-        composeTestRule.mainClock.advanceTimeBy(10_000)
-
-        composeTestRule.onNodeWithText(string(R.string.see_my_plan)).assertDoesNotExist()
-        assertThat(done).isTrue()
-    }
 }

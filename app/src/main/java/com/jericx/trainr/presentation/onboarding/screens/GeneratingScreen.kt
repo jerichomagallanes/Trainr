@@ -48,11 +48,7 @@ fun GeneratingScreen(
     isReady: Boolean,
     onStart: () -> Unit,
     onDone: () -> Unit,
-    failure: PlanGenerationResult.Failure? = null,
-    // What the coach failed with, when the week handed over was built in its
-    // place. Said here, once, and waited on: a note that leaves by itself is
-    // one nobody reads.
-    builtInsteadOf: PlanGenerationResult.Failure? = null,
+    failure: PlanGenerationResult? = null,
     onRetry: () -> Unit = {},
     onGiveUp: () -> Unit = {},
     @StringRes giveUpLabel: Int = R.string.cancel
@@ -76,15 +72,14 @@ fun GeneratingScreen(
 
     failure?.let {
         GenerationFailedDialog(
-            failure = it,
             giveUpLabel = giveUpLabel,
             onRetry = onRetry,
             onGiveUp = onGiveUp
         )
     }
 
-    LaunchedEffect(isReady, builtInsteadOf) {
-        if (!isReady || builtInsteadOf != null) return@LaunchedEffect
+    LaunchedEffect(isReady) {
+        if (!isReady) return@LaunchedEffect
         val shown = System.currentTimeMillis() - shownAt
         delay((MINIMUM_VISIBLE_MILLIS - shown).coerceAtLeast(0L))
         currentOnDone()
@@ -112,61 +107,20 @@ fun GeneratingScreen(
             
             Spacer(modifier = Modifier.height(Spacing.extraLarge * 2))
 
-            if (isReady && builtInsteadOf != null) {
-                BuiltInsteadNote(reason = builtInsteadOf, onContinue = onDone)
-            } else {
-                Text(
-                    text = stringResource(R.string.generating_your_workout_routine),
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.trainrColors.onSurface,
-                    textAlign = TextAlign.Center
-                )
+            Text(
+                text = stringResource(R.string.generating_your_workout_routine),
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.trainrColors.onSurface,
+                textAlign = TextAlign.Center
+            )
 
-                Spacer(modifier = Modifier.height(Spacing.extraLarge))
+            Spacer(modifier = Modifier.height(Spacing.extraLarge))
 
-                LoadingIndicator(
-                    activeIndex = activeIndicator,
-                    totalCount = totalIndicators
-                )
-            }
+            LoadingIndicator(
+                activeIndex = activeIndicator,
+                totalCount = totalIndicators
+            )
         }
-    }
-}
-
-@Composable
-private fun BuiltInsteadNote(
-    reason: PlanGenerationResult.Failure,
-    onContinue: () -> Unit
-) {
-    Text(
-        text = stringResource(R.string.generation_built_instead_title),
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.trainrColors.onSurface,
-        textAlign = TextAlign.Center
-    )
-
-    Spacer(modifier = Modifier.height(Spacing.large))
-
-    Text(
-        text = stringResource(
-            when (reason) {
-                PlanGenerationResult.Offline -> R.string.generation_built_instead_offline
-                PlanGenerationResult.Failed -> R.string.generation_built_instead_failed
-                PlanGenerationResult.DailyLimitReached -> R.string.generation_built_instead_limit
-            }
-        ),
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.trainrColors.onSurface,
-        textAlign = TextAlign.Center
-    )
-
-    Spacer(modifier = Modifier.height(Spacing.extraLarge))
-
-    TextButton(onClick = onContinue) {
-        Text(
-            text = stringResource(R.string.see_my_plan),
-            color = MaterialTheme.trainrColors.brandStrong
-        )
     }
 }
 
@@ -206,64 +160,32 @@ private fun LoadingIndicator(
 
 @Composable
 private fun GenerationFailedDialog(
-    failure: PlanGenerationResult.Failure,
     @StringRes giveUpLabel: Int,
     onRetry: () -> Unit,
     onGiveUp: () -> Unit
 ) {
-    // Retrying a spent allowance cannot work, so it is not offered.
-    val canRetry = failure != PlanGenerationResult.DailyLimitReached
-
     AlertDialog(
         onDismissRequest = onGiveUp,
         title = {
-            Text(
-                text = stringResource(
-                    when (failure) {
-                        PlanGenerationResult.DailyLimitReached ->
-                            R.string.generation_limit_title
-                        else -> R.string.generation_failed_title
-                    }
-                )
-            )
+            Text(text = stringResource(R.string.generation_failed_title))
         },
         text = {
-            Text(
-                text = stringResource(
-                    when (failure) {
-                        PlanGenerationResult.Offline -> R.string.generation_failed_offline
-                        PlanGenerationResult.Failed -> R.string.generation_failed_message
-                        PlanGenerationResult.DailyLimitReached ->
-                            R.string.generation_limit_message
-                    }
-                )
-            )
+            Text(text = stringResource(R.string.generation_failed_message))
         },
         confirmButton = {
-            if (canRetry) {
-                TextButton(onClick = onRetry) {
-                    Text(
-                        text = stringResource(R.string.try_again),
-                        color = MaterialTheme.trainrColors.brandStrong
-                    )
-                }
-            } else {
-                TextButton(onClick = onGiveUp) {
-                    Text(
-                        text = stringResource(R.string.got_it),
-                        color = MaterialTheme.trainrColors.brandStrong
-                    )
-                }
+            TextButton(onClick = onRetry) {
+                Text(
+                    text = stringResource(R.string.try_again),
+                    color = MaterialTheme.trainrColors.brandStrong
+                )
             }
         },
         dismissButton = {
-            if (canRetry) {
-                TextButton(onClick = onGiveUp) {
-                    Text(
-                        text = stringResource(giveUpLabel),
-                        color = MaterialTheme.trainrColors.onSurface
-                    )
-                }
+            TextButton(onClick = onGiveUp) {
+                Text(
+                    text = stringResource(giveUpLabel),
+                    color = MaterialTheme.trainrColors.onSurface
+                )
             }
         }
     )

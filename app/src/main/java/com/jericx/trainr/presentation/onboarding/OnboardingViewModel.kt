@@ -141,8 +141,7 @@ class OnboardingViewModel @Inject constructor(
                 _onboardingState.value = _onboardingState.value.copy(
                     isLoading = true,
                     isCompleted = false,
-                    generationFailure = null,
-                    builtInsteadOf = null
+                    generationFailure = null
                 )
                 val existing = userRepository.getCurrentUser()
                 val profile = _onboardingState.value.userProfile
@@ -171,7 +170,7 @@ class OnboardingViewModel @Inject constructor(
 
                     _onboardingState.value = _onboardingState.value.copy(
                         isLoading = false,
-                        generationFailure = result as PlanGenerationResult.Failure
+                        generationFailure = PlanGenerationResult.Failed
                     )
                     return@launch
                 }
@@ -180,8 +179,7 @@ class OnboardingViewModel @Inject constructor(
                 userRepository.saveWeeklyWorkoutPlan(result.plan.copy(userId = userId))
                 _onboardingState.value = _onboardingState.value.copy(
                     isLoading = false,
-                    isCompleted = true,
-                    builtInsteadOf = result.insteadOf
+                    isCompleted = true
                 )
                 onSuccess()
             } catch (e: Exception) {
@@ -218,6 +216,5 @@ data class OnboardingState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val isCompleted: Boolean = false,
-    val generationFailure: PlanGenerationResult.Failure? = null,
-    val builtInsteadOf: PlanGenerationResult.Failure? = null
+    val generationFailure: PlanGenerationResult? = null
 )

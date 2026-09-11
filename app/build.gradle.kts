@@ -215,9 +215,7 @@ dependencies {
     implementation(libs.bundles.room)
     ksp(libs.room.compiler)
 
-    // Video tutorials
     implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.ai)
     implementation(libs.firebase.appcheck.playintegrity)
     implementation(libs.firebase.crashlytics)
     // Debug and minified-smoke builds cannot pass Play Integrity: nothing there

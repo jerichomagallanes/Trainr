@@ -6,7 +6,6 @@ import com.jericx.trainr.domain.generation.PlanGenerator
 import com.jericx.trainr.domain.generation.PlanRequest
 import com.jericx.trainr.domain.generation.PlanSkeleton
 import com.jericx.trainr.domain.generation.PlanSkeletonBuilder
-import com.jericx.trainr.domain.generation.PlanSource
 import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
 
 // Next week is last week's movements, progressed from what was lifted, with no
@@ -24,7 +23,7 @@ class CarryForwardPlanGenerator(
     override suspend fun generate(request: PlanRequest): PlanGenerationResult {
         val previous = request.previousWeek
         val carried = if (request.freshCast || previous == null) null else carry(previous, request)
-        return carried?.let { PlanGenerationResult.Generated(it, PlanSource.PROGRESSED) } ?: next.generate(request)
+        return carried?.let { PlanGenerationResult.Generated(it) } ?: next.generate(request)
     }
 
     private fun carry(previous: WeeklyWorkoutPlan, request: PlanRequest): WeeklyWorkoutPlan? {
