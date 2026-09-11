@@ -39,7 +39,10 @@ android {
         versionCode = maxOf(runCatching { commitCount.get() }.getOrDefault(0), minimumVersionCode)
         versionName = "1.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // Hilt's, so an instrumented test can reach the real graph: the
+        // paywall gate is wired in the navigation and cannot be seen from a
+        // screen on its own.
+        testInstrumentationRunner = "com.jericx.trainr.HiltTestRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
@@ -239,6 +242,8 @@ dependencies {
     androidTestImplementation(libs.androidx.test.espresso.core)
     androidTestImplementation(libs.compose.ui.test.junit4)
     androidTestImplementation(libs.truth)
+    androidTestImplementation(libs.hilt.android.testing)
+    kspAndroidTest(libs.hilt.android.compiler)
 }
 
 // What the next upload will be numbered, without building it: Play only tells
