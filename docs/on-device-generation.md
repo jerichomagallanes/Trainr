@@ -8,6 +8,23 @@ as researched, not measured on our own hardware: Stage 0 exists to measure them.
 
 # Trainr: migration from remote Gemini to on-device Gemma — plan
 
+## Outcome (2026-09-12)
+
+The Stage 0 spike was run. Gemma 4 E2B q4_0 and Qwen3-0.6B were measured on 15
+real profiles under grammar-constrained decoding. Both were structurally
+perfect: 0 off-list picks in 319 slots, 0 duplicates, 0 rejected titles. Gemma
+took a median 26.9 s and a maximum 42.4 s per week on an Apple M2, against a
+kill criterion of 30 s on a mid-range phone; Qwen a median 15.2 s. Scored
+against the evidence in `programming-evidence.md`, the app's own ranked pick
+beat or tied both models on every metric, and Gemma doubled within-day
+redundancy (12 of 15 weeks worse, 0 better).
+
+**Decision: no model ships, on-device or remote.** The remote model was removed
+as well, and the seeded variety that replaced it halved redundancy versus
+taking rank 1 everywhere. What follows is the plan as it stood before the
+spike, kept as history; `generation-contract.md` describes what the app does
+now.
+
 ## 1. Feasibility, honestly
 
 **Yes on both platforms, but only if the generation job is reshaped first.** The current job — one call producing a whole week of per-set `{reps, weightKg}` objects plus model-written prose — is ~3.0–3.7k output tokens. That is ~60–90 s on a flagship and 4–7 minutes on a mid-range phone. It is not shippable as-is at any model size. Reshaped to "model picks movements, app computes numbers," it is ~40–120 output tokens per day, which is 5–15 s per day even on weak hardware.
