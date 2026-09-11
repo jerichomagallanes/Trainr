@@ -5,9 +5,11 @@ import com.google.firebase.ai.ai
 import com.google.firebase.ai.type.GenerativeBackend
 import com.google.firebase.ai.type.QuotaExceededException
 import com.google.firebase.ai.type.RequestTimeoutException
+import com.google.firebase.ai.type.Schema
 import com.google.firebase.ai.type.ServerException
 import com.google.firebase.ai.type.content
 import com.google.firebase.ai.type.generationConfig
+import com.jericx.trainr.domain.generation.PlanSkeleton
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
 import java.io.IOException
@@ -20,14 +22,14 @@ class FirebaseAiClient : PlanModelClient {
         model: String,
         systemInstruction: String,
         userPrompt: String,
-        exerciseKeys: List<String>
+        skeleton: PlanSkeleton
     ): GeminiResponse = try {
         val generativeModel = Firebase.ai(backend = GenerativeBackend.googleAI())
             .generativeModel(
                 modelName = model,
                 generationConfig = generationConfig {
                     responseMimeType = "application/json"
-                    responseSchema = generatedPlanSchema(exerciseKeys)
+                    responseSchema = planSelectionSchema(skeleton).toFirebase()
                     temperature = TEMPERATURE
                 },
                 systemInstruction = content { text(systemInstruction) }
@@ -56,6 +58,12 @@ class FirebaseAiClient : PlanModelClient {
         if (e.isNetworkFailure()) GeminiResponse.Unreachable else GeminiResponse.Failed
     }
 
+    private fun SelectionSchema.toFirebase(): Schema = when (this) {
+        is SelectionSchema.Obj -> Schema.obj(properties.associate { (name, child) -> name to child.toFirebase() })
+        is SelectionSchema.OneOf -> Schema.enumeration(values, description)
+        is SelectionSchema.Text -> Schema.string(description)
+    }
+
     private fun Exception.isNetworkFailure(): Boolean {
         var cause: Throwable? = this
         while (cause != null) {
@@ -66,7 +74,8 @@ class FirebaseAiClient : PlanModelClient {
     }
 
     private companion object {
-        // A whole week normally lands in twenty to thirty seconds.
+        // Generous: the answer is a few hundred tokens, so a call that has not
+        // landed by now has stalled.
         const val CALL_TIMEOUT_MILLIS = 45_000L
 
         const val TEMPERATURE = 0.4f

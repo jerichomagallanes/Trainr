@@ -1,207 +1,126 @@
 package com.jericx.trainr.data.generation
 
 import com.google.common.truth.Truth.assertThat
+import com.google.common.truth.Truth.assertWithMessage
+import com.jericx.trainr.data.catalog.ExerciseCatalogReader
 import com.jericx.trainr.domain.generation.PlanRequest
-import com.jericx.trainr.domain.model.Injury
+import com.jericx.trainr.domain.generation.PlanSkeleton
+import com.jericx.trainr.domain.generation.PlanSkeletonBuilder
+import com.jericx.trainr.domain.generation.SessionFocus
+import com.jericx.trainr.domain.generation.SkeletonDay
+import com.jericx.trainr.domain.generation.SkeletonSlot
+import com.jericx.trainr.domain.generation.SlotTier
 import com.jericx.trainr.domain.model.Equipment
-import com.jericx.trainr.domain.catalog.CatalogExercise
-import com.jericx.trainr.domain.catalog.MovementPattern
-import com.jericx.trainr.domain.catalog.MuscleGroup
-import com.jericx.trainr.domain.model.ExerciseMeasure
-import com.jericx.trainr.domain.model.ExerciseSet
+import com.jericx.trainr.domain.model.ExperienceLevel
 import com.jericx.trainr.domain.model.FitnessGoal
+import com.jericx.trainr.domain.model.Injury
+import com.jericx.trainr.domain.model.UnitSystem
 import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
-import com.jericx.trainr.domain.model.WorkoutDay
-import com.jericx.trainr.domain.model.WorkoutExercise
-import com.jericx.trainr.domain.model.WorkoutStatus
-import com.jericx.trainr.domain.model.UnitSystem
+import java.io.File
 import org.junit.Test
 
 class PlanPromptBuilderTest {
 
-    private fun catalogExercise(
-        key: String,
-        muscle: MuscleGroup,
-        measure: ExerciseMeasure,
-        pattern: MovementPattern,
-        equipment: Equipment = Equipment.NONE
-    ) = CatalogExercise(key, key, muscle, emptyList(), equipment, measure, pattern, staple = true)
-
-    private val shortlist = listOf(
-        catalogExercise(
-            "goblet_squat", MuscleGroup.QUADRICEPS,
-            ExerciseMeasure.WEIGHT_AND_REPS, MovementPattern.SQUAT, Equipment.DUMBBELL
-        ),
-        catalogExercise("push_up", MuscleGroup.CHEST, ExerciseMeasure.REPS, MovementPattern.HORIZONTAL_PUSH),
-        catalogExercise("plank", MuscleGroup.ABDOMINALS, ExerciseMeasure.DURATION, MovementPattern.CORE)
-    )
-
+    private val catalog = ExerciseCatalogReader.read(File("src/main/assets/exercise-catalog.json").readText())
+    private val skeletons = PlanSkeletonBuilder(catalog)
     private val builder = PlanPromptBuilder()
 
-    private fun request(
-        previousWeek: WeeklyWorkoutPlan? = null,
-        units: UnitSystem = UnitSystem.METRIC
-    ) = PlanRequest(
-        user = UserProfile(
-            id = 1,
-            age = 30,
-            height = 170f,
-            weight = 70f,
-            fitnessGoal = FitnessGoal.MUSCLE_GAIN,
-            availableEquipment = listOf(Equipment.DUMBBELL, Equipment.MACHINE),
-            workoutDaysPerWeek = 3,
-            workoutDuration = 45,
-            injuries = listOf(Injury.LOWER_BACK),
-            bodyUnitSystem = units
-        ),
-        weekNumber = if (previousWeek == null) 1 else 2,
-        startDateMillis = 0L,
-        history = listOfNotNull(previousWeek)
+    private fun user(
+        goal: FitnessGoal = FitnessGoal.MUSCLE_GAIN,
+        days: Int = 4,
+        minutes: Int = 60,
+        experience: ExperienceLevel = ExperienceLevel.INTERMEDIATE
+    ) = UserProfile(
+        id = 1, age = 34, height = 170f, weight = 70f, fitnessGoal = goal, experienceLevel = experience,
+        availableEquipment = Equipment.entries.toList(), workoutDaysPerWeek = days, workoutDuration = minutes,
+        injuries = listOf(Injury.LOWER_BACK)
     )
 
-    @Test
-    fun thePromptCarriesEverythingTheCoachMustRespect() {
-        val prompt = builder.userPrompt(request(), shortlist)
+    private fun request(user: UserProfile = user(), history: List<WeeklyWorkoutPlan> = emptyList()) =
+        PlanRequest(user, weekNumber = 2, startDateMillis = 0L, history = history)
 
-        assertThat(prompt).contains("build muscle")
-        assertThat(prompt).contains("dumbbells, machines and cables")
-        assertThat(prompt).contains("3 (plan EXACTLY this many days)")
-        assertThat(prompt).contains("about 45 minutes")
-        assertThat(prompt).contains("lower back pain")
-        assertThat(prompt).contains("English")
+    private fun prompt(request: PlanRequest = request()) = builder.userPrompt(request, skeletons.build(request))
+
+    @Test
+    fun thePromptNamesTheWeekTheClientAndEverySessionWithAChoiceLeft() {
+        val request = request()
+        val skeleton = skeletons.build(request)
+        val prompt = builder.userPrompt(request, skeleton)
+
+        assertThat(prompt).contains("Choose the movements for week 2.")
+        assertThat(prompt).contains("Client: 34, intermediate, training to build muscle.")
+        skeleton.days.filter { it.openSlots.isNotEmpty() }.forEach { day ->
+            assertThat(prompt).contains("- ${day.id}, ${day.focus.title.lowercase()}, ${day.openSlots.size} slots")
+        }
     }
 
-    // The cap is enforced and the target is not, so a target the week cannot
-    // buy is the rule that gets dropped. Both numbers, and the rule for
-    // counting a set against them, have to be in the prompt.
+    // Each was a rule the model could disobey. None of them is now: the
+    // schema holds the movements, the skeleton the budget, and the injury
+    // guard every list.
     @Test
-    fun thePromptCarriesABudgetTheWeekCanActuallyPayFor() {
-        val prompt = builder.userPrompt(request(), shortlist)
+    fun thePromptCarriesNoVocabularyNoBudgetNoBodyAndNoInjuries() {
+        val prompt = prompt()
 
-        assertThat(prompt).contains("Session set cap: at most 14 sets")
-        assertThat(prompt).contains("Weekly set target: about 7 hard sets")
-        assertThat(prompt).contains("never past 67")
-        assertThat(prompt).contains("half for each muscle that movement assists")
+        listOf("_", "goblet", "kg", "minutes", "sets", "170", "70 ", "lower back", "injur", "dumbbell", "Last week")
+            .forEach { assertWithMessage(it).that(prompt).doesNotContain(it) }
     }
 
     @Test
-    fun weekOneCarriesNoHistory() {
-        assertThat(builder.userPrompt(request(), shortlist)).doesNotContain("Last week")
+    fun historyNeverReachesThePrompt() {
+        val lastWeek = WeeklyWorkoutPlan(userId = 1, weekNumber = 1, title = "Week 1", workoutDays = emptyList())
+
+        assertThat(prompt(request(history = listOf(lastWeek)))).doesNotContain("week 1")
     }
 
     @Test
-    fun historyReportsWhatWasActuallyDonePerSet() {
-        val previous = WeeklyWorkoutPlan(
-            userId = 1,
-            weekNumber = 1,
-            title = "Week 1",
-            workoutDays = listOf(
-                WorkoutDay(
-                    dayNumber = 1,
-                    title = "Full Body",
-                    status = WorkoutStatus.COMPLETED,
-                    duration = 45,
-                    exerciseCount = 1,
-                    equipment = emptyList(),
-                    exercises = listOf(
-                        WorkoutExercise(
-                            exerciseKey = "goblet_squat",
-                            name = "Goblet Squats",
-                            measure = ExerciseMeasure.WEIGHT_AND_REPS,
-                            prescription = "2 sets of 12 reps",
-                            durationMinutes = 8,
-                            sets = listOf(
-                                ExerciseSet(
-                                    setNumber = 1,
-                                    targetReps = 12,
-                                    actualReps = 12,
-                                    actualWeightKg = 20f,
-                                    isCompleted = true
-                                ),
-                                ExerciseSet(setNumber = 2, targetReps = 12)
-                            )
-                        )
-                    )
-                ),
-                WorkoutDay(
-                    dayNumber = 3,
-                    title = "Skipped Day",
-                    status = WorkoutStatus.NOT_STARTED,
-                    duration = 30,
-                    exerciseCount = 0,
-                    equipment = emptyList()
-                )
-            )
+    fun theLargestWeekStillAsksInAFewLines() {
+        FitnessGoal.entries.forEach { goal ->
+            (1..7).forEach { days ->
+                val prompt = prompt(request(user(goal, days, 90, ExperienceLevel.ADVANCED)))
+                assertWithMessage("$goal ${days}d").that(prompt.length).isLessThan(600)
+            }
+        }
+    }
+
+    @Test
+    fun aSessionWithNothingLeftToChooseIsNotListed() {
+        fun slot(id: String, vararg candidates: String) = SkeletonSlot(
+            id = id, label = "the $id", tier = SlotTier.ACCESSORY, patterns = emptyList(), muscles = emptySet(),
+            candidates = candidates.toList(), sets = 3, restSeconds = 60
+        )
+        val skeleton = PlanSkeleton(
+            title = "Test Week",
+            days = listOf(
+                SkeletonDay(1, SessionFocus.FULL_BODY, listOf(slot("warm_up", "arm_circles"), slot("primary", "a", "b"))),
+                SkeletonDay(4, SessionFocus.MOBILITY_FLOW, listOf(slot("mobility", "stretching")))
+            ),
+            units = UnitSystem.METRIC, maxSetsPerSession = 20, sessionCeilingMinutes = 90,
+            weeklySetsByRegion = emptyMap(), uncoveredPatterns = emptySet()
         )
 
-        val prompt = builder.userPrompt(request(previousWeek = previous), shortlist)
+        val prompt = builder.userPrompt(request(), skeleton)
 
-        assertThat(prompt).contains("Last week (week 1)")
-        assertThat(prompt).contains("goblet_squat: prescribed \"2 sets of 12 reps\"")
-        assertThat(prompt).contains("20.0kg x 12")
-        assertThat(prompt).contains("skipped")
-        assertThat(prompt).contains("Skipped Day (skipped)")
-    }
-
-    // The vocabulary is the client's own, so it belongs in the request and not
-    // in a brief that is identical for everyone.
-    @Test
-    fun theVocabularyIsListedByHowEachMovementIsMeasured() {
-        val prompt = builder.userPrompt(request(), shortlist)
-
-        assertThat(prompt).contains("Movements you may prescribe")
-        assertThat(prompt).contains("Weighted - every set needs reps and weightKg:")
-        assertThat(prompt).contains("QUADRICEPS: goblet_squat")
-        assertThat(prompt).contains("Bodyweight - every set needs reps:")
-        assertThat(prompt).contains("CHEST: push_up")
-        assertThat(builder.systemInstruction()).doesNotContain("goblet_squat")
-    }
-
-    // Programming around what the client owns is the app's job, so the demand
-    // is only made where the shortlist can meet it.
-    @Test
-    fun theWeekIsToldWhichPatternsItMustCover() {
-        val prompt = builder.userPrompt(request(), shortlist)
-
-        assertThat(prompt).contains("a squat or lunge")
-        assertThat(prompt).contains("an upper-body press")
-        assertThat(builder.userPrompt(request(), emptyList()))
-            .doesNotContain("The week must include")
-    }
-
-    // In pounds the gym's step is 5 lb, so a 2.5% rise on 20 kg reads back as the same 45 lb
-    @Test
-    fun theBriefNamesTheIncrementTheClientCanActuallyLoad() {
-        val metric = PlanPromptBuilder().userPrompt(request(units = UnitSystem.METRIC), shortlist)
-        assertThat(metric).contains("Reads weights in kilograms")
-        assertThat(metric).contains("increment 2.5 kg")
-
-        val imperial = PlanPromptBuilder().userPrompt(request(units = UnitSystem.IMPERIAL), shortlist)
-        assertThat(imperial).contains("Reads weights in pounds")
-        assertThat(imperial).contains("increment 2.27 kg")
+        assertThat(prompt).contains("- day1, full body, 1 slot\n")
+        assertThat(prompt).doesNotContain("day4")
     }
 
     @Test
-    fun theContractStaysInKilogramsWhicheverTheClientReads() {
-        val imperial = PlanPromptBuilder().systemInstruction()
-
-        assertThat(imperial).contains("Weights are kilograms")
-        assertThat(imperial).contains("multiple of the client's smallest loadable")
-    }
-
-    @Test
-    fun theCoachingBriefKeepsItsLoadBearingRules() {
+    fun theBriefNoLongerPricesSetsSplitsTheWeekRestatesInjuriesOrWritesCopy() {
         val brief = builder.systemInstruction()
 
-        assertThat(brief).contains("chosen from the movement list")
-        assertThat(brief).contains("warm-up")
-        assertThat(brief).contains("kilograms")
-        assertThat(brief).contains("strength 3-6 reps")
-        assertThat(brief).contains("never by distance")
-        assertThat(brief).contains("injuries strictly")
+        listOf("weightKg", "reps", "prescription", "injur", "kilograms", "push/pull/legs", "reserve", "exactly")
+            .forEach { assertWithMessage(it).that(brief).doesNotContain(it) }
+        assertThat(brief.length).isLessThan(1_500)
+    }
+
+    @Test
+    fun theBriefKeepsWhatOnlyTheModelCanDo() {
+        val brief = builder.systemInstruction()
+
+        assertThat(brief).contains("which movement fills each slot")
+        assertThat(brief).contains("near-versions of the same movement")
+        assertThat(brief).contains("never \"Day 2\"")
         assertThat(brief).contains("JSON only")
-        assertThat(brief).contains("never letter or index labels")
-        assertThat(brief).contains("under about 25 characters")
     }
 }

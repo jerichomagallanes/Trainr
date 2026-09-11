@@ -1,20 +1,22 @@
 package com.jericx.trainr.data.generation
 
 import com.google.common.truth.Truth.assertThat
-import com.jericx.trainr.domain.generation.PlanGenerationResult
+import com.jericx.trainr.data.catalog.ExerciseCatalogReader
 import com.jericx.trainr.domain.diagnostics.Breadcrumbs
 import com.jericx.trainr.domain.diagnostics.NoBreadcrumbs
+import com.jericx.trainr.domain.generation.PlanGenerationResult
 import com.jericx.trainr.domain.generation.PlanRequest
+import com.jericx.trainr.domain.generation.PlanSkeleton
+import com.jericx.trainr.domain.generation.PlanSkeletonBuilder
+import com.jericx.trainr.domain.generation.SkeletonSlot
 import com.jericx.trainr.domain.generation.SpentModels
 import com.jericx.trainr.domain.model.Injury
-import com.jericx.trainr.domain.catalog.CatalogExercise
-import com.jericx.trainr.domain.catalog.InMemoryExerciseCatalog
-import com.jericx.trainr.domain.catalog.MovementPattern
-import com.jericx.trainr.domain.catalog.MuscleGroup
-import com.jericx.trainr.domain.model.Equipment
-import com.jericx.trainr.domain.model.ExerciseMeasure
 import com.jericx.trainr.domain.model.UserProfile
+import java.io.File
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+import kotlinx.serialization.json.putJsonObject
 import org.junit.Test
 
 class GeminiPlanGeneratorTest {
@@ -23,17 +25,17 @@ class GeminiPlanGeneratorTest {
         private val remaining = ArrayDeque(answers)
         val modelsAsked = mutableListOf<String>()
         val prompts = mutableListOf<String>()
-        val offered = mutableListOf<List<String>>()
+        val skeletons = mutableListOf<PlanSkeleton>()
 
         override suspend fun generate(
             model: String,
             systemInstruction: String,
             userPrompt: String,
-            exerciseKeys: List<String>
+            skeleton: PlanSkeleton
         ): GeminiResponse {
             modelsAsked += model
             prompts += userPrompt
-            offered += exerciseKeys
+            skeletons += skeleton
             return remaining.removeFirstOrNull() ?: GeminiResponse.Failed
         }
     }
@@ -56,27 +58,18 @@ class GeminiPlanGeneratorTest {
         fun everything() = events + state.keys + state.values
     }
 
+    private val catalog = ExerciseCatalogReader.read(File("src/main/assets/exercise-catalog.json").readText())
+
     private fun generator(
         client: PlanModelClient,
         spentModels: SpentModels = FakeSpentModels(),
         breadcrumbs: Breadcrumbs = NoBreadcrumbs
     ) = GeminiPlanGenerator(
         client = client,
-        parser = GeneratedPlanParser(catalog),
         promptBuilder = PlanPromptBuilder(),
         catalog = catalog,
         spentModels = spentModels,
         breadcrumbs = breadcrumbs
-    )
-
-    private val catalog = InMemoryExerciseCatalog(
-        listOf(
-            CatalogExercise(
-                "goblet_squat", "Goblet Squat",
-                MuscleGroup.QUADRICEPS, emptyList(), Equipment.NONE,
-                ExerciseMeasure.WEIGHT_AND_REPS, MovementPattern.SQUAT, staple = true
-            )
-        )
     )
 
     private fun request(daysPerWeek: Int = 1) = PlanRequest(
@@ -85,30 +78,23 @@ class GeminiPlanGeneratorTest {
         startDateMillis = 1_000L
     )
 
-    private val validPlanJson = """
-        {
-          "title": "Week 1",
-          "days": [
-            {
-              "dayNumber": 1,
-              "title": "Full Body",
-              "exercises": [
-                {
-                  "exerciseKey": "goblet_squat",
-                  "prescription": "3 sets of 12 reps",
-                  "instructions": "Squat holding a dumbbell at your chest.",
-                  "restSeconds": 60,
-                  "sets": [
-                    { "reps": 12, "weightKg": 20 },
-                    { "reps": 12, "weightKg": 20 },
-                    { "reps": 12, "weightKg": 20 }
-                  ]
-                }
-              ]
+    private fun skeleton(request: PlanRequest = request()) = PlanSkeletonBuilder(catalog).build(request)
+
+    // What a model that did its job would send: one of each slot's own
+    // movements, and a name for every session.
+    private fun answerFor(
+        request: PlanRequest = request(),
+        pick: (SkeletonSlot) -> String = { it.candidates.first() }
+    ): String = buildJsonObject {
+        skeleton(request).days.filter { it.openSlots.isNotEmpty() }.forEach { day ->
+            putJsonObject(day.id) {
+                day.openSlots.forEach { put(it.id, pick(it)) }
+                put("title", "Whole Body Strength")
             }
-          ]
         }
-    """.trimIndent()
+    }.toString()
+
+    private val validPlanJson get() = answerFor()
 
     @Test
     fun aValidResponseBecomesAPlan() = runTest {
@@ -118,8 +104,7 @@ class GeminiPlanGeneratorTest {
 
         assertThat(plan.userId).isEqualTo(7)
         assertThat(plan.startDateMillis).isEqualTo(1_000L)
-        assertThat(plan.workoutDays.single().exercises.single().exerciseKey)
-            .isEqualTo("goblet_squat")
+        assertThat(plan.workoutDays).isNotEmpty()
         assertThat(client.modelsAsked).containsExactly(PlanModelClient.MODELS.first())
     }
 
@@ -132,26 +117,15 @@ class GeminiPlanGeneratorTest {
         assertThat(plan).isNotNull()
         assertThat(client.prompts).hasSize(2)
         assertThat(client.prompts[1]).contains("rejected")
-        assertThat(client.prompts[1]).contains("plan: has no days")
+        assertThat(client.prompts[1]).contains("You left out day")
     }
 
     @Test
-    fun theWrongNumberOfDaysIsRejectedAndRetried() = runTest {
-        val client = answering(text(validPlanJson), text(validPlanJson), text(validPlanJson))
-
-        val result = generator(client).generate(request(daysPerWeek = 3))
-
-        assertThat(result).isEqualTo(PlanGenerationResult.Failed)
-        assertThat(client.prompts).hasSize(3)
-        assertThat(client.prompts[1]).contains("asked for exactly 3")
-    }
-
-    @Test
-    fun persistentGarbageGivesUpAfterThreeAttempts() = runTest {
+    fun persistentGarbageGivesUpAfterTwoAttempts() = runTest {
         val client = answering(*Array(4) { text("not json at all") })
 
         assertThat(generator(client).generate(request())).isEqualTo(PlanGenerationResult.Failed)
-        assertThat(client.prompts).hasSize(3)
+        assertThat(client.prompts).hasSize(2)
     }
 
     @Test
@@ -343,5 +317,66 @@ class GeminiPlanGeneratorTest {
         for (secret in listOf("Jericho", "31", "178", "75", "rotator cuff")) {
             assertThat(trailText).doesNotContain(secret)
         }
+    }
+
+    @Test
+    fun theMovementTheModelChoseIsTheOneTrained() = runTest {
+        val slot = skeleton().days.flatMap { it.openSlots }.first { it.candidates.size > 1 }
+        val second = slot.candidates[1]
+        val client = answering(text(answerFor { if (it == slot) second else it.candidates.first() }))
+
+        val plan = (generator(client).generate(request()) as PlanGenerationResult.Generated).plan
+
+        assertThat(plan.workoutDays.flatMap { it.exercises }.map { it.exerciseKey }).contains(second)
+    }
+
+    // One slip in a week is the app's to fix; asking again would spend a
+    // request from the day's allowance on it.
+    @Test
+    fun anAnswerWithASlipIsRepairedRatherThanAskedAgain() = runTest {
+        val threeDays = request(daysPerWeek = 3)
+        val slot = skeleton(threeDays).days.first { it.openSlots.isNotEmpty() }.openSlots.first()
+        val trail = FakeBreadcrumbs()
+        val client = answering(text(answerFor(threeDays) { if (it == slot) "not_a_movement" else it.candidates.first() }))
+
+        val result = generator(client, breadcrumbs = trail).generate(threeDays)
+
+        assertThat(result).isInstanceOf(PlanGenerationResult.Generated::class.java)
+        assertThat(client.prompts).hasSize(1)
+        assertThat(trail.events).contains("generation: answer used, 1 slots repaired")
+    }
+
+    @Test
+    fun anAnswerThatIsNotAnObjectIsSentBackWithoutQuotingIt() = runTest {
+        val client = answering(text("Sure! Here is the week."), text(validPlanJson))
+
+        generator(client).generate(request())
+
+        assertThat(client.prompts[1]).contains(PlanSelectionRepair.NOT_AN_OBJECT)
+        assertThat(client.prompts[1]).doesNotContain("Sure!")
+    }
+
+    @Test
+    fun theModelIsGivenTheSkeletonToChooseWithin() = runTest {
+        val client = answering(text(validPlanJson))
+
+        generator(client).generate(request())
+
+        assertThat(client.skeletons.single()).isEqualTo(skeleton())
+    }
+
+    // The model only ever chooses among movements: one that takes the top of
+    // every list gets exactly the week the app would have built alone.
+    @Test
+    fun choosingEveryTopCandidateGivesTheTemplateWeek() = runTest {
+        val coached = (generator(answering(text(validPlanJson))).generate(request()) as PlanGenerationResult.Generated).plan
+        val template = (TemplatePlanGenerator(catalog).generate(request()) as PlanGenerationResult.Generated).plan
+
+        fun shape(days: List<com.jericx.trainr.domain.model.WorkoutDay>) = days.map { day ->
+            day.exercises.map { exercise ->
+                exercise.exerciseKey to exercise.sets.map { Triple(it.targetReps, it.targetWeightKg, it.targetSeconds) }
+            }
+        }
+        assertThat(shape(coached.workoutDays)).isEqualTo(shape(template.workoutDays))
     }
 }

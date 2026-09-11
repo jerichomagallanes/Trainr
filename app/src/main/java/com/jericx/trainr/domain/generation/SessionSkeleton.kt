@@ -74,6 +74,10 @@ data class PlanSkeleton(
     // Named so the caller stops asking for what the week cannot hold.
     val uncoveredPatterns: Set<PatternRequirement>
 ) {
+    // A day with nothing in it is one the catalog could not fill, and no
+    // amount of choosing makes a week out of it.
+    val isComplete: Boolean get() = days.isNotEmpty() && days.none { it.slots.isEmpty() }
+
     val allowedKeys: Set<String> get() = days.flatMap { day -> day.slots.flatMap { it.candidates } }.toSet()
 
     // The patterns the week was actually dealt, which is what a finished plan
