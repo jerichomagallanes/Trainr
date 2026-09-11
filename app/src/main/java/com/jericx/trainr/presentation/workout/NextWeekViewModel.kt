@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.jericx.trainr.domain.generation.PlanGenerationResult
 import com.jericx.trainr.domain.generation.PlanGenerator
 import com.jericx.trainr.domain.generation.PlanRequest
-import com.jericx.trainr.domain.generation.PlanSource
 import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
 import com.jericx.trainr.domain.model.withoutWeekNumber
@@ -30,11 +29,8 @@ class NextWeekViewModel @Inject constructor(
     private val _failure = MutableStateFlow<PlanGenerationResult.Failure?>(null)
     val failure: StateFlow<PlanGenerationResult.Failure?> = _failure.asStateFlow()
 
-    // Who chose the week just written, and what the coach failed with when it
-    // was built instead.
-    private val _source = MutableStateFlow<PlanSource?>(null)
-    val source: StateFlow<PlanSource?> = _source.asStateFlow()
-
+    // What the coach failed with, when the week just written was built in its
+    // place.
     private val _builtInsteadOf = MutableStateFlow<PlanGenerationResult.Failure?>(null)
     val builtInsteadOf: StateFlow<PlanGenerationResult.Failure?> = _builtInsteadOf.asStateFlow()
 
@@ -47,14 +43,13 @@ class NextWeekViewModel @Inject constructor(
     // runs alongside the first and both write a week.
     private var isWorking = false
 
-    // Asks nothing of the network, so it is the way through when the model cannot
-    // be reached; offered, never substituted for a generation. The copy joins the
-    // plan at the end and takes its dates from there, whatever week it came from.
+    // The same sessions and loads with every log cleared, asking nothing of the
+    // network. The copy joins the plan at the end and takes its dates from
+    // there, whatever week it came from.
     fun repeatWeek(sourceWeekNumber: Int? = null) {
         if (isWorking) return
         isWorking = true
         _failure.value = null
-        _source.value = null
         _builtInsteadOf.value = null
         viewModelScope.launch {
             try {
@@ -85,7 +80,6 @@ class NextWeekViewModel @Inject constructor(
         if (isWorking) return
         isWorking = true
         _failure.value = null
-        _source.value = null
         _builtInsteadOf.value = null
         viewModelScope.launch {
             try {
@@ -127,7 +121,6 @@ class NextWeekViewModel @Inject constructor(
 
                 userRepository.deleteWeeklyWorkoutPlan(current.id)
                 userRepository.saveWeeklyWorkoutPlan(replacement.plan)
-                _source.value = replacement.source
                 _isReady.value = true
             } finally {
                 isWorking = false
@@ -139,7 +132,6 @@ class NextWeekViewModel @Inject constructor(
         if (isWorking) return
         isWorking = true
         _failure.value = null
-        _source.value = null
         _builtInsteadOf.value = null
         viewModelScope.launch {
             try {
@@ -175,7 +167,6 @@ class NextWeekViewModel @Inject constructor(
             }
 
             userRepository.saveWeeklyWorkoutPlan(result.plan)
-            _source.value = result.source
             _builtInsteadOf.value = result.insteadOf
             _isReady.value = true
     }
