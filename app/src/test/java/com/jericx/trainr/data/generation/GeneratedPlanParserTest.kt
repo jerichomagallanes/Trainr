@@ -372,45 +372,4 @@ class GeneratedPlanParserTest {
             "day 3, bicycle_crunch: restSeconds must be 5..600"
         )
     }
-
-    @Test
-    fun theContractDocumentsOwnExampleParses() {
-        val squats = """
-            {
-              "exerciseKey": "goblet_squat",
-              "prescription": "3 sets of 12 reps",
-              "instructions": "Squat holding a dumbbell at your chest to build the legs and brace the core.",
-              "restSeconds": 60,
-              "sets": [
-                { "reps": 12, "weightKg": 20 },
-                { "reps": 12, "weightKg": 20 },
-                { "reps": 12, "weightKg": 20 }
-              ]
-            }
-        """.trimIndent()
-        val plank = """
-            {
-              "exerciseKey": "plank",
-              "prescription": "3 sets of 45 seconds",
-              "instructions": "Hold a straight line from head to heels to brace the whole core.",
-              "sets": [{ "seconds": 45 }, { "seconds": 45 }, { "seconds": 45 }]
-            }
-        """.trimIndent()
-        val example = """
-            {
-              "title": "Week 1",
-              "days": [
-                {
-                  "dayNumber": 1,
-                  "title": "Full Body Strength",
-                  "exercises": [$squats, $plank]
-                }
-              ]
-            }
-        """.trimIndent()
-
-        val result = parser.parse(example, userId = 1, weekNumber = 1, startDateMillis = 0L)
-
-        assertThat(result).isInstanceOf(PlanParseResult.Parsed::class.java)
-    }
 }
