@@ -9,12 +9,7 @@ import com.jericx.trainr.domain.generation.PlanSkeletonBuilder
 
 // A whole week with no model at all: the skeleton, the top of every list, and
 // the engine's numbers.
-class TemplatePlanGenerator(
-    private val catalog: ExerciseCatalog,
-    // What its weeks are handed over as. Only a dev build, standing it in for
-    // the coach, says anything but TEMPLATE.
-    private val source: PlanSource = PlanSource.TEMPLATE
-) : PlanGenerator {
+class TemplatePlanGenerator(private val catalog: ExerciseCatalog) : PlanGenerator {
 
     private val builder = PlanSkeletonBuilder(catalog)
     private val assembler = PlanAssembler(catalog)
@@ -24,7 +19,7 @@ class TemplatePlanGenerator(
         val skeleton = builder.build(request)
         if (!skeleton.isComplete) return PlanGenerationResult.Failed
         return assembler.assemble(skeleton, PlanSelection(), request)
-            ?.let { PlanGenerationResult.Generated(it, source) }
+            ?.let { PlanGenerationResult.Generated(it, PlanSource.TEMPLATE) }
             ?: PlanGenerationResult.Failed
     }
 }

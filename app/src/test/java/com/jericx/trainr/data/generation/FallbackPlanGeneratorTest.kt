@@ -51,17 +51,6 @@ class FallbackPlanGeneratorTest {
             }
     }
 
-    // Standing in for the coach is a dev build's arrangement; a week that
-    // replaced a failed answer is always named for what it is.
-    @Test
-    fun aWeekBuiltInsteadIsATemplateWhateverTheTemplateCallsItself() = runTest {
-        val result = FallbackPlanGenerator(
-            Answering(PlanGenerationResult.Offline),
-            TemplatePlanGenerator(catalog, source = PlanSource.COACH)
-        ).generate(request) as PlanGenerationResult.Generated
-
-        assertThat(result.source).isEqualTo(PlanSource.TEMPLATE)
-    }
 
     @Test
     fun withNothingToBuildFromTheCoachsOwnReasonIsReported() = runTest {

@@ -46,11 +46,13 @@ filter is the whole of that obligation, and it has a test per injury.
    names the reason and waits for the client to read it. Only when the catalog
    cannot build a week either does the coach's own failure reach the screen.
 
-A week the app built in place of a failed answer does not spend the free
-generation; a coached or progressed week does (`ProGate.spend`). Debug builds
-use the template standing in for the coach, so the allowance and the paywall
-behave there as they would with a real answer, and no development run spends
-the model's daily allowance.
+**One free week.** Every path that produces a week — the first plan, next
+week, regenerating this week, and repeating a week — goes through `ProGate`,
+and the first week delivered spends the free generation whichever tier built
+it. Everything after that asks for Pro. A generation that failed spends
+nothing, because the allowance is spent only once a week has actually arrived.
+Debug builds never reach the network, so no development run spends the model's
+daily allowance.
 
 ## The selection schema
 

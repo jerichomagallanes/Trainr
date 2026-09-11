@@ -215,9 +215,9 @@ fun AppContent(
     // is shown a price.
     var prompt by remember { mutableStateOf<PaywallReason?>(null) }
 
-    fun askThen(reason: PaywallReason, route: String) {
+    fun askThen(reason: PaywallReason, action: () -> Unit) {
         when (proGate.decide()) {
-            ProGate.Decision.ALLOWED -> navController.navigate(route)
+            ProGate.Decision.ALLOWED -> action()
             ProGate.Decision.ASK -> prompt = reason
         }
     }
@@ -390,7 +390,7 @@ fun AppContent(
                                     )
                                 }
                             } else if (fromPlan) {
-                                askThen(PaywallReason.FRESH_PLAN, Screen.Generating.route)
+                                askThen(PaywallReason.FRESH_PLAN) { navController.navigate(Screen.Generating.route) }
                             } else {
                                 navController.navigate(Screen.Generating.route)
                             }
@@ -419,10 +419,10 @@ fun AppContent(
                         isReady = onboardingState.isCompleted,
                         onStart = { onboardingViewModel.saveUserProfile() },
                         onDone = {
-                            // Spent here and nowhere earlier, so a failed generation
-                            // costs nothing. What the week that arrived costs is
-                            // ProGate's to say.
-                            onboardingState.planSource?.let(proGate::spend)
+                            // Spent here and nowhere earlier, so a failed
+                            // generation costs nothing and the free week is
+                            // still there to be used.
+                            proGate.spend()
                             navController.navigate(Screen.Home.route) {
                                 popUpTo(0) { inclusive = true }
                             }
@@ -478,9 +478,13 @@ fun AppContent(
                         onBackClick = { navController.popBackStack() },
                         onDayClick = openDay,
                         onStartTodayClick = openDay,
-                        onRepeatWeekClick = { nextWeekViewModel.repeatWeek(weekNumber) },
+                        onRepeatWeekClick = {
+                            askThen(PaywallReason.NEXT_WEEK) {
+                                nextWeekViewModel.repeatWeek(weekNumber)
+                            }
+                        },
                         onRegenerateWeekClick = {
-                            askThen(PaywallReason.REWRITE, Screen.RegeneratingWeek.route)
+                            askThen(PaywallReason.REWRITE) { navController.navigate(Screen.RegeneratingWeek.route) }
                         }
                     )
                 }
@@ -544,7 +548,7 @@ fun AppContent(
                             navController.navigate(Screen.WeeklyProgress.route)
                         },
                         onPreviewNextWeekClick = {
-                            askThen(PaywallReason.NEXT_WEEK, Screen.GeneratingNextWeek.route)
+                            askThen(PaywallReason.NEXT_WEEK) { navController.navigate(Screen.GeneratingNextWeek.route) }
                         }
                     )
                 }
@@ -574,15 +578,14 @@ fun AppContent(
                     val nextWeekViewModel: NextWeekViewModel = hiltViewModel()
                     val failure by nextWeekViewModel.failure.collectAsStateWithLifecycle()
                     val weekIsReady by nextWeekViewModel.isReady.collectAsStateWithLifecycle()
-                    val source by nextWeekViewModel.source.collectAsStateWithLifecycle()
                     GeneratingScreen(
                         isReady = weekIsReady,
                         onStart = { nextWeekViewModel.regenerateThisWeek() },
                         onDone = {
-                            // Spent here and nowhere earlier, so a failed generation
-                            // costs nothing. What the week that arrived costs is
-                            // ProGate's to say.
-                            source?.let(proGate::spend)
+                            // Spent here and nowhere earlier, so a failed
+                            // generation costs nothing and the free week is
+                            // still there to be used.
+                            proGate.spend()
                             navController.navigate(Screen.Home.route) {
                                 popUpTo(0) { inclusive = true }
                             }
@@ -598,15 +601,14 @@ fun AppContent(
                     val nextWeekFailure by nextWeekViewModel.failure.collectAsStateWithLifecycle()
                     val nextWeekBuiltInstead by nextWeekViewModel.builtInsteadOf.collectAsStateWithLifecycle()
                     val weekIsReady by nextWeekViewModel.isReady.collectAsStateWithLifecycle()
-                    val source by nextWeekViewModel.source.collectAsStateWithLifecycle()
                     GeneratingScreen(
                         isReady = weekIsReady,
                         onStart = { nextWeekViewModel.generateNextWeek() },
                         onDone = {
-                            // Spent here and nowhere earlier, so a failed generation
-                            // costs nothing. What the week that arrived costs is
-                            // ProGate's to say.
-                            source?.let(proGate::spend)
+                            // Spent here and nowhere earlier, so a failed
+                            // generation costs nothing and the free week is
+                            // still there to be used.
+                            proGate.spend()
                             navController.navigate(Screen.Home.route) {
                                 popUpTo(0) { inclusive = true }
                             }
@@ -657,11 +659,13 @@ fun AppContent(
                         },
                         onOpenProClick = { navController.navigate(Screen.Pro.route) },
                         onStartNextWeekClick = {
-                            askThen(PaywallReason.NEXT_WEEK, Screen.GeneratingNextWeek.route)
+                            askThen(PaywallReason.NEXT_WEEK) { navController.navigate(Screen.GeneratingNextWeek.route) }
                         },
-                        onRepeatWeekClick = { nextWeekViewModel.repeatWeek() },
+                        onRepeatWeekClick = {
+                            askThen(PaywallReason.NEXT_WEEK) { nextWeekViewModel.repeatWeek() }
+                        },
                         onRegenerateWeekClick = {
-                            askThen(PaywallReason.REWRITE, Screen.RegeneratingWeek.route)
+                            askThen(PaywallReason.REWRITE) { navController.navigate(Screen.RegeneratingWeek.route) }
                         },
                         onCreatePlanClick = {
                             navController.navigate(Screen.Review.createRoute(fromPlan = true))
