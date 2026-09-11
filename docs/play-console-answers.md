@@ -21,8 +21,8 @@ Play's Families policy draw around collecting personal data, which this app does
 **Yes.**
 
 ### Is all of the user data collected by your app encrypted in transit?
-**Yes.** The only thing that leaves the device goes to Google's Gemini API over
-HTTPS.
+**Yes.** The only thing that leaves the device is a crash report to Firebase
+Crashlytics, over HTTPS.
 
 ### Do you provide a way for users to request that their data is deleted?
 **Yes.** Uninstalling the app deletes everything; Android's Clear storage does
@@ -30,22 +30,22 @@ the same without uninstalling. Nothing is held off the device to delete.
 
 ### Data types
 
-Five rows. For every one: **collected = yes, processed ephemerally = no,
-required = yes**. Sharing and purpose differ per row, so they are in the table.
+Five rows. For every one: **collected = yes, shared = no, processed ephemerally
+= no, required = yes**. Purpose differs per row, so it is in the table.
 
 | Category | Type | Shared | Purpose | Why |
 | --- | --- | --- | --- | --- |
 | Personal info | **Name** | **No** | App functionality | Asked for in onboarding, never leaves the device. |
-| Health and fitness | **Health info** | **Yes** | App functionality | Height, weight and injuries. Sent to Gemini to write the plan. |
-| Health and fitness | **Fitness info** | **Yes** | App functionality | Goal, experience, equipment, schedule, and the sets and reps you log. Sent to Gemini so the next week progresses from the last. |
+| Health and fitness | **Health info** | **No** | App functionality | Height, weight and injuries. Used on the device to write the plan; never sent. |
+| Health and fitness | **Fitness info** | **No** | App functionality | Goal, experience, equipment, schedule, and the sets and reps you log. Used on the device so the next week progresses from the last; never sent. |
 | App info and performance | **Crash logs** | **No** | Analytics | Stack traces, device state and the hand-written trail. Play defines the Analytics purpose as "monitoring app health, diagnose and fix bugs or crashes", which is exactly this and is not App functionality. |
 | Device or other IDs | **Device or other IDs** | **No** | Analytics | The Crashlytics installation UUID, which tells one crash apart from the same crash twice. Play's definition of this type names Firebase installation IDs, so it is declarable. |
 
 Gender is also collected. Play has no separate gender type; it falls under
 **Personal info → Other personal info** if you want to be exhaustive. Like the
-name, it is collected but **not shared** — the prompt never includes it.
+name, it is collected but **not shared** — it never leaves the device.
 
-### Why the Gemini rows are shared and the Crashlytics rows are not
+### Why no row is shared
 
 Play defines sharing as "transferring user data collected from your app to a
 third party", and exempts transfers to a **service provider**: "an entity that
@@ -54,19 +54,9 @@ instructions". The distinction Google draws is whether the recipient uses the
 data for its own purposes.
 
 **Crashlytics is a service provider.** It processes crash reports on our behalf
-and for no purpose of its own, so those rows are collected but not shared.
-
-**The free Gemini API is not**, and its own terms say so plainly. For the Unpaid
-Services: "Google uses the content you submit to the Services and any generated
-responses to provide, improve, and develop Google products and services", and
-"Human reviewers may read, annotate, and process your API input and output."
-That is use for Google's own purposes, which is the definition of a third party
-rather than a service provider. So those rows are shared, and answering No would
-be wrong.
-
-**On the paid tier this reverses**: "Google doesn't use your prompts ... or
-responses to improve our products". Moving to paid would make Gemini a service
-provider, and those two rows would become collected-but-not-shared.
+and for no purpose of its own, so those rows are collected but not shared. The
+profile and training rows never leave the device at all: the plan is built by
+the app from the bundled catalog.
 
 ### What to say it is not
 
@@ -81,18 +71,11 @@ provider, and those two rows would become collected-but-not-shared.
 - No account management (there are no accounts)
 - No location, contacts, photos, files, messages, calendar, audio or camera data
 
-App Check with Play Integrity attests the app and device to Google, but carries
-no profile data and is a security measure rather than data collection.
-
 ### Crash reports carry no profile data
 
 Crashlytics is set up with **no user ID**. It does carry custom keys and logs —
-a hand-written trail of screens visited and the walk through the Gemini models —
-but nothing the client typed goes into it, and a test enforces that by running a
-full profile through a failing generation and asserting none of its values
-appear. Rejected answers record how many problems there were, never what they
-said, because a validation message can quote the model's own text and that text
-was written from the profile.
+a hand-written trail of screens visited (route patterns, never their arguments)
+and purchase events — but nothing the client typed goes into it.
 
 Dev builds do not report at all
 (`firebase_crashlytics_collection_enabled` is false in the dev manifest).
