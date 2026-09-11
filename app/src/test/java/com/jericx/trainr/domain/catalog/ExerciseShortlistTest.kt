@@ -207,4 +207,24 @@ class ExerciseShortlistTest {
         assertThat(ExerciseShortlist.requiredPatterns(shortlist, FitnessGoal.FLEXIBILITY))
             .isEmpty()
     }
+
+    // Ruled out means never offered, so the model cannot pick it and the
+    // parser never has to catch it.
+    @Test
+    fun aMovementAnInjuryRulesOutIsNeverOffered() {
+        val catalog = InMemoryExerciseCatalog(
+            listOf(
+                exercise("overhead_press", pattern = MovementPattern.VERTICAL_PUSH),
+                exercise("push_up")
+            )
+        )
+        val shoulder = UserProfile(
+            availableEquipment = listOf(Equipment.NONE),
+            injuries = listOf(com.jericx.trainr.domain.model.Injury.SHOULDER)
+        )
+
+        val offered = ExerciseShortlist.forRequest(catalog, shoulder).map { it.key }
+
+        assertThat(offered).containsExactly("push_up")
+    }
 }

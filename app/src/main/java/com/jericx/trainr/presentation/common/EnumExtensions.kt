@@ -57,6 +57,17 @@ fun Equipment.getLocalizedName(): String = when (this) {
 }
 
 @Composable
+fun Injury.cautionText(): String = when (this) {
+    Injury.LOWER_BACK -> stringResource(R.string.caution_lower_back)
+    Injury.KNEE -> stringResource(R.string.caution_knee)
+    Injury.SHOULDER -> stringResource(R.string.caution_shoulder)
+    Injury.WRIST -> stringResource(R.string.caution_wrist)
+    Injury.ANKLE -> stringResource(R.string.caution_ankle)
+    Injury.HIP -> stringResource(R.string.caution_hip)
+    Injury.NECK -> stringResource(R.string.caution_neck)
+}
+
+@Composable
 fun Injury.getLocalizedName(): String = when (this) {
     Injury.LOWER_BACK -> stringResource(R.string.lower_back_pain_injury)
     Injury.KNEE -> stringResource(R.string.knee_problems_injury)
