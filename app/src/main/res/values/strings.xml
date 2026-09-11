@@ -217,6 +217,7 @@
     <string name="generation_built_instead_failed">The AI coach did not come back with a week that held up, so this one was built from your answers. It still progresses from what you log.</string>
     <string name="generation_built_instead_limit">You are out of AI-written plans for today, so this week was built from your answers. It still progresses from what you log.</string>
     <string name="see_my_plan">See my plan</string>
+    <string name="estimated_weight">Estimated weight</string>
     <string name="try_again">Try again</string>
     <string name="back_to_profile">Back to profile</string>
     <string name="missed">Missed</string>
