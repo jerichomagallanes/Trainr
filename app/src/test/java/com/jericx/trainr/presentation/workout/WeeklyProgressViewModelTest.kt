@@ -8,6 +8,7 @@ import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.domain.repository.UserRepository
 import com.jericx.trainr.presentation.workout.model.WeekStatus
 import com.jericx.trainr.presentation.workout.util.WorkoutWeek
+import com.jericx.trainr.presentation.workout.util.mondayOf
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -42,7 +43,7 @@ class WeeklyProgressViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private val weekStart = WorkoutWeek.mondayOf(1_755_000_000_000L)
+    private val weekStart = mondayOf(1_755_000_000_000L)
 
     private fun day(number: Int, status: WorkoutStatus) = WorkoutDay(
         dayNumber = number,

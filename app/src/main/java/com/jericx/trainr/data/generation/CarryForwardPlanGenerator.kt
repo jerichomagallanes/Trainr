@@ -8,8 +8,8 @@ import com.jericx.trainr.domain.generation.PlanSkeleton
 import com.jericx.trainr.domain.generation.PlanSkeletonBuilder
 import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
 
-// Next week is last week's movements, progressed from what was lifted, with no
-// model asked: a lift only moves on while it stays in the programme. A profile
+// Next week is last week's movements, progressed from what was lifted: a lift
+// only moves on while it stays in the programme. A profile
 // edit that rules a movement out, a split with no room for it, or a client
 // asking for new movements hands the week to the generator behind this one.
 class CarryForwardPlanGenerator(

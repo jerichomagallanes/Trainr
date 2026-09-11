@@ -14,7 +14,6 @@ import com.jericx.trainr.domain.model.ExerciseSet
 import com.jericx.trainr.domain.model.ExperienceLevel
 import com.jericx.trainr.domain.model.FitnessGoal
 import com.jericx.trainr.domain.model.Gender
-import com.jericx.trainr.domain.model.UnitSystem
 import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
 import com.jericx.trainr.domain.model.WorkoutDay
@@ -38,16 +37,14 @@ class PlanExpanderTest {
         tier: SlotTier = SlotTier.PRIMARY_COMPOUND,
         secondsPerSet: Int? = null
     ) = SkeletonSlot(
-        id = "primary", label = "the main lift", tier = tier, patterns = emptyList(),
-        muscles = emptySet(), candidates = keys.toList(), sets = 3, restSeconds = 120,
+        id = "primary", tier = tier, candidates = keys.toList(), sets = 3, restSeconds = 120,
         secondsPerSet = secondsPerSet
     )
 
     private fun skeleton(vararg slots: SkeletonSlot) = PlanSkeleton(
         title = "Test Week",
         days = listOf(SkeletonDay(dayNumber = 1, focus = SessionFocus.FULL_BODY, slots = slots.toList())),
-        units = UnitSystem.METRIC, maxSetsPerSession = 20, sessionCeilingMinutes = 90,
-        weeklySetsByRegion = emptyMap(), uncoveredPatterns = emptySet()
+        maxSetsPerSession = 20, sessionCeilingMinutes = 90, uncoveredPatterns = emptySet()
     )
 
     private fun expand(
@@ -62,7 +59,7 @@ class PlanExpanderTest {
 
     private val GeneratedPlan.only get() = days.single().exercises.single()
 
-    // What a movement is and how it is done is the catalog's, never a model's.
+    // What a movement is and how it is done is the catalog's, never stored with the week.
     @Test
     fun theCopyComesFromTheCatalog() {
         val squat = expand(skeleton(slot("goblet_squat"))).only

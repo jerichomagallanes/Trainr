@@ -216,12 +216,7 @@ dependencies {
     ksp(libs.room.compiler)
 
     implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.appcheck.playintegrity)
     implementation(libs.firebase.crashlytics)
-    // Debug and minified-smoke builds cannot pass Play Integrity: nothing there
-    // was installed from Play. They attest with a token registered in the
-    // console instead, which is what makes local development possible at all.
-    debugImplementation(libs.firebase.appcheck.debug)
 
     implementation(libs.youtube.player)
 
@@ -231,7 +226,6 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockk)
-    testImplementation(libs.androidx.arch.core.testing)
     testImplementation(libs.truth)
 
     // Instrumentation tests

@@ -51,8 +51,7 @@ class TemplatePlanGeneratorTest {
         (generate(user, history, week) as PlanGenerationResult.Generated).plan
 
     // The whole point: every answer the setup screen allows gets a week, and
-    // every such week passes the same parser, with the same limits, that a
-    // model's answer has to.
+    // every such week passes the parser's checks with the limits the skeleton set.
     @Test
     fun everyAnswerTheSetupScreenAllowsBuildsAWeekTheParserAccepts() {
         val kits = listOf(

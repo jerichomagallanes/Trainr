@@ -11,12 +11,12 @@ import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
 // be tuned.
 object DeloadCheck {
 
-    internal const val WEEKS_BETWEEN_DELOADS = 6
-    internal const val WEEKS_BETWEEN_DELOADS_OLDER = 4
-    internal const val OLDER_AGE = 50
-    internal const val LOW_COMPLETION = 0.60f
-    internal const val BEGINNER_GRACE_WEEKS = 8
-    internal const val STALLING_MOVEMENTS = 2
+    private const val WEEKS_BETWEEN_DELOADS = 6
+    private const val WEEKS_BETWEEN_DELOADS_OLDER = 4
+    private const val OLDER_AGE = 50
+    private const val LOW_COMPLETION = 0.60f
+    private const val BEGINNER_GRACE_WEEKS = 8
+    private const val STALLING_MOVEMENTS = 2
 
     // Any two of three, because each alone is noise: one bad week, one busy
     // fortnight, or simply time passing.

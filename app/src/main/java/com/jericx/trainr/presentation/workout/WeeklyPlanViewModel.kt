@@ -53,8 +53,6 @@ data class WeeklyPlanUiState(
             ?: days.firstOrNull { it.day.status != WorkoutStatus.COMPLETED }
 
     val nextWorkoutIsToday: Boolean get() = nextWorkout?.isToday == true
-
-    val todaysDay: WorkoutDay? get() = nextWorkout?.day
 }
 
 @HiltViewModel
@@ -140,7 +138,6 @@ class WeeklyPlanViewModel @Inject constructor(
         // Plans stored before startDateMillis existed fall back to the sample week.
         fun stateFor(
             plan: WeeklyWorkoutPlan,
-            isSample: Boolean = false,
             isCurrentWeek: Boolean = true,
             // A fact about the newest week, whatever week is being read: appending
             // while one is still being trained would move home onto the copy.
@@ -166,10 +163,10 @@ class WeeklyPlanViewModel @Inject constructor(
                 weekStartMillis = start,
                 weekEndMillis = WorkoutWeek.dateOfDay(start, LAST_ISO_DAY),
                 hasLoaded = true,
-                hasPlan = !isSample,
+                hasPlan = true,
                 isCurrentWeek = isCurrentWeek,
-                canStartNextWeek = !isSample && readyForTheNext,
-                canAddWeek = canAddWeek ?: (!isSample && readyForTheNext)
+                canStartNextWeek = readyForTheNext,
+                canAddWeek = canAddWeek ?: readyForTheNext
             )
         }
     }

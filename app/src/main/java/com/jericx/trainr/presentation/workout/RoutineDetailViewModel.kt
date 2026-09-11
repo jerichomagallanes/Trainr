@@ -75,7 +75,7 @@ class RoutineDetailViewModel @Inject constructor(
 
     private var tickJob: Job? = null
 
-    // Null on the sample fallback, so nothing persists rows that do not exist.
+    // Null until the stored day is read, so nothing persists rows that do not exist.
     private var storedDay: WorkoutDay? = null
     private var weeklyPlanId = 0L
 
@@ -333,7 +333,7 @@ class RoutineDetailViewModel @Inject constructor(
     }
 
     // Completing writes the prescription onto sets never filled in, so the day
-    // reads back the same way for the PREVIOUS column and next week's prompt.
+    // reads back the same way for the PREVIOUS column and next week's progression.
     private suspend fun persistFilledSets(positions: List<Int>) {
         var day = storedDay ?: return
         positions.forEach { position ->

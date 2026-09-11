@@ -67,7 +67,7 @@ class CarryForwardPlanGeneratorTest {
     )
 
     @Test
-    fun aWeekNothingForcesToChangeIsLastWeeksMovementsWithNoModelAsked() {
+    fun aWeekNothingForcesToChangeIsLastWeeksMovementsWithoutAskingTheNextGenerator() {
         val first = firstWeek().logged()
         val next = Recording()
 

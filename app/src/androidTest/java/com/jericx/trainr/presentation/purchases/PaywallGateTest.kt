@@ -15,6 +15,7 @@ import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.domain.purchases.FreeGenerationAllowance
 import com.jericx.trainr.domain.purchases.ProGate
+import com.jericx.trainr.domain.diagnostics.Breadcrumbs
 import com.jericx.trainr.domain.repository.UserRepository
 import com.jericx.trainr.presentation.AppContent
 import com.jericx.trainr.presentation.Screen
@@ -53,6 +54,9 @@ class PaywallGateTest {
 
     @Inject
     lateinit var themePreferences: ThemePreferences
+
+    @Inject
+    lateinit var breadcrumbs: Breadcrumbs
 
     @Before
     fun setUp() {
@@ -95,6 +99,7 @@ class PaywallGateTest {
                 versionName = "1.0",
                 themePreferences = themePreferences,
                 proGate = gate,
+                breadcrumbs = breadcrumbs,
                 startDestination = Screen.Home.route
             )
         }
@@ -126,8 +131,8 @@ class PaywallGateTest {
         composeTestRule.onNodeWithText(string(R.string.pro_upgrade_title)).assertDoesNotExist()
     }
 
-    // The one that was missed: a copied week asks nothing of the network, which
-    // was taken to mean it asks nothing of the client either.
+    // The one that was missed: a copied week is built without a generator,
+    // which was taken to mean it asks nothing of the client either.
     @Test
     fun repeatingAWeekAsksForPro() {
         seed(finished = true)

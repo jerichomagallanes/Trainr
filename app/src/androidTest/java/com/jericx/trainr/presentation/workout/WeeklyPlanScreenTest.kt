@@ -132,7 +132,6 @@ class WeeklyPlanScreenTest {
                     it.copy(status = WorkoutStatus.COMPLETED)
                 }
             ),
-            isSample = false
         )
         composeTestRule.setContent {
             TrainrTheme { WeeklyPlanScreen(state = finished, onBackClick = {}) }
@@ -248,7 +247,6 @@ class WeeklyPlanScreenTest {
                     it.copy(status = WorkoutStatus.COMPLETED)
                 }
             ),
-            isSample = false
         )
         var started = false
         composeTestRule.setContent {
@@ -271,7 +269,6 @@ class WeeklyPlanScreenTest {
                     it.copy(status = WorkoutStatus.COMPLETED)
                 }
             ),
-            isSample = false
         )
         var repeated = false
         composeTestRule.setContent {
@@ -454,7 +451,6 @@ class WeeklyPlanScreenTest {
                 it.copy(status = WorkoutStatus.NOT_STARTED)
             }
         ),
-        isSample = false,
         nowMillis = SampleWorkoutData.dateOf(1)
     )
 
@@ -497,7 +493,6 @@ class WeeklyPlanScreenTest {
                     )
                 }
             ),
-            isSample = false,
             nowMillis = SampleWorkoutData.dateOf(1)
         )
         composeTestRule.setContent {
@@ -565,7 +560,6 @@ class WeeklyPlanScreenTest {
                 it.copy(status = WorkoutStatus.NOT_STARTED)
             }
         ),
-        isSample = false,
         // Looked at after the week has run out, so every session was missed.
         nowMillis = SampleWorkoutData.dateOf(9)
     )

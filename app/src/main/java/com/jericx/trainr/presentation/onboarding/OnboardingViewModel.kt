@@ -111,19 +111,13 @@ class OnboardingViewModel @Inject constructor(
     fun updateProfileOnly(onSuccess: () -> Unit) {
         viewModelScope.launch {
             try {
-                _onboardingState.value = _onboardingState.value.copy(isLoading = true)
                 userRepository.getCurrentUser()?.let { existing ->
                     userRepository.updateUser(
                         _onboardingState.value.userProfile.copy(id = existing.id)
                     )
                 }
-                _onboardingState.value = _onboardingState.value.copy(isLoading = false)
                 onSuccess()
             } catch (e: Exception) {
-                _onboardingState.value = _onboardingState.value.copy(
-                    isLoading = false,
-                    error = e.message
-                )
             }
         }
     }
@@ -139,7 +133,6 @@ class OnboardingViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 _onboardingState.value = _onboardingState.value.copy(
-                    isLoading = true,
                     isCompleted = false,
                     generationFailure = null
                 )
@@ -169,7 +162,6 @@ class OnboardingViewModel @Inject constructor(
                     }
 
                     _onboardingState.value = _onboardingState.value.copy(
-                        isLoading = false,
                         generationFailure = PlanGenerationResult.Failed
                     )
                     return@launch
@@ -177,15 +169,10 @@ class OnboardingViewModel @Inject constructor(
 
                 val userId = userRepository.saveUser(profile)
                 userRepository.saveWeeklyWorkoutPlan(result.plan.copy(userId = userId))
-                _onboardingState.value = _onboardingState.value.copy(
-                    isLoading = false,
-                    isCompleted = true
-                )
+                _onboardingState.value = _onboardingState.value.copy(isCompleted = true)
                 onSuccess()
             } catch (e: Exception) {
                 _onboardingState.value = _onboardingState.value.copy(
-                    isLoading = false,
-                    error = e.message,
                     generationFailure = PlanGenerationResult.Failed
                 )
             } finally {
@@ -212,9 +199,6 @@ enum class OnboardingStep {
 data class OnboardingState(
     val userProfile: UserProfile = UserProfile(),
     val answeredSteps: Set<OnboardingStep> = emptySet(),
-    val currentStep: Int = 0,
-    val isLoading: Boolean = false,
-    val error: String? = null,
     val isCompleted: Boolean = false,
     val generationFailure: PlanGenerationResult? = null
 )

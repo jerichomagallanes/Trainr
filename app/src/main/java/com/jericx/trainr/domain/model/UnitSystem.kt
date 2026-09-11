@@ -24,7 +24,7 @@ val LoadedEquipment = setOf(
     Equipment.PLATE
 )
 
-// Loads are stored in kilograms, which is what the model prescribes and what
+// Loads are stored in kilograms, which is what the engine prescribes and what
 // history is compared in. These convert at the edges.
 object WeightUnit {
 

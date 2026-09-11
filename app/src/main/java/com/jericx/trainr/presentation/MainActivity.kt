@@ -16,7 +16,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import com.jericx.trainr.R
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,7 +33,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import androidx.navigation.compose.rememberNavController
 import com.jericx.trainr.BuildConfig
-import com.jericx.trainr.data.diagnostics.CrashlyticsBreadcrumbs
 import com.jericx.trainr.domain.diagnostics.Breadcrumbs
 import com.jericx.trainr.data.preferences.AppearanceMode
 import com.jericx.trainr.data.preferences.ThemePreferences
@@ -86,9 +84,6 @@ private fun OnboardingState.filledFor(
     editing: Boolean
 ): UserProfile? = if (editing || step in answeredSteps) userProfile else null
 
-@Composable
-private fun rememberBreadcrumbs(): Breadcrumbs = remember { CrashlyticsBreadcrumbs() }
-
 private val NavBackStackEntry.isEditing: Boolean
     get() = arguments?.getBoolean(Screen.EditableStep.ARG_EDIT) ?: false
 
@@ -125,6 +120,9 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var proGate: ProGate
 
+    @Inject
+    lateinit var breadcrumbs: Breadcrumbs
+
     // The app ships English copy only, so dates and numbers have to be English
     // too, whatever the device says. The configured context must become the
     // activity's base before any resources are read, so it cannot move to
@@ -152,7 +150,8 @@ class MainActivity : ComponentActivity() {
             AppContent(
                 versionName = versionName,
                 themePreferences = themePreferences,
-                proGate = proGate
+                proGate = proGate,
+                breadcrumbs = breadcrumbs
             )
         }
     }
@@ -175,6 +174,7 @@ fun AppContent(
     versionName: String,
     themePreferences: ThemePreferences,
     proGate: ProGate,
+    breadcrumbs: Breadcrumbs,
     // Where the app opens. Only a test starts anywhere else: the splash decides
     // between the plan and the welcome on a timer, which a test would spend two
     // seconds waiting out before it could reach what it came to check.
@@ -183,9 +183,18 @@ fun AppContent(
     val context = LocalContext.current
     val navController = rememberNavController()
 
+    // Spent here and nowhere earlier, so a failed generation costs nothing and
+    // the free week is still there to be used.
+    val weekBuilt: () -> Unit = {
+        proGate.spend()
+        navController.navigate(Screen.Home.route) {
+            popUpTo(0) { inclusive = true }
+        }
+    }
+    val leave: () -> Unit = { navController.popBackStack() }
+
     // Route patterns only, never their filled-in arguments, so a crash report
     // carries no client data.
-    val breadcrumbs = rememberBreadcrumbs()
     LaunchedEffect(navController) {
         navController.currentBackStackEntryFlow.collect { entry ->
             entry.destination.route?.let { breadcrumbs.record("screen: ${it.substringBefore('?')}") }
@@ -422,18 +431,10 @@ fun AppContent(
                     GeneratingScreen(
                         isReady = onboardingState.isCompleted,
                         onStart = { onboardingViewModel.saveUserProfile() },
-                        onDone = {
-                            // Spent here and nowhere earlier, so a failed
-                            // generation costs nothing and the free week is
-                            // still there to be used.
-                            proGate.spend()
-                            navController.navigate(Screen.Home.route) {
-                                popUpTo(0) { inclusive = true }
-                            }
-                        },
+                        onDone = weekBuilt,
                         failure = onboardingState.generationFailure,
                         onRetry = { onboardingViewModel.saveUserProfile() },
-                        onGiveUp = { navController.popBackStack() },
+                        onGiveUp = leave,
                         giveUpLabel = R.string.back_to_profile
                     )
                 }
@@ -584,18 +585,10 @@ fun AppContent(
                     GeneratingScreen(
                         isReady = weekIsReady,
                         onStart = { nextWeekViewModel.regenerateThisWeek() },
-                        onDone = {
-                            // Spent here and nowhere earlier, so a failed
-                            // generation costs nothing and the free week is
-                            // still there to be used.
-                            proGate.spend()
-                            navController.navigate(Screen.Home.route) {
-                                popUpTo(0) { inclusive = true }
-                            }
-                        },
+                        onDone = weekBuilt,
                         failure = failure,
                         onRetry = { nextWeekViewModel.regenerateThisWeek() },
-                        onGiveUp = { navController.popBackStack() }
+                        onGiveUp = leave
                     )
                 }
 
@@ -606,18 +599,10 @@ fun AppContent(
                     GeneratingScreen(
                         isReady = weekIsReady,
                         onStart = { nextWeekViewModel.generateNextWeek() },
-                        onDone = {
-                            // Spent here and nowhere earlier, so a failed
-                            // generation costs nothing and the free week is
-                            // still there to be used.
-                            proGate.spend()
-                            navController.navigate(Screen.Home.route) {
-                                popUpTo(0) { inclusive = true }
-                            }
-                        },
+                        onDone = weekBuilt,
                         failure = nextWeekFailure,
                         onRetry = { nextWeekViewModel.generateNextWeek() },
-                        onGiveUp = { navController.popBackStack() }
+                        onGiveUp = leave
                     )
                 }
 

@@ -13,9 +13,6 @@ interface UserDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertUser(user: UserEntity): Long
 
-    @Query("SELECT * FROM users WHERE id = :userId")
-    suspend fun getUserById(userId: Long): UserEntity?
-
     @Query("SELECT * FROM users LIMIT 1")
     suspend fun getCurrentUser(): UserEntity?
 
@@ -43,7 +40,6 @@ interface UserDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertWorkoutDays(days: List<WorkoutDayEntity>): List<Long>
 
-    // Days, exercises and sets go with it: every child cascades on delete.
     @Query("DELETE FROM weekly_workout_plans WHERE id = :planId")
     suspend fun deleteWeeklyWorkoutPlan(planId: Long)
 
@@ -58,9 +54,6 @@ interface UserDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertWorkoutExercise(exercise: WorkoutExerciseEntity): Long
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertWorkoutExercises(exercises: List<WorkoutExerciseEntity>)
 
     @Query("SELECT * FROM workout_exercises WHERE workoutDayId = :workoutDayId")
     suspend fun getExercisesForWorkoutDay(workoutDayId: Long): List<WorkoutExerciseEntity>
@@ -119,10 +112,5 @@ interface UserDao {
         excludeDayId: Long,
         beforeMillis: Long
     ): List<ExerciseSetEntity>
-
-    @Query("SELECT COUNT(*) FROM workout_exercises WHERE workoutDayId = :workoutDayId")
-    suspend fun getTotalExercisesForDay(workoutDayId: Long): Int
-
-    @Query("SELECT COUNT(*) FROM workout_exercises WHERE workoutDayId = :workoutDayId AND isCompleted = 1")
-    suspend fun getCompletedExercisesForDay(workoutDayId: Long): Int
 }
+

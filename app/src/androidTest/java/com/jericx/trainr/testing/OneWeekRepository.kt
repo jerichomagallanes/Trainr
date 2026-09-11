@@ -2,10 +2,8 @@ package com.jericx.trainr.testing
 
 import com.jericx.trainr.domain.model.ExerciseSet
 import com.jericx.trainr.domain.model.UserProfile
-import com.jericx.trainr.domain.model.WeeklyProgress
 import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
 import com.jericx.trainr.domain.model.WorkoutDay
-import com.jericx.trainr.domain.model.WorkoutDayProgress
 import com.jericx.trainr.domain.model.WorkoutExercise
 import com.jericx.trainr.domain.repository.UserRepository
 import kotlinx.coroutines.flow.Flow
@@ -23,7 +21,6 @@ class OneWeekRepository(private val plan: WeeklyWorkoutPlan) : UserRepository {
         plan.takeIf { it.weekNumber == weekNumber }
 
     override suspend fun saveUser(user: UserProfile): Long = 1
-    override suspend fun getUser(userId: Long): UserProfile? = null
     override suspend fun updateUser(user: UserProfile) = Unit
     override suspend fun hasUsers(): Boolean = true
 
@@ -58,8 +55,5 @@ class OneWeekRepository(private val plan: WeeklyWorkoutPlan) : UserRepository {
         excludeDayId: Long,
         beforeMillis: Long
     ): List<ExerciseSet> = emptyList()
-
-    override suspend fun getWeeklyProgress(userId: Long, weekNumber: Int): WeeklyProgress? = null
-    override suspend fun getWorkoutDayProgress(weeklyPlanId: Long): List<WorkoutDayProgress> =
-        emptyList()
 }
+

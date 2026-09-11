@@ -116,8 +116,7 @@ class GeneratedPlanParserTest {
 
     // Five minutes of jogging, then two sets of twenty at three seconds a rep
     // with thirty seconds between them: eight minutes of work, plus the minute
-    // spent walking from one to the other, whatever the model would have
-    // claimed.
+    // spent walking from one to the other.
     @Test
     fun aDaysNumbersAreDerivedNotAccepted() {
         val cardio = parseGood().workoutDays.first { it.dayNumber == 3 }
@@ -168,7 +167,7 @@ class GeneratedPlanParserTest {
     }
 
     // How a movement is measured is a fact about the movement, so it comes
-    // from the catalog and the model never gets to disagree with it.
+    // from the catalog, whatever the plan says.
     @Test
     fun theCatalogDecidesHowAMovementIsMeasured() {
         val plan = parseGood()
@@ -188,8 +187,8 @@ class GeneratedPlanParserTest {
         assertThat(squat.name).isEqualTo("goblet squat")
     }
 
-    // Asking a model to restate the day's kit only gave it a way to name
-    // equipment the client does not own.
+    // The day's kit is read off the catalog, so it can only name equipment
+    // the movements actually need.
     @Test
     fun theDaysEquipmentComesFromItsMovements() {
         val parser = GeneratedPlanParser(
@@ -292,7 +291,7 @@ class GeneratedPlanParserTest {
     }
 
     // A session is a time budget: nine sets is not something half an hour of
-    // heavy work pays for, and the model is told so before it is asked again.
+    // heavy work pays for.
     @Test
     fun aDayThatOverspendsTheSessionIsRejected() {
         val result = parser.parse(
@@ -358,8 +357,7 @@ class GeneratedPlanParserTest {
         assertThat(errors).containsExactly("day 3, warm_up_jog: has no sets")
     }
 
-    // An answer is sent back with every problem it has, so one retry can fix
-    // them all rather than one each.
+    // A rejected week names every problem it has, not just the first.
     @Test
     fun everyProblemIsReportedNotJustTheFirst() {
         val errors = errorsOf(

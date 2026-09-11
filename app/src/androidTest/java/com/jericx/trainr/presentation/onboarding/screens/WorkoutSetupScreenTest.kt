@@ -5,9 +5,7 @@ import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.assertIsNotEnabled
-import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.jericx.trainr.R
 import com.jericx.trainr.testing.notEllipsized
@@ -17,7 +15,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import com.jericx.trainr.domain.model.Equipment
 import com.jericx.trainr.domain.model.EquipmentChoices
-import com.google.common.truth.Truth.assertThat
 
 @RunWith(AndroidJUnit4::class)
 class WorkoutSetupScreenTest {

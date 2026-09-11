@@ -11,10 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,22 +29,15 @@ import com.jericx.trainr.domain.model.equipmentFor
 import com.jericx.trainr.domain.model.LoadedEquipment
 import com.jericx.trainr.domain.model.UnitSystem
 import com.jericx.trainr.presentation.common.getLocalizedName
-import com.jericx.trainr.presentation.common.components.cards.TrainrLocationCard
-import com.jericx.trainr.presentation.common.components.cards.TrainrSelectionCard
 import com.jericx.trainr.presentation.common.components.core.TrainrButton
-import com.jericx.trainr.presentation.common.components.core.TrainrCheckboxChip
 import com.jericx.trainr.presentation.common.components.core.TrainrDropdown
-import com.jericx.trainr.presentation.common.components.core.TrainrMultiSelectChip
 import com.jericx.trainr.presentation.common.components.core.TrainrProgress
 import com.jericx.trainr.presentation.common.components.core.TrainrToggleChip
-import com.jericx.trainr.presentation.common.components.layout.TrainrChipGroup
-import com.jericx.trainr.presentation.common.components.layout.TrainrFlowRow
 import com.jericx.trainr.presentation.common.components.layout.TrainrFormSection
 import com.jericx.trainr.presentation.common.components.layout.TrainrScaffold
 import com.jericx.trainr.presentation.common.components.layout.TrainrScreenContent
 import com.jericx.trainr.presentation.common.components.layout.TrainrTopBar
 import com.jericx.trainr.presentation.common.components.typography.TrainrScreenTitle
-import com.jericx.trainr.presentation.common.components.typography.TrainrSectionTitle
 import com.jericx.trainr.presentation.common.theme.ComponentHeight
 import com.jericx.trainr.presentation.common.theme.Spacing
 

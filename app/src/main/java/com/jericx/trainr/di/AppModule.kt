@@ -98,9 +98,6 @@ object AppModule {
 
     @Provides
     @Singleton
-    // Last week's movements carried forward wherever nothing forces a change,
-    // and a week built from the catalog otherwise. No model, so no network and
-    // nothing to attest or meter.
     fun providePlanGenerator(catalog: ExerciseCatalog): PlanGenerator =
         CarryForwardPlanGenerator(catalog, next = TemplatePlanGenerator(catalog))
 

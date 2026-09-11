@@ -66,23 +66,6 @@ enum class ExerciseMeasure {
     DURATION
 }
 
-data class WeeklyProgress(
-    val weekNumber: Int,
-    val completedWorkouts: Int,
-    val totalWorkouts: Int,
-    val completionPercentage: Float,
-    val workoutDays: List<WorkoutDayProgress>
-)
-
-data class WorkoutDayProgress(
-    val dayNumber: Int,
-    val title: String,
-    val status: WorkoutStatus,
-    val completionPercentage: Float,
-    val completedExercises: Int,
-    val totalExercises: Int
-)
-
 enum class WorkoutStatus {
     NOT_STARTED,
     IN_PROGRESS,

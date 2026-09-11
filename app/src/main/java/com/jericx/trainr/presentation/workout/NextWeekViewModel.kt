@@ -34,13 +34,11 @@ class NextWeekViewModel @Inject constructor(
     private val _isReady = MutableStateFlow(false)
     val isReady: StateFlow<Boolean> = _isReady.asStateFlow()
 
-    // Generating takes the better part of a minute; without this a second ask
-    // runs alongside the first and both write a week.
+    // A second tap before the first write lands would write a second week.
     private var isWorking = false
 
-    // The same sessions and loads with every log cleared, asking nothing of the
-    // network. The copy joins the plan at the end and takes its dates from
-    // there, whatever week it came from.
+    // The same sessions and loads with every log cleared. The copy joins the
+    // plan at the end and takes its dates from there, whatever week it came from.
     fun repeatWeek(sourceWeekNumber: Int? = null) {
         if (isWorking) return
         isWorking = true
@@ -68,8 +66,8 @@ class NextWeekViewModel @Inject constructor(
         }
     }
 
-    // Written the safe way round: the model is asked first and the old week goes
-    // only once a replacement exists, so a failed generation loses nothing.
+    // Written the safe way round: the replacement is built first and the old
+    // week goes only once it exists, so a failed generation loses nothing.
     fun regenerateThisWeek() {
         if (isWorking) return
         isWorking = true
@@ -104,10 +102,9 @@ class NextWeekViewModel @Inject constructor(
                     _failure.value = result
                     return@launch
                 }
-                val replacement = result
 
                 userRepository.deleteWeeklyWorkoutPlan(current.id)
-                userRepository.saveWeeklyWorkoutPlan(replacement.plan)
+                userRepository.saveWeeklyWorkoutPlan(result.plan)
                 _isReady.value = true
             } finally {
                 isWorking = false
@@ -183,7 +180,7 @@ class NextWeekViewModel @Inject constructor(
     companion object {
         private const val DAYS_PER_WEEK = 7
 
-        fun repeatedWeek(
+        private fun repeatedWeek(
             previous: WeeklyWorkoutPlan,
             weekNumber: Int,
             startDateMillis: Long

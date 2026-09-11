@@ -14,36 +14,12 @@ val TextMuted = Color(0xFF626262)
 val DividerGray = Color(0xFFD9D9D9)
 
 val Gray900 = Color(0xFF212121)
-val Gray800 = Color(0xFF424242)
-val Gray700 = Color(0xFF616161)
-val Gray500 = Color(0xFF9E9E9E)
-val Gray300 = Color(0xFFE0E0E0)
-val Gray200 = Color(0xFFEEEEEE)
 val Gray100 = Color(0xFFF5F5F5)
 
 val Red700 = Color(0xFF8B1A1A)
 val Blue500 = Color(0xFF5DADE2)
 
-val GreenSuccess = Color(0xFF4CAF50)
 val RedError = Color(0xFFE74C3C)
-val YellowWarning = Color(0xFFF39C12)
-
-val StatusCompleted = Color(0xFF5F8C32)
-
-@Deprecated(
-    "Status colours are per-theme now.",
-    ReplaceWith("MaterialTheme.trainrColors.statusActive")
-)
-val StatusInProgress = Orange500
-
-@Deprecated(
-    "Status colours are per-theme now.",
-    ReplaceWith("MaterialTheme.trainrColors.statusIdle")
-)
-val StatusNotStarted = TextMuted
-
-val SurfaceLight = Color(0xFFFAFAFA)
-val SurfaceDark = Color(0xFF121212)
 
 // Dark values are tuned against the four dark grounds (page/card/raised/sunken).
 
@@ -115,7 +91,7 @@ val LightTrainrColors = TrainrColors(
     surfaceCard = Color.White,
     surfaceRaised = Color.White,
     surfaceSunken = Gray100,
-    surfacePanel = SurfaceLight,
+    surfacePanel = Color(0xFFFAFAFA),
     surfaceSelected = Slate800,
     onSurfaceSelected = Color.White,
     surfaceEmphasis = Slate800,
@@ -142,7 +118,7 @@ val LightTrainrColors = TrainrColors(
     brandStrongDisabled = Color(0xFFE09C4D),
     statusDone = Color(0xFF567C2C),
     statusDoneInk = Color(0xFF4F7429),
-    statusDoneEdge = StatusCompleted,
+    statusDoneEdge = Color(0xFF5F8C32),
     statusActive = Color(0xFFB36000),
     statusIdle = TextMuted,
     onStatus = Color.White,
