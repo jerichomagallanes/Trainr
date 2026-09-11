@@ -171,8 +171,8 @@ can be tuned against what logged weeks show.
 - **The starting weight.** No validated equation predicts one from bodyweight,
   age and sex; the validated route is a performed rep maximum (REYNOLDS). The
   seed is bodyweight × a coefficient by equipment and movement pattern × a
-  muscle factor × sex (1.00; 0.55 upper and 0.70 lower body for women, after
-  MILLER) × age (1% a year off past 40, never below 0.60, and 0.80 under 18) ×
+  muscle factor × sex (1.00 for a client who said male; 0.55 upper and 0.70 lower body for
+  everyone else, after MILLER) × age (1% a year off past 40, never below 0.60, and 0.80 under 18) ×
   experience (0.65, 1.0, 1.3), taken as a ten-rep maximum and moved to the rep
   target by Epley's formula, capped at twelve reps. A movement done with two
   dumbbells is halved per bell. The card calls such a weight an estimate until
