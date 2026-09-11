@@ -12,6 +12,8 @@ import com.jericx.trainr.domain.catalog.ExerciseRole
 import com.jericx.trainr.domain.catalog.isLoadable
 import com.jericx.trainr.domain.catalog.role
 import com.jericx.trainr.domain.model.ExerciseMeasure
+import com.jericx.trainr.domain.catalog.InjuryGuard
+import com.jericx.trainr.domain.model.Injury
 
 // The catalog is data, and data that ships wrong is a plan that reads wrong.
 // These hold the file itself to account rather than the code that reads it.
@@ -300,5 +302,27 @@ class ExerciseCatalogIntegrityTest {
         assertThat(catalog["clean"]?.role).isEqualTo(ExerciseRole.COMPOUND)
         assertThat(catalog.all.map { it.role }.distinct())
             .containsAtLeast(ExerciseRole.COMPOUND, ExerciseRole.ISOLATION, ExerciseRole.TIMED)
+    }
+
+    // A key renamed in the catalog would stop the guard excluding anything,
+    // and nothing would say so.
+    @Test
+    fun everyMovementTheInjuryGuardNamesExists() {
+        val missing = InjuryGuard.NamedKeys.filter { catalog[it] == null }
+
+        assertThat(missing).isEmpty()
+    }
+
+    // The guard is only safe if it cannot make a week unbuildable. The worst
+    // case the setup screen allows is every injury and no equipment, and that
+    // client still has to be able to squat, press and pull.
+    @Test
+    fun everyInjuryAtOnceWithNoEquipmentStillLeavesASquatAPressAndAPull() {
+        val left = catalog.availableWith(setOf(Equipment.NONE))
+            .filterNot { InjuryGuard.excludes(it, Injury.entries) }
+
+        assertThat(left.any { it.pattern.isLowerPush }).isTrue()
+        assertThat(left.any { it.pattern.isPush }).isTrue()
+        assertThat(left.any { it.pattern.isPull }).isTrue()
     }
 }

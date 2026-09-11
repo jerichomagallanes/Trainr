@@ -20,7 +20,10 @@ object ExerciseShortlist {
         carriedOver: Set<String> = emptySet()
     ): List<CatalogExercise> {
         val owned = user.availableEquipment.toSet().ifEmpty { setOf(Equipment.NONE) }
+        // Filtered before anything else, so the required patterns below are
+        // worked out from what this client can actually be given.
         val available = catalog.availableWith(owned)
+            .filterNot { InjuryGuard.excludes(it, user.injuries) }
         val byKey = available.associateBy { it.key }
 
         // Last week's movements come first whatever else is dropped: a key the

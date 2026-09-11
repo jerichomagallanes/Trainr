@@ -334,6 +334,15 @@
     <string name="hip_problems_injury">Hip Problems</string>
     <string name="neck_pain_injury">Neck Pain</string>
     <string name="none_injury">None</string>
+    <!-- One line on an exercise card when the movement touches an injury the
+         client declared. Care, not a diagnosis. -->
+    <string name="caution_lower_back">Brace and keep your back flat. Stop if it pinches.</string>
+    <string name="caution_knee">Keep your knee in line with your toes. Stop if it hurts.</string>
+    <string name="caution_shoulder">Stay in a range your shoulder is comfortable in.</string>
+    <string name="caution_wrist">Keep your wrist straight rather than bent back.</string>
+    <string name="caution_ankle">Keep your weight through the whole foot, and move softly.</string>
+    <string name="caution_hip">Only go as deep as your hip moves without pain.</string>
+    <string name="caution_neck">Keep your chin tucked and your neck relaxed.</string>
     
     <!-- Trainr Pro -->
     <string name="pro_name">Trainr Pro</string>
