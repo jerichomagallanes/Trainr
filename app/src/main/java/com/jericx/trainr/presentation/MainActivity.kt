@@ -432,7 +432,6 @@ fun AppContent(
                             }
                         },
                         failure = onboardingState.generationFailure,
-                        builtInsteadOf = onboardingState.builtInsteadOf,
                         onRetry = { onboardingViewModel.saveUserProfile() },
                         onGiveUp = { navController.popBackStack() },
                         giveUpLabel = R.string.back_to_profile
@@ -603,7 +602,6 @@ fun AppContent(
                 composable(Screen.GeneratingNextWeek.route) {
                     val nextWeekViewModel: NextWeekViewModel = hiltViewModel()
                     val nextWeekFailure by nextWeekViewModel.failure.collectAsStateWithLifecycle()
-                    val nextWeekBuiltInstead by nextWeekViewModel.builtInsteadOf.collectAsStateWithLifecycle()
                     val weekIsReady by nextWeekViewModel.isReady.collectAsStateWithLifecycle()
                     GeneratingScreen(
                         isReady = weekIsReady,
@@ -618,7 +616,6 @@ fun AppContent(
                             }
                         },
                         failure = nextWeekFailure,
-                        builtInsteadOf = nextWeekBuiltInstead,
                         onRetry = { nextWeekViewModel.generateNextWeek() },
                         onGiveUp = { navController.popBackStack() }
                     )

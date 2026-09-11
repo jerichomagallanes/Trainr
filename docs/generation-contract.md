@@ -1,12 +1,17 @@
 # Generation contract
 
-How a week is made. Three owners, each deciding only what it knows best: the
-**model** chooses which movement fills each slot and what to call each session,
-the **app** works out everything numeric, and the **catalog** says what every
+How a week is made. Two owners now, no model: the **app** decides everything
+numeric and which movement fills each slot, and the **catalog** says what every
 movement is and how it is done. The executable authority is the code on both
-platforms and its tests: `PlanSkeletonBuilder`, `PlanSelectionSchema`,
-`PlanSelectionRepair`, `PlanExpander`, `GeneratedPlanParser` and the three
-generators. This document is the annotated version.
+platforms and its tests: `PlanSkeletonBuilder`, `TemplatePlanGenerator`,
+`CarryForwardPlanGenerator`, `PlanExpander` and `GeneratedPlanParser`. This
+document is the annotated version.
+
+A remote model used to choose the movements. It was measured against the app's
+own ranking on 15 real profiles and did not beat it — see
+`docs/programming-evidence.md` for what "better" was measured against — so it
+was removed along with the network, the daily allowance and the failure modes
+that came with them.
 
 ## Who decides what
 

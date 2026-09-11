@@ -5,7 +5,6 @@ import com.jericx.trainr.data.catalog.ExerciseCatalogReader
 import com.jericx.trainr.domain.generation.PlanGenerationResult
 import com.jericx.trainr.domain.generation.PlanGenerator
 import com.jericx.trainr.domain.generation.PlanRequest
-import com.jericx.trainr.domain.generation.PlanSource
 import com.jericx.trainr.domain.model.Equipment
 import com.jericx.trainr.domain.model.ExperienceLevel
 import com.jericx.trainr.domain.model.FitnessGoal
@@ -74,7 +73,6 @@ class CarryForwardPlanGeneratorTest {
 
         val result = carry(request(user(), listOf(first)), next) as PlanGenerationResult.Generated
 
-        assertThat(result.source).isEqualTo(PlanSource.PROGRESSED)
         assertThat(result.plan.movements()).isEqualTo(first.movements())
         assertThat(result.plan.workoutDays.map { it.title }).isEqualTo(first.workoutDays.map { it.title })
         assertThat(next.asked).isEmpty()

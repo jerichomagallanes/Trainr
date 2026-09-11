@@ -232,14 +232,14 @@ class OnboardingViewModelTest {
 
     @Test
     fun `a failed generation writes no plan and reports why`() = runTest(testDispatcher) {
-        coEvery { planGenerator.generate(any()) } returns PlanGenerationResult.Offline
+        coEvery { planGenerator.generate(any()) } returns PlanGenerationResult.Failed
         var done = false
 
         viewModel.saveUserProfile(onSuccess = { done = true })
         advanceUntilIdle()
 
         with(viewModel.onboardingState.value) {
-            assertThat(generationFailure).isEqualTo(PlanGenerationResult.Offline)
+            assertThat(generationFailure).isEqualTo(PlanGenerationResult.Failed)
             assertThat(isCompleted).isFalse()
             assertThat(isLoading).isFalse()
         }
@@ -251,7 +251,7 @@ class OnboardingViewModelTest {
     @Test
     fun `a first profile is kept when generation fails`() = runTest(testDispatcher) {
         coEvery { planGenerator.generate(any()) } returns
-            PlanGenerationResult.DailyLimitReached
+            PlanGenerationResult.Failed
 
         viewModel.saveUserProfile()
         advanceUntilIdle()
@@ -394,7 +394,7 @@ class OnboardingViewModelTest {
         advanceUntilIdle()
         assertThat(viewModel.onboardingState.value.isCompleted).isTrue()
 
-        coEvery { planGenerator.generate(any()) } returns PlanGenerationResult.Offline
+        coEvery { planGenerator.generate(any()) } returns PlanGenerationResult.Failed
         viewModel.saveUserProfile()
         advanceUntilIdle()
 
@@ -422,30 +422,5 @@ class OnboardingViewModelTest {
             .containsExactly(OnboardingStep.BASIC_INFO, OnboardingStep.GOALS)
     }
 
-    // Handed over rather than lost, but never passed off as the coach's.
-    @Test
-    fun `a week built in place of the coach's is kept and says why`() = runTest(testDispatcher) {
-        coEvery { planGenerator.generate(any()) } returns PlanGenerationResult.Generated(
-            WeeklyWorkoutPlan(userId = 0, weekNumber = 1, title = "Built week", workoutDays = emptyList()),
-            insteadOf = PlanGenerationResult.Offline
-        )
 
-        viewModel.saveUserProfile()
-        advanceUntilIdle()
-
-        with(viewModel.onboardingState.value) {
-            assertThat(isCompleted).isTrue()
-            assertThat(generationFailure).isNull()
-            assertThat(builtInsteadOf).isEqualTo(PlanGenerationResult.Offline)
-        }
-        coVerify { userRepository.saveWeeklyWorkoutPlan(any()) }
-    }
-
-    @Test
-    fun `a coached week says nothing was built instead`() = runTest(testDispatcher) {
-        viewModel.saveUserProfile()
-        advanceUntilIdle()
-
-        assertThat(viewModel.onboardingState.value.builtInsteadOf).isNull()
-    }
 }

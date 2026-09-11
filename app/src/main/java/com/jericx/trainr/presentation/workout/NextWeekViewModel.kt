@@ -26,13 +26,8 @@ class NextWeekViewModel @Inject constructor(
     private val planGenerator: PlanGenerator
 ) : ViewModel() {
 
-    private val _failure = MutableStateFlow<PlanGenerationResult.Failure?>(null)
-    val failure: StateFlow<PlanGenerationResult.Failure?> = _failure.asStateFlow()
-
-    // What the coach failed with, when the week just written was built in its
-    // place.
-    private val _builtInsteadOf = MutableStateFlow<PlanGenerationResult.Failure?>(null)
-    val builtInsteadOf: StateFlow<PlanGenerationResult.Failure?> = _builtInsteadOf.asStateFlow()
+    private val _failure = MutableStateFlow<PlanGenerationResult?>(null)
+    val failure: StateFlow<PlanGenerationResult?> = _failure.asStateFlow()
 
     // State rather than a callback: a screen rebuilt mid-generation, and a
     // rotation is enough, would never hear that its week had arrived.
@@ -50,7 +45,6 @@ class NextWeekViewModel @Inject constructor(
         if (isWorking) return
         isWorking = true
         _failure.value = null
-        _builtInsteadOf.value = null
         viewModelScope.launch {
             try {
                 val user = userRepository.getCurrentUser() ?: return@launch
@@ -80,7 +74,6 @@ class NextWeekViewModel @Inject constructor(
         if (isWorking) return
         isWorking = true
         _failure.value = null
-        _builtInsteadOf.value = null
         viewModelScope.launch {
             try {
                 val user = userRepository.getCurrentUser()
@@ -107,17 +100,11 @@ class NextWeekViewModel @Inject constructor(
                     )
                 )
 
-                // Asked for to get a different week from the coach, so the
-                // app's own week is no answer: this one stays, and why is said.
-                val failure = when (result) {
-                    is PlanGenerationResult.Failure -> result
-                    is PlanGenerationResult.Generated -> result.insteadOf
-                }
-                if (failure != null) {
-                    _failure.value = failure
+                if (result !is PlanGenerationResult.Generated) {
+                    _failure.value = result
                     return@launch
                 }
-                val replacement = result as PlanGenerationResult.Generated
+                val replacement = result
 
                 userRepository.deleteWeeklyWorkoutPlan(current.id)
                 userRepository.saveWeeklyWorkoutPlan(replacement.plan)
@@ -132,7 +119,6 @@ class NextWeekViewModel @Inject constructor(
         if (isWorking) return
         isWorking = true
         _failure.value = null
-        _builtInsteadOf.value = null
         viewModelScope.launch {
             try {
                 generate()
@@ -162,12 +148,11 @@ class NextWeekViewModel @Inject constructor(
             )
 
             if (result !is PlanGenerationResult.Generated) {
-                _failure.value = result as PlanGenerationResult.Failure
+                _failure.value = result
                 return
             }
 
             userRepository.saveWeeklyWorkoutPlan(result.plan)
-            _builtInsteadOf.value = result.insteadOf
             _isReady.value = true
     }
 

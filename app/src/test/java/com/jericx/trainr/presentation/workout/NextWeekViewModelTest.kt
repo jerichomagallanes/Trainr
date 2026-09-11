@@ -133,13 +133,13 @@ class NextWeekViewModelTest {
     @Test
     fun aFailedGenerationSavesNothingAndReportsWhy() = runTest {
         every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(finishedWeek))
-        coEvery { planGenerator.generate(any()) } returns PlanGenerationResult.Offline
+        coEvery { planGenerator.generate(any()) } returns PlanGenerationResult.Failed
 
                 val viewModel = viewModel()
         viewModel.generateNextWeek()
         advanceUntilIdle()
 
-        assertThat(viewModel.failure.value).isEqualTo(PlanGenerationResult.Offline)
+        assertThat(viewModel.failure.value).isEqualTo(PlanGenerationResult.Failed)
         assertThat(viewModel.isReady.value).isFalse()
         coVerify(exactly = 0) { userRepository.saveWeeklyWorkoutPlan(any()) }
     }
@@ -240,7 +240,7 @@ class NextWeekViewModelTest {
             }
         )
         every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(current))
-        coEvery { planGenerator.generate(any()) } returns PlanGenerationResult.Offline
+        coEvery { planGenerator.generate(any()) } returns PlanGenerationResult.Failed
 
         val viewModel = viewModel()
         viewModel.regenerateThisWeek()
@@ -248,7 +248,7 @@ class NextWeekViewModelTest {
 
         coVerify(exactly = 0) { userRepository.deleteWeeklyWorkoutPlan(any()) }
         coVerify(exactly = 0) { userRepository.saveWeeklyWorkoutPlan(any()) }
-        assertThat(viewModel.failure.value).isEqualTo(PlanGenerationResult.Offline)
+        assertThat(viewModel.failure.value).isEqualTo(PlanGenerationResult.Failed)
         assertThat(viewModel.isReady.value).isFalse()
     }
 
@@ -377,44 +377,5 @@ class NextWeekViewModelTest {
         coVerify(exactly = 1) { userRepository.saveWeeklyWorkoutPlan(any()) }
     }
 
-    // Regenerating is asked for to get a different week from the coach, so
-    // the app's own week is no answer to it.
-    @Test
-    fun aRegenerationTheCoachCouldNotAnswerLeavesTheWeekAndSaysWhy() = runTest {
-        val current = finishedWeek.copy(
-            workoutDays = finishedWeek.workoutDays.map {
-                it.copy(status = WorkoutStatus.NOT_STARTED, completedAt = null)
-            }
-        )
-        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(current))
-        coEvery { planGenerator.generate(any()) } returns PlanGenerationResult.Generated(
-            finishedWeek.copy(id = 0), insteadOf = PlanGenerationResult.Offline
-        )
 
-        val viewModel = viewModel()
-        viewModel.regenerateThisWeek()
-        advanceUntilIdle()
-
-        coVerify(exactly = 0) { userRepository.deleteWeeklyWorkoutPlan(any()) }
-        coVerify(exactly = 0) { userRepository.saveWeeklyWorkoutPlan(any()) }
-        assertThat(viewModel.failure.value).isEqualTo(PlanGenerationResult.Offline)
-        assertThat(viewModel.isReady.value).isFalse()
-    }
-
-    @Test
-    fun aNextWeekBuiltInPlaceOfTheCoachsIsSavedAndSaysWhy() = runTest {
-        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(finishedWeek))
-        val built = finishedWeek.copy(id = 0, weekNumber = 2, title = "Built")
-        coEvery { planGenerator.generate(any()) } returns
-            PlanGenerationResult.Generated(built, insteadOf = PlanGenerationResult.DailyLimitReached)
-
-        val viewModel = viewModel()
-        viewModel.generateNextWeek()
-        advanceUntilIdle()
-
-        coVerify { userRepository.saveWeeklyWorkoutPlan(built) }
-        assertThat(viewModel.isReady.value).isTrue()
-        assertThat(viewModel.failure.value).isNull()
-        assertThat(viewModel.builtInsteadOf.value).isEqualTo(PlanGenerationResult.DailyLimitReached)
-    }
 }

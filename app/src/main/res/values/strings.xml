@@ -207,16 +207,8 @@
         <item quantity="other">%1$d of %2$d workouts are logged in this week. The AI coach chooses new movements, and the new week replaces them for good.</item>
     </plurals>
     <string name="generation_failed_title">Could not create your workout plan</string>
-    <string name="generation_failed_offline">Trainr is offline. Check your connection and try again.</string>
     <string name="generation_failed_message">Something went wrong while writing your workout plan. Please try again.</string>
-    <string name="generation_limit_title">Daily limit reached</string>
-    <string name="generation_limit_message">Trainr can only write a few plans a day at the moment. The limit resets each day, so trying again now will not help.\n\nYour answers are saved. Come back later and create your plan in one tap.</string>
     <string name="got_it">Got it</string>
-    <string name="generation_built_instead_title">Your plan is ready</string>
-    <string name="generation_built_instead_offline">Trainr is offline, so this week was built from your answers rather than written by the AI coach. It still progresses from what you log.</string>
-    <string name="generation_built_instead_failed">The AI coach did not come back with a week that held up, so this one was built from your answers. It still progresses from what you log.</string>
-    <string name="generation_built_instead_limit">You are out of AI-written plans for today, so this week was built from your answers. It still progresses from what you log.</string>
-    <string name="see_my_plan">See my plan</string>
     <string name="estimated_weight">Estimated weight</string>
     <string name="try_again">Try again</string>
     <string name="back_to_profile">Back to profile</string>
@@ -352,14 +344,8 @@
     
     <!-- Trainr Pro -->
     <string name="pro_name">Trainr Pro</string>
-    <string name="pro_headline">Keep the coach writing</string>
-    <string name="pro_benefit_next_week">A new week each week, written from what you actually lifted</string>
-    <string name="pro_benefit_regenerate">Rewrite a week that does not suit you</string>
-    <string name="pro_benefit_fresh_plan">Start a fresh plan whenever your goal changes</string>
-    <string name="pro_free_note">Your first week, every set you log, and repeating a week all stay free.</string>
     <string name="pro_monthly">Monthly</string>
     <string name="pro_yearly">Yearly</string>
-    <string name="pro_best_value">Best value</string>
     <string name="pro_trial_then">%1$s free, then %2$s</string>
     <string name="pro_subscribe">Subscribe</string>
     <string name="pro_not_now">Not now</string>
@@ -371,7 +357,6 @@
     <string name="pro_unavailable">Subscriptions are not available right now. Please try again later.</string>
     <string name="pro_terms">Terms of Use</string>
     <string name="pro_privacy">Privacy Policy</string>
-    <string name="pro_renewal_apple">Payment is charged to your Apple ID at confirmation. It renews automatically unless you cancel at least 24 hours before the period ends. Manage it in Settings.</string>
     <string name="pro_renewal_google">Payment is charged to your Google Play account at confirmation. It renews automatically unless you cancel at least 24 hours before the period ends. Manage it in Play Store subscriptions.</string>
 
     <!-- Trainr Pro paywall -->
@@ -408,7 +393,7 @@
     <string name="pro_faq_includes_q">What does Trainr Pro include?</string>
     <string name="pro_faq_includes_a">Pro unlocks new AI-written weeks: generate next week from what you lifted, rewrite a week that does not suit you, and start a fresh plan whenever your goal changes.</string>
     <string name="pro_faq_human_q">Is my plan written by a real trainer?</string>
-    <string name="pro_faq_human_a">No. A Gemini model writes it from the answers you gave, and progresses it from the sets you log. Plans are guidance, not medical advice.</string>
+    <string name="pro_faq_human_a">No. Trainr builds it on your phone from the answers you gave, and progresses it from the sets you log. Plans are guidance, not medical advice.</string>
     <string name="pro_faq_renew_q">Does Pro renew automatically?</string>
     <string name="pro_faq_renew_a">Yes. Monthly and Yearly renew at the end of each period, until you cancel.</string>
     <string name="pro_faq_cancel_q">Can I cancel any time?</string>
