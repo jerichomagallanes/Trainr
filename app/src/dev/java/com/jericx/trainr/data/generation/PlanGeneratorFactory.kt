@@ -16,4 +16,7 @@ internal fun planGenerator(
     catalog: ExerciseCatalog,
     spentModels: SpentModels,
     breadcrumbs: Breadcrumbs
-): PlanGenerator = TemplatePlanGenerator(catalog, source = PlanSource.COACH)
+): PlanGenerator = CarryForwardPlanGenerator(
+    catalog = catalog,
+    next = TemplatePlanGenerator(catalog, source = PlanSource.COACH)
+)

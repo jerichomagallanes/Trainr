@@ -107,7 +107,9 @@ class NextWeekViewModel @Inject constructor(
                         // The weeks before this one, so a replacement still
                         // progresses from what was actually lifted.
                         history = plans.filter { it.weekNumber < current.weekNumber }
-                            .sortedByDescending { it.weekNumber }
+                            .sortedByDescending { it.weekNumber },
+                        // New movements are the point of asking again.
+                        freshCast = true
                     )
                 )
 
