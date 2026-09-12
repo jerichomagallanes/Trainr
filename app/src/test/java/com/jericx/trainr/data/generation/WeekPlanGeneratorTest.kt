@@ -286,4 +286,15 @@ class WeekPlanGeneratorTest {
     private companion object {
         const val DAY = 86_400_000L
     }
+
+    // Forty clients who answered the same way get forty weeks, not two. A pair
+    // looks varied by a coin flip; only a crowd shows a choice riding on one bit.
+    @Test
+    fun fortyClientsWhoAnsweredTheSameWayGetFortyDifferentWeeks() {
+        val weeks = (1L..40L).map { id ->
+            planFor(user().copy(id = id)).workoutDays.flatMap { day -> day.exercises.map { it.exerciseKey } }
+        }
+
+        assertThat(weeks.toSet()).hasSize(40)
+    }
 }

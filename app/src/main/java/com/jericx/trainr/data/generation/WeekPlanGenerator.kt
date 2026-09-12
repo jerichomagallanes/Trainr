@@ -126,7 +126,7 @@ class WeekPlanGenerator(private val catalog: ExerciseCatalog) : PlanGenerator {
         // Hashed together rather than xored: xor leaves the choice riding on the
         // seed's lowest bits, so with two candidates every slot in the week
         // turned on one bit and there were only ever two weeks to go round.
-        val offset = (hash("$client:${slot.id}:$dayNumber").toUInt() % best.size.toUInt()).toInt()
+        val offset = (mixed(hash("$client:${slot.id}:$dayNumber")) % best.size.toUInt()).toInt()
         return best.drop(offset) + best.take(offset) + pool.drop(VARIETY_DEPTH)
     }
 
@@ -151,6 +151,16 @@ class WeekPlanGenerator(private val catalog: ExerciseCatalog) : PlanGenerator {
 
     // Written out so Swift can run the same algorithm: its own string hashing
     // is seeded per process and would give a different week on every launch.
+    // FNV-1a's low bits are a parity of the input's low bits, so a modulo read
+    // straight off them turned every slot in the week on one bit and forty
+    // clients shared two weeks. Murmur's finalizer spreads the high bits down.
+    private fun mixed(h: Int): UInt {
+        var u = h.toUInt()
+        u = u xor (u shr 16); u *= 0x85ebca6bu
+        u = u xor (u shr 13); u *= 0xc2b2ae35u
+        return u xor (u shr 16)
+    }
+
     private fun hash(text: String): Int {
         var h = FNV_OFFSET
         text.forEach { h = (h xor it.code) * FNV_PRIME }
