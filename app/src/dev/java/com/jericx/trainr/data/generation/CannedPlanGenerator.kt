@@ -140,8 +140,11 @@ class CannedPlanGenerator : PlanGenerator {
             Equipment.PULL_UP_BAR -> "Pull-up bar"
             Equipment.SQUAT_RACK -> "Squat rack"
             Equipment.CABLE_MACHINE -> "Cable machine"
+            Equipment.MACHINES -> "Weight machines"
             Equipment.CARDIO_MACHINES -> "Cardio equipment"
-            Equipment.NONE, Equipment.OTHERS -> BODYWEIGHT
+            Equipment.MAT -> "Exercise mat"
+            Equipment.JUMP_ROPE -> "Jump rope"
+            Equipment.NONE -> BODYWEIGHT
         }
 
         // Weekdays per plan length, spaced so hard days avoid landing back to

@@ -5,6 +5,7 @@ import com.jericx.trainr.domain.diagnostics.NoBreadcrumbs
 import com.jericx.trainr.domain.generation.PlanGenerator
 import com.jericx.trainr.domain.generation.PlanGenerationResult
 import com.jericx.trainr.domain.generation.PlanRequest
+import com.jericx.trainr.domain.generation.SessionBudget
 import com.jericx.trainr.domain.generation.SpentModels
 import kotlinx.coroutines.delay
 
@@ -96,7 +97,11 @@ class GeminiPlanGenerator(
 
             when (
                 val result = parser.parse(
-                    json, request.user.id, request.weekNumber, request.startDateMillis
+                    json,
+                    request.user.id,
+                    request.weekNumber,
+                    request.startDateMillis,
+                    PlanLimits(SessionBudget.maxSetsPerSession(request.user))
                 )
             ) {
                 is PlanParseResult.Parsed -> {

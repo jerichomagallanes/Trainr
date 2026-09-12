@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.jericx.trainr.domain.model.Equipment
 import com.jericx.trainr.domain.model.ExperienceLevel
 import com.jericx.trainr.domain.model.FitnessGoal
+import com.jericx.trainr.domain.model.Injury
 import com.jericx.trainr.domain.model.Gender
 import com.jericx.trainr.domain.model.UnitSystem
 import com.jericx.trainr.domain.model.UserProfile
@@ -96,7 +97,7 @@ class OnboardingViewModel @Inject constructor(
         )
     }
 
-    fun updateLimitations(injuries: List<String>) {
+    fun updateLimitations(injuries: List<Injury>) {
         _onboardingState.value = _onboardingState.value.copy(
             answeredSteps = answeredWith(OnboardingStep.LIMITATIONS),
             userProfile = _onboardingState.value.userProfile.copy(injuries = injuries)

@@ -90,7 +90,9 @@
     <string name="cardio_equipment">有酸素運動器具</string>
     <string name="cable_machine">ケーブルマシン</string>
     <string name="squat_rack">スクワットラック</string>
-    <string name="others">その他</string>
+    <string name="weight_machines">ウエイトマシン</string>
+    <string name="exercise_mat">エクササイズマット</string>
+    <string name="jump_rope">縄跳び</string>
     <string name="workout_days_per_week">週に何日ワークアウトできますか？</string>
     <string name="session_duration">セッション時間</string>
     <string name="preferred_workout_time">好みのワークアウト時間</string>
@@ -107,7 +109,6 @@
     <string name="lets_keep_you_safe">安全を保ちましょう</string>
     <string name="limitations_description">制限事項を教えてください。ワークアウトを適応させます</string>
     <string name="any_injuries_or_areas">怪我や注意が必要な部位はありますか？</string>
-    <string name="none">なし</string>
     <string name="preferred_workout_style">好みのワークアウトスタイル</string>
     <string name="strength_training">筋力トレーニング</string>
     <string name="strength_training_description">筋肉と筋力の構築に重点を置く。</string>
@@ -116,6 +117,8 @@
     <string name="hiit">HIIT</string>
     <string name="hiit_description">高強度インターバルトレーニング。</string>
     <string name="mixed_balanced">ミックス/バランス</string>
+    <string name="mobility_yoga">モビリティ＆ヨガ</string>
+    <string name="mobility_yoga_description">ストレッチ、モビリティ、ヨガ中心。</string>
     <string name="mixed_balanced_description">さまざまなトレーニングスタイルの組み合わせ。</string>
     
     <!-- Review Screen -->

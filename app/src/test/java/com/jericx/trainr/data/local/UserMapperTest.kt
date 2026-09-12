@@ -1,6 +1,7 @@
 package com.jericx.trainr.data.local
 
 import com.google.common.truth.Truth.assertThat
+import com.jericx.trainr.domain.model.Injury
 import com.jericx.trainr.domain.model.Equipment
 import com.jericx.trainr.domain.model.ExperienceLevel
 import com.jericx.trainr.domain.model.FitnessGoal
@@ -29,7 +30,7 @@ class UserMapperTest {
         workoutDaysPerWeek = 4,
         workoutDuration = 60,
         preferredWorkoutTime = WorkoutTime.EVENING,
-        injuries = listOf("Lower back"),
+        injuries = listOf(Injury.LOWER_BACK),
         workoutType = WorkoutType.STRENGTH,
         createdAt = 1_700_000_000_000L
     )
@@ -49,7 +50,7 @@ class UserMapperTest {
         assertThat(entity.preferredWorkoutTime).isEqualTo("EVENING")
         assertThat(entity.workoutType).isEqualTo("STRENGTH")
         assertThat(entity.availableEquipment).containsExactly("DUMBBELLS", "BARBELL").inOrder()
-        assertThat(entity.injuries).containsExactly("Lower back")
+        assertThat(entity.injuries).containsExactly("LOWER_BACK")
         assertThat(entity.createdAt).isEqualTo(1_700_000_000_000L)
     }
 

@@ -103,11 +103,14 @@ class GeneratedPlanParserTest {
             .containsExactly(1, 3).inOrder()
     }
 
+    // Five minutes of jogging, then two sets of twenty at three seconds a rep
+    // with thirty seconds between them: eight minutes, whatever the model
+    // would have claimed.
     @Test
     fun aDaysNumbersAreDerivedNotAccepted() {
         val cardio = parseGood().workoutDays.first { it.dayNumber == 3 }
 
-        assertThat(cardio.duration).isEqualTo(9)
+        assertThat(cardio.duration).isEqualTo(8)
         assertThat(cardio.exerciseCount).isEqualTo(2)
     }
 
@@ -118,7 +121,7 @@ class GeneratedPlanParserTest {
         assertThat(squat.exerciseKey).isEqualTo("goblet_squat")
         assertThat(squat.name).isEqualTo("Goblet Squats")
         assertThat(squat.measure).isEqualTo(ExerciseMeasure.WEIGHT_AND_REPS)
-        assertThat(squat.durationMinutes).isEqualTo(8)
+        assertThat(squat.durationMinutes).isEqualTo(4)
         assertThat(squat.prescription).isEqualTo("3 sets of 12 reps")
         assertThat(squat.restTime).isEqualTo(60)
         assertThat(squat.setCount).isEqualTo(3)
@@ -226,19 +229,40 @@ class GeneratedPlanParserTest {
         val repsErrors = errorsOf(goodJsonWith("{ \"reps\": 12, \"weightKg\": 20 },", "{},"))
         val secondsErrors = errorsOf(goodJsonWith("{ \"seconds\": 300 }", "{ \"reps\": 300 }"))
 
-        assertThat(repsErrors).containsExactly("day 1, goblet_squat, set 1: needs reps above zero")
+        assertThat(repsErrors)
+            .containsExactly("day 1, goblet_squat, set 1: needs reps between 1 and 100")
         assertThat(secondsErrors)
-            .containsExactly("day 3, warm_up_jog, set 1: needs seconds above zero")
+            .containsExactly("day 3, warm_up_jog, set 1: needs seconds between 5 and 5400")
     }
 
     @Test
-    fun nonPositiveNumbersAreRejected() {
-        assertThat(errorsOf(goodJsonWith("\"durationMinutes\": 5,", "\"durationMinutes\": 0,")))
-            .containsExactly("day 3, warm_up_jog: durationMinutes must be above zero")
+    fun numbersNoClientCouldPerformAreRejected() {
         assertThat(errorsOf(goodJsonWith("\"restSeconds\": 30,", "\"restSeconds\": -30,")))
-            .containsExactly("day 3, bicycle_crunch: restSeconds must be above zero")
+            .containsExactly("day 3, bicycle_crunch: restSeconds must be 5..600")
         assertThat(errorsOf(goodJsonWith("\"weightKg\": 22.5", "\"weightKg\": 0")))
-            .containsExactly("day 1, goblet_squat, set 3: weightKg must be above zero")
+            .containsExactly("day 1, goblet_squat, set 3: weightKg must be between 0.5 and 500.0")
+        assertThat(errorsOf(goodJsonWith("{ \"reps\": 12, \"weightKg\": 20 },", "{ \"reps\": 400 },")))
+            .containsExactly("day 1, goblet_squat, set 1: needs reps between 1 and 100")
+    }
+
+    // A session is a time budget: nine sets is not something half an hour of
+    // heavy work pays for, and the model is told so before it is asked again.
+    @Test
+    fun aDayThatOverspendsTheSessionIsRejected() {
+        val result = parser.parse(
+            goodJson,
+            userId = 7,
+            weekNumber = 2,
+            startDateMillis = 1_753_056_000_000L,
+            limits = PlanLimits(maxSetsPerSession = 2)
+        )
+
+        assertThat((result as PlanParseResult.Invalid).errors).containsExactly(
+            "day 1: has 3 sets but the client's session length allows at most 2, " +
+                "warm-up included",
+            "day 3: has 3 sets but the client's session length allows at most 2, " +
+                "warm-up included"
+        )
     }
 
     @Test

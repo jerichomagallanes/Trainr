@@ -6,6 +6,7 @@ import com.jericx.trainr.domain.diagnostics.Breadcrumbs
 import com.jericx.trainr.domain.diagnostics.NoBreadcrumbs
 import com.jericx.trainr.domain.generation.PlanRequest
 import com.jericx.trainr.domain.generation.SpentModels
+import com.jericx.trainr.domain.model.Injury
 import com.jericx.trainr.domain.model.UserProfile
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
@@ -306,7 +307,7 @@ class GeminiPlanGeneratorTest {
             age = 31,
             height = 178f,
             weight = 75f,
-            injuries = listOf("Left rotator cuff"),
+            injuries = listOf(Injury.SHOULDER),
             workoutDaysPerWeek = 1
         )
         val client = answering(

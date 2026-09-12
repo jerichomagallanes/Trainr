@@ -168,6 +168,14 @@ fun FitnessGoalScreen(
                         )
 
                         TrainrIconCard(
+                            iconRes = R.drawable.ic_self_improvement,
+                            title = stringResource(R.string.mobility_yoga),
+                            description = stringResource(R.string.mobility_yoga_description),
+                            isSelected = selectedStyle == WorkoutType.YOGA,
+                            onClick = { selectedStyle = WorkoutType.YOGA }
+                        )
+
+                        TrainrIconCard(
                             iconRes = R.drawable.ic_emoji_people,
                             title = stringResource(R.string.mixed_balanced),
                             description = stringResource(R.string.mixed_balanced_description),
