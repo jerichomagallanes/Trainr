@@ -8,8 +8,7 @@ import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.model.asDisplayText
 
 // What a movement is and how it is done come from the catalog; a stored week
-// only says which movement and how much. Copy stored with the week is read
-// only where the catalog has nothing to say.
+// only says which movement and how much.
 fun WorkoutDay.toRoutineUi(
     previousByKey: Map<String, List<ExerciseSet>> = emptyMap(),
     catalog: ExerciseCatalog? = null,
@@ -21,7 +20,7 @@ fun WorkoutDay.toRoutineUi(
         ExerciseUi(
             position = index + 1,
             name = exercise.name,
-            description = movement?.summary?.takeIf { it.isNotBlank() } ?: exercise.instructions,
+            description = movement?.summary.orEmpty(),
             minutes = exercise.durationMinutes,
             measure = exercise.measure,
             sets = exercise.sets,

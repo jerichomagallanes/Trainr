@@ -47,7 +47,7 @@ class ReviewScreenTest {
 
     private fun routineSentence(profile: UserProfile) =
         composeTestRule.activity.getString(
-            R.string.ai_routine_description,
+            R.string.routine_description,
             composeTestRule.activity.getString(
                 R.string.program_length_format,
                 profile.workoutDaysPerWeek
@@ -223,7 +223,7 @@ class ReviewScreenTest {
 
         composeTestRule.onNodeWithText(string(R.string.generate_my_workout_plan))
             .assertDoesNotExist()
-        composeTestRule.onNodeWithText(string(R.string.ai_routine_preview_label))
+        composeTestRule.onNodeWithText(string(R.string.routine_preview_label))
             .assertDoesNotExist()
         composeTestRule.onNodeWithText(string(R.string.review_profile_description))
             .assertIsDisplayed()

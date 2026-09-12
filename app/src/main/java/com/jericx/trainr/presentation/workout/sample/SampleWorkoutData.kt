@@ -58,8 +58,6 @@ object SampleWorkoutData {
                             measure = ExerciseMeasure.WEIGHT_AND_REPS,
                             sets = repSets(3, reps = 12, weightKg = 20f, done = true),
                             durationMinutes = 8,
-                            prescription = "3 sets of 12 reps",
-                            instructions = "Squat holding a dumbbell at your chest to build the legs and brace the core.",
                             isCompleted = true
                         ),
                         WorkoutExercise(
@@ -68,8 +66,6 @@ object SampleWorkoutData {
                             measure = ExerciseMeasure.WEIGHT_AND_REPS,
                             sets = repSets(3, reps = 10, weightKg = 16f, done = true),
                             durationMinutes = 8,
-                            prescription = "3 sets of 10 reps",
-                            instructions = "Press dumbbells from the floor to work the chest, shoulders and triceps.",
                             isCompleted = true
                         ),
                         WorkoutExercise(
@@ -78,8 +74,6 @@ object SampleWorkoutData {
                             measure = ExerciseMeasure.WEIGHT_AND_REPS,
                             sets = repSets(3, reps = 12, weightKg = 18f, done = true),
                             durationMinutes = 8,
-                            prescription = "3 sets of 12 reps",
-                            instructions = "Hinge at the hips and row dumbbells to your ribs for a stronger back.",
                             isCompleted = true
                         ),
                         WorkoutExercise(
@@ -88,8 +82,6 @@ object SampleWorkoutData {
                             measure = ExerciseMeasure.WEIGHT_AND_REPS,
                             sets = repSets(3, reps = 10, weightKg = 12f, done = true),
                             durationMinutes = 7,
-                            prescription = "3 sets of 10 reps",
-                            instructions = "Press dumbbells overhead to build shoulder strength and stability.",
                             isCompleted = true
                         ),
                         WorkoutExercise(
@@ -98,8 +90,6 @@ object SampleWorkoutData {
                             measure = ExerciseMeasure.WEIGHT_AND_REPS,
                             sets = repSets(3, reps = 12, weightKg = 24f, done = true),
                             durationMinutes = 8,
-                            prescription = "3 sets of 12 reps",
-                            instructions = "Hinge with soft knees to load the hamstrings and glutes.",
                             isCompleted = true
                         ),
                         WorkoutExercise(
@@ -108,8 +98,6 @@ object SampleWorkoutData {
                             measure = ExerciseMeasure.DURATION,
                             sets = timedSets(3, seconds = 45, done = true),
                             durationMinutes = 6,
-                            prescription = "3 sets of 45 seconds",
-                            instructions = "Hold a straight line from head to heels to brace the whole core.",
                             isCompleted = true
                         )
                     ),
@@ -130,8 +118,6 @@ object SampleWorkoutData {
                             measure = ExerciseMeasure.DURATION,
                             sets = timedSets(1, seconds = 300, done = true),
                             durationMinutes = 5,
-                            prescription = "5 minutes",
-                            instructions = "Light jogging in place to get your heart rate up and muscles warm.",
                             isCompleted = true
                         ),
                         WorkoutExercise(
@@ -139,37 +125,28 @@ object SampleWorkoutData {
                             name = "High-Intensity Intervals",
                             measure = ExerciseMeasure.DURATION,
                             sets = timedSets(5, seconds = 60),
-                            durationMinutes = 10,
-                            prescription = "5 sets of 1 minute",
-                            instructions = "Quick bursts of intense effort with short rest to boost " +
-                                "cardio, burn fat, and build endurance."
+                            durationMinutes = 10
                         ),
                         WorkoutExercise(
                             exerciseKey = "bicycle_crunch",
                             name = "Bicycle Crunches",
                             measure = ExerciseMeasure.REPS,
                             sets = repSets(3, reps = 20),
-                            durationMinutes = 5,
-                            prescription = "3 sets of 20 reps",
-                            instructions = "Core exercise with alternating elbow-to-knee twists to target abs and obliques."
+                            durationMinutes = 5
                         ),
                         WorkoutExercise(
                             exerciseKey = "bodyweight_russian_twist",
                             name = "Russian Twists",
                             measure = ExerciseMeasure.REPS,
                             sets = repSets(3, reps = 15),
-                            durationMinutes = 4,
-                            prescription = "3 sets of 15 reps",
-                            instructions = "Seated core exercise involving torso rotation to engage abs and obliques."
+                            durationMinutes = 4
                         ),
                         WorkoutExercise(
                             exerciseKey = "lying_leg_raise",
                             name = "Leg Raises",
                             measure = ExerciseMeasure.REPS,
                             sets = repSets(3, reps = 12),
-                            durationMinutes = 4,
-                            prescription = "3 sets of 12 reps",
-                            instructions = "Lying core exercise that lifts legs to strengthen lower abs and hip flexors."
+                            durationMinutes = 4
                         )
                     )
                 ),
@@ -187,36 +164,28 @@ object SampleWorkoutData {
                             name = "Jump Squats",
                             measure = ExerciseMeasure.REPS,
                             sets = repSets(4, reps = 12),
-                            durationMinutes = 10,
-                            prescription = "4 sets of 12 reps",
-                            instructions = "Explode upward out of a squat to build lower-body power."
+                            durationMinutes = 10
                         ),
                         WorkoutExercise(
                             exerciseKey = "walking_lunge",
                             name = "Walking Lunges",
                             measure = ExerciseMeasure.REPS,
                             sets = repSets(3, reps = 20),
-                            durationMinutes = 10,
-                            prescription = "3 sets of 20 steps",
-                            instructions = "Step forward into deep lunges to work quads, glutes and balance."
+                            durationMinutes = 10
                         ),
                         WorkoutExercise(
                             exerciseKey = "dumbbell_step_up",
                             name = "Dumbbell Step-Ups",
                             measure = ExerciseMeasure.WEIGHT_AND_REPS,
                             sets = repSets(3, reps = 10, weightKg = 12f),
-                            durationMinutes = 10,
-                            prescription = "3 sets of 10 reps",
-                            instructions = "Drive through the leading leg onto a step to build single-leg strength."
+                            durationMinutes = 10
                         ),
                         WorkoutExercise(
                             exerciseKey = "glute_bridge",
                             name = "Glute Bridges",
                             measure = ExerciseMeasure.REPS,
                             sets = repSets(3, reps = 15),
-                            durationMinutes = 10,
-                            prescription = "3 sets of 15 reps",
-                            instructions = "Lift the hips from the floor to switch on the glutes and hamstrings."
+                            durationMinutes = 10
                         )
                     )
                 )

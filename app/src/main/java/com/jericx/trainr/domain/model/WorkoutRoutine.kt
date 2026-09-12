@@ -39,10 +39,8 @@ data class WorkoutExercise(
     // Independent: ten minutes of "5 sets of 1 minute" is not five minutes, so
     // neither can be derived from the other.
     val durationMinutes: Int = 0,
-    val prescription: String = "",
     val restTime: Int? = null,
     val equipment: List<String> = emptyList(),
-    val instructions: String = "",
     val videoTutorialUrl: String? = null,
     val isCompleted: Boolean = false,
     val notes: String = ""

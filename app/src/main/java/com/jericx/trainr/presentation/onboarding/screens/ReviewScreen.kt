@@ -338,14 +338,14 @@ private fun AIPreviewCard(userProfile: UserProfile) {
                     modifier = Modifier.weight(1f)
                 ) {
                     Text(
-                        text = stringResource(R.string.ai_routine_preview_label),
+                        text = stringResource(R.string.routine_preview_label),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.trainrColors.onSurfaceEmphasis
                     )
                     Spacer(modifier = Modifier.height(Spacing.extraSmall))
                     Text(
                         text = stringResource(
-                            R.string.ai_routine_description,
+                            R.string.routine_description,
                             if (userProfile.workoutDaysPerWeek == 0) {
                                 stringResource(R.string.flexible_schedule)
                             } else {

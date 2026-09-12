@@ -5,7 +5,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.data.catalog.ExerciseCatalogReader
-import com.jericx.trainr.data.generation.TemplatePlanGenerator
+import com.jericx.trainr.data.generation.WeekPlanGenerator
 import com.jericx.trainr.domain.generation.PlanGenerationResult
 import com.jericx.trainr.domain.generation.PlanRequest
 import com.jericx.trainr.domain.model.Equipment
@@ -62,7 +62,7 @@ class WorkoutPersistenceTest {
         )
         val profile = UserProfile(firstName = "Jericho", age = 30, weight = 80f, availableEquipment = Equipment.entries.toList())
         val userId = repository.saveUser(profile)
-        val built = (TemplatePlanGenerator(catalog).generate(PlanRequest(profile.copy(id = userId), 1, 0L))
+        val built = (WeekPlanGenerator(catalog).generate(PlanRequest(profile.copy(id = userId), 1, 0L))
             as PlanGenerationResult.Generated).plan
         repository.saveWeeklyWorkoutPlan(built.copy(userId = userId))
 
@@ -71,7 +71,7 @@ class WorkoutPersistenceTest {
         fun shape(plan: WeeklyWorkoutPlan) = plan.workoutDays.map { day ->
             listOf(day.dayNumber, day.title, day.exercises.map { exercise ->
                 listOf(
-                    exercise.exerciseKey, exercise.measure, exercise.instructions,
+                    exercise.exerciseKey, exercise.measure,
                     exercise.sets.map { listOf(it.targetReps, it.targetWeightKg, it.targetSeconds) }
                 )
             })
@@ -102,7 +102,7 @@ class WorkoutPersistenceTest {
     }
 
     @Test
-    fun anExercisesMeasureAndPrescriptionSurvive() = runTest {
+    fun anExercisesMeasureAndSetsSurvive() = runTest {
         val userId = seedSamplePlan()
 
         val exercises = repository.getWeeklyWorkoutPlan(userId, 1)!!
@@ -111,7 +111,6 @@ class WorkoutPersistenceTest {
         val plank = exercises.first { it.name == "Plank" }
         assertThat(plank.measure).isEqualTo(ExerciseMeasure.DURATION)
         assertThat(plank.durationMinutes).isEqualTo(6)
-        assertThat(plank.prescription).isEqualTo("3 sets of 45 seconds")
         assertThat(plank.sets.map { it.targetSeconds }).containsExactly(45, 45, 45)
     }
 
@@ -230,8 +229,6 @@ class WorkoutPersistenceTest {
                         )
                     ),
                     durationMinutes = 8,
-                    prescription = "1 set of 12 reps",
-                    instructions = "Squat again, heavier.",
                     isCompleted = true
                 )
             ),
@@ -267,8 +264,6 @@ class WorkoutPersistenceTest {
                     measure = ExerciseMeasure.WEIGHT_AND_REPS,
                     sets = listOf(ExerciseSet(setNumber = 1, targetReps = 12)),
                     durationMinutes = 8,
-                    prescription = "1 set of 12 reps",
-                    instructions = "Squat.",
                     isCompleted = true
                 )
             ),

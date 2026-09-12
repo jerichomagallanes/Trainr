@@ -10,8 +10,7 @@ import com.jericx.trainr.data.preferences.ThemePreferences
 import com.jericx.trainr.data.purchases.Entitlements
 import com.jericx.trainr.data.purchases.StoredGenerationAllowance
 import com.jericx.trainr.data.repository.UserRepositoryImpl
-import com.jericx.trainr.data.generation.CarryForwardPlanGenerator
-import com.jericx.trainr.data.generation.TemplatePlanGenerator
+import com.jericx.trainr.data.generation.WeekPlanGenerator
 import com.jericx.trainr.domain.diagnostics.Breadcrumbs
 import com.jericx.trainr.data.diagnostics.CrashlyticsBreadcrumbs
 import com.jericx.trainr.domain.generation.PlanGenerator
@@ -99,7 +98,7 @@ object AppModule {
     @Provides
     @Singleton
     fun providePlanGenerator(catalog: ExerciseCatalog): PlanGenerator =
-        CarryForwardPlanGenerator(catalog, next = TemplatePlanGenerator(catalog))
+        WeekPlanGenerator(catalog)
 
     @Provides
     @Singleton
