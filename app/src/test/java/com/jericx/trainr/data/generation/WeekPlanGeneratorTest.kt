@@ -19,10 +19,10 @@ import java.io.File
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
-class TemplatePlanGeneratorTest {
+class WeekPlanGeneratorTest {
 
     private val catalog = ExerciseCatalogReader.read(File("src/main/assets/exercise-catalog.json").readText())
-    private val generator = TemplatePlanGenerator(catalog)
+    private val generator = WeekPlanGenerator(catalog)
 
     private fun user(
         goal: FitnessGoal = FitnessGoal.MUSCLE_GAIN,
@@ -41,14 +41,51 @@ class TemplatePlanGeneratorTest {
     private fun generate(
         user: UserProfile,
         history: List<WeeklyWorkoutPlan> = emptyList(),
-        week: Int = 1,
+        week: Int = history.size + 1,
         fresh: Boolean = false
     ) = runBlocking {
-        generator.generate(PlanRequest(user, week, (week - 1) * 7 * DAY, history, freshCast = fresh))
+        generator.generate(
+            PlanRequest(user, week, (week - 1) * 7 * DAY, history.sortedByDescending { it.weekNumber }, freshCast = fresh)
+        )
     }
 
-    private fun planFor(user: UserProfile, history: List<WeeklyWorkoutPlan> = emptyList(), week: Int = 1) =
-        (generate(user, history, week) as PlanGenerationResult.Generated).plan
+    private fun planFor(
+        user: UserProfile,
+        history: List<WeeklyWorkoutPlan> = emptyList(),
+        week: Int = history.size + 1,
+        fresh: Boolean = false
+    ) = (generate(user, history, week, fresh) as PlanGenerationResult.Generated).plan
+
+    private fun WeeklyWorkoutPlan.movements() = workoutDays.map { day -> day.exercises.map { it.exerciseKey } }
+
+    private fun WeeklyWorkoutPlan.logged(which: (Int) -> Boolean = { true }) = copy(
+        workoutDays = workoutDays.map { day ->
+            day.copy(
+                exercises = day.exercises.map { exercise ->
+                    exercise.copy(
+                        sets = exercise.sets.mapIndexed { index, set ->
+                            if (!which(index)) set else set.copy(
+                                actualReps = set.targetReps, actualWeightKg = set.targetWeightKg,
+                                actualSeconds = set.targetSeconds, isCompleted = true
+                            )
+                        }
+                    )
+                }
+            )
+        }
+    )
+
+    private fun climbed(from: WeeklyWorkoutPlan, to: WeeklyWorkoutPlan): Int {
+        val before = from.workoutDays.flatMap { it.exercises }.associateBy { it.exerciseKey }
+        return to.workoutDays.flatMap { it.exercises }.count { exercise ->
+            val previous = before[exercise.exerciseKey] ?: return@count false
+            val now = exercise.sets.first()
+            val then = previous.sets.first()
+            (now.targetReps ?: 0) > (then.targetReps ?: 0) ||
+                (now.targetWeightKg ?: 0f) > (then.targetWeightKg ?: 0f) ||
+                (now.targetSeconds ?: 0) > (then.targetSeconds ?: 0)
+        }
+    }
 
     // The whole point: every answer the setup screen allows gets a week, and
     // every such week passes the parser's checks with the limits the skeleton set.
@@ -135,62 +172,22 @@ class TemplatePlanGeneratorTest {
         }
     }
 
-    // A week done in full is progressed from: the second week is not the
-    // first week again.
-    @Test
-    fun aSecondWeekClimbsFromAFirstWeekDoneInFull() {
-        val first = planFor(user())
-        val done = first.copy(
-            workoutDays = first.workoutDays.map { day ->
-                day.copy(
-                    exercises = day.exercises.map { exercise ->
-                        exercise.copy(
-                            sets = exercise.sets.map {
-                                it.copy(
-                                    actualReps = it.targetReps, actualWeightKg = it.targetWeightKg,
-                                    actualSeconds = it.targetSeconds, isCompleted = true
-                                )
-                            }
-                        )
-                    }
-                )
-            }
-        )
-
-        val second = planFor(user(), history = listOf(done), week = 2)
-        val before = done.workoutDays.flatMap { it.exercises }.associateBy { it.exerciseKey }
-        val climbed = second.workoutDays.flatMap { it.exercises }.count { exercise ->
-            val previous = before[exercise.exerciseKey] ?: return@count false
-            val now = exercise.sets.first()
-            val then = previous.sets.first()
-            (now.targetReps ?: 0) > (then.targetReps ?: 0) ||
-                (now.targetWeightKg ?: 0f) > (then.targetWeightKg ?: 0f) ||
-                (now.targetSeconds ?: 0) > (then.targetSeconds ?: 0)
-        }
-
-        assertThat(climbed).isGreaterThan(0)
-    }
 
     // With no movements there is nothing to build, and it says so rather
     // than handing over an empty week.
     @Test
     fun anEmptyCatalogIsTheOneThingItCannotBuildFrom() {
-        val empty = TemplatePlanGenerator(InMemoryExerciseCatalog(emptyList()))
+        val empty = WeekPlanGenerator(InMemoryExerciseCatalog(emptyList()))
 
         assertThat(runBlocking { empty.generate(PlanRequest(user(), 1, 0L)) })
             .isEqualTo(PlanGenerationResult.Failed)
-    }
-
-    private companion object {
-        const val DAY = 86_400_000L
     }
 
     // Two people who answered the same way should not train the same week for
     // ever, and one person rebuilding their own week should get it back.
     @Test
     fun twoClientsWhoAnsweredTheSameWayDoNotGetTheSameWeek() {
-        fun movements(user: UserProfile) =
-            planFor(user).workoutDays.flatMap { day -> day.exercises.map { it.exerciseKey } }
+        fun movements(user: UserProfile) = planFor(user).movements().flatten()
 
         val alex = user()
         val sam = user().copy(id = 2)
@@ -202,7 +199,7 @@ class TemplatePlanGeneratorTest {
     @Test
     fun everyMovementChosenIsStillOneOfTheBestTheSlotOffered() {
         val skeleton = PlanSkeletonBuilder(catalog).build(PlanRequest(user(), 1, 0L))
-        val chosen = planFor(user()).workoutDays.flatMap { day -> day.exercises.map { it.exerciseKey } }
+        val chosen = planFor(user()).movements().flatten()
 
         val topThree = skeleton.days.flatMap { day -> day.slots.flatMap { it.candidates.take(3) } }.toSet()
         chosen.forEach { assertThat(topThree).contains(it) }
@@ -211,10 +208,82 @@ class TemplatePlanGeneratorTest {
     // Asking again is asking for something different.
     @Test
     fun aFreshCastIsADifferentWeek() {
-        fun movements(fresh: Boolean) =
-            (generate(user(), week = 2, fresh = fresh) as PlanGenerationResult.Generated)
-                .plan.workoutDays.flatMap { day -> day.exercises.map { it.exerciseKey } }
+        fun movements(fresh: Boolean) = planFor(user(), week = 2, fresh = fresh).movements().flatten()
 
         assertThat(movements(fresh = true)).isNotEqualTo(movements(fresh = false))
+    }
+
+    @Test
+    fun aWeekNothingForcesToChangeIsLastWeeksMovementsUnderLastWeeksTitles() {
+        val first = planFor(user()).logged()
+
+        val second = planFor(user(), listOf(first))
+
+        assertThat(second.movements()).isEqualTo(first.movements())
+        assertThat(second.workoutDays.map { it.title }).isEqualTo(first.workoutDays.map { it.title })
+    }
+
+    @Test
+    fun aWeekDoneInFullIsCarriedForwardHarder() {
+        val first = planFor(user()).logged()
+
+        val second = planFor(user(), listOf(first))
+
+        assertThat(climbed(first, second)).isGreaterThan(0)
+    }
+
+    // Kit given up takes its movements with it, so the week is chosen afresh.
+    @Test
+    fun aProfileEditThatRulesAMovementOutPicksTheWeekAfresh() {
+        val first = planFor(user()).logged()
+        val bodyweight = user(kit = listOf(Equipment.NONE))
+
+        val second = planFor(bodyweight, listOf(first))
+
+        assertThat(second.movements()).isNotEqualTo(first.movements())
+        assertThat(second.movements()).isEqualTo(planFor(bodyweight, listOf(first)).movements())
+        second.movements().flatten().forEach {
+            assertThat(catalog[it]!!.equipment).isEqualTo(Equipment.NONE)
+        }
+    }
+
+    @Test
+    fun aDifferentNumberOfDaysPicksTheWeekAfresh() {
+        val first = planFor(user()).logged()
+
+        val second = planFor(user(days = 4), listOf(first))
+
+        assertThat(second.workoutDays).hasSize(4)
+        assertThat(second.movements()).isNotEqualTo(first.movements())
+    }
+
+    @Test
+    fun askingForNewMovementsIsNeverAnsweredWithLastWeeks() {
+        val first = planFor(user()).logged()
+
+        val second = planFor(user(), listOf(first), fresh = true)
+
+        assertThat(second.movements()).isNotEqualTo(first.movements())
+    }
+
+
+    // Six weeks without a lighter one, and most sets left undone: a lighter
+    // week is due, and it keeps the movements while cutting the work.
+    @Test
+    fun aDeloadWeekKeepsTheMovementsAndCutsTheSets() {
+        val week = planFor(user())
+        val history = (1..6).map { number ->
+            week.copy(weekNumber = number, startDateMillis = (number - 1) * 7 * DAY).logged { it == 0 }
+        }
+
+        val deload = planFor(user(), history)
+
+        assertThat(deload.movements()).isEqualTo(week.movements())
+        assertThat(deload.workoutDays.sumOf { day -> day.exercises.sumOf { it.sets.size } })
+            .isLessThan(week.workoutDays.sumOf { day -> day.exercises.sumOf { it.sets.size } })
+    }
+
+    private companion object {
+        const val DAY = 86_400_000L
     }
 }

@@ -67,7 +67,7 @@ fun WelcomeScreen(
         OnboardingPage(
             R.drawable.img_exercising,
             R.drawable.img_exercising_night,
-            stringResource(R.string.ai_generated_routines)
+            stringResource(R.string.routines_built_around_you)
         ),
         OnboardingPage(
             R.drawable.img_task_done,
@@ -237,7 +237,7 @@ private fun WelcomeHeader() {
                             fontWeight = FontWeight.Bold
                         )
                     ) {
-                        append(stringResource(R.string.ai_powered))
+                        append(stringResource(R.string.trainer_adjective))
                     }
                     append(" " + stringResource(R.string.personal_trainer))
                 },

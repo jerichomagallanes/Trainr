@@ -112,10 +112,8 @@ class UserMapper {
             reps = exercise.reps,
             duration = exercise.duration,
             durationMinutes = exercise.durationMinutes,
-            prescription = exercise.prescription,
             restTime = exercise.restTime,
             equipment = exercise.equipment,
-            instructions = exercise.instructions,
             videoTutorialUrl = exercise.videoTutorialUrl,
             isCompleted = exercise.isCompleted,
             notes = exercise.notes
@@ -133,10 +131,8 @@ class UserMapper {
             reps = entity.reps,
             duration = entity.duration,
             durationMinutes = entity.durationMinutes,
-            prescription = entity.prescription,
             restTime = entity.restTime,
             equipment = entity.equipment,
-            instructions = entity.instructions,
             videoTutorialUrl = entity.videoTutorialUrl,
             isCompleted = entity.isCompleted,
             notes = entity.notes

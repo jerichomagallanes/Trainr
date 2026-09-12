@@ -104,10 +104,8 @@ data class WorkoutExerciseEntity(
     val reps: String?,
     val duration: String?,
     val durationMinutes: Int,
-    val prescription: String,
     val restTime: Int?,
     val equipment: List<String>,
-    val instructions: String,
     val videoTutorialUrl: String?,
     val isCompleted: Boolean,
     val notes: String

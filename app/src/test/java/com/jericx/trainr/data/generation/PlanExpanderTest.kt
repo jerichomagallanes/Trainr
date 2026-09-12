@@ -59,15 +59,6 @@ class PlanExpanderTest {
 
     private val GeneratedPlan.only get() = days.single().exercises.single()
 
-    // What a movement is and how it is done is the catalog's, never stored with the week.
-    @Test
-    fun theCopyComesFromTheCatalog() {
-        val squat = expand(skeleton(slot("goblet_squat"))).only
-
-        assertThat(squat.instructions).isEqualTo(catalog["goblet_squat"]!!.summary)
-        assertThat(squat.prescription).isEmpty()
-    }
-
     @Test
     fun aChoiceTheSlotOfferedIsHonoured() {
         val picked = expand(skeleton(slot("goblet_squat", "dumbbell_squat")), selection = choose("dumbbell_squat"))

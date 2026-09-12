@@ -15,8 +15,8 @@ import com.jericx.trainr.domain.generation.SkeletonDay
 import com.jericx.trainr.domain.generation.SkeletonSlot
 
 // A skeleton plus whatever was chosen for it becomes a plan: the catalog says
-// what each movement is and how it is done, the engine says how much, and the
-// skeleton says how many sets and how long between them.
+// what each movement is, the engine says how much, and the skeleton says how
+// many sets and how long between them.
 class PlanExpander(private val catalog: ExerciseCatalog) {
 
     fun expand(skeleton: PlanSkeleton, selection: PlanSelection, request: PlanRequest): GeneratedPlan {
@@ -83,7 +83,6 @@ class PlanExpander(private val catalog: ExerciseCatalog) {
     private fun exercise(slot: SkeletonSlot, movement: CatalogExercise, target: ProgressionTarget) =
         GeneratedExercise(
             exerciseKey = movement.key,
-            instructions = movement.summary,
             restSeconds = slot.restSeconds,
             sets = target.sets.map { set ->
                 GeneratedSet(

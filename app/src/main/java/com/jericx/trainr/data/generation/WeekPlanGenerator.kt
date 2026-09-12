@@ -9,22 +9,66 @@ import com.jericx.trainr.domain.generation.PlanRequest
 import com.jericx.trainr.domain.generation.PlanSkeleton
 import com.jericx.trainr.domain.generation.PlanSkeletonBuilder
 import com.jericx.trainr.domain.generation.SkeletonSlot
+import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
 import kotlin.math.roundToInt
 
 // A whole week from the catalog: the skeleton, a movement for every slot, and
-// the engine's numbers.
-class TemplatePlanGenerator(private val catalog: ExerciseCatalog) : PlanGenerator {
+// the engine's numbers. Next week is last week's movements, progressed from
+// what was lifted, for as long as every one of them still has a place; a
+// profile edit that rules one out, a split with no room for it, or a client
+// asking for new movements picks the week afresh.
+class WeekPlanGenerator(private val catalog: ExerciseCatalog) : PlanGenerator {
 
     private val builder = PlanSkeletonBuilder(catalog)
-    private val assembler = PlanAssembler(catalog)
+    private val expander = PlanExpander(catalog)
+    private val parser = GeneratedPlanParser(catalog)
 
     override suspend fun generate(request: PlanRequest): PlanGenerationResult {
         if (catalog.all.isEmpty()) return PlanGenerationResult.Failed
         val skeleton = builder.build(request)
         if (!skeleton.isComplete) return PlanGenerationResult.Failed
-        return assembler.assemble(skeleton, choose(skeleton, request), request)
+        val previous = request.previousWeek?.takeUnless { request.freshCast }
+        val carried = previous?.let { carry(it, skeleton) }?.let { assemble(skeleton, it, request) }
+        return (carried ?: assemble(skeleton, choose(skeleton, request), request))
             ?.let { PlanGenerationResult.Generated(it) }
             ?: PlanGenerationResult.Failed
+    }
+
+    private fun assemble(skeleton: PlanSkeleton, selection: PlanSelection, request: PlanRequest): WeeklyWorkoutPlan? {
+        val parsed = parser.parse(
+            expander.expand(skeleton, selection, request),
+            request.user.id,
+            request.weekNumber,
+            request.startDateMillis,
+            PlanLimits(
+                maxSetsPerSession = skeleton.maxSetsPerSession,
+                allowedKeys = skeleton.allowedKeys,
+                requiredPatterns = skeleton.requiredPatterns,
+                sessionMinutes = request.user.workoutDuration,
+                sessionCeilingMinutes = skeleton.sessionCeilingMinutes
+            )
+        )
+        return (parsed as? PlanParseResult.Parsed)?.plan
+    }
+
+    // Each of last week's movements back in a slot that offers it, on the same
+    // day, under the same title. Null when one is left over or a slot is left
+    // empty, because the week would then not be last week's.
+    private fun carry(previous: WeeklyWorkoutPlan, skeleton: PlanSkeleton): PlanSelection? {
+        if (previous.workoutDays.size != skeleton.days.size) return null
+        val days = skeleton.days.associate { day ->
+            val before = previous.workoutDays.firstOrNull { it.dayNumber == day.dayNumber } ?: return null
+            val remaining = before.exercises.map { it.exerciseKey }.toMutableList()
+            day.slots.filter { it.isDecided }.forEach { remaining.remove(it.candidates.single()) }
+            val slots = day.openSlots.associate { slot ->
+                val key = remaining.firstOrNull { it in slot.candidates } ?: return null
+                remaining.remove(key)
+                slot.id to key
+            }
+            if (remaining.isNotEmpty()) return null
+            day.id to DaySelection(slots, before.title)
+        }
+        return PlanSelection(days)
     }
 
     // Two clients who answered the same way should not train the same week for

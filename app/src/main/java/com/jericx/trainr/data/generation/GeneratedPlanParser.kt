@@ -12,7 +12,6 @@ import com.jericx.trainr.domain.model.withoutWeekNumber
 import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.model.WorkoutExercise
 import com.jericx.trainr.domain.model.asDisplayText
-import kotlinx.serialization.json.Json
 
 // What the client's own answers make possible: rejects a week the app's own
 // arithmetic should never produce.
@@ -25,11 +24,7 @@ data class PlanLimits(
     // time and a timed set breaks it, so the minutes are what has to fit.
     val sessionMinutes: Int = 0,
     val sessionCeilingMinutes: Int = 0
-) {
-    companion object {
-        val Unbounded = PlanLimits(maxSetsPerSession = Int.MAX_VALUE)
-    }
-}
+)
 
 sealed interface PlanParseResult {
     data class Parsed(val plan: WeeklyWorkoutPlan) : PlanParseResult
@@ -40,29 +35,12 @@ sealed interface PlanParseResult {
 // those arrive as parameters.
 class GeneratedPlanParser(private val catalog: ExerciseCatalog = InMemoryExerciseCatalog(emptyList())) {
 
-    private val decoder = Json { ignoreUnknownKeys = true }
-
-    fun parse(
-        json: String,
-        userId: Long,
-        weekNumber: Int,
-        startDateMillis: Long,
-        limits: PlanLimits = PlanLimits.Unbounded
-    ): PlanParseResult {
-        val generated = try {
-            decoder.decodeFromString<GeneratedPlan>(json)
-        } catch (e: IllegalArgumentException) {
-            return PlanParseResult.Invalid(listOf("not a generated plan: ${e.message}"))
-        }
-        return parse(generated, userId, weekNumber, startDateMillis, limits)
-    }
-
     fun parse(
         generated: GeneratedPlan,
         userId: Long,
         weekNumber: Int,
         startDateMillis: Long,
-        limits: PlanLimits = PlanLimits.Unbounded
+        limits: PlanLimits
     ): PlanParseResult {
         val errors = buildList { check(generated, limits) }
         if (errors.isNotEmpty()) return PlanParseResult.Invalid(errors)
@@ -222,9 +200,7 @@ class GeneratedPlanParser(private val catalog: ExerciseCatalog = InMemoryExercis
             sets = sets.mapIndexed { index, set -> set.toDomain(index + 1, resolved) },
             setCount = sets.size,
             durationMinutes = minutes,
-            prescription = prescription,
-            restTime = restSeconds,
-            instructions = instructions
+            restTime = restSeconds
         )
     }
 

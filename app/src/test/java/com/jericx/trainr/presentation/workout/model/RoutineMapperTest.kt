@@ -20,8 +20,6 @@ class RoutineMapperTest {
         name: String,
         exerciseKey: String = "",
         durationMinutes: Int = 5,
-        prescription: String = "3 sets of 10 reps",
-        instructions: String = "Do the thing.",
         videoTutorialUrl: String? = null,
         isCompleted: Boolean = false,
         sets: List<ExerciseSet> = emptyList()
@@ -29,8 +27,6 @@ class RoutineMapperTest {
         name = name,
         exerciseKey = exerciseKey,
         durationMinutes = durationMinutes,
-        prescription = prescription,
-        instructions = instructions,
         videoTutorialUrl = videoTutorialUrl,
         isCompleted = isCompleted,
         sets = sets
@@ -57,8 +53,6 @@ class RoutineMapperTest {
             exercise(
                 name = "Bicycle Crunches",
                 durationMinutes = 5,
-                prescription = "3 sets of 20 reps",
-                instructions = "Alternating elbow-to-knee twists.",
                 videoTutorialUrl = "https://youtu.be/kDPxFoCmb-w",
                 isCompleted = true
             )
@@ -69,7 +63,7 @@ class RoutineMapperTest {
             assertThat(position).isEqualTo(1)
             assertThat(name).isEqualTo("Bicycle Crunches")
             assertThat(minutes).isEqualTo(5)
-            assertThat(description).isEqualTo("Alternating elbow-to-knee twists.")
+            assertThat(description).isEmpty()
             assertThat(videoUrl).isEqualTo("https://youtu.be/kDPxFoCmb-w")
             assertThat(isCompleted).isTrue()
         }
@@ -87,7 +81,7 @@ class RoutineMapperTest {
     @Test
     fun keepsTheTotalSeparateFromThePrescription() {
         val routine = day(
-            exercise(name = "Intervals", durationMinutes = 10, prescription = "5 sets of 1 minute")
+            exercise(name = "Intervals", durationMinutes = 10)
         ).toRoutineUi()
 
         assertThat(routine.exercises.single().minutes).isEqualTo(10)
@@ -153,19 +147,18 @@ class RoutineMapperTest {
     private val catalog = ExerciseCatalogReader.read(File("src/main/assets/exercise-catalog.json").readText())
 
     @Test
-    fun theCatalogSaysHowAMovementIsDoneWhateverTheStoredWeekSays() {
-        val routine = day(exercise("Goblet Squat", exerciseKey = "goblet_squat", instructions = "Written by a model."))
+    fun theCatalogSaysHowAMovementIsDone() {
+        val routine = day(exercise("Goblet Squat", exerciseKey = "goblet_squat"))
             .toRoutineUi(catalog = catalog)
 
         assertThat(routine.exercises.single().description).isEqualTo(catalog["goblet_squat"]!!.summary)
     }
 
     @Test
-    fun theChipIsReadOffTheSetsNotTheStoredText() {
+    fun theChipIsReadOffTheSets() {
         val routine = day(
             exercise(
                 "Squat",
-                prescription = "a model's words",
                 sets = (1..3).map { ExerciseSet(setNumber = it, targetReps = 10) }
             )
         ).toRoutineUi()

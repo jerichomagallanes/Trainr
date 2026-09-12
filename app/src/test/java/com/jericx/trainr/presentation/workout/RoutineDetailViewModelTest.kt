@@ -365,8 +365,6 @@ class RoutineDetailViewModelTest {
                 ExerciseSet(id = id * 10 + 1, setNumber = 2, targetReps = 12, targetWeightKg = 20f)
             ),
             durationMinutes = 8,
-            prescription = "2 sets of 12 reps",
-            instructions = "Stored instructions.",
             isCompleted = done
         )
 
