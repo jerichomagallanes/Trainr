@@ -224,12 +224,12 @@ private val COMPARISON = listOf(
     ComparisonRow(R.string.pro_compare_logging, Mark.Yes, Mark.Yes),
     ComparisonRow(R.string.pro_compare_timer, Mark.Yes, Mark.Yes),
     ComparisonRow(R.string.pro_compare_history, Mark.Yes, Mark.Yes),
-    ComparisonRow(R.string.pro_compare_repeat, Mark.Yes, Mark.Yes),
     ComparisonRow(
         R.string.pro_compare_generated,
         Mark.Count(R.string.pro_compare_one),
         Mark.Count(R.string.pro_compare_every_week)
     ),
+    ComparisonRow(R.string.pro_compare_repeat, Mark.No, Mark.Yes),
     ComparisonRow(R.string.pro_compare_rewrite, Mark.No, Mark.Yes),
     ComparisonRow(R.string.pro_compare_fresh, Mark.No, Mark.Yes)
 )

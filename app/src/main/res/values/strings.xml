@@ -372,7 +372,7 @@
     <string name="pro_compare_every_week">Every week</string>
     <string name="pro_questions">Any questions?</string>
     <string name="pro_faq_includes_q">What does Trainr Pro include?</string>
-    <string name="pro_faq_includes_a">Pro unlocks new weeks: build next week from what you lifted, rewrite a week that does not suit you, and start a fresh plan whenever your goal changes.</string>
+    <string name="pro_faq_includes_a">Pro unlocks every week after your first: build next week from what you lifted, repeat a week that went well, rewrite one that does not suit you, and start a fresh plan whenever your goal changes.</string>
     <string name="pro_faq_human_q">Is my plan written by a real trainer?</string>
     <string name="pro_faq_human_a">No. Trainr builds it on your phone from the answers you gave, and progresses it from the sets you log. Plans are guidance, not medical advice.</string>
     <string name="pro_faq_renew_q">Does Pro renew automatically?</string>
@@ -382,7 +382,7 @@
     <string name="pro_faq_devices_q">What happens if I get a new phone?</string>
     <string name="pro_faq_devices_a">Pro follows your Google account, not the device. Sign in with the same Google account and tap Restore purchase. Trainr has no accounts of its own, so a purchase made on iOS does not unlock Android.</string>
     <string name="pro_faq_free_q">What stays free?</string>
-    <string name="pro_faq_free_a">Your first week, every set you log, the rest timer, the video on every exercise, all your past weeks and progress, and repeating a week as often as you like.</string>
+    <string name="pro_faq_free_a">Your first week, every set you log, the rest timer, the video on every exercise, and all your past weeks and progress.</string>
     <string name="pro_support_trouble">Having trouble with your purchase?</string>
 
     <!-- Trainr Pro contextual prompt -->
