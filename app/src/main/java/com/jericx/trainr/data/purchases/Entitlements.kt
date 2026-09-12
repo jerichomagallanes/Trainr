@@ -27,6 +27,10 @@ class Entitlements(
     private val _isPro = MutableStateFlow(false)
     val isPro: StateFlow<Boolean> = _isPro.asStateFlow()
 
+    // A lifetime purchase has no expiry, and nothing to manage or cancel.
+    private val _isLifetime = MutableStateFlow(false)
+    val isLifetime: StateFlow<Boolean> = _isLifetime.asStateFlow()
+
     var offering: Offering? = null
         private set
 
@@ -69,19 +73,20 @@ class Entitlements(
     }
 
     private fun read(info: CustomerInfo): Boolean {
-        val active = info.entitlements.all[ENTITLEMENT]?.isActive == true
+        val pro = info.entitlements.all[ENTITLEMENT]
+        val active = pro?.isActive == true
         _isPro.value = active
+        _isLifetime.value = active && pro?.expirationDate == null
         return active
     }
 
     companion object {
         private const val ENTITLEMENT = "trainr_ai_workout_plans_pro"
 
-        // RevenueCat's test store key, and the same one iOS uses: it is
-        // platform-agnostic and returns an offering without any Play products
-        // existing, which is what lets the paywall be used before the console
-        // work is done. A public SDK key is meant to ship in the binary; the
-        // secret key is never in the app.
+        // RevenueCat's Test Store key until the Play products exist: it returns
+        // an offering with no console work done, which is what lets the paywall
+        // be used meanwhile. A public SDK key is meant to ship in the binary;
+        // the secret key is never in the app.
         private const val API_KEY = "test_WMIQYjVmrPgWhTvqwpfnkobWhAB"
 
         private val keyIsShippable: Boolean

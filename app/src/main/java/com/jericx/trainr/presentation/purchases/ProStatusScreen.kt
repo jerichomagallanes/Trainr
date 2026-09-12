@@ -21,13 +21,14 @@ import com.jericx.trainr.presentation.common.components.typography.TrainrScreenT
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.trainrColors
 
-// Where a subscriber can see that they are subscribed, restore a purchase after
-// a reinstall, and reach the only place a subscription can actually be
-// cancelled. The paywall cannot serve any of that: it closes itself for anyone
-// who already has Pro.
+// Where someone with Pro can see that they have it, restore a purchase after a
+// reinstall, and reach the only place a subscription can actually be cancelled.
+// The paywall cannot serve any of that: it closes itself for anyone who already
+// has Pro.
 @Composable
 fun ProStatusScreen(
     isWorking: Boolean,
+    isLifetime: Boolean,
     @StringRes noticeRes: Int?,
     onRestore: () -> Unit,
     onNoticeShown: () -> Unit,
@@ -45,7 +46,9 @@ fun ProStatusScreen(
                 .background(colors.brandLarge)
                 .padding(horizontal = Spacing.extraSmall, vertical = 3.dp)
         )
-        TrainrScreenTitle(text = stringResource(R.string.pro_active))
+        TrainrScreenTitle(
+            text = stringResource(if (isLifetime) R.string.pro_active_lifetime else R.string.pro_active)
+        )
         Column(
             modifier = Modifier.padding(top = Spacing.section),
             verticalArrangement = Arrangement.spacedBy(Spacing.medium)
@@ -62,12 +65,14 @@ fun ProStatusScreen(
             modifier = Modifier.padding(top = Spacing.section),
             verticalArrangement = Arrangement.spacedBy(Spacing.medium)
         ) {
-            Text(
-                text = stringResource(R.string.pro_manage),
-                style = MaterialTheme.typography.labelLarge,
-                color = colors.brandStrong,
-                modifier = Modifier.clickable { onOpenLink(ProLinks.SUBSCRIPTIONS) }
-            )
+            if (!isLifetime) {
+                Text(
+                    text = stringResource(R.string.pro_manage),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = colors.brandStrong,
+                    modifier = Modifier.clickable { onOpenLink(ProLinks.SUBSCRIPTIONS) }
+                )
+            }
             Text(
                 text = stringResource(R.string.pro_restore),
                 style = MaterialTheme.typography.labelLarge,

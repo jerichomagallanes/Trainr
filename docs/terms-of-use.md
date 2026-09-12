@@ -55,10 +55,10 @@ look right for you. You are the last check, not the app.
 
 ## Paying for Trainr Pro
 
-Your first generated week is free. Trainr Pro unlocks new weeks after that: a
-fresh week each week, rewriting a week that does not suit you, and starting a new
-plan whenever your goal changes. Logging, the timer, the videos, your history and
-repeating a week are free and stay free.
+Your first generated week is free. Trainr Pro unlocks every week after that: a
+fresh week each week, repeating a week that went well, rewriting one that does
+not suit you, and starting a new plan whenever your goal changes. Logging, the
+timer, the videos and your history are free and stay free.
 
 - **The store takes the payment, not us.** Prices, currency, tax and any free
   trial come from the App Store or Google Play, and what they show you at the

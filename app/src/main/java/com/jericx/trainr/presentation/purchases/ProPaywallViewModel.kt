@@ -32,7 +32,8 @@ class ProPaywallViewModel @Inject constructor(
         val selectedId: String? = null,
         val isWorking: Boolean = false,
         val noticeRes: Int? = null,
-        val isPro: Boolean = false
+        val isPro: Boolean = false,
+        val isLifetime: Boolean = false
     )
 
     private val _state = MutableStateFlow(State())
@@ -51,6 +52,7 @@ class ProPaywallViewModel @Inject constructor(
             val plans = packages.map { it.toPlan(packages) }
             _state.value = _state.value.copy(
                 isPro = isPro,
+                isLifetime = entitlements.isLifetime.value,
                 plans = plans,
                 selectedId = preferred(plans)?.id
             )
@@ -72,7 +74,8 @@ class ProPaywallViewModel @Inject constructor(
             }.isSuccess
             _state.value = _state.value.copy(
                 isWorking = false,
-                isPro = if (bought) entitlements.refresh() else _state.value.isPro
+                isPro = if (bought) entitlements.refresh() else _state.value.isPro,
+                isLifetime = entitlements.isLifetime.value
             )
         }
     }
@@ -84,6 +87,7 @@ class ProPaywallViewModel @Inject constructor(
             _state.value = _state.value.copy(
                 isWorking = false,
                 isPro = restored,
+                isLifetime = entitlements.isLifetime.value,
                 noticeRes = if (restored) R.string.pro_restored else R.string.pro_nothing_to_restore
             )
         }
