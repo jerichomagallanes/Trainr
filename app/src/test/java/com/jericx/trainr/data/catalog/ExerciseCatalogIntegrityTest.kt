@@ -266,7 +266,8 @@ class ExerciseCatalogIntegrityTest {
     // Pinned rather than matched on the name, because the name does not
     // settle it: a walking lunge alternates inside the set and a dumbbell row
     // does not say which arm. Where the name is ambiguous the movement is left
-    // bilateral, so the chip understates the work rather than doubling it.
+    // bilateral, so the session budget understates the time rather than
+    // doubling it.
     @Test
     fun onlyTheMovementsReviewedAsPerSideAreMarkedUnilateral() {
         val marked = catalog.all.filter { it.unilateral }.map { it.key }.sorted()

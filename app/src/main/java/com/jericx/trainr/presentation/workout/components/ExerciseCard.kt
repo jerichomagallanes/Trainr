@@ -39,7 +39,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.SpanStyle
-import com.jericx.trainr.presentation.workout.util.asText
 import com.jericx.trainr.presentation.common.cautionText
 
 @Composable
@@ -130,6 +129,7 @@ fun ExerciseCard(
                 if (exercise.primaryMuscle.isNotBlank()) {
                     Text(
                         text = buildAnnotatedString {
+                            append(stringResource(R.string.muscle_primary_label) + ": ")
                             withStyle(
                                 SpanStyle(color = accentInk, fontWeight = FontWeight.Medium)
                             ) {
@@ -137,6 +137,7 @@ fun ExerciseCard(
                             }
                             if (exercise.secondaryMuscles.isNotEmpty()) {
                                 append(MUSCLE_SEPARATOR)
+                                append(stringResource(R.string.muscle_secondary_label) + ": ")
                                 append(exercise.secondaryMuscles.joinToString(", "))
                             }
                         },
@@ -181,52 +182,35 @@ fun ExerciseCard(
                     color = colors.onSurface,
                     modifier = Modifier.padding(start = Spacing.extraSmall)
                 )
-                val chip = exercise.prescription.asText()
-                if (chip.isNotBlank()) {
-                    Text(
-                        text = chip,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = colors.onSurfaceEmphasis,
-                        modifier = Modifier
-                            .weight(1f, fill = false)
-                            .padding(start = Spacing.small)
-                            .background(colors.surfaceEmphasis, MaterialTheme.shapes.medium)
-                            .padding(horizontal = Spacing.tight, vertical = 3.dp)
-                    )
-                }
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
+                // Drawn even when empty: gating it on sets takes away the only
+                // Add set button.
+                ExerciseSetTable(
+                    measure = exercise.measure,
+                    sets = exercise.sets,
+                    onSetChanged = onSetChanged,
+                    onAddSet = onAddSet,
+                    onDeleteSet = onDeleteSet,
+                    previousSets = exercise.previousSets,
+                    units = units
+                )
+
                 if (exercise.isEstimated) {
                     Text(
-                        text = stringResource(R.string.estimated_weight),
+                        text = stringResource(R.string.estimated_weight_note),
                         style = MaterialTheme.typography.bodySmall,
-                        color = colors.onSurfaceMuted,
-                        modifier = Modifier
-                            .padding(start = Spacing.small)
-                            .border(1.dp, colors.cardEdge, MaterialTheme.shapes.medium)
-                            .padding(horizontal = Spacing.tight, vertical = 3.dp)
+                        color = colors.onSurfaceMuted
                     )
                 }
             }
-
-            // Drawn even when empty: gating it on sets takes away the only
-            // Add set button.
-            ExerciseSetTable(
-                measure = exercise.measure,
-                sets = exercise.sets,
-                onSetChanged = onSetChanged,
-                onAddSet = onAddSet,
-                onDeleteSet = onDeleteSet,
-                previousSets = exercise.previousSets,
-                units = units
-            )
 
             content()
         }
     }
 }
 
-// A middot rather than a label on each side: the line is read at a glance
-// twelve times down a day, and "Primary:"/"Secondary:" twice per card is more
-// words than the names themselves.
 private const val MUSCLE_SEPARATOR = "  \u00b7  "
 
 @Preview(showBackground = true, heightDp = 700)
