@@ -26,12 +26,12 @@ RevenueCat:
   All three products attach to it.
 - Offering: `default`, current. Packages `$rc_monthly`, `$rc_annual` and
   `$rc_lifetime`, each pointing at the matching product on both stores.
-- App keys: the iOS app's public key (`appl_…`) goes in
-  `Trainr-iOS/Trainr/Services/Purchases/Entitlements.swift`; the Android app's
+- App keys: the iOS app's public key (`appl_…`) lives in
+  `Trainr-iOS/Trainr/Services/Purchases/Entitlements.swift`, the Android app's
   (`goog_…`) in `app/src/main/java/com/jericx/trainr/data/purchases/Entitlements.kt`.
-  Until then both hold the Test Store key (`test_…`), and a release build with
-  that key refuses to configure purchases and leaves every paid path free
-  rather than take money it cannot verify.
+  Both are public SDK keys and ship in the binaries. A release build that still
+  held a Test Store key (`test_…`) would refuse to configure purchases and leave
+  every paid path free rather than take money it cannot verify.
 
 Package types drive the copy: `$rc_lifetime` shows "Pay once" and "Unlock Pro
 forever", hides the renewal disclosure, and the Pro screen for its buyer says

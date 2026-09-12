@@ -83,11 +83,9 @@ class Entitlements(
     companion object {
         private const val ENTITLEMENT = "trainr_ai_workout_plans_pro"
 
-        // RevenueCat's Test Store key until the Play products exist: it returns
-        // an offering with no console work done, which is what lets the paywall
-        // be used meanwhile. A public SDK key is meant to ship in the binary;
-        // the secret key is never in the app.
-        private const val API_KEY = "test_WMIQYjVmrPgWhTvqwpfnkobWhAB"
+        // A public SDK key is meant to ship in the binary; the secret key is
+        // never in the app.
+        private const val API_KEY = "goog_DCzKEzGLFppqStqXSGJrqEXGdlt"
 
         private val keyIsShippable: Boolean
             get() = BuildConfig.DEBUG || !API_KEY.startsWith("test_")
