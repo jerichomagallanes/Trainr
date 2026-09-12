@@ -110,7 +110,6 @@ A new `PlanSkeleton` in `domain/generation/` (next to `/Users/jericho/StudioProj
 - `sets`, `reps`, `restSeconds`, RIR target — from `SessionBudget` plus a role×goal table (see §5).
 - `weightKg` — from logged actuals, or the week-1 seed table. **The model never emits a weight.** Invented kilograms are the loudest fake tell and a 1B model has no basis for them.
 - `instructions` — from `CatalogExercise.summary` / `.steps`, which are already populated for all 451 movements. The model has been paying tokens to rewrite text we already own; stop.
-- `prescription` chip — templated from the computed sets/reps/measure, so the chip can never disagree with the set rows.
 
 **Critical engineering move:** the expander's output is the *existing* `GeneratedPlan` (`/Users/jericho/StudioProjects/Trainr/app/src/main/java/com/jericx/trainr/data/generation/GeneratedPlan.kt`). `GeneratedPlanParser`, `RoutineMapper`, the DB and the UI are untouched. The parser's semantic checks become a safety net over our own arithmetic rather than over a model's.
 
@@ -186,7 +185,7 @@ Set an explicit removal criterion rather than keeping it forever: **delete the r
 Measure: (a) does a human reading the day accept the movement selection and order — target ≥80% of days accepted with zero edits; (b) tokens/s decode and TTFT; (c) engine init time; (d) peak RSS; (e) llguidance mask latency with a 40-key enum (unmeasured anywhere, and it is per-token overhead on top of already slow decode); (f) whether Qwen3-0.6B's `ekv1280` holds the trimmed prompt.
 **Kill criterion:** if selection acceptance on Gemma 4 E2B is below ~60%, or mid-range per-day latency exceeds 30 s, stop here and ship only Stage 1. That outcome is not a failure — Stage 1 is most of the value.
 
-**Stage 1 — the reshape, against existing remote Gemini (ships alone).** Slot skeleton, `ProgressionEngine`, catalog-sourced instructions, templated prescription chips, equipment-aware increments, validators V1–V11, deterministic template fallback. Mirror in Swift. Ships: cheaper and faster remote generation, plans that **can never fail**, visible week-to-week continuity, no more invented kilograms. Do this against Gemini, not on-device, so regressions are attributable to the reshape and not to the model swap.
+**Stage 1 — the reshape, against existing remote Gemini (ships alone).** Slot skeleton, `ProgressionEngine`, catalog-sourced instructions, equipment-aware increments, validators V1–V11, deterministic template fallback. Mirror in Swift. Ships: cheaper and faster remote generation, plans that **can never fail**, visible week-to-week continuity, no more invented kilograms. Do this against Gemini, not on-device, so regressions are attributable to the reshape and not to the model swap.
 
 **Stage 2 — on-device engine, Android, dev flavour only.** Add `litertlm-android:0.17.0` behind the existing `dev`/`prod` flavour split; port `generatedPlanSchema` from Firebase's `Schema` builder to a raw JSON Schema string; **model side-loaded via adb, no downloader yet.** Ships internally: real device measurements, A/B against tier 3 on identical profiles.
 

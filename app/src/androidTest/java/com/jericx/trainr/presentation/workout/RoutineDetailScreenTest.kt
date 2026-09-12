@@ -125,6 +125,25 @@ class RoutineDetailScreenTest {
         assertThat(starts).hasSize(state.routine.exercises.count { !it.isCompleted })
     }
 
+    // A movement with a tutorial but no written steps offers the video alone:
+    // a How to perform toggle with nothing behind it opened onto an empty list.
+    @Test
+    fun aMovementWithOnlyAVideoOffersTheVideoAndNotTheSteps() {
+        val unfinished = state.routine.exercises.filter { !it.isCompleted }
+        assertThat(unfinished.any { it.steps.isEmpty() && it.videoUrl != null }).isTrue()
+        setScreen()
+
+        val howTos = composeTestRule
+            .onAllNodesWithText(string(R.string.show_how_to_perform))
+            .fetchSemanticsNodes()
+        val videos = composeTestRule
+            .onAllNodesWithText(string(R.string.show_video_tutorial))
+            .fetchSemanticsNodes()
+
+        assertThat(howTos).hasSize(unfinished.count { it.steps.isNotEmpty() })
+        assertThat(videos).hasSize(unfinished.count { it.steps.isEmpty() && it.videoUrl != null })
+    }
+
     // The stored routine arrives after the sample one is already on screen;
     // swapping in an already-finished day must not read as finishing it.
     @Test

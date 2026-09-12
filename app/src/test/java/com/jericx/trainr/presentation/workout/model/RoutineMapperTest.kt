@@ -3,8 +3,6 @@ package com.jericx.trainr.presentation.workout.model
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.data.catalog.ExerciseCatalogReader
 import com.jericx.trainr.domain.catalog.InjuryGuard
-import com.jericx.trainr.domain.generation.Prescription
-import com.jericx.trainr.domain.generation.PrescriptionUnit
 import com.jericx.trainr.domain.model.ExerciseMeasure
 import com.jericx.trainr.domain.model.Injury
 import java.io.File
@@ -152,30 +150,6 @@ class RoutineMapperTest {
             .toRoutineUi(catalog = catalog)
 
         assertThat(routine.exercises.single().description).isEqualTo(catalog["goblet_squat"]!!.summary)
-    }
-
-    @Test
-    fun theChipIsReadOffTheSets() {
-        val routine = day(
-            exercise(
-                "Squat",
-                sets = (1..3).map { ExerciseSet(setNumber = it, targetReps = 10) }
-            )
-        ).toRoutineUi()
-
-        assertThat(routine.exercises.single().prescription)
-            .isEqualTo(Prescription.Fixed(3, PrescriptionUnit.REPS, 10, perSide = false))
-    }
-
-    @Test
-    fun aOneSidedMovementIsCountedPerSide() {
-        val oneSided = catalog.all.first { it.unilateral && it.measure != ExerciseMeasure.DURATION }
-
-        val routine = day(
-            exercise(oneSided.name, exerciseKey = oneSided.key, sets = listOf(ExerciseSet(setNumber = 1, targetReps = 8)))
-        ).toRoutineUi(catalog = catalog)
-
-        assertThat((routine.exercises.single().prescription as Prescription.Fixed).perSide).isTrue()
     }
 
     @Test

@@ -230,21 +230,24 @@ fun RoutineDetailScreen(
                                 onStop = onStopTimer
                             )
 
-                            val video = YouTubeVideo.from(exercise.videoUrl)
-                            if (exercise.steps.isNotEmpty() || video != null) {
+                            val video: @Composable () -> Unit = {
+                                YouTubeVideo.from(exercise.videoUrl)?.let {
+                                    VideoTutorial(
+                                        video = it,
+                                        isExpanded = state.expandedVideo == exercise.position,
+                                        onToggle = { onToggleVideo(exercise.position) }
+                                    )
+                                }
+                            }
+                            if (exercise.steps.isNotEmpty()) {
                                 HowToSection(
                                     steps = exercise.steps,
                                     isExpanded = state.expandedHowTo == exercise.position,
-                                    onToggle = { onToggleHowTo(exercise.position) }
-                                ) {
-                                    video?.let {
-                                        VideoTutorial(
-                                            video = it,
-                                            isExpanded = state.expandedVideo == exercise.position,
-                                            onToggle = { onToggleVideo(exercise.position) }
-                                        )
-                                    }
-                                }
+                                    onToggle = { onToggleHowTo(exercise.position) },
+                                    video = video
+                                )
+                            } else {
+                                video()
                             }
                         }
                     }

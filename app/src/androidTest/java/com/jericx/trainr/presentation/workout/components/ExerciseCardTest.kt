@@ -40,11 +40,10 @@ class ExerciseCardTest {
     }
 
     @Test
-    fun showsThePrescriptionAndDuration() {
+    fun showsTheNameAndDuration() {
         setCard(sampleExercises[1])
 
         composeTestRule.onNodeWithText("High-Intensity Intervals").assertIsDisplayed()
-        composeTestRule.onNodeWithText("5 sets of 60 seconds").assertIsDisplayed()
         composeTestRule.onNodeWithText("10 mins").assertIsDisplayed()
         // The set rows are numbered too, so the badge is not the only "2" on the card.
         assertThat(
@@ -98,30 +97,40 @@ class ExerciseCardTest {
         assertThat(toggled).isTrue()
     }
 
-    // What the movement trains is the catalog's to say, and it reads at a
-    // glance rather than as two labelled lines on every card of the day.
     @Test
-    fun theMuscleLineNamesWhatTheMovementTrains() {
-        val squat = sampleExercises.first { it.primaryMuscle.isNotBlank() }
+    fun theMuscleLineLabelsWhatTheMovementTrainsAndWhatAssists() {
+        val press = sampleExercises[0].copy(
+            primaryMuscle = "Chest",
+            secondaryMuscles = listOf("Shoulders", "Triceps")
+        )
 
-        setCard(squat)
+        setCard(press)
 
-        composeTestRule.onNodeWithText(squat.primaryMuscle, substring = true)
-            .assertIsDisplayed()
-        squat.secondaryMuscles.forEach { muscle ->
-            composeTestRule.onNodeWithText(muscle, substring = true).assertIsDisplayed()
-        }
+        composeTestRule.onNodeWithText(
+            "${string(R.string.muscle_primary_label)}: Chest  \u00b7  " +
+                "${string(R.string.muscle_secondary_label)}: Shoulders, Triceps"
+        ).assertIsDisplayed()
     }
 
-    // A movement the catalog has nothing to say about must not leave a stray
-    // separator sitting under its name.
+    @Test
+    fun aMovementWithNoSecondariesLabelsOnlyThePrimary() {
+        val solo = sampleExercises[0].copy(primaryMuscle = "Chest", secondaryMuscles = emptyList())
+
+        setCard(solo)
+
+        composeTestRule.onNodeWithText("${string(R.string.muscle_primary_label)}: Chest").assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.muscle_secondary_label), substring = true)
+            .assertDoesNotExist()
+    }
+
     @Test
     fun aMovementWithNoMusclesShowsNoMuscleLine() {
         val unknown = sampleExercises[0].copy(primaryMuscle = "", secondaryMuscles = emptyList())
 
         setCard(unknown)
 
-        composeTestRule.onNodeWithText("\u00b7", substring = true).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.muscle_primary_label), substring = true)
+            .assertDoesNotExist()
     }
 
     @Test
@@ -141,7 +150,7 @@ class ExerciseCardTest {
 
         setCard(weighted)
 
-        composeTestRule.onNodeWithText(string(R.string.estimated_weight)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.estimated_weight_note)).assertIsDisplayed()
     }
 
     @Test
@@ -154,6 +163,6 @@ class ExerciseCardTest {
 
         setCard(weighted)
 
-        composeTestRule.onNodeWithText(string(R.string.estimated_weight)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.estimated_weight_note)).assertDoesNotExist()
     }
 }

@@ -26,7 +26,6 @@ that came with them.
 | A lighter week | App | `DeloadCheck` |
 | The plan's title | App | `PlanSkeletonBuilder` |
 | Name, measure, muscles, how-to, equipment | Catalog | `exercise-catalog.json` |
-| The chip ("3 sets of 10 reps") | App, read off the sets | `Prescription` |
 | The caution line under a movement | Catalog and app | `InjuryGuard` |
 | Dates, ids, completion, what was lifted | App state | — |
 
@@ -101,8 +100,8 @@ give the same week for the same answers.
 - A starting weight lighter than an empty bar, or a movement the client has
   outgrown, is answered with the next candidate on the list, at most three.
 - Rest is the skeleton's; timed sets never exceed what the day budgeted.
-- The how-to and the chip are not stored with the week: the card reads the
-  catalog's summary and derives the chip from the sets.
+- The how-to is not stored with the week: the card reads the catalog's
+  summary and steps, and the set rows are the prescription.
 - A session's title falls back to its focus and is cut to 40 characters.
 
 ## Parser — a net over the app's own arithmetic
