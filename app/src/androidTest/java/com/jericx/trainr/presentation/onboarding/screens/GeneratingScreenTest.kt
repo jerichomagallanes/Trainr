@@ -90,7 +90,7 @@ class GeneratingScreenTest {
                     isReady = false,
                     onStart = {},
                     onDone = { done = true },
-                    failure = PlanGenerationResult.Offline
+                    failure = PlanGenerationResult.Failed
                 )
             }
         }
@@ -101,25 +101,7 @@ class GeneratingScreenTest {
     }
 
     @Test
-    fun beingOfflineIsSaidPlainly() {
-        composeTestRule.setContent {
-            TrainrTheme {
-                GeneratingScreen(
-                    isReady = false,
-                    onStart = {},
-                    onDone = {},
-                    failure = PlanGenerationResult.Offline
-                )
-            }
-        }
-
-        composeTestRule.onNodeWithText(string(R.string.generation_failed_title)).assertIsDisplayed()
-        composeTestRule.onNodeWithText(string(R.string.generation_failed_offline))
-            .assertIsDisplayed()
-    }
-
-    @Test
-    fun anAnswerThatNeverHeldUpReadsDifferently() {
+    fun aFailureSaysWhatWentWrong() {
         composeTestRule.setContent {
             TrainrTheme {
                 GeneratingScreen(
@@ -144,7 +126,7 @@ class GeneratingScreenTest {
                     isReady = false,
                     onStart = {},
                     onDone = {},
-                    failure = PlanGenerationResult.Offline,
+                    failure = PlanGenerationResult.Failed,
                     onRetry = { retried = true }
                 )
             }
@@ -164,7 +146,7 @@ class GeneratingScreenTest {
                     isReady = false,
                     onStart = {},
                     onDone = {},
-                    failure = PlanGenerationResult.Offline,
+                    failure = PlanGenerationResult.Failed,
                     onGiveUp = { wentBack = true },
                     giveUpLabel = R.string.back_to_profile
                 )
@@ -174,64 +156,5 @@ class GeneratingScreenTest {
         composeTestRule.onNodeWithText(string(R.string.back_to_profile)).performClick()
 
         assertThat(wentBack).isTrue()
-    }
-
-
-    @Test
-    fun theDailyLimitGetsItsOwnTitleAndReason() {
-        composeTestRule.setContent {
-            TrainrTheme {
-                GeneratingScreen(
-                    isReady = false,
-                    onStart = {},
-                    onDone = {},
-                    failure = PlanGenerationResult.DailyLimitReached
-                )
-            }
-        }
-
-        composeTestRule.onNodeWithText(string(R.string.generation_limit_title))
-            .assertIsDisplayed()
-        composeTestRule.onNodeWithText(string(R.string.generation_limit_message))
-            .assertIsDisplayed()
-        composeTestRule.onNodeWithText(string(R.string.generation_failed_title))
-            .assertDoesNotExist()
-    }
-
-    // Retrying a spent allowance cannot work, so nothing invites it.
-    @Test
-    fun theDailyLimitOffersNoRetry() {
-        var retried = false
-        composeTestRule.setContent {
-            TrainrTheme {
-                GeneratingScreen(
-                    isReady = false,
-                    onStart = {},
-                    onDone = {},
-                    failure = PlanGenerationResult.DailyLimitReached,
-                    onRetry = { retried = true }
-                )
-            }
-        }
-
-        composeTestRule.onNodeWithText(string(R.string.try_again)).assertDoesNotExist()
-        composeTestRule.onNodeWithText(string(R.string.got_it)).assertIsDisplayed()
-        assertThat(retried).isFalse()
-    }
-
-    @Test
-    fun anOrdinaryFailureStillOffersRetry() {
-        composeTestRule.setContent {
-            TrainrTheme {
-                GeneratingScreen(
-                    isReady = false,
-                    onStart = {},
-                    onDone = {},
-                    failure = PlanGenerationResult.Failed
-                )
-            }
-        }
-
-        composeTestRule.onNodeWithText(string(R.string.try_again)).assertIsDisplayed()
     }
 }

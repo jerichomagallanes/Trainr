@@ -7,24 +7,21 @@ data class PlanRequest(
     val user: UserProfile,
     val weekNumber: Int,
     val startDateMillis: Long,
-    val languageCode: String,
-    val previousWeek: WeeklyWorkoutPlan? = null
-)
+    // Newest first. A stall is two short weeks and a ramp back spans three,
+    // so one previous week is not enough to progress from.
+    val history: List<WeeklyWorkoutPlan> = emptyList(),
+    // New movements were asked for, so last week's are not carried into it.
+    val freshCast: Boolean = false
+) {
+    val previousWeek: WeeklyWorkoutPlan? get() = history.firstOrNull()
+}
 
 sealed interface PlanGenerationResult {
     data class Generated(val plan: WeeklyWorkoutPlan) : PlanGenerationResult
 
-    sealed interface Failure : PlanGenerationResult
-
-    // The request never reached the model: no network, or it timed out trying.
-    data object Offline : Failure
-
-    // The model answered, but never with a plan that held up.
-    data object Failed : Failure
-
-    // Every model has spent its allowance for the day. Kept apart from Failed
-    // because a retry here is a button the app already knows will fail.
-    data object DailyLimitReached : Failure
+    // Nothing to build from: an empty catalog, or a week the app's own checks
+    // turned down. Both are bugs rather than anything the client did.
+    data object Failed : PlanGenerationResult
 }
 
 interface PlanGenerator {

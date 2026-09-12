@@ -6,18 +6,16 @@ import com.jericx.trainr.common.Constants
 import com.jericx.trainr.data.local.TrainrDatabase
 import com.jericx.trainr.data.local.UserDao
 import com.jericx.trainr.data.local.UserMapper
-import com.jericx.trainr.data.preferences.LanguageCodeProvider
-import com.jericx.trainr.data.preferences.LanguagePreferences
 import com.jericx.trainr.data.preferences.ThemePreferences
 import com.jericx.trainr.data.purchases.Entitlements
 import com.jericx.trainr.data.purchases.StoredGenerationAllowance
 import com.jericx.trainr.data.repository.UserRepositoryImpl
-import com.jericx.trainr.data.generation.planGenerator
+import com.jericx.trainr.data.generation.WeekPlanGenerator
 import com.jericx.trainr.domain.diagnostics.Breadcrumbs
 import com.jericx.trainr.data.diagnostics.CrashlyticsBreadcrumbs
 import com.jericx.trainr.domain.generation.PlanGenerator
-import com.jericx.trainr.data.generation.DailySpentModels
-import com.jericx.trainr.domain.generation.SpentModels
+import com.jericx.trainr.data.catalog.AssetExerciseCatalog
+import com.jericx.trainr.domain.catalog.ExerciseCatalog
 import com.jericx.trainr.domain.purchases.FreeGenerationAllowance
 import com.jericx.trainr.domain.purchases.ProGate
 import com.jericx.trainr.domain.repository.UserRepository
@@ -39,7 +37,13 @@ object AppModule {
             context,
             TrainrDatabase::class.java,
             Constants.DATABASE_NAME
-        ).build()
+        )
+            // Nothing is in production, so a schema change resets the local
+            // database rather than earning a migration. This has to become a
+            // real migration before the first release: left here, the first
+            // schema change after launch silently wipes every client.
+            .fallbackToDestructiveMigration(dropAllTables = true)
+            .build()
     }
 
     @Provides
@@ -72,11 +76,6 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideSpentModels(@ApplicationContext context: Context): SpentModels =
-        DailySpentModels(context)
-
-    @Provides
-    @Singleton
     fun provideUserDao(database: TrainrDatabase): UserDao {
         return database.userDao
     }
@@ -98,24 +97,17 @@ object AppModule {
 
     @Provides
     @Singleton
-    // Which generator answers is a property of the build: see planGenerator()
-    // in the dev and prod source sets.
-    fun providePlanGenerator(
-        spentModels: SpentModels,
-        breadcrumbs: Breadcrumbs
-    ): PlanGenerator = planGenerator(spentModels, breadcrumbs)
+    fun providePlanGenerator(catalog: ExerciseCatalog): PlanGenerator =
+        WeekPlanGenerator(catalog)
+
+    @Provides
+    @Singleton
+    fun provideExerciseCatalog(@ApplicationContext context: Context): ExerciseCatalog =
+        AssetExerciseCatalog(context)
 
     @Provides
     @Singleton
     fun provideThemePreferences(@ApplicationContext context: Context): ThemePreferences {
         return ThemePreferences(context)
-    }
-
-    @Provides
-    @Singleton
-    fun provideLanguageCodeProvider(@ApplicationContext context: Context): LanguageCodeProvider {
-        return LanguageCodeProvider {
-            LanguagePreferences(context).getCurrentLanguageObject(context).code
-        }
     }
 }

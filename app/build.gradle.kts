@@ -39,7 +39,10 @@ android {
         versionCode = maxOf(runCatching { commitCount.get() }.getOrDefault(0), minimumVersionCode)
         versionName = "1.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // Hilt's, so an instrumented test can reach the real graph: the
+        // paywall gate is wired in the navigation and cannot be seen from a
+        // screen on its own.
+        testInstrumentationRunner = "com.jericx.trainr.HiltTestRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
@@ -54,8 +57,8 @@ android {
         buildConfig = true
     }
 
-    // English-only for now: ja and tl stay in the repo but out of the build
-    // until language switching returns.
+    // English-only: keeps the library translations AppCompat and Material ship
+    // with out of the APK.
     androidResources {
         localeFilters += listOf("en")
     }
@@ -212,15 +215,8 @@ dependencies {
     implementation(libs.bundles.room)
     ksp(libs.room.compiler)
 
-    // Video tutorials
     implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.ai)
-    implementation(libs.firebase.appcheck.playintegrity)
     implementation(libs.firebase.crashlytics)
-    // Debug and minified-smoke builds cannot pass Play Integrity: nothing there
-    // was installed from Play. They attest with a token registered in the
-    // console instead, which is what makes local development possible at all.
-    debugImplementation(libs.firebase.appcheck.debug)
 
     implementation(libs.youtube.player)
 
@@ -230,7 +226,6 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockk)
-    testImplementation(libs.androidx.arch.core.testing)
     testImplementation(libs.truth)
 
     // Instrumentation tests
@@ -239,6 +234,8 @@ dependencies {
     androidTestImplementation(libs.androidx.test.espresso.core)
     androidTestImplementation(libs.compose.ui.test.junit4)
     androidTestImplementation(libs.truth)
+    androidTestImplementation(libs.hilt.android.testing)
+    kspAndroidTest(libs.hilt.android.compiler)
 }
 
 // What the next upload will be numbered, without building it: Play only tells

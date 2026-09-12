@@ -41,13 +41,11 @@ class SessionBudgetTest {
             .isAtLeast(4)
     }
 
-    // Ten sets a muscle a week needs days to spread over; one or two days a
-    // week cannot hold it, so it is not promised.
+    // A day half again as long as the answer is not that answer.
     @Test
-    fun theWeeklyTargetOnlyReachesTenWhenThereAreDaysToSpreadItOver() {
-        assertThat(SessionBudget.weeklySetsPerMuscle(profile(45, FitnessGoal.MUSCLE_GAIN, days = 4)))
-            .isEqualTo(10)
-        assertThat(SessionBudget.weeklySetsPerMuscle(profile(45, FitnessGoal.MUSCLE_GAIN, days = 2)))
-            .isEqualTo(6)
+    fun theSessionCeilingSitsAboveTheAnswerWithoutLeavingIt() {
+        val user = profile(45, FitnessGoal.MUSCLE_GAIN, days = 3)
+
+        assertThat(SessionBudget.sessionCeilingMinutes(user)).isEqualTo(67)
     }
 }

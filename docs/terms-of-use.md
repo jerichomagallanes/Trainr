@@ -1,6 +1,6 @@
 # Terms of Use for Trainr
 
-**Last updated: 9 September 2026**
+**Last updated: 12 September 2026**
 
 Trainr is a workout planning app made by one person. These are the terms you
 agree to by using it. Like the privacy policy, this is written to be read, not to
@@ -19,8 +19,8 @@ You answer some questions about yourself and your training, and Trainr writes yo
 a weekly workout plan. You log your sets against it, and the next week is written
 from what you actually lifted.
 
-The plans are written by **Google's Gemini model**, not by a person. Everything
-you log stays on your device.
+The plans are written by the app itself, on your device, not by a person.
+Everything you answer and log stays on your device.
 
 ## Training is your risk to take
 
@@ -37,9 +37,9 @@ You train at your own risk. By using Trainr you accept that risk of injury exist
 in any physical training, and that you are the one deciding whether a given
 session is safe for you on a given day.
 
-## The plans are written by a model, and that has limits
+## The plans are written by software, and that has limits
 
-A language model wrote your plan from the answers you gave. That means:
+The app wrote your plan from the answers you gave. That means:
 
 - It can be wrong. It can suggest an exercise that does not suit you, a weight
   that is too heavy, or a volume that is too much.
@@ -51,14 +51,11 @@ A language model wrote your plan from the answers you gave. That means:
   weight loss, or anything else.
 
 Read your plan before you train it, and change or skip anything that does not
-look right for you. You are the last check, not the model.
-
-Generation depends on a service run by Google. It can change, become slower, or
-stop being available, and there are days when a plan cannot be written at all.
+look right for you. You are the last check, not the app.
 
 ## Paying for Trainr Pro
 
-Your first AI-written week is free. Trainr Pro unlocks new weeks after that: a
+Your first generated week is free. Trainr Pro unlocks new weeks after that: a
 fresh week each week, rewriting a week that does not suit you, and starting a new
 plan whenever your goal changes. Logging, the timer, the videos, your history and
 repeating a week are free and stay free.
@@ -81,9 +78,8 @@ repeating a week are free and stay free.
 
 ## Your data
 
-Everything Trainr collects, and the one place it sends any of it, is described in
-the [privacy policy](privacy-policy). Read that too: it says plainly what goes to
-Google's Gemini API and what that means on the free tier of that service.
+Everything Trainr collects, and the little that leaves your device, is described
+in the [privacy policy](privacy-policy). Read that too.
 
 ## Age
 
@@ -92,10 +88,8 @@ below 13.
 
 ## What not to do with it
 
-Do not try to unlock Pro without paying for it, interfere with the checks that
-confirm requests come from a genuine copy of the app, or use the generation
-service for anything other than getting your own workout plans. The app is
-licensed to you to use, not to resell or republish.
+Do not try to unlock Pro without paying for it. The app is licensed to you to
+use, not to resell or republish.
 
 ## No warranty
 
@@ -118,8 +112,8 @@ https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
 
 That agreement covers the software licence: what you may do with the app, and
 Apple's part as the distributor rather than the maker. This document covers
-Trainr itself — what it does, the training you do at your own risk, that a model
-wrote your plan, and how paying works. Where the two disagree about the licence,
+Trainr itself — what it does, the training you do at your own risk, that
+software wrote your plan, and how paying works. Where the two disagree about the licence,
 Apple's agreement wins for App Store copies.
 
 ## Changes

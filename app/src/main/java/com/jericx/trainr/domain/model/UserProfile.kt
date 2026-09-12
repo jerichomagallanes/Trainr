@@ -11,13 +11,10 @@ data class UserProfile(
     val weight: Float = 0f,
     val fitnessGoal: FitnessGoal = FitnessGoal.GENERAL_FITNESS,
     val experienceLevel: ExperienceLevel = ExperienceLevel.BEGINNER,
-    val workoutLocation: WorkoutLocation = WorkoutLocation.HOME,
     val availableEquipment: List<Equipment> = emptyList(),
     val workoutDaysPerWeek: Int = Constants.Workout.DEFAULT_WORKOUT_DAYS_PER_WEEK,
     val workoutDuration: Int = Constants.Workout.DEFAULT_WORKOUT_DURATION,
-    val preferredWorkoutTime: WorkoutTime = WorkoutTime.ANYTIME,
     val injuries: List<Injury> = emptyList(),
-    val workoutType: WorkoutType = WorkoutType.MIXED,
     // How the client reads their own body; storage stays metric either way.
     val bodyUnitSystem: UnitSystem = UnitSystem.Default,
     // What the plates in their gym are marked in, a separate question from the
@@ -50,73 +47,65 @@ enum class ExperienceLevel {
     ADVANCED
 }
 
-enum class WorkoutLocation {
-    HOME,
-    GYM,
-    BOTH
-}
-
+// The equipment vocabulary the exercise catalog is categorised by, and the
+// only vocabulary the setup screen asks about. One tag per movement: what a
+// bench press is done with is the bar, and the bench is part of doing it.
 enum class Equipment {
     NONE,
-    DUMBBELLS,
     BARBELL,
-    BENCH,
-    RESISTANCE_BANDS,
-    PULL_UP_BAR,
-    KETTLEBELLS,
-    SQUAT_RACK,
-    CABLE_MACHINE,
-    MACHINES,
-    CARDIO_MACHINES,
-    MAT,
-    JUMP_ROPE
+    DUMBBELL,
+    KETTLEBELL,
+    MACHINE,
+    PLATE,
+    RESISTANCE_BAND,
+    SUSPENSION_BAND,
+    OTHER
 }
 
-// Everything a gym has that a home might not, and the other way round. A
-// client who trains in both places has both, which is why BOTH is the union
-// and not the gym list.
-val HomeEquipment = listOf(
+// Asked in the catalog's own order.
+val EquipmentChoices = listOf(
     Equipment.NONE,
-    Equipment.DUMBBELLS,
-    Equipment.KETTLEBELLS,
-    Equipment.RESISTANCE_BANDS,
-    Equipment.PULL_UP_BAR,
-    Equipment.BENCH,
-    Equipment.MAT,
-    Equipment.JUMP_ROPE,
     Equipment.BARBELL,
-    Equipment.SQUAT_RACK,
-    Equipment.CARDIO_MACHINES
+    Equipment.DUMBBELL,
+    Equipment.KETTLEBELL,
+    Equipment.MACHINE,
+    Equipment.PLATE,
+    Equipment.RESISTANCE_BAND,
+    Equipment.SUSPENSION_BAND,
+    Equipment.OTHER
 )
 
-val GymEquipment = listOf(
-    Equipment.BARBELL,
-    Equipment.SQUAT_RACK,
-    Equipment.BENCH,
-    Equipment.DUMBBELLS,
-    Equipment.KETTLEBELLS,
-    Equipment.CABLE_MACHINE,
-    Equipment.MACHINES,
-    Equipment.PULL_UP_BAR,
-    Equipment.RESISTANCE_BANDS,
-    Equipment.CARDIO_MACHINES,
-    Equipment.MAT
+// A profile saved before the catalog settled on nine categories still names
+// the old finer-grained kit. Dropping those would quietly empty someone's
+// equipment and hand them a bodyweight plan without saying why.
+private val LegacyEquipment = mapOf(
+    "DUMBBELLS" to Equipment.DUMBBELL,
+    "KETTLEBELLS" to Equipment.KETTLEBELL,
+    "RESISTANCE_BANDS" to Equipment.RESISTANCE_BAND,
+    "MACHINES" to Equipment.MACHINE,
+    "CABLE_MACHINE" to Equipment.MACHINE,
+    "CARDIO_MACHINES" to Equipment.MACHINE,
+    "PULL_UP_BAR" to Equipment.MACHINE,
+    "SQUAT_RACK" to Equipment.BARBELL,
+    "BENCH" to Equipment.OTHER,
+    "JUMP_ROPE" to Equipment.OTHER,
+    "OTHERS" to Equipment.OTHER,
+    "MAT" to Equipment.NONE
 )
 
-fun equipmentFor(location: WorkoutLocation): List<Equipment> = when (location) {
-    WorkoutLocation.HOME -> HomeEquipment
-    WorkoutLocation.GYM -> GymEquipment
-    WorkoutLocation.BOTH -> HomeEquipment.filterNot { it == Equipment.NONE } +
-        GymEquipment.filterNot { it in HomeEquipment }
-}
+fun storedEquipment(raw: String): Equipment? =
+    runCatching { Equipment.valueOf(raw) }.getOrNull() ?: LegacyEquipment[raw]
 
-enum class WorkoutType {
-    STRENGTH,
-    CARDIO,
-    HIIT,
-    YOGA,
-    MIXED
-}
+// A chip the catalog cannot serve is a lie: the client ticks it, the shortlist
+// comes back empty, and the plan is built from nothing. What is offered is
+// what there are movements for.
+//
+// Where they train used to gate this and could not: a gym has resistance
+// bands and a spare room has a machine, so every answer offered the same nine
+// and the question only cost a tap.
+fun equipmentFor(
+    stocked: Set<Equipment> = EquipmentChoices.toSet()
+): List<Equipment> = EquipmentChoices.filter { it in stocked }
 
 // Stored and sent as these constants, never as the words on the chip: a
 // profile filled in Japanese used to reach the model as Japanese injury names,
@@ -129,12 +118,4 @@ enum class Injury {
     ANKLE,
     HIP,
     NECK
-}
-
-enum class WorkoutTime {
-    EARLY_MORNING,
-    MORNING,
-    AFTERNOON,
-    EVENING,
-    ANYTIME
 }

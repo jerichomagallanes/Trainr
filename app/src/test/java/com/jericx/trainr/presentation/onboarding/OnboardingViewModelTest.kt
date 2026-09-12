@@ -4,14 +4,16 @@ import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.domain.model.Injury
 import com.jericx.trainr.domain.model.Equipment
 import com.jericx.trainr.domain.model.ExperienceLevel
+import com.jericx.trainr.domain.catalog.CatalogExercise
+import com.jericx.trainr.domain.catalog.InMemoryExerciseCatalog
+import com.jericx.trainr.domain.catalog.MovementPattern
+import com.jericx.trainr.domain.catalog.MuscleGroup
+import com.jericx.trainr.domain.model.ExerciseMeasure
 import com.jericx.trainr.domain.model.FitnessGoal
 import com.jericx.trainr.domain.model.Gender
 import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
-import com.jericx.trainr.domain.model.WorkoutLocation
 import com.jericx.trainr.domain.model.WorkoutStatus
-import com.jericx.trainr.domain.model.WorkoutTime
-import com.jericx.trainr.domain.model.WorkoutType
 import com.jericx.trainr.presentation.onboarding.OnboardingStep
 import com.jericx.trainr.domain.model.UnitSystem
 import com.jericx.trainr.domain.generation.PlanGenerator
@@ -37,6 +39,17 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class OnboardingViewModelTest {
 
+    private val catalog = InMemoryExerciseCatalog(
+        listOf(
+            CatalogExercise(
+                "push_up", "Push Up", MuscleGroup.CHEST, emptyList(),
+                Equipment.NONE, ExerciseMeasure.REPS,
+                MovementPattern.HORIZONTAL_PUSH, staple = true
+            )
+        )
+    )
+
+
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var userRepository: UserRepository
     private lateinit var planGenerator: PlanGenerator
@@ -59,7 +72,7 @@ class OnboardingViewModelTest {
                 )
             )
         }
-        viewModel = OnboardingViewModel(userRepository, planGenerator) { "en" }
+        viewModel = OnboardingViewModel(userRepository, planGenerator, catalog)
     }
 
     @After
@@ -73,9 +86,7 @@ class OnboardingViewModelTest {
 
         // createdAt defaults to the clock, so whole-profile comparison needs it pinned
         assertThat(state.userProfile).isEqualTo(UserProfile(createdAt = state.userProfile.createdAt))
-        assertThat(state.isLoading).isFalse()
         assertThat(state.isCompleted).isFalse()
-        assertThat(state.error).isNull()
     }
 
     @Test
@@ -108,33 +119,28 @@ class OnboardingViewModelTest {
     }
 
     @Test
-    fun `updateFitnessGoal sets the goal and the workout style together`() {
-        viewModel.updateFitnessGoal(FitnessGoal.MUSCLE_GAIN, WorkoutType.HIIT)
+    fun `updateFitnessGoal sets the goal`() {
+        viewModel.updateFitnessGoal(FitnessGoal.MUSCLE_GAIN)
 
         val profile = viewModel.onboardingState.value.userProfile
         assertThat(profile.fitnessGoal).isEqualTo(FitnessGoal.MUSCLE_GAIN)
-        assertThat(profile.workoutType).isEqualTo(WorkoutType.HIIT)
     }
 
     @Test
-    fun `updateWorkoutSetup sets all five fields`() {
-        val equipment = listOf(Equipment.DUMBBELLS, Equipment.BENCH)
+    fun `updateWorkoutSetup sets every field it is given`() {
+        val equipment = listOf(Equipment.DUMBBELL, Equipment.OTHER)
 
         viewModel.updateWorkoutSetup(
-            location = WorkoutLocation.HOME,
             equipment = equipment,
             liftingUnits = UnitSystem.IMPERIAL,
             daysPerWeek = 4,
             duration = 45,
-            preferredTime = WorkoutTime.EVENING
         )
 
         val profile = viewModel.onboardingState.value.userProfile
-        assertThat(profile.workoutLocation).isEqualTo(WorkoutLocation.HOME)
         assertThat(profile.availableEquipment).containsExactlyElementsIn(equipment)
         assertThat(profile.workoutDaysPerWeek).isEqualTo(4)
         assertThat(profile.workoutDuration).isEqualTo(45)
-        assertThat(profile.preferredWorkoutTime).isEqualTo(WorkoutTime.EVENING)
         assertThat(profile.liftingUnitSystem).isEqualTo(UnitSystem.IMPERIAL)
     }
 
@@ -142,12 +148,10 @@ class OnboardingViewModelTest {
     fun `body units and lifting units are kept apart`() {
         viewModel.updateBodyMetrics(178f, 75f, UnitSystem.IMPERIAL)
         viewModel.updateWorkoutSetup(
-            location = WorkoutLocation.GYM,
             equipment = listOf(Equipment.BARBELL),
             liftingUnits = UnitSystem.METRIC,
             daysPerWeek = 4,
             duration = 45,
-            preferredTime = WorkoutTime.EVENING
         )
 
         val profile = viewModel.onboardingState.value.userProfile
@@ -160,12 +164,10 @@ class OnboardingViewModelTest {
     fun `without loaded equipment the sets follow the body units`() {
         viewModel.updateBodyMetrics(178f, 75f, UnitSystem.IMPERIAL)
         viewModel.updateWorkoutSetup(
-            location = WorkoutLocation.HOME,
             equipment = listOf(Equipment.NONE),
             liftingUnits = null,
             daysPerWeek = 3,
             duration = 30,
-            preferredTime = WorkoutTime.MORNING
         )
 
         val profile = viewModel.onboardingState.value.userProfile
@@ -184,13 +186,13 @@ class OnboardingViewModelTest {
     }
 
     @Test
-    fun `updateLimitations leaves the workout style alone`() {
-        viewModel.updateFitnessGoal(FitnessGoal.ENDURANCE, WorkoutType.CARDIO)
+    fun `updateLimitations leaves the goal alone`() {
+        viewModel.updateFitnessGoal(FitnessGoal.ENDURANCE)
 
         viewModel.updateLimitations(listOf(Injury.KNEE))
 
-        assertThat(viewModel.onboardingState.value.userProfile.workoutType)
-            .isEqualTo(WorkoutType.CARDIO)
+        assertThat(viewModel.onboardingState.value.userProfile.fitnessGoal)
+            .isEqualTo(FitnessGoal.ENDURANCE)
     }
 
     @Test
@@ -202,9 +204,7 @@ class OnboardingViewModelTest {
         advanceUntilIdle()
 
         val state = viewModel.onboardingState.value
-        assertThat(state.isLoading).isFalse()
         assertThat(state.isCompleted).isTrue()
-        assertThat(state.error).isNull()
         assertThat(callbackInvoked).isTrue()
         coVerify { userRepository.saveUser(any()) }
     }
@@ -228,16 +228,15 @@ class OnboardingViewModelTest {
 
     @Test
     fun `a failed generation writes no plan and reports why`() = runTest(testDispatcher) {
-        coEvery { planGenerator.generate(any()) } returns PlanGenerationResult.Offline
+        coEvery { planGenerator.generate(any()) } returns PlanGenerationResult.Failed
         var done = false
 
         viewModel.saveUserProfile(onSuccess = { done = true })
         advanceUntilIdle()
 
         with(viewModel.onboardingState.value) {
-            assertThat(generationFailure).isEqualTo(PlanGenerationResult.Offline)
+            assertThat(generationFailure).isEqualTo(PlanGenerationResult.Failed)
             assertThat(isCompleted).isFalse()
-            assertThat(isLoading).isFalse()
         }
         assertThat(done).isFalse()
         coVerify(exactly = 0) { userRepository.saveWeeklyWorkoutPlan(any()) }
@@ -247,7 +246,7 @@ class OnboardingViewModelTest {
     @Test
     fun `a first profile is kept when generation fails`() = runTest(testDispatcher) {
         coEvery { planGenerator.generate(any()) } returns
-            PlanGenerationResult.DailyLimitReached
+            PlanGenerationResult.Failed
 
         viewModel.saveUserProfile()
         advanceUntilIdle()
@@ -291,7 +290,6 @@ class OnboardingViewModelTest {
             // Generation runs before the user row exists, so a new client's id is still 0
             assertThat(user.id).isEqualTo(0L)
             assertThat(weekNumber).isEqualTo(1)
-            assertThat(languageCode).isEqualTo("en")
             assertThat(previousWeek).isNull()
         }
     }
@@ -299,7 +297,7 @@ class OnboardingViewModelTest {
     @Test
     fun `a stored profile is loaded so editing starts from saved answers`() = runTest(testDispatcher) {
         coEvery { userRepository.getCurrentUser() } returns UserProfile(id = 7L, firstName = "Jeco", age = 26)
-        val loaded = OnboardingViewModel(userRepository, planGenerator) { "en" }
+        val loaded = OnboardingViewModel(userRepository, planGenerator, catalog)
 
         advanceUntilIdle()
 
@@ -327,9 +325,7 @@ class OnboardingViewModelTest {
         advanceUntilIdle()
 
         val state = viewModel.onboardingState.value
-        assertThat(state.isLoading).isFalse()
         assertThat(state.isCompleted).isFalse()
-        assertThat(state.error).isEqualTo("DB write failed")
         assertThat(callbackInvoked).isFalse()
     }
     // Regenerating wipes history; editing the profile must not, so it updates rather than re-inserts
@@ -337,9 +333,9 @@ class OnboardingViewModelTest {
     fun `updateProfileOnly saves the profile and leaves the plan alone`() = runTest {
         val stored = UserProfile(id = 4, firstName = "Jet", age = 28)
         coEvery { userRepository.getCurrentUser() } returns stored
-        val viewModel = OnboardingViewModel(userRepository, planGenerator) { "en" }
+        val viewModel = OnboardingViewModel(userRepository, planGenerator, catalog)
         advanceUntilIdle()
-        viewModel.updateFitnessGoal(FitnessGoal.STRENGTH, WorkoutType.MIXED)
+        viewModel.updateFitnessGoal(FitnessGoal.STRENGTH)
 
         var done = false
         viewModel.updateProfileOnly { done = true }
@@ -354,7 +350,6 @@ class OnboardingViewModelTest {
         coVerify(exactly = 0) { userRepository.saveWeeklyWorkoutPlan(any()) }
         coVerify(exactly = 0) { planGenerator.generate(any()) }
         assertThat(done).isTrue()
-        assertThat(viewModel.onboardingState.value.isLoading).isFalse()
     }
 
     // Anchoring week one to the Monday just gone would hand a late signup already-missed sessions
@@ -391,7 +386,7 @@ class OnboardingViewModelTest {
         advanceUntilIdle()
         assertThat(viewModel.onboardingState.value.isCompleted).isTrue()
 
-        coEvery { planGenerator.generate(any()) } returns PlanGenerationResult.Offline
+        coEvery { planGenerator.generate(any()) } returns PlanGenerationResult.Failed
         viewModel.saveUserProfile()
         advanceUntilIdle()
 
@@ -413,9 +408,11 @@ class OnboardingViewModelTest {
     @Test
     fun `answered steps accumulate rather than replace one another`() {
         viewModel.updateBasicInfo("Jericho", 31, Gender.FEMALE, ExperienceLevel.ADVANCED)
-        viewModel.updateFitnessGoal(FitnessGoal.STRENGTH, WorkoutType.HIIT)
+        viewModel.updateFitnessGoal(FitnessGoal.STRENGTH)
 
         assertThat(viewModel.onboardingState.value.answeredSteps)
             .containsExactly(OnboardingStep.BASIC_INFO, OnboardingStep.GOALS)
     }
+
+
 }

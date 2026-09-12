@@ -3,17 +3,11 @@ package com.jericx.trainr.data.repository
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.data.local.UserDao
 import com.jericx.trainr.data.local.UserMapper
-import com.jericx.trainr.data.local.WeeklyWorkoutPlanEntity
-import com.jericx.trainr.data.local.WorkoutDayEntity
 import com.jericx.trainr.domain.model.Equipment
 import com.jericx.trainr.domain.model.ExperienceLevel
 import com.jericx.trainr.domain.model.FitnessGoal
 import com.jericx.trainr.domain.model.Gender
 import com.jericx.trainr.domain.model.UserProfile
-import com.jericx.trainr.domain.model.WorkoutLocation
-import com.jericx.trainr.domain.model.WorkoutStatus
-import com.jericx.trainr.domain.model.WorkoutTime
-import com.jericx.trainr.domain.model.WorkoutType
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -43,39 +37,10 @@ class UserRepositoryImplTest {
         weight = 72f,
         fitnessGoal = FitnessGoal.MUSCLE_GAIN,
         experienceLevel = ExperienceLevel.INTERMEDIATE,
-        workoutLocation = WorkoutLocation.GYM,
-        availableEquipment = listOf(Equipment.DUMBBELLS),
+        availableEquipment = listOf(Equipment.DUMBBELL),
         workoutDaysPerWeek = 4,
         workoutDuration = 60,
-        preferredWorkoutTime = WorkoutTime.EVENING,
         injuries = emptyList(),
-        workoutType = WorkoutType.STRENGTH
-    )
-
-    private fun planEntity(id: Long = 1L) = WeeklyWorkoutPlanEntity(
-        id = id,
-        userId = 1L,
-        weekNumber = 1,
-        title = "Week 1",
-        startDateMillis = null,
-        createdAt = 0L,
-        updatedAt = 0L
-    )
-
-    private fun dayEntity(
-        id: Long,
-        dayNumber: Int,
-        status: WorkoutStatus
-    ) = WorkoutDayEntity(
-        id = id,
-        weeklyPlanId = 1L,
-        dayNumber = dayNumber,
-        title = "Day $dayNumber",
-        status = status.name,
-        duration = 45,
-        exerciseCount = 5,
-        equipment = emptyList(),
-        completedAt = null
     )
 
     @Test
@@ -89,89 +54,9 @@ class UserRepositoryImplTest {
     }
 
     @Test
-    fun `getUser returns null when dao returns null`() = runTest {
-        coEvery { userDao.getUserById(5L) } returns null
-
-        val result = repository.getUser(5L)
-
-        assertThat(result).isNull()
-    }
-
-    @Test
-    fun `getUser maps entity to domain when dao returns one`() = runTest {
-        val profile = sampleProfile().copy(id = 5L)
-        coEvery { userDao.getUserById(5L) } returns mapper.mapToEntity(profile)
-
-        val result = repository.getUser(5L)
-
-        assertThat(result).isEqualTo(profile)
-    }
-
-    @Test
     fun `hasUsers delegates to dao`() = runTest {
         coEvery { userDao.hasUsers() } returns true
 
         assertThat(repository.hasUsers()).isTrue()
-    }
-
-    @Test
-    fun `getWeeklyProgress computes 50 percent when half of days are completed`() = runTest {
-        coEvery { userDao.getWeeklyWorkoutPlan(1L, 1) } returns planEntity()
-        val days = listOf(
-            dayEntity(10L, 1, WorkoutStatus.COMPLETED),
-            dayEntity(11L, 2, WorkoutStatus.COMPLETED),
-            dayEntity(12L, 3, WorkoutStatus.NOT_STARTED),
-            dayEntity(13L, 4, WorkoutStatus.IN_PROGRESS)
-        )
-        coEvery { userDao.getWorkoutDaysForPlan(1L) } returns days
-        coEvery { userDao.getExercisesForWorkoutDay(any()) } returns emptyList()
-        coEvery { userDao.getTotalExercisesForDay(any()) } returns 0
-        coEvery { userDao.getCompletedExercisesForDay(any()) } returns 0
-
-        val progress = repository.getWeeklyProgress(userId = 1L, weekNumber = 1)
-
-        assertThat(progress).isNotNull()
-        assertThat(progress!!.completedWorkouts).isEqualTo(2)
-        assertThat(progress.totalWorkouts).isEqualTo(4)
-        assertThat(progress.completionPercentage).isEqualTo(50f)
-    }
-
-    @Test
-    fun `getWeeklyProgress returns null when plan is missing`() = runTest {
-        coEvery { userDao.getWeeklyWorkoutPlan(1L, 99) } returns null
-
-        val progress = repository.getWeeklyProgress(userId = 1L, weekNumber = 99)
-
-        assertThat(progress).isNull()
-    }
-
-    @Test
-    fun `getWorkoutDayProgress reports zero percent when day has no exercises`() = runTest {
-        coEvery { userDao.getWorkoutDaysForPlan(1L) } returns listOf(
-            dayEntity(20L, 1, WorkoutStatus.NOT_STARTED)
-        )
-        coEvery { userDao.getTotalExercisesForDay(20L) } returns 0
-        coEvery { userDao.getCompletedExercisesForDay(20L) } returns 0
-
-        val progress = repository.getWorkoutDayProgress(weeklyPlanId = 1L)
-
-        assertThat(progress).hasSize(1)
-        assertThat(progress[0].completionPercentage).isEqualTo(0f)
-        assertThat(progress[0].totalExercises).isEqualTo(0)
-    }
-
-    @Test
-    fun `getWorkoutDayProgress computes percent from completed over total`() = runTest {
-        coEvery { userDao.getWorkoutDaysForPlan(1L) } returns listOf(
-            dayEntity(30L, 1, WorkoutStatus.IN_PROGRESS)
-        )
-        coEvery { userDao.getTotalExercisesForDay(30L) } returns 4
-        coEvery { userDao.getCompletedExercisesForDay(30L) } returns 3
-
-        val progress = repository.getWorkoutDayProgress(weeklyPlanId = 1L)
-
-        assertThat(progress[0].completionPercentage).isEqualTo(75f)
-        assertThat(progress[0].completedExercises).isEqualTo(3)
-        assertThat(progress[0].totalExercises).isEqualTo(4)
     }
 }

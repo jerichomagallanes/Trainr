@@ -51,7 +51,7 @@ class NextWeekViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun viewModel() = NextWeekViewModel(userRepository, planGenerator) { "en" }
+    private fun viewModel() = NextWeekViewModel(userRepository, planGenerator)
 
     // Recent enough that the week after it still lies ahead, the ordinary case
     private val weekOneStart = WorkoutWeek.startOfDay() - TimeUnit.DAYS.toMillis(3)
@@ -106,6 +106,7 @@ class NextWeekViewModelTest {
         advanceUntilIdle()
 
         assertThat(request.captured.weekNumber).isEqualTo(2)
+        assertThat(request.captured.freshCast).isFalse()
         assertThat(request.captured.previousWeek).isEqualTo(finishedWeek)
         assertThat(request.captured.startDateMillis)
             .isEqualTo(WorkoutWeek.dateOfDay(weekOneStart, 8))
@@ -132,13 +133,13 @@ class NextWeekViewModelTest {
     @Test
     fun aFailedGenerationSavesNothingAndReportsWhy() = runTest {
         every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(finishedWeek))
-        coEvery { planGenerator.generate(any()) } returns PlanGenerationResult.Offline
+        coEvery { planGenerator.generate(any()) } returns PlanGenerationResult.Failed
 
                 val viewModel = viewModel()
         viewModel.generateNextWeek()
         advanceUntilIdle()
 
-        assertThat(viewModel.failure.value).isEqualTo(PlanGenerationResult.Offline)
+        assertThat(viewModel.failure.value).isEqualTo(PlanGenerationResult.Failed)
         assertThat(viewModel.isReady.value).isFalse()
         coVerify(exactly = 0) { userRepository.saveWeeklyWorkoutPlan(any()) }
     }
@@ -225,6 +226,7 @@ class NextWeekViewModelTest {
         assertThat(request.captured.weekNumber).isEqualTo(2)
         assertThat(request.captured.startDateMillis).isEqualTo(current.startDateMillis)
         assertThat(request.captured.previousWeek?.weekNumber).isEqualTo(1)
+        assertThat(request.captured.freshCast).isTrue()
         coVerify { userRepository.deleteWeeklyWorkoutPlan(10) }
         coVerify { userRepository.saveWeeklyWorkoutPlan(replacement) }
     }
@@ -238,7 +240,7 @@ class NextWeekViewModelTest {
             }
         )
         every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(current))
-        coEvery { planGenerator.generate(any()) } returns PlanGenerationResult.Offline
+        coEvery { planGenerator.generate(any()) } returns PlanGenerationResult.Failed
 
         val viewModel = viewModel()
         viewModel.regenerateThisWeek()
@@ -246,7 +248,7 @@ class NextWeekViewModelTest {
 
         coVerify(exactly = 0) { userRepository.deleteWeeklyWorkoutPlan(any()) }
         coVerify(exactly = 0) { userRepository.saveWeeklyWorkoutPlan(any()) }
-        assertThat(viewModel.failure.value).isEqualTo(PlanGenerationResult.Offline)
+        assertThat(viewModel.failure.value).isEqualTo(PlanGenerationResult.Failed)
         assertThat(viewModel.isReady.value).isFalse()
     }
 
@@ -374,5 +376,6 @@ class NextWeekViewModelTest {
 
         coVerify(exactly = 1) { userRepository.saveWeeklyWorkoutPlan(any()) }
     }
+
 
 }

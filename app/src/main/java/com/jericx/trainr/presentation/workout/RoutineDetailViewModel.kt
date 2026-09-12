@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jericx.trainr.domain.model.ExerciseSet
+import com.jericx.trainr.domain.catalog.ExerciseCatalog
 import com.jericx.trainr.domain.model.UnitSystem
 import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.model.WorkoutExercise
@@ -34,6 +35,7 @@ data class RoutineDetailUiState(
     val timer: ExerciseTimerUi? = null,
     // One at a time: each player is a WebView that lives as long as its section is open.
     val expandedVideo: Int? = null,
+    val expandedHowTo: Int? = null,
     val dayNumber: Int = 1,
     val weekNumber: Int = 1,
     val completesTheWeek: Boolean = false,
@@ -47,7 +49,8 @@ data class RoutineDetailUiState(
 @HiltViewModel
 class RoutineDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val catalog: ExerciseCatalog
 ) : ViewModel() {
 
     private val requestedDayNumber: Int =
@@ -72,7 +75,7 @@ class RoutineDetailViewModel @Inject constructor(
 
     private var tickJob: Job? = null
 
-    // Null on the sample fallback, so nothing persists rows that do not exist.
+    // Null until the stored day is read, so nothing persists rows that do not exist.
     private var storedDay: WorkoutDay? = null
     private var weeklyPlanId = 0L
 
@@ -111,7 +114,7 @@ class RoutineDetailViewModel @Inject constructor(
                     .filterValues { sets -> sets.isNotEmpty() }
                 _uiState.value = RoutineDetailUiState(
                     unitSystem = units,
-                    routine = day.toRoutineUi(previousByKey, units),
+                    routine = day.toRoutineUi(previousByKey, catalog, user?.injuries.orEmpty()),
                     equipment = day.equipment,
                     dateMillis = plan.startDateMillis
                         ?.let { WorkoutWeek.dateOfDay(it, day.dayNumber) }
@@ -269,6 +272,14 @@ class RoutineDetailViewModel @Inject constructor(
         }
     }
 
+    // Kept apart from the video: collapsing the section should not also lose
+    // the player someone left open inside it.
+    fun toggleHowTo(position: Int) {
+        _uiState.update {
+            it.copy(expandedHowTo = if (it.expandedHowTo == position) null else position)
+        }
+    }
+
     private fun cancelTick() {
         tickJob?.cancel()
         tickJob = null
@@ -322,7 +333,7 @@ class RoutineDetailViewModel @Inject constructor(
     }
 
     // Completing writes the prescription onto sets never filled in, so the day
-    // reads back the same way for the PREVIOUS column and next week's prompt.
+    // reads back the same way for the PREVIOUS column and next week's progression.
     private suspend fun persistFilledSets(positions: List<Int>) {
         var day = storedDay ?: return
         positions.forEach { position ->
@@ -376,7 +387,7 @@ class RoutineDetailViewModel @Inject constructor(
             val day = days[index]
 
             return RoutineDetailUiState(
-                routine = day.toRoutineUi(),
+                routine = day.toRoutineUi(catalog = SampleWorkoutData.catalog),
                 equipment = day.equipment,
                 dateMillis = SampleWorkoutData.dateOf(day.dayNumber),
                 // "Day 2", not day 3: the design counts workout days, not weekdays.

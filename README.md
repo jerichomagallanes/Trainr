@@ -1,6 +1,6 @@
-# 🏋️ Trainr - AI-Powered Personal Training App
+# 🏋️ Trainr - Personal Training App
 
-Trainr is an Android fitness application that creates personalized workout routines using AI. Built with Kotlin and Jetpack Compose, it follows Clean Architecture principles to provide users with customized training plans based on their individual fitness goals, experience level, and available equipment.
+Trainr is an Android fitness application that builds your workout plan on your phone from your answers, and progresses it from the sets you log. Built with Kotlin and Jetpack Compose, it follows Clean Architecture principles to provide users with customized training plans based on their individual fitness goals, experience level, and available equipment.
 
 App Demo
 
@@ -9,8 +9,7 @@ App Demo
 ## 📋 Features
 
 - **Personalized Onboarding**: Complete fitness assessment including age, gender, experience level, and body metrics
-- **Custom Workout Plans**: AI-generated routines tailored to your fitness goals and available equipment
-- **Flexible Setup**: Support for home, gym, or hybrid workout environments
+- **Custom Workout Plans**: Routines built around your fitness goals and available equipment, and progressed week to week from what you actually lifted
 - **Equipment Adaptation**: Workouts adapt to your available equipment (bodyweight, dumbbells, barbells, etc.)
 - **Goal-Oriented Training**: Specialized programs for weight loss, muscle gain, strength, endurance, and general fitness
 - **Injury Considerations**: Safe workout modifications based on reported limitations
@@ -49,8 +48,6 @@ App Demo
 - **Kotlin Coroutines & Flow**: Asynchronous programming and reactive streams
 - **Material Design 3**: Modern UI components and theming
 - **Navigation Compose**: Single-activity navigation between Compose screens
-- **Firebase AI Logic**: Gemini generation without an API key in the app
-- **Firebase App Check**: Play Integrity attestation for every generation request
 - **android-youtube-player**: In-app exercise demonstrations via the official IFrame Player API
 
 ## 🏗️ Architecture
@@ -74,7 +71,7 @@ it does not hold.
 
 ## 🏃‍♀️ Start Your Fitness Journey
 
-Download Trainr today and let AI create the perfect workout plan tailored just for you!
+Download Trainr today and get a workout plan built around you, on your phone.
 
 ## 📄 Licence
 

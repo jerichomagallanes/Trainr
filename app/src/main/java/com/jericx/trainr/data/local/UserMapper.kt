@@ -14,13 +14,10 @@ class UserMapper {
             weight = user.weight,
             fitnessGoal = user.fitnessGoal.name,
             experienceLevel = user.experienceLevel.name,
-            workoutLocation = user.workoutLocation.name,
             availableEquipment = user.availableEquipment.map { it.name },
             workoutDaysPerWeek = user.workoutDaysPerWeek,
             workoutDuration = user.workoutDuration,
-            preferredWorkoutTime = user.preferredWorkoutTime.name,
             injuries = user.injuries.map { it.name },
-            workoutType = user.workoutType.name,
             bodyUnitSystem = user.bodyUnitSystem.name,
             liftingUnitSystem = user.liftingUnitSystem?.name,
             createdAt = user.createdAt
@@ -37,17 +34,12 @@ class UserMapper {
             weight = entity.weight,
             fitnessGoal = FitnessGoal.valueOf(entity.fitnessGoal),
             experienceLevel = ExperienceLevel.valueOf(entity.experienceLevel),
-            workoutLocation = WorkoutLocation.valueOf(entity.workoutLocation),
-            availableEquipment = entity.availableEquipment.mapNotNull {
-                try { Equipment.valueOf(it) } catch (e: Exception) { null }
-            },
+            availableEquipment = entity.availableEquipment.mapNotNull(::storedEquipment).distinct(),
             workoutDaysPerWeek = entity.workoutDaysPerWeek,
             workoutDuration = entity.workoutDuration,
-            preferredWorkoutTime = WorkoutTime.valueOf(entity.preferredWorkoutTime),
             injuries = entity.injuries.mapNotNull {
                 try { Injury.valueOf(it) } catch (e: Exception) { null }
             },
-            workoutType = WorkoutType.valueOf(entity.workoutType),
             bodyUnitSystem = runCatching { UnitSystem.valueOf(entity.bodyUnitSystem) }
                 .getOrDefault(UnitSystem.Default),
             liftingUnitSystem = entity.liftingUnitSystem
@@ -120,10 +112,8 @@ class UserMapper {
             reps = exercise.reps,
             duration = exercise.duration,
             durationMinutes = exercise.durationMinutes,
-            prescription = exercise.prescription,
             restTime = exercise.restTime,
             equipment = exercise.equipment,
-            instructions = exercise.instructions,
             videoTutorialUrl = exercise.videoTutorialUrl,
             isCompleted = exercise.isCompleted,
             notes = exercise.notes
@@ -141,10 +131,8 @@ class UserMapper {
             reps = entity.reps,
             duration = entity.duration,
             durationMinutes = entity.durationMinutes,
-            prescription = entity.prescription,
             restTime = entity.restTime,
             equipment = entity.equipment,
-            instructions = entity.instructions,
             videoTutorialUrl = entity.videoTutorialUrl,
             isCompleted = entity.isCompleted,
             notes = entity.notes

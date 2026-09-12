@@ -44,6 +44,7 @@ import com.jericx.trainr.presentation.common.theme.TrainrTheme
 import com.jericx.trainr.presentation.common.theme.trainrColors
 import com.jericx.trainr.presentation.workout.components.ExerciseCard
 import com.jericx.trainr.presentation.workout.components.ExerciseTimer
+import com.jericx.trainr.presentation.workout.components.HowToSection
 import com.jericx.trainr.presentation.workout.components.VideoTutorial
 import com.jericx.trainr.domain.model.ExerciseSet
 import com.jericx.trainr.presentation.workout.model.ExerciseUi
@@ -75,7 +76,8 @@ fun RoutineDetailRoute(
         onResumeTimer = viewModel::resumeTimer,
         onResetTimer = viewModel::resetTimer,
         onStopTimer = viewModel::stopTimer,
-        onToggleVideo = viewModel::toggleVideo
+        onToggleVideo = viewModel::toggleVideo,
+        onToggleHowTo = viewModel::toggleHowTo
     )
 }
 
@@ -96,6 +98,7 @@ fun RoutineDetailScreen(
     onResetTimer: () -> Unit = {},
     onStopTimer: () -> Unit = {},
     onToggleVideo: (Int) -> Unit = {},
+    onToggleHowTo: (Int) -> Unit = {},
     onDayCompleted: (Int) -> Unit = {},
     onWeekCompleted: (Int) -> Unit = {}
 ) {
@@ -227,12 +230,21 @@ fun RoutineDetailScreen(
                                 onStop = onStopTimer
                             )
 
-                            YouTubeVideo.from(exercise.videoUrl)?.let { video ->
-                                VideoTutorial(
-                                    video = video,
-                                    isExpanded = state.expandedVideo == exercise.position,
-                                    onToggle = { onToggleVideo(exercise.position) }
-                                )
+                            val video = YouTubeVideo.from(exercise.videoUrl)
+                            if (exercise.steps.isNotEmpty() || video != null) {
+                                HowToSection(
+                                    steps = exercise.steps,
+                                    isExpanded = state.expandedHowTo == exercise.position,
+                                    onToggle = { onToggleHowTo(exercise.position) }
+                                ) {
+                                    video?.let {
+                                        VideoTutorial(
+                                            video = it,
+                                            isExpanded = state.expandedVideo == exercise.position,
+                                            onToggle = { onToggleVideo(exercise.position) }
+                                        )
+                                    }
+                                }
                             }
                         }
                     }

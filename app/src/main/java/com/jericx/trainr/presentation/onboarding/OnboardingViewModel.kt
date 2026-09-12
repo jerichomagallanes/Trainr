@@ -2,6 +2,7 @@ package com.jericx.trainr.presentation.onboarding
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.jericx.trainr.domain.catalog.ExerciseCatalog
 import com.jericx.trainr.domain.model.Equipment
 import com.jericx.trainr.domain.model.ExperienceLevel
 import com.jericx.trainr.domain.model.FitnessGoal
@@ -9,10 +10,6 @@ import com.jericx.trainr.domain.model.Injury
 import com.jericx.trainr.domain.model.Gender
 import com.jericx.trainr.domain.model.UnitSystem
 import com.jericx.trainr.domain.model.UserProfile
-import com.jericx.trainr.domain.model.WorkoutLocation
-import com.jericx.trainr.domain.model.WorkoutTime
-import com.jericx.trainr.domain.model.WorkoutType
-import com.jericx.trainr.data.preferences.LanguageCodeProvider
 import com.jericx.trainr.domain.generation.PlanGenerationResult
 import com.jericx.trainr.domain.generation.PlanGenerator
 import com.jericx.trainr.domain.generation.PlanRequest
@@ -29,8 +26,13 @@ import javax.inject.Inject
 class OnboardingViewModel @Inject constructor(
     private val userRepository: UserRepository,
     private val planGenerator: PlanGenerator,
-    private val languageCode: LanguageCodeProvider
+    catalog: ExerciseCatalog
 ) : ViewModel() {
+
+    // Only the kit the catalog actually has movements for reaches the setup
+    // screen, so a chip can never lead to an empty week.
+    val stockedEquipment: Set<Equipment> = catalog.all.map { it.equipment }.toSet()
+
 
     private val _onboardingState = MutableStateFlow(OnboardingState())
     val onboardingState: StateFlow<OnboardingState> = _onboardingState.asStateFlow()
@@ -66,33 +68,28 @@ class OnboardingViewModel @Inject constructor(
         )
     }
 
-    fun updateFitnessGoal(goal: FitnessGoal, workoutType: WorkoutType) {
+    fun updateFitnessGoal(goal: FitnessGoal) {
         _onboardingState.value = _onboardingState.value.copy(
             answeredSteps = answeredWith(OnboardingStep.GOALS),
             userProfile = _onboardingState.value.userProfile.copy(
-                fitnessGoal = goal,
-                workoutType = workoutType
+                fitnessGoal = goal
             )
         )
     }
 
     fun updateWorkoutSetup(
-        location: WorkoutLocation,
         equipment: List<Equipment>,
         liftingUnits: UnitSystem?,
         daysPerWeek: Int,
-        duration: Int,
-        preferredTime: WorkoutTime
+        duration: Int
     ) {
         _onboardingState.value = _onboardingState.value.copy(
             answeredSteps = answeredWith(OnboardingStep.SETUP),
             userProfile = _onboardingState.value.userProfile.copy(
-                workoutLocation = location,
                 liftingUnitSystem = liftingUnits,
                 availableEquipment = equipment,
                 workoutDaysPerWeek = daysPerWeek,
-                workoutDuration = duration,
-                preferredWorkoutTime = preferredTime
+                workoutDuration = duration
             )
         )
     }
@@ -114,19 +111,13 @@ class OnboardingViewModel @Inject constructor(
     fun updateProfileOnly(onSuccess: () -> Unit) {
         viewModelScope.launch {
             try {
-                _onboardingState.value = _onboardingState.value.copy(isLoading = true)
                 userRepository.getCurrentUser()?.let { existing ->
                     userRepository.updateUser(
                         _onboardingState.value.userProfile.copy(id = existing.id)
                     )
                 }
-                _onboardingState.value = _onboardingState.value.copy(isLoading = false)
                 onSuccess()
             } catch (e: Exception) {
-                _onboardingState.value = _onboardingState.value.copy(
-                    isLoading = false,
-                    error = e.message
-                )
             }
         }
     }
@@ -142,7 +133,6 @@ class OnboardingViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 _onboardingState.value = _onboardingState.value.copy(
-                    isLoading = true,
                     isCompleted = false,
                     generationFailure = null
                 )
@@ -159,8 +149,7 @@ class OnboardingViewModel @Inject constructor(
                     PlanRequest(
                         user = profile,
                         weekNumber = FIRST_WEEK,
-                        startDateMillis = start,
-                        languageCode = languageCode.current()
+                        startDateMillis = start
                     )
                 )
 
@@ -173,23 +162,17 @@ class OnboardingViewModel @Inject constructor(
                     }
 
                     _onboardingState.value = _onboardingState.value.copy(
-                        isLoading = false,
-                        generationFailure = result as PlanGenerationResult.Failure
+                        generationFailure = PlanGenerationResult.Failed
                     )
                     return@launch
                 }
 
                 val userId = userRepository.saveUser(profile)
                 userRepository.saveWeeklyWorkoutPlan(result.plan.copy(userId = userId))
-                _onboardingState.value = _onboardingState.value.copy(
-                    isLoading = false,
-                    isCompleted = true
-                )
+                _onboardingState.value = _onboardingState.value.copy(isCompleted = true)
                 onSuccess()
             } catch (e: Exception) {
                 _onboardingState.value = _onboardingState.value.copy(
-                    isLoading = false,
-                    error = e.message,
                     generationFailure = PlanGenerationResult.Failed
                 )
             } finally {
@@ -216,9 +199,6 @@ enum class OnboardingStep {
 data class OnboardingState(
     val userProfile: UserProfile = UserProfile(),
     val answeredSteps: Set<OnboardingStep> = emptySet(),
-    val currentStep: Int = 0,
-    val isLoading: Boolean = false,
-    val error: String? = null,
     val isCompleted: Boolean = false,
-    val generationFailure: PlanGenerationResult.Failure? = null
+    val generationFailure: PlanGenerationResult? = null
 )

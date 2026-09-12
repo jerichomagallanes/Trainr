@@ -4,8 +4,6 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 
-// Version 1 with no migrations because nothing has shipped. From the first
-// upload onward, every schema change needs a migration and this number climbs.
 @Database(
     entities = [
         UserEntity::class,
@@ -14,7 +12,9 @@ import androidx.room.TypeConverters
         WorkoutExerciseEntity::class,
         ExerciseSetEntity::class
     ],
-    version = 1,
+    // Bumped without a migration on purpose: the version has to move for the
+    // destructive fallback to fire, or an old file fails its identity check.
+    version = 4,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

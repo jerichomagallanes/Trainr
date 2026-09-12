@@ -5,36 +5,40 @@ import org.junit.Test
 
 class EquipmentVocabularyTest {
 
-    // The three movements worth the time they take are a leg press, an upper
-    // push and an upper pull. A gym list with nothing to pull from leaves the
-    // model to invent the equipment or skip the pattern.
+    // The setup screen asks in the catalog's own vocabulary, so a chip and a
+    // movement's category are the same word or the filter silently misses.
     @Test
-    fun aGymCanPull() {
-        assertThat(equipmentFor(WorkoutLocation.GYM))
-            .containsAtLeast(Equipment.PULL_UP_BAR, Equipment.CABLE_MACHINE, Equipment.MACHINES)
+    fun theChipsAreTheCatalogsOwnNineCategories() {
+        assertThat(EquipmentChoices).containsExactly(
+            Equipment.NONE,
+            Equipment.BARBELL,
+            Equipment.DUMBBELL,
+            Equipment.KETTLEBELL,
+            Equipment.MACHINE,
+            Equipment.PLATE,
+            Equipment.RESISTANCE_BAND,
+            Equipment.SUSPENSION_BAND,
+            Equipment.OTHER
+        ).inOrder()
     }
 
-    // A garage with a barbell is a home gym, and a bench is the most common
-    // thing in one after the dumbbells.
+    // "I have no equipment" is one of the nine answers, not a special case of
+    // where someone stands: a gym member can still be given a push-up.
     @Test
-    fun aHomeCanBeLoaded() {
-        assertThat(equipmentFor(WorkoutLocation.HOME))
-            .containsAtLeast(Equipment.BENCH, Equipment.BARBELL, Equipment.SQUAT_RACK)
+    fun everyCategoryIncludingBodyweightIsOffered() {
+        val offered = equipmentFor()
+
+        assertThat(offered).containsNoDuplicates()
+        assertThat(offered).containsExactlyElementsIn(EquipmentChoices).inOrder()
+        assertThat(offered).contains(Equipment.NONE)
     }
 
-    // Training in both places used to mean being asked only about the gym.
+    // A category the catalog cannot serve is a chip that leads nowhere.
     @Test
-    fun bothIsTheUnionAndNotTheGymList() {
-        val both = equipmentFor(WorkoutLocation.BOTH)
+    fun aCategoryNothingIsStockedForIsNotOffered() {
+        val stocked = setOf(Equipment.NONE, Equipment.DUMBBELL)
 
-        assertThat(both).containsAtLeast(Equipment.JUMP_ROPE, Equipment.MACHINES)
-        assertThat(both).doesNotContain(Equipment.NONE)
-        assertThat(both).containsNoDuplicates()
-    }
-
-    @Test
-    fun bodyweightOnlyIsOfferedOnlyWhereItIsAnAnswer() {
-        assertThat(equipmentFor(WorkoutLocation.HOME)).contains(Equipment.NONE)
-        assertThat(equipmentFor(WorkoutLocation.GYM)).doesNotContain(Equipment.NONE)
+        assertThat(equipmentFor(stocked))
+            .containsExactly(Equipment.NONE, Equipment.DUMBBELL).inOrder()
     }
 }

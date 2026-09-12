@@ -23,6 +23,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,7 +31,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.jericx.trainr.R
@@ -47,7 +47,7 @@ fun GeneratingScreen(
     isReady: Boolean,
     onStart: () -> Unit,
     onDone: () -> Unit,
-    failure: PlanGenerationResult.Failure? = null,
+    failure: PlanGenerationResult? = null,
     onRetry: () -> Unit = {},
     onGiveUp: () -> Unit = {},
     @StringRes giveUpLabel: Int = R.string.cancel
@@ -55,6 +55,7 @@ fun GeneratingScreen(
     var activeIndicator by remember { mutableIntStateOf(0) }
     val totalIndicators = 14
     val shownAt = remember { System.currentTimeMillis() }
+    val currentOnDone by rememberUpdatedState(onDone)
 
     LaunchedEffect(Unit) {
         while (true) {
@@ -70,7 +71,6 @@ fun GeneratingScreen(
 
     failure?.let {
         GenerationFailedDialog(
-            failure = it,
             giveUpLabel = giveUpLabel,
             onRetry = onRetry,
             onGiveUp = onGiveUp
@@ -81,7 +81,7 @@ fun GeneratingScreen(
         if (!isReady) return@LaunchedEffect
         val shown = System.currentTimeMillis() - shownAt
         delay((MINIMUM_VISIBLE_MILLIS - shown).coerceAtLeast(0L))
-        onDone()
+        currentOnDone()
     }
     
     Box(
@@ -112,7 +112,7 @@ fun GeneratingScreen(
                 color = MaterialTheme.trainrColors.onSurface,
                 textAlign = TextAlign.Center
             )
-            
+
             Spacer(modifier = Modifier.height(Spacing.extraLarge))
 
             LoadingIndicator(
@@ -159,64 +159,32 @@ private fun LoadingIndicator(
 
 @Composable
 private fun GenerationFailedDialog(
-    failure: PlanGenerationResult.Failure,
     @StringRes giveUpLabel: Int,
     onRetry: () -> Unit,
     onGiveUp: () -> Unit
 ) {
-    // Retrying a spent allowance cannot work, so it is not offered.
-    val canRetry = failure != PlanGenerationResult.DailyLimitReached
-
     AlertDialog(
         onDismissRequest = onGiveUp,
         title = {
-            Text(
-                text = stringResource(
-                    when (failure) {
-                        PlanGenerationResult.DailyLimitReached ->
-                            R.string.generation_limit_title
-                        else -> R.string.generation_failed_title
-                    }
-                )
-            )
+            Text(text = stringResource(R.string.generation_failed_title))
         },
         text = {
-            Text(
-                text = stringResource(
-                    when (failure) {
-                        PlanGenerationResult.Offline -> R.string.generation_failed_offline
-                        PlanGenerationResult.Failed -> R.string.generation_failed_message
-                        PlanGenerationResult.DailyLimitReached ->
-                            R.string.generation_limit_message
-                    }
-                )
-            )
+            Text(text = stringResource(R.string.generation_failed_message))
         },
         confirmButton = {
-            if (canRetry) {
-                TextButton(onClick = onRetry) {
-                    Text(
-                        text = stringResource(R.string.try_again),
-                        color = MaterialTheme.trainrColors.brandStrong
-                    )
-                }
-            } else {
-                TextButton(onClick = onGiveUp) {
-                    Text(
-                        text = stringResource(R.string.got_it),
-                        color = MaterialTheme.trainrColors.brandStrong
-                    )
-                }
+            TextButton(onClick = onRetry) {
+                Text(
+                    text = stringResource(R.string.try_again),
+                    color = MaterialTheme.trainrColors.brandStrong
+                )
             }
         },
         dismissButton = {
-            if (canRetry) {
-                TextButton(onClick = onGiveUp) {
-                    Text(
-                        text = stringResource(giveUpLabel),
-                        color = MaterialTheme.trainrColors.onSurface
-                    )
-                }
+            TextButton(onClick = onGiveUp) {
+                Text(
+                    text = stringResource(giveUpLabel),
+                    color = MaterialTheme.trainrColors.onSurface
+                )
             }
         }
     )

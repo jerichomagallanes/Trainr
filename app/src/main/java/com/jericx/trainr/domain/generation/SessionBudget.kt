@@ -1,14 +1,13 @@
 package com.jericx.trainr.domain.generation
 
+import com.jericx.trainr.domain.catalog.ExerciseRole
 import com.jericx.trainr.domain.model.FitnessGoal
 import com.jericx.trainr.domain.model.UserProfile
 import kotlin.math.max
 
 // A session is a time budget, and rest spends most of it. Heavy strength work
 // asks 3-5 minutes between sets (ACSM 2009; Schoenfeld 2016), so half an hour
-// buys six working sets, not the dozen a model will happily write. Working the
-// count out here turns "sum close to the session length" - three numbers the
-// model has to keep in agreement - into one number it is handed.
+// buys six working sets.
 object SessionBudget {
 
     // Warm-up, changing, and the walk between stations.
@@ -27,18 +26,29 @@ object SessionBudget {
         FitnessGoal.FLEXIBILITY -> 30
     }
 
+    // Isolation work does not need the three minutes a heavy compound does;
+    // the existing brief already asked for 90-120 on multi-joint and 60-90 on
+    // isolation, and this is that, worked out rather than written out.
+    fun restSeconds(goal: FitnessGoal, role: ExerciseRole): Int = when (role) {
+        ExerciseRole.TIMED -> TIMED_REST
+        ExerciseRole.COMPOUND -> restSeconds(goal)
+        ExerciseRole.ISOLATION -> {
+            val shorter = restSeconds(goal) * 3 / 4
+            maxOf(shorter / REST_GRANULARITY * REST_GRANULARITY, TIMED_REST)
+        }
+    }
+
     fun maxSetsPerSession(user: UserProfile): Int {
         val usableSeconds = (user.workoutDuration - OVERHEAD_MINUTES) * 60
         val perSet = WORK_SECONDS_PER_SET + restSeconds(user.fitnessGoal)
         return max(FLOOR_SETS, usableSeconds / perSet)
     }
 
-    // The floor worth programming is 4 hard sets per muscle group per week
-    // (Iversen 2021); growth keeps improving up to 10 and beyond (Schoenfeld
-    // 2017), which only fits once there are days to spread it over.
-    fun weeklySetsPerMuscle(user: UserProfile): Int = when {
-        user.fitnessGoal == FitnessGoal.MUSCLE_GAIN ||
-            user.fitnessGoal == FitnessGoal.STRENGTH -> if (user.workoutDaysPerWeek >= 3) 10 else 6
-        else -> 6
-    }
+    // The session length is what the client answered; this is the point past
+    // which the day is no longer that session. Half again as long as "about
+    // 45 minutes" is not about 45 minutes.
+    fun sessionCeilingMinutes(user: UserProfile): Int = user.workoutDuration * 3 / 2
+
+    private const val TIMED_REST = 30
+    private const val REST_GRANULARITY = 15
 }

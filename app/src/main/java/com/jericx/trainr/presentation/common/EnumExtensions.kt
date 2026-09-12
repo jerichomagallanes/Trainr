@@ -1,6 +1,5 @@
 package com.jericx.trainr.presentation.common
 
-import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.jericx.trainr.R
@@ -44,36 +43,27 @@ fun FitnessGoal.getFocusPhrase(): String = when (this) {
 }
 
 @Composable
-fun WorkoutType.getProgramPhrase(): String = when (this) {
-    WorkoutType.STRENGTH -> stringResource(R.string.program_strength)
-    WorkoutType.CARDIO -> stringResource(R.string.program_cardio)
-    WorkoutType.HIIT -> stringResource(R.string.program_hiit)
-    WorkoutType.YOGA -> stringResource(R.string.program_flexibility)
-    WorkoutType.MIXED -> stringResource(R.string.program_mixed)
-}
-
-@Composable
-fun WorkoutLocation.getLocalizedName(): String = when (this) {
-    WorkoutLocation.HOME -> stringResource(R.string.home_location)
-    WorkoutLocation.GYM -> stringResource(R.string.gym_location)
-    WorkoutLocation.BOTH -> stringResource(R.string.both_location)
-}
-
-@Composable
 fun Equipment.getLocalizedName(): String = when (this) {
     Equipment.NONE -> stringResource(R.string.bodyweight_only)
-    Equipment.DUMBBELLS -> stringResource(R.string.dumbbells)
-    Equipment.BARBELL -> stringResource(R.string.barbell_plates)
-    Equipment.BENCH -> stringResource(R.string.bench)
-    Equipment.RESISTANCE_BANDS -> stringResource(R.string.resistance_bands)
-    Equipment.PULL_UP_BAR -> stringResource(R.string.pull_up_bar)
-    Equipment.KETTLEBELLS -> stringResource(R.string.kettlebells)
-    Equipment.SQUAT_RACK -> stringResource(R.string.squat_rack)
-    Equipment.CABLE_MACHINE -> stringResource(R.string.cable_machine)
-    Equipment.MACHINES -> stringResource(R.string.weight_machines)
-    Equipment.CARDIO_MACHINES -> stringResource(R.string.cardio_equipment)
-    Equipment.MAT -> stringResource(R.string.exercise_mat)
-    Equipment.JUMP_ROPE -> stringResource(R.string.jump_rope)
+    Equipment.BARBELL -> stringResource(R.string.equipment_barbell)
+    Equipment.DUMBBELL -> stringResource(R.string.equipment_dumbbell)
+    Equipment.KETTLEBELL -> stringResource(R.string.equipment_kettlebell)
+    Equipment.MACHINE -> stringResource(R.string.equipment_machine)
+    Equipment.PLATE -> stringResource(R.string.equipment_plate)
+    Equipment.RESISTANCE_BAND -> stringResource(R.string.equipment_resistance_band)
+    Equipment.SUSPENSION_BAND -> stringResource(R.string.equipment_suspension_band)
+    Equipment.OTHER -> stringResource(R.string.equipment_other)
+}
+
+@Composable
+fun Injury.cautionText(): String = when (this) {
+    Injury.LOWER_BACK -> stringResource(R.string.caution_lower_back)
+    Injury.KNEE -> stringResource(R.string.caution_knee)
+    Injury.SHOULDER -> stringResource(R.string.caution_shoulder)
+    Injury.WRIST -> stringResource(R.string.caution_wrist)
+    Injury.ANKLE -> stringResource(R.string.caution_ankle)
+    Injury.HIP -> stringResource(R.string.caution_hip)
+    Injury.NECK -> stringResource(R.string.caution_neck)
 }
 
 @Composable
@@ -85,22 +75,4 @@ fun Injury.getLocalizedName(): String = when (this) {
     Injury.ANKLE -> stringResource(R.string.ankle_issues_injury)
     Injury.HIP -> stringResource(R.string.hip_problems_injury)
     Injury.NECK -> stringResource(R.string.neck_pain_injury)
-}
-
-@Composable
-fun WorkoutType.getLocalizedName(): String = when (this) {
-    WorkoutType.STRENGTH -> stringResource(R.string.strength_training_style)
-    WorkoutType.CARDIO -> stringResource(R.string.cardio_style)
-    WorkoutType.HIIT -> stringResource(R.string.hiit_style)
-    WorkoutType.YOGA -> stringResource(R.string.flexibility_mobility_style)
-    WorkoutType.MIXED -> stringResource(R.string.mixed_balanced_style)
-}
-
-@Composable
-fun WorkoutTime.getLocalizedName(): String = when (this) {
-    WorkoutTime.EARLY_MORNING -> stringResource(R.string.early_morning)
-    WorkoutTime.MORNING -> stringResource(R.string.morning)
-    WorkoutTime.AFTERNOON -> stringResource(R.string.afternoon)
-    WorkoutTime.EVENING -> stringResource(R.string.evening)
-    WorkoutTime.ANYTIME -> stringResource(R.string.flexible_anytime_time)
 }

@@ -112,7 +112,7 @@ data class RoutineUi(
 
 // An exercise is done when its sets are, applied beside every set edit so the
 // two cannot disagree; a blank set logs its prescription below, or PREVIOUS and
-// next week's prompt read a finished day back as skipped.
+// next week's progression read a finished day back as skipped.
 private fun ExerciseUi.tickedFromItsSets(): ExerciseUi =
     copy(isCompleted = sets.isNotEmpty() && sets.all { it.isCompleted })
 

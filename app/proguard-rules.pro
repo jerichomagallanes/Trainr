@@ -4,6 +4,5 @@
 -renamesourcefileattribute SourceFile
 
 # Room, Hilt, Compose and kotlinx.serialization all ship consumer rules, so
-# nothing is needed for them here. Serialization is only used for List<String>
-# type converters, which uses built-in serializers rather than reflection over
-# @Serializable classes.
+# nothing is needed for them here. kotlinx.serialization generates serializers
+# at compile time, so no keep rules are needed.

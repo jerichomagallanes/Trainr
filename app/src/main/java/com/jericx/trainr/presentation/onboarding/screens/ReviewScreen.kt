@@ -39,7 +39,6 @@ import com.jericx.trainr.presentation.common.components.typography.TrainrScreenT
 import com.jericx.trainr.presentation.common.components.typography.TrainrSubtitle
 import com.jericx.trainr.presentation.common.getFocusPhrase
 import com.jericx.trainr.presentation.common.getLocalizedName
-import com.jericx.trainr.presentation.common.getProgramPhrase
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.trainrColors
 import com.jericx.trainr.presentation.onboarding.util.BodyMetricsConverter
@@ -168,20 +167,17 @@ fun ReviewScreen(
                 Spacer(modifier = Modifier.height(Spacing.screen))
 
                 val fitnessGoalText = userProfile.fitnessGoal.getLocalizedName()
-                val workoutTypeText = userProfile.workoutType.getLocalizedName()
                 
                 ProfileSection(
                     title = stringResource(R.string.fitness_goals_label),
                     onEdit = onEditGoals,
                     items = listOf(
-                        stringResource(R.string.main_goal_label) to fitnessGoalText,
-                        stringResource(R.string.workout_style_label) to workoutTypeText
+                        stringResource(R.string.main_goal_label) to fitnessGoalText
                     )
                 )
 
                 Spacer(modifier = Modifier.height(Spacing.screen))
 
-                val locationText = userProfile.workoutLocation.getLocalizedName()
                 val equipmentText = if (userProfile.availableEquipment.isEmpty() ||
                     userProfile.availableEquipment.contains(Equipment.NONE))
                     stringResource(R.string.bodyweight_only_label)
@@ -191,7 +187,6 @@ fun ReviewScreen(
                     }
                     equipmentNames.joinToString(", ")
                 }
-                val preferredTimeText = userProfile.preferredWorkoutTime.getLocalizedName()
                 
                 val liftingUnitsText = userProfile.liftingUnitSystem?.let {
                     stringResource(
@@ -204,7 +199,6 @@ fun ReviewScreen(
                     title = stringResource(R.string.workout_setup_label),
                     onEdit = onEditSetup,
                     items = listOfNotNull(
-                        stringResource(R.string.location_label) to locationText,
                         stringResource(R.string.equipment_label_full) to equipmentText,
                         liftingUnitsText?.let {
                             stringResource(R.string.weights_in_label) to it
@@ -221,8 +215,7 @@ fun ReviewScreen(
                             R.plurals.duration_minutes_format,
                             userProfile.workoutDuration,
                             userProfile.workoutDuration
-                        ),
-                        stringResource(R.string.preferred_time_label) to preferredTimeText
+                        )
                     )
                 )
 
@@ -345,14 +338,14 @@ private fun AIPreviewCard(userProfile: UserProfile) {
                     modifier = Modifier.weight(1f)
                 ) {
                     Text(
-                        text = stringResource(R.string.ai_routine_preview_label),
+                        text = stringResource(R.string.routine_preview_label),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.trainrColors.onSurfaceEmphasis
                     )
                     Spacer(modifier = Modifier.height(Spacing.extraSmall))
                     Text(
                         text = stringResource(
-                            R.string.ai_routine_description,
+                            R.string.routine_description,
                             if (userProfile.workoutDaysPerWeek == 0) {
                                 stringResource(R.string.flexible_schedule)
                             } else {
@@ -361,7 +354,6 @@ private fun AIPreviewCard(userProfile: UserProfile) {
                                     userProfile.workoutDaysPerWeek
                                 )
                             },
-                            userProfile.workoutType.getProgramPhrase(),
                             userProfile.fitnessGoal.getFocusPhrase()
                         ),
                         style = MaterialTheme.typography.bodyMedium,

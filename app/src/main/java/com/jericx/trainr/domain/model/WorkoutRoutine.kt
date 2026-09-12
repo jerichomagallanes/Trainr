@@ -39,10 +39,8 @@ data class WorkoutExercise(
     // Independent: ten minutes of "5 sets of 1 minute" is not five minutes, so
     // neither can be derived from the other.
     val durationMinutes: Int = 0,
-    val prescription: String = "",
     val restTime: Int? = null,
     val equipment: List<String> = emptyList(),
-    val instructions: String = "",
     val videoTutorialUrl: String? = null,
     val isCompleted: Boolean = false,
     val notes: String = ""
@@ -65,23 +63,6 @@ enum class ExerciseMeasure {
     REPS,
     DURATION
 }
-
-data class WeeklyProgress(
-    val weekNumber: Int,
-    val completedWorkouts: Int,
-    val totalWorkouts: Int,
-    val completionPercentage: Float,
-    val workoutDays: List<WorkoutDayProgress>
-)
-
-data class WorkoutDayProgress(
-    val dayNumber: Int,
-    val title: String,
-    val status: WorkoutStatus,
-    val completionPercentage: Float,
-    val completedExercises: Int,
-    val totalExercises: Int
-)
 
 enum class WorkoutStatus {
     NOT_STARTED,

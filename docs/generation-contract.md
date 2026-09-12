@@ -1,198 +1,124 @@
 # Generation contract
 
-The shape a generated weekly workout plan must arrive in. The AI does not
-choose this shape — the app does, by sending it as a structured-output JSON
-schema with the prompt. The executable authority is
-`data/generation/GeneratedPlanParser.kt` and its tests; this document is the
-annotated version, plus the guidance the prompt must carry.
+How a week is made. Two owners now, no model: the **app** decides everything
+numeric and which movement fills each slot, and the **catalog** says what every
+movement is and how it is done. The executable authority is the code on both
+platforms and its tests: `PlanSkeletonBuilder`, `WeekPlanGenerator`,
+`PlanExpander` and `GeneratedPlanParser`. This
+document is the annotated version.
 
-## Division of responsibility
+A remote model used to choose the movements. It was measured against the app's
+own ranking on 15 real profiles and did not beat it — see
+`docs/programming-evidence.md` for what "better" was measured against — so it
+was removed along with the network, the daily allowance and the failure modes
+that came with them.
 
-The model writes **the plan**: which days, which exercises, what to aim for,
-and every piece of display copy. The app supplies **everything it already
-knows better**, as parameters to `GeneratedPlanParser.parse()`:
+## Who decides what
 
-| The app supplies | Why the model must not |
-| ---------------- | ---------------------- |
-| `userId`, `weekNumber` | App state. |
-| `startDateMillis` (local midnight of the plan's Monday) | The model has no clock; dates it writes are guesses. |
-| Video tutorial URLs | Model-written URLs are routinely dead or wrong. Resolved at render time from the hand-verified `ExerciseVideoCatalog`, keyed on `exerciseKey`. |
-| Completion state, actuals, notes, ids | A new plan has no history, and only the user logs work. |
-| `durationMinutes` | Arithmetic on the prescription, not a fourth number the model has to keep in agreement with sets, reps and rest. |
+| Decision | Owner | Where |
+| --- | --- | --- |
+| The split, which weekdays, how many slots a day holds, what each slot is for | App | `PlanSkeletonBuilder` |
+| Each slot's candidates: owned kit only, nothing an injury rules out, ranked, last week's first | App | `PlanSkeletonBuilder`, `InjuryGuard` |
+| Which candidate fills each open slot | App: last week's, or one of the slot's best two, seeded from the client's answers | `WeekPlanGenerator` |
+| Each session's title | App: the session's focus, or last week's title when the week is carried forward | `PlanSkeletonBuilder`, `WeekPlanGenerator` |
+| Sets per slot, rest between them, the session's length | App | `SessionBudget`, `PlanSkeletonBuilder` |
+| Reps, seconds and weight for every set | App | `ProgressionEngine`, `SeedLoad`, `LoadStep`, `RepWindow` |
+| A lighter week | App | `DeloadCheck` |
+| The plan's title | App | `PlanSkeletonBuilder` |
+| Name, measure, muscles, how-to, equipment | Catalog | `exercise-catalog.json` |
+| The chip ("3 sets of 10 reps") | App, read off the sets | `Prescription` |
+| The caution line under a movement | Catalog and app | `InjuryGuard` |
+| Dates, ids, completion, what was lifted | App state | — |
 
-Derived rather than accepted, so the app can never contradict itself on
-screen: an exercise's `durationMinutes` is its prescribed work plus its rest
-(a repetition costs about three seconds at the moderate velocity ACSM asks
-for), a day's `duration` is the sum of those, `exerciseCount` is the size of
-its exercise list, and set numbers are the order the sets arrive in.
+Injuries, history, body, budget and equipment reach a week only through the
+skeleton. Each was once a rule a model could disobey; each is now a mechanism
+nothing reaches around. A movement an injury rules out is on no slot's list, so the
+filter is the whole of that obligation, and it has a test per injury.
 
-## Schema
+## One generator, two ways to choose
 
-```json
-{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "type": "object",
-  "additionalProperties": false,
-  "required": ["title", "days"],
-  "properties": {
-    "title": { "type": "string", "minLength": 1 },
-    "days": {
-      "type": "array",
-      "minItems": 1,
-      "maxItems": 7,
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["dayNumber", "title", "equipment", "exercises"],
-        "properties": {
-          "dayNumber": { "type": "integer", "minimum": 1, "maximum": 7 },
-          "title": { "type": "string", "minLength": 1 },
-          "equipment": { "type": "array", "items": { "type": "string" } },
-          "exercises": {
-            "type": "array",
-            "minItems": 1,
-            "items": {
-              "type": "object",
-              "additionalProperties": false,
-              "required": [
-                "exerciseKey", "name", "measure",
-                "prescription", "instructions", "sets"
-              ],
-              "properties": {
-                "exerciseKey": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
-                "name": { "type": "string", "minLength": 1 },
-                "measure": { "enum": ["WEIGHT_AND_REPS", "REPS", "DURATION"] },
-                "prescription": { "type": "string", "minLength": 1 },
-                "instructions": { "type": "string", "minLength": 1 },
-                "restSeconds": { "type": ["integer", "null"], "minimum": 1 },
-                "sets": {
-                  "type": "array",
-                  "minItems": 1,
-                  "items": {
-                    "type": "object",
-                    "additionalProperties": false,
-                    "properties": {
-                      "reps": { "type": ["integer", "null"], "minimum": 1 },
-                      "weightKg": { "type": ["number", "null"], "exclusiveMinimum": 0 },
-                      "seconds": { "type": ["integer", "null"], "minimum": 1 }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}
-```
+`WeekPlanGenerator` builds the skeleton once, then:
 
-## Example
+1. **Carries last week forward** when there is a previous week, the request is
+   not for a fresh cast, and every one of last week's movements still has a
+   slot that offers it on the same day. A profile edit that rules one out, or a
+   different number of days, means it cannot. Regenerating a week asks for new
+   movements (`PlanRequest.freshCast`) and never carries.
+2. **Chooses** otherwise — a movement for every slot from the catalog, as
+   described below.
 
-```json
-{
-  "title": "Week 1",
-  "days": [
-    {
-      "dayNumber": 1,
-      "title": "Full Body Strength",
-      "equipment": ["Dumbbells", "Yoga Mat"],
-      "exercises": [
-        {
-          "exerciseKey": "goblet_squat",
-          "name": "Goblet Squats",
-          "measure": "WEIGHT_AND_REPS",
-          "prescription": "3 sets of 12 reps",
-          "instructions": "Squat holding a dumbbell at your chest to build the legs and brace the core.",
-          "restSeconds": 60,
-          "sets": [
-            { "reps": 12, "weightKg": 20 },
-            { "reps": 12, "weightKg": 20 },
-            { "reps": 12, "weightKg": 20 }
-          ]
-        },
-        {
-          "exerciseKey": "plank",
-          "name": "Plank",
-          "measure": "DURATION",
-          "prescription": "3 sets of 45 seconds",
-          "instructions": "Hold a straight line from head to heels to brace the whole core.",
-          "sets": [
-            { "seconds": 45 },
-            { "seconds": 45 },
-            { "seconds": 45 }
-          ]
-        }
-      ]
-    }
-  ]
-}
-```
+Either selection is expanded and parsed against the skeleton's own limits. A
+carried week the parser turns down falls back to a fresh choice; a chosen week
+it turns down is `Failed`, which only an empty or unfillable catalog produces.
 
-## Field notes
+**One free week.** Every path that produces a week — the first plan, next
+week, regenerating this week, and repeating a week — goes through `ProGate`,
+and the first week delivered spends the free generation whichever tier built
+it. Everything after that asks for Pro. A generation that failed spends
+nothing, because the allowance is spent only once a week has actually arrived.
 
-- **`exerciseKey`** — the field the whole progression loop hangs on. A
-  canonical `lower_snake_case` slug, singular, in English
-  (`goblet_squat`, `bent_over_row`), identical for the same movement in every
-  week and every locale. History — the PREVIOUS column, progress over time —
-  is matched on this key, never on `name`: prose names drift ("Goblet Squats"
-  one week, "Dumbbell Goblet Squat" the next) and a drifted name breaks
-  history silently. Unique within a day; recurring across days is normal.
-- **`name`, `prescription`, `instructions`, titles** — display copy, written
-  in the user's language. `prescription` is free text ("3 sets of 12 reps",
-  "5 minutes"), not assembled from the sets: assembling it would mean
-  inventing and translating a unit vocabulary for text the generator writes
-  anyway.
-- **`measure`** — decides which columns a set row renders and which target
-  each set must carry: `WEIGHT_AND_REPS` and `REPS` require `reps` (weight
-  optional — a new user has no baseline), `DURATION` requires `seconds`.
-  A stray target the measure doesn't render (a weight on a jog) is stripped,
-  so nothing lingers invisibly in the log. An unknown `measure` value
-  degrades to `REPS`, matching the database mapper's fallback — and the plan
-  is then rejected anyway if its sets carry no reps.
-- **`durationMinutes`** — computed, not written. The card shows it beside
-  the prescription, and it is the prescribed work plus the rest between sets.
-- **`restSeconds`** — optional, maps to the domain's `restTime`, which is in
-  seconds.
-- **`dayNumber`** — ISO day of week, 1 = Monday. Weeks start Monday. Each day
-  appears at most once; the parser sorts days by it.
-- **`equipment`** — display strings in the user's language, only what the
-  day's exercises actually use, drawn from the equipment the user said they
-  have.
+## The selection
 
-## Validation
+`PlanSelection` is a title per session and one movement key per open slot,
+keyed by the skeleton's own ids. An empty selection is a complete answer: the
+top of every list. A slot with a single candidate is already decided and is not
+chosen for.
 
-The parser returns `Parsed(plan)` or `Invalid(errors)` — every problem, not
-just the first, so a retry prompt can quote the full list. It never throws on
-model output. Rejected: malformed JSON, blank required text, duplicate or
-out-of-range day numbers, malformed or duplicated (within a day) exercise
-keys, empty day/exercise/set lists, and numbers no client could perform: reps
-outside 1–100, seconds outside 5–5400, `restSeconds` outside 5–600, `weightKg`
-outside 0.5–500 kg, more than 12 exercises in a day or 10 sets in an exercise,
-or a day whose total sets exceed what the client's session length pays for
-(see `SessionBudget`). A set missing the target its measure requires is
-rejected too.
-Tolerated: unknown JSON keys (ignored), unknown `measure` (degrades to
-`REPS`), stray set targets (stripped).
+`WeekPlanGenerator` fills it so that two clients who answered the same way
+do not train the same week for ever, and the same client rebuilding the same
+week gets the same movements:
 
-## Prompt guidance
+- Each open slot takes one of its best two candidates (`VARIETY_DEPTH`), not
+  always its first. Going deeper was measured against the volume and frequency
+  the evidence asks for and spread a week's sets thinner for no variety worth
+  having.
+- Which of the two is decided by an FNV hash of the client's answers — id, age,
+  weight, gender, goal, experience, equipment and injuries — together with the
+  slot id and the day number. Session length and day count are left out of the
+  seed: they reshape the week on their own, and letting them reshuffle every
+  movement would let a longer answer buy a shorter session.
+- A movement already used that day is skipped, and so is one that trains the
+  same muscle with the same pattern as something already in the session, so
+  variety never buys a repeat.
+- A fresh cast (`freshCast`) rotates each slot's pool by one and adds the week
+  number to the seed, so a regenerated week is a different week rather than the
+  same one reordered.
+- The session's title is its focus (`fallbackTitle`).
 
-The prompt that requests a plan must tell the model, alongside this schema:
+The hash is written out by hand so the iOS app can run the same algorithm and
+give the same week for the same answers.
 
-- Write all display copy in the user's language (en / ja / tl). Keep
-  `exerciseKey` English slugs regardless of locale.
-- Use the same `exerciseKey` for the same movement every week. When
-  regenerating, the keys from previous weeks arrive in the prompt — reuse
-  them for recurring movements rather than minting near-duplicates.
-- Plan only `days.length == workoutDaysPerWeek` days, on sensible weekdays,
-  using only the user's available equipment, respecting injuries.
-- Give every set an explicit target; the app shows targets as placeholders
-  the user logs against, and next week's generation is fed what was actually
-  done (e.g. "last week: 40kg × 12, 12, 9").
-- `WEIGHT_AND_REPS` only where the user has the kit to load the movement;
-  bodyweight work is `REPS`, timed work is `DURATION`. Distance work (a 5 km
-  run) has no representation yet — prescribe cardio by time.
-- The session's set cap and the weekly set target per muscle group, both
-  computed by `SessionBudget` from the user's answers. What the rules
-  themselves rest on is in docs/programming-evidence.md.
+## Expansion — how a choice becomes a week
+
+`PlanExpander` turns each slot into an exercise:
+
+- The movement is the selection's if it is on the slot's list and not
+  already used that day; otherwise the list's own order decides.
+- `ProgressionEngine` is asked for the sets, given the movement's history
+  across every stored week, the day's date, whether a lighter week is due,
+  whether an injury asks care with it, and, for timed work, the seconds the day
+  was fitted around.
+- A starting weight lighter than an empty bar, or a movement the client has
+  outgrown, is answered with the next candidate on the list, at most three.
+- Rest is the skeleton's; timed sets never exceed what the day budgeted.
+- The how-to and the chip are not stored with the week: the card reads the
+  catalog's summary and derives the chip from the sets.
+- A session's title falls back to its focus and is cut to 40 characters.
+
+## Parser — a net over the app's own arithmetic
+
+Every week, whichever tier produced it, goes through `GeneratedPlanParser`
+with the limits the skeleton was built to. Its job is now to catch a bug in
+the app's arithmetic before a client sees it. It rejects:
+
+- a blank plan title, no days, a repeated day, a day outside 1–7;
+- a day with a blank title, no exercises, or more than 12;
+- a day with more sets than its session length pays for, or more minutes of
+  work and rest than half again the answered length;
+- a movement repeated within a day, not offered, not in the catalog, or not a
+  `lower_snake_case` key;
+- rest outside 5–600 s, no sets or more than 10, reps outside 1–100, seconds
+  outside 5–5400, a weight outside 0.5–500 kg, and a set missing the target
+  its measure needs;
+- a week missing a movement pattern it was dealt (a squat or lunge, an
+  upper-body press, an upper-body pull).
