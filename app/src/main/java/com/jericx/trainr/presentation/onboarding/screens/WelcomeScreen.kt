@@ -25,7 +25,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -35,8 +34,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
@@ -51,7 +48,7 @@ import com.jericx.trainr.presentation.common.theme.themedPainter
 import com.jericx.trainr.presentation.common.theme.trainrColors
 import com.jericx.trainr.presentation.common.components.core.TrainrButton
 
-data class OnboardingPage(
+private data class OnboardingPage(
     val imageRes: Int,
     val nightImageRes: Int,
     val title: String
@@ -70,7 +67,7 @@ fun WelcomeScreen(
         OnboardingPage(
             R.drawable.img_exercising,
             R.drawable.img_exercising_night,
-            stringResource(R.string.ai_generated_routines)
+            stringResource(R.string.routines_built_around_you)
         ),
         OnboardingPage(
             R.drawable.img_task_done,
@@ -240,7 +237,7 @@ private fun WelcomeHeader() {
                             fontWeight = FontWeight.Bold
                         )
                     ) {
-                        append(stringResource(R.string.ai_powered))
+                        append(stringResource(R.string.trainer_adjective))
                     }
                     append(" " + stringResource(R.string.personal_trainer))
                 },

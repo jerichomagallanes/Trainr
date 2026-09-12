@@ -2,7 +2,6 @@ package com.jericx.trainr.presentation.workout
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.jericx.trainr.data.preferences.LanguageCodeProvider
 import com.jericx.trainr.domain.generation.PlanGenerationResult
 import com.jericx.trainr.domain.generation.PlanGenerator
 import com.jericx.trainr.domain.generation.PlanRequest
@@ -24,24 +23,21 @@ import javax.inject.Inject
 @HiltViewModel
 class NextWeekViewModel @Inject constructor(
     private val userRepository: UserRepository,
-    private val planGenerator: PlanGenerator,
-    private val languageCode: LanguageCodeProvider
+    private val planGenerator: PlanGenerator
 ) : ViewModel() {
 
-    private val _failure = MutableStateFlow<PlanGenerationResult.Failure?>(null)
-    val failure: StateFlow<PlanGenerationResult.Failure?> = _failure.asStateFlow()
+    private val _failure = MutableStateFlow<PlanGenerationResult?>(null)
+    val failure: StateFlow<PlanGenerationResult?> = _failure.asStateFlow()
 
     // State rather than a callback: a screen rebuilt mid-generation, and a
     // rotation is enough, would never hear that its week had arrived.
     private val _isReady = MutableStateFlow(false)
     val isReady: StateFlow<Boolean> = _isReady.asStateFlow()
 
-    // Generating takes the better part of a minute; without this a second ask
-    // runs alongside the first and both write a week.
+    // A second tap before the first write lands would write a second week.
     private var isWorking = false
 
-    // Asks nothing of the network, so it is the way through when the model cannot
-    // be reached; offered, never substituted for a generation. The copy joins the
+    // The same sessions and loads with every log cleared. The copy joins the
     // plan at the end and takes its dates from there, whatever week it came from.
     fun repeatWeek(sourceWeekNumber: Int? = null) {
         if (isWorking) return
@@ -70,8 +66,8 @@ class NextWeekViewModel @Inject constructor(
         }
     }
 
-    // Written the safe way round: the model is asked first and the old week goes
-    // only once a replacement exists, so a failed generation loses nothing.
+    // Written the safe way round: the replacement is built first and the old
+    // week goes only once it exists, so a failed generation loses nothing.
     fun regenerateThisWeek() {
         if (isWorking) return
         isWorking = true
@@ -93,17 +89,17 @@ class NextWeekViewModel @Inject constructor(
                         user = user,
                         weekNumber = current.weekNumber,
                         startDateMillis = current.startDateMillis ?: WorkoutWeek.startOfDay(),
-                        languageCode = languageCode.current(),
-                        // The week before this one, so a replacement still
+                        // The weeks before this one, so a replacement still
                         // progresses from what was actually lifted.
-                        previousWeek = plans.firstOrNull {
-                            it.weekNumber == current.weekNumber - 1
-                        }
+                        history = plans.filter { it.weekNumber < current.weekNumber }
+                            .sortedByDescending { it.weekNumber },
+                        // New movements are the point of asking again.
+                        freshCast = true
                     )
                 )
 
                 if (result !is PlanGenerationResult.Generated) {
-                    _failure.value = result as PlanGenerationResult.Failure
+                    _failure.value = result
                     return@launch
                 }
 
@@ -132,10 +128,11 @@ class NextWeekViewModel @Inject constructor(
     private suspend fun generate() {
             // Nothing to build on, or the week already exists: either way the
             // client is where they wanted to be.
-            val (user, latest) = nextWeekFrom() ?: run {
+            val (user, plans) = nextWeekFrom() ?: run {
                 _isReady.value = true
                 return
             }
+            val latest = plans.first()
             val nextNumber = latest.weekNumber + 1
             val start = startAfter(latest)
             val result = planGenerator.generate(
@@ -143,13 +140,12 @@ class NextWeekViewModel @Inject constructor(
                     user = user,
                     weekNumber = nextNumber,
                     startDateMillis = start,
-                    languageCode = languageCode.current(),
-                    previousWeek = latest
+                    history = plans
                 )
             )
 
             if (result !is PlanGenerationResult.Generated) {
-                _failure.value = result as PlanGenerationResult.Failure
+                _failure.value = result
                 return
             }
 
@@ -159,14 +155,17 @@ class NextWeekViewModel @Inject constructor(
 
     // Null when the week after this one already exists, so revisiting the
     // completion screen cannot stack duplicates.
-    private suspend fun nextWeekFrom(): Pair<UserProfile, WeeklyWorkoutPlan>? {
+    // Every stored week, newest first, so the next one can progress from more
+    // than the last.
+    private suspend fun nextWeekFrom(): Pair<UserProfile, List<WeeklyWorkoutPlan>>? {
         val user = userRepository.getCurrentUser() ?: return null
-        val latest = userRepository.getWeeklyWorkoutPlans(user.id).first()
-            .maxByOrNull { it.weekNumber } ?: return null
+        val plans = userRepository.getWeeklyWorkoutPlans(user.id).first()
+            .sortedByDescending { it.weekNumber }
+        val latest = plans.firstOrNull() ?: return null
         // Enforced at the write as well as shown: a screen may forget to ask.
         if (!latest.isReadyForTheNextWeek()) return null
         if (userRepository.getWeeklyWorkoutPlan(user.id, latest.weekNumber + 1) != null) return null
-        return user to latest
+        return user to plans
     }
 
     // Never overlaps the week it follows and never starts in the past: someone
@@ -181,7 +180,7 @@ class NextWeekViewModel @Inject constructor(
     companion object {
         private const val DAYS_PER_WEEK = 7
 
-        fun repeatedWeek(
+        private fun repeatedWeek(
             previous: WeeklyWorkoutPlan,
             weekNumber: Int,
             startDateMillis: Long

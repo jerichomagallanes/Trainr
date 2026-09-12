@@ -1,13 +1,10 @@
 package com.jericx.trainr.presentation.common.theme
 
 import android.app.Activity
-import android.os.Build
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -16,7 +13,6 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.core.view.WindowCompat
@@ -97,17 +93,9 @@ private val LocalTrainrDarkTheme = staticCompositionLocalOf { false }
 @Composable
 fun TrainrTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
+    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
 
     val view = LocalView.current
     if (!view.isInEditMode) {
@@ -147,11 +135,3 @@ val MaterialTheme.trainrColors: TrainrColors
 @Composable
 fun themedPainter(@DrawableRes light: Int, @DrawableRes night: Int): Painter =
     painterResource(if (LocalTrainrDarkTheme.current) night else light)
-
-val MaterialTheme.success: Color
-    @Composable
-    get() = GreenSuccess
-
-val MaterialTheme.warning: Color
-    @Composable
-    get() = YellowWarning

@@ -1,6 +1,5 @@
 package com.jericx.trainr.presentation.workout.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -41,7 +40,6 @@ import com.jericx.trainr.domain.model.ExerciseMeasure
 import com.jericx.trainr.domain.model.ExerciseSet
 import com.jericx.trainr.domain.model.UnitSystem
 import com.jericx.trainr.domain.model.WeightUnit
-import androidx.compose.ui.graphics.Color
 import com.jericx.trainr.presentation.common.components.core.TrainrSwipeToDelete
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme

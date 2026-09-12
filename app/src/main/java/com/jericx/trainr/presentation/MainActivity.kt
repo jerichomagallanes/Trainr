@@ -16,7 +16,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import com.jericx.trainr.R
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,14 +33,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import androidx.navigation.compose.rememberNavController
 import com.jericx.trainr.BuildConfig
-import com.jericx.trainr.data.diagnostics.CrashlyticsBreadcrumbs
 import com.jericx.trainr.domain.diagnostics.Breadcrumbs
 import com.jericx.trainr.data.preferences.AppearanceMode
-import com.jericx.trainr.data.preferences.NavigationStateManager
 import com.jericx.trainr.data.preferences.ThemePreferences
 import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.model.WorkoutDay
-import com.jericx.trainr.presentation.common.LocaleManager
 import com.jericx.trainr.presentation.common.theme.DarkTrainrColors
 import com.jericx.trainr.presentation.common.theme.LightTrainrColors
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
@@ -72,6 +68,7 @@ import com.jericx.trainr.presentation.workout.WeeklyProgressRoute
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import javax.inject.Inject
+import java.util.Locale
 
 private val editArguments = listOf(
     navArgument(Screen.EditableStep.ARG_EDIT) {
@@ -87,13 +84,8 @@ private fun OnboardingState.filledFor(
     editing: Boolean
 ): UserProfile? = if (editing || step in answeredSteps) userProfile else null
 
-@Composable
-private fun rememberBreadcrumbs(): Breadcrumbs = remember { CrashlyticsBreadcrumbs() }
-
 private val NavBackStackEntry.isEditing: Boolean
     get() = arguments?.getBoolean(Screen.EditableStep.ARG_EDIT) ?: false
-
-private const val FORCED_LANGUAGE = "en"
 
 private fun AppearanceMode.isDark(systemInDarkTheme: Boolean): Boolean = when (this) {
     AppearanceMode.SYSTEM -> systemInDarkTheme
@@ -128,11 +120,18 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var proGate: ProGate
 
-    // English-only for now, whatever the device says. The returned context
-    // carries that configuration and must become the activity's base before any
-    // resources are read, so it cannot move to onCreate.
+    @Inject
+    lateinit var breadcrumbs: Breadcrumbs
+
+    // The app ships English copy only, so dates and numbers have to be English
+    // too, whatever the device says. The configured context must become the
+    // activity's base before any resources are read, so it cannot move to
+    // onCreate.
     override fun attachBaseContext(newBase: Context) {
-        super.attachBaseContext(LocaleManager.updateAppLocale(newBase, FORCED_LANGUAGE))
+        Locale.setDefault(Locale.ENGLISH)
+        val config = Configuration(newBase.resources.configuration)
+        config.setLocale(Locale.ENGLISH)
+        super.attachBaseContext(newBase.createConfigurationContext(config))
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -151,7 +150,8 @@ class MainActivity : ComponentActivity() {
             AppContent(
                 versionName = versionName,
                 themePreferences = themePreferences,
-                proGate = proGate
+                proGate = proGate,
+                breadcrumbs = breadcrumbs
             )
         }
     }
@@ -173,14 +173,28 @@ class MainActivity : ComponentActivity() {
 fun AppContent(
     versionName: String,
     themePreferences: ThemePreferences,
-    proGate: ProGate
+    proGate: ProGate,
+    breadcrumbs: Breadcrumbs,
+    // Where the app opens. Only a test starts anywhere else: the splash decides
+    // between the plan and the welcome on a timer, which a test would spend two
+    // seconds waiting out before it could reach what it came to check.
+    startDestination: String = Screen.SplashScreen.route
 ) {
     val context = LocalContext.current
     val navController = rememberNavController()
 
+    // Spent here and nowhere earlier, so a failed generation costs nothing and
+    // the free week is still there to be used.
+    val weekBuilt: () -> Unit = {
+        proGate.spend()
+        navController.navigate(Screen.Home.route) {
+            popUpTo(0) { inclusive = true }
+        }
+    }
+    val leave: () -> Unit = { navController.popBackStack() }
+
     // Route patterns only, never their filled-in arguments, so a crash report
     // carries no client data.
-    val breadcrumbs = rememberBreadcrumbs()
     LaunchedEffect(navController) {
         navController.currentBackStackEntryFlow.collect { entry ->
             entry.destination.route?.let { breadcrumbs.record("screen: ${it.substringBefore('?')}") }
@@ -191,20 +205,7 @@ fun AppContent(
     val onboardingState by onboardingViewModel.onboardingState.collectAsStateWithLifecycle()
 
     val splashScreenDuration = 2000L
-    var showSplashScreen by remember { mutableStateOf(true) }
-
-    LaunchedEffect(Unit) {
-        if (NavigationStateManager.isLanguageChangePending(context)) {
-            val savedRoute = NavigationStateManager.getCurrentRoute(context)
-            if (savedRoute != null && savedRoute != Screen.SplashScreen.route) {
-                showSplashScreen = false
-                navController.navigate(savedRoute) {
-                    popUpTo(Screen.SplashScreen.route) { inclusive = true }
-                }
-                NavigationStateManager.clearNavigationState(context)
-            }
-        }
-    }
+    var showSplashScreen by remember { mutableStateOf(startDestination == Screen.SplashScreen.route) }
 
     LaunchedEffect(showSplashScreen) {
         if (showSplashScreen) {
@@ -227,9 +228,9 @@ fun AppContent(
     // is shown a price.
     var prompt by remember { mutableStateOf<PaywallReason?>(null) }
 
-    fun askThen(reason: PaywallReason, route: String) {
+    fun askThen(reason: PaywallReason, action: () -> Unit) {
         when (proGate.decide()) {
-            ProGate.Decision.ALLOWED -> navController.navigate(route)
+            ProGate.Decision.ALLOWED -> action()
             ProGate.Decision.ASK -> prompt = reason
         }
     }
@@ -256,20 +257,14 @@ fun AppContent(
                 )
             }
 
-            NavHost(navController = navController, startDestination = Screen.SplashScreen.route) {
+            NavHost(navController = navController, startDestination = startDestination) {
                 composable(route = Screen.SplashScreen.route) {
                     SplashScreen(versionName = versionName)
                 }
 
                 composable(Screen.Welcome.route) {
-                    LaunchedEffect(Unit) {
-                        NavigationStateManager.saveCurrentRoute(context, Screen.Welcome.route)
-                    }
                     WelcomeScreen(
                         onGetStartedClick = {
-                            NavigationStateManager.saveCurrentRoute(
-                                context, Screen.BasicInfo.createRoute()
-                            )
                             navController.navigate(Screen.BasicInfo.createRoute())
                         }
                     )
@@ -323,8 +318,8 @@ fun AppContent(
                     FitnessGoalScreen(
                         initial = onboardingState.filledFor(OnboardingStep.GOALS, editing),
                         isEditing = editing,
-                        onNextClick = { goal, workoutType ->
-                            onboardingViewModel.updateFitnessGoal(goal, workoutType)
+                        onNextClick = { goal ->
+                            onboardingViewModel.updateFitnessGoal(goal)
                             if (editing) {
                                 navController.popBackStack()
                             } else {
@@ -343,9 +338,10 @@ fun AppContent(
                     WorkoutSetupScreen(
                         initial = onboardingState.filledFor(OnboardingStep.SETUP, editing),
                         isEditing = editing,
-                        onNextClick = { location, equipment, liftingUnits, days, duration, time ->
+                        stockedEquipment = onboardingViewModel.stockedEquipment,
+                        onNextClick = { equipment, liftingUnits, days, duration ->
                             onboardingViewModel.updateWorkoutSetup(
-                                location, equipment, liftingUnits, days, duration, time
+                                equipment, liftingUnits, days, duration
                             )
                             if (editing) {
                                 navController.popBackStack()
@@ -407,7 +403,7 @@ fun AppContent(
                                     )
                                 }
                             } else if (fromPlan) {
-                                askThen(PaywallReason.FRESH_PLAN, Screen.Generating.route)
+                                askThen(PaywallReason.FRESH_PLAN) { navController.navigate(Screen.Generating.route) }
                             } else {
                                 navController.navigate(Screen.Generating.route)
                             }
@@ -435,18 +431,10 @@ fun AppContent(
                     GeneratingScreen(
                         isReady = onboardingState.isCompleted,
                         onStart = { onboardingViewModel.saveUserProfile() },
-                        onDone = {
-                            // Spent here and nowhere earlier: a generation that
-                            // failed has taken nothing, so the free week is
-                            // still there to be used.
-                            proGate.spend()
-                            navController.navigate(Screen.Home.route) {
-                                popUpTo(0) { inclusive = true }
-                            }
-                        },
+                        onDone = weekBuilt,
                         failure = onboardingState.generationFailure,
                         onRetry = { onboardingViewModel.saveUserProfile() },
-                        onGiveUp = { navController.popBackStack() },
+                        onGiveUp = leave,
                         giveUpLabel = R.string.back_to_profile
                     )
                 }
@@ -494,9 +482,13 @@ fun AppContent(
                         onBackClick = { navController.popBackStack() },
                         onDayClick = openDay,
                         onStartTodayClick = openDay,
-                        onRepeatWeekClick = { nextWeekViewModel.repeatWeek(weekNumber) },
+                        onRepeatWeekClick = {
+                            askThen(PaywallReason.NEXT_WEEK) {
+                                nextWeekViewModel.repeatWeek(weekNumber)
+                            }
+                        },
                         onRegenerateWeekClick = {
-                            askThen(PaywallReason.REWRITE, Screen.RegeneratingWeek.route)
+                            askThen(PaywallReason.REWRITE) { navController.navigate(Screen.RegeneratingWeek.route) }
                         }
                     )
                 }
@@ -560,7 +552,7 @@ fun AppContent(
                             navController.navigate(Screen.WeeklyProgress.route)
                         },
                         onPreviewNextWeekClick = {
-                            askThen(PaywallReason.NEXT_WEEK, Screen.GeneratingNextWeek.route)
+                            askThen(PaywallReason.NEXT_WEEK) { navController.navigate(Screen.GeneratingNextWeek.route) }
                         }
                     )
                 }
@@ -593,18 +585,10 @@ fun AppContent(
                     GeneratingScreen(
                         isReady = weekIsReady,
                         onStart = { nextWeekViewModel.regenerateThisWeek() },
-                        onDone = {
-                            // Spent here and nowhere earlier: a generation that
-                            // failed has taken nothing, so the free week is
-                            // still there to be used.
-                            proGate.spend()
-                            navController.navigate(Screen.Home.route) {
-                                popUpTo(0) { inclusive = true }
-                            }
-                        },
+                        onDone = weekBuilt,
                         failure = failure,
                         onRetry = { nextWeekViewModel.regenerateThisWeek() },
-                        onGiveUp = { navController.popBackStack() }
+                        onGiveUp = leave
                     )
                 }
 
@@ -615,18 +599,10 @@ fun AppContent(
                     GeneratingScreen(
                         isReady = weekIsReady,
                         onStart = { nextWeekViewModel.generateNextWeek() },
-                        onDone = {
-                            // Spent here and nowhere earlier: a generation that
-                            // failed has taken nothing, so the free week is
-                            // still there to be used.
-                            proGate.spend()
-                            navController.navigate(Screen.Home.route) {
-                                popUpTo(0) { inclusive = true }
-                            }
-                        },
+                        onDone = weekBuilt,
                         failure = nextWeekFailure,
                         onRetry = { nextWeekViewModel.generateNextWeek() },
-                        onGiveUp = { navController.popBackStack() }
+                        onGiveUp = leave
                     )
                 }
 
@@ -669,11 +645,13 @@ fun AppContent(
                         },
                         onOpenProClick = { navController.navigate(Screen.Pro.route) },
                         onStartNextWeekClick = {
-                            askThen(PaywallReason.NEXT_WEEK, Screen.GeneratingNextWeek.route)
+                            askThen(PaywallReason.NEXT_WEEK) { navController.navigate(Screen.GeneratingNextWeek.route) }
                         },
-                        onRepeatWeekClick = { nextWeekViewModel.repeatWeek() },
+                        onRepeatWeekClick = {
+                            askThen(PaywallReason.NEXT_WEEK) { nextWeekViewModel.repeatWeek() }
+                        },
                         onRegenerateWeekClick = {
-                            askThen(PaywallReason.REWRITE, Screen.RegeneratingWeek.route)
+                            askThen(PaywallReason.REWRITE) { navController.navigate(Screen.RegeneratingWeek.route) }
                         },
                         onCreatePlanClick = {
                             navController.navigate(Screen.Review.createRoute(fromPlan = true))

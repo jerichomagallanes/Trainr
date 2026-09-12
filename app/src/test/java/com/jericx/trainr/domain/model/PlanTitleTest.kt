@@ -5,7 +5,7 @@ import org.junit.Test
 
 class PlanTitleTest {
 
-    // The model writes the week number into the title, so a copied week would call itself the first
+    // Old plans carry the week number in the title, so a copied week would call itself the first
     @Test
     fun aTrailingWeekNumberIsDropped() {
         assertThat("Beginner Muscle Building - Week 1".withoutWeekNumber())

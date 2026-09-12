@@ -5,11 +5,4 @@ package com.jericx.trainr.domain.diagnostics
 interface Breadcrumbs {
 
     fun record(event: String)
-
-    fun state(key: String, value: String)
-}
-
-object NoBreadcrumbs : Breadcrumbs {
-    override fun record(event: String) = Unit
-    override fun state(key: String, value: String) = Unit
 }

@@ -2,16 +2,13 @@ package com.jericx.trainr.domain.repository
 
 import com.jericx.trainr.domain.model.ExerciseSet
 import com.jericx.trainr.domain.model.UserProfile
-import com.jericx.trainr.domain.model.WeeklyProgress
 import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
 import com.jericx.trainr.domain.model.WorkoutDay
-import com.jericx.trainr.domain.model.WorkoutDayProgress
 import com.jericx.trainr.domain.model.WorkoutExercise
 import kotlinx.coroutines.flow.Flow
 
 interface UserRepository {
     suspend fun saveUser(user: UserProfile): Long
-    suspend fun getUser(userId: Long): UserProfile?
     suspend fun getCurrentUser(): UserProfile?
     suspend fun updateUser(user: UserProfile)
     suspend fun hasUsers(): Boolean
@@ -42,7 +39,4 @@ interface UserRepository {
         excludeDayId: Long,
         beforeMillis: Long
     ): List<ExerciseSet>
-
-    suspend fun getWeeklyProgress(userId: Long, weekNumber: Int): WeeklyProgress?
-    suspend fun getWorkoutDayProgress(weeklyPlanId: Long): List<WorkoutDayProgress>
 }

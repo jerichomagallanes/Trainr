@@ -16,7 +16,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.jericx.trainr.R
+import com.jericx.trainr.domain.model.Injury
 import com.jericx.trainr.domain.model.UserProfile
+import com.jericx.trainr.presentation.common.getLocalizedName
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.components.core.TrainrButton
 import com.jericx.trainr.presentation.common.components.core.TrainrCheckboxChip
@@ -32,24 +34,13 @@ import com.jericx.trainr.presentation.common.components.typography.TrainrSubtitl
 fun LimitationsScreen(
     initial: UserProfile? = null,
     isEditing: Boolean = false,
-    onNextClick: (injuries: List<String>) -> Unit,
+    onNextClick: (injuries: List<Injury>) -> Unit,
     onBackClick: () -> Unit
 ) {
     var selectedInjuries by remember {
         mutableStateOf(initial?.injuries?.toSet() ?: emptySet())
     }
-    val injuryOptions = listOf(
-        stringResource(R.string.lower_back_pain_injury),
-        stringResource(R.string.knee_problems_injury),
-        stringResource(R.string.shoulder_injury_injury),
-        stringResource(R.string.wrist_pain_injury),
-        stringResource(R.string.ankle_issues_injury),
-        stringResource(R.string.hip_problems_injury),
-        stringResource(R.string.neck_pain_injury),
-        stringResource(R.string.none_injury)
-    )
-    val noneOption = stringResource(R.string.none_injury)
-    val noneLabel = stringResource(R.string.none)
+    var noneSelected by remember { mutableStateOf(false) }
 
     TrainrScaffold(
         onBackClick = onBackClick,
@@ -57,10 +48,7 @@ fun LimitationsScreen(
         bottomButton = {
             TrainrButton(
                 text = stringResource(if (isEditing) R.string.save else R.string.submit),
-                onClick = {
-                    val injuries = selectedInjuries.filter { it != noneLabel }.toList()
-                    onNextClick(injuries)
-                },
+                onClick = { onNextClick(Injury.entries.filter { it in selectedInjuries }) },
                 enabled = true
             )
         }
@@ -104,30 +92,29 @@ fun LimitationsScreen(
                     verticalArrangement = Arrangement.spacedBy(Spacing.card),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    injuryOptions.forEach { injury ->
-                        val isNone = injury == noneOption
-
+                    Injury.entries.forEach { injury ->
                         TrainrCheckboxChip(
-                            text = injury,
+                            text = injury.getLocalizedName(),
                             checked = selectedInjuries.contains(injury),
                             onCheckedChange = { isChecked ->
-                                selectedInjuries = if (isNone) {
-                                    if (isChecked) {
-                                        setOf(injury)
-                                    } else {
-                                        emptySet()
-                                    }
+                                noneSelected = false
+                                selectedInjuries = if (isChecked) {
+                                    selectedInjuries + injury
                                 } else {
-                                    val withoutNone = selectedInjuries - noneOption
-                                    if (isChecked) {
-                                        withoutNone + injury
-                                    } else {
-                                        withoutNone - injury
-                                    }
+                                    selectedInjuries - injury
                                 }
                             }
                         )
                     }
+
+                    TrainrCheckboxChip(
+                        text = stringResource(R.string.none_injury),
+                        checked = noneSelected,
+                        onCheckedChange = { isChecked ->
+                            noneSelected = isChecked
+                            if (isChecked) selectedInjuries = emptySet()
+                        }
+                    )
                 }
             }
         }

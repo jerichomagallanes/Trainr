@@ -7,7 +7,7 @@
     <string name="welcome_to">WELCOME TO</string>
     <string name="get_started">Get Started</string>
     <string name="personalized_workout_plans">Personalized workout plans</string>
-    <string name="ai_generated_routines">AI-generated routines</string>
+    <string name="routines_built_around_you">Routines built around you</string>
     <string name="track_your_progress">Track your progress</string>
     
     <!-- Basic Info Screen -->
@@ -73,31 +73,19 @@
     
     <!-- Workout Setup Screen -->
     <string name="set_up_your_workout">SET UP YOUR WORKOUT</string>
-    <string name="where_will_you_work_out">Where will you work out?</string>
-    <string name="home">Home</string>
-    <string name="gym">Gym</string>
-    <string name="both">Both</string>
     <string name="available_equipment">Available Equipment</string>
     <string name="weights_marked_in">What are the weights marked in?</string>
     <string name="bodyweight_only">Bodyweight only</string>
-    <string name="dumbbells">Dumbbells</string>
-    <string name="resistance_bands">Resistance bands</string>
-    <string name="pull_up_bar">Pull-up bar</string>
-    <string name="kettlebells">Kettlebells</string>
-    <string name="barbell_plates">Barbell &amp; plates</string>
-    <string name="bench">Bench</string>
-    <string name="cardio_equipment">Cardio equipment</string>
-    <string name="cable_machine">Cable machine</string>
-    <string name="squat_rack">Squat rack</string>
-    <string name="others">Others</string>
+    <string name="equipment_barbell">Barbell</string>
+    <string name="equipment_dumbbell">Dumbbell</string>
+    <string name="equipment_kettlebell">Kettlebell</string>
+    <string name="equipment_machine">Machine</string>
+    <string name="equipment_plate">Plate</string>
+    <string name="equipment_resistance_band">Resistance Band</string>
+    <string name="equipment_suspension_band">Suspension Band</string>
+    <string name="equipment_other">Other</string>
     <string name="workout_days_per_week">How many days per week can you work out?</string>
     <string name="session_duration">Session Duration</string>
-    <string name="preferred_workout_time">Preferred Workout Time</string>
-    <string name="early_morning_time">Early Morning (5-7 AM)</string>
-    <string name="morning_time">Morning (7-12 PM)</string>
-    <string name="afternoon_time">Afternoon (12-5 PM)</string>
-    <string name="evening_time">Evening (5-10 PM)</string>
-    <string name="flexible_anytime">Flexible/Anytime</string>
     <plurals name="workout_days_option">
         <item quantity="one">%d day</item>
         <item quantity="other">%d days</item>
@@ -107,16 +95,6 @@
     <string name="lets_keep_you_safe">LET\'S KEEP YOU SAFE</string>
     <string name="limitations_description">Tell us about any limitations so we can adapt your workouts</string>
     <string name="any_injuries_or_areas">Any injuries or areas to be careful with?</string>
-    <string name="none">None</string>
-    <string name="preferred_workout_style">Preferred Workout Style</string>
-    <string name="strength_training">Strength Training</string>
-    <string name="strength_training_description">Focus on building muscle and strength.</string>
-    <string name="cardio">Cardio</string>
-    <string name="cardio_description">Improve endurance and burn calories.</string>
-    <string name="hiit">HIIT</string>
-    <string name="hiit_description">High intensity interval training.</string>
-    <string name="mixed_balanced">Mixed/Balanced</string>
-    <string name="mixed_balanced_description">Combination of different training styles.</string>
     
     <!-- Review Screen -->
     <string name="your_fitness_profile">YOUR FITNESS PROFILE</string>
@@ -160,6 +138,28 @@
     <string name="start_workout_over_title">Start this workout over?</string>
     <string name="start_workout_over_message">Your logged sets and reps will be cleared. The workout itself stays exactly as it was planned.</string>
     <string name="start_over">Start over</string>
+    <!-- Prescription chip. The set count is the plural subject; the amount is
+         formatted separately so "1 set of 12 reps" reads correctly. -->
+    <plurals name="prescription_sets">
+        <item quantity="one">%1$d set of %2$s</item>
+        <item quantity="other">%1$d sets of %2$s</item>
+    </plurals>
+    <plurals name="prescription_reps">
+        <item quantity="one">%d rep</item>
+        <item quantity="other">%d reps</item>
+    </plurals>
+    <plurals name="prescription_seconds">
+        <item quantity="one">%d second</item>
+        <item quantity="other">%d seconds</item>
+    </plurals>
+    <plurals name="prescription_minutes">
+        <item quantity="one">%d minute</item>
+        <item quantity="other">%d minutes</item>
+    </plurals>
+    <string name="prescription_range_reps">%1$d-%2$d reps</string>
+    <string name="prescription_range_seconds">%1$d-%2$d seconds</string>
+    <string name="prescription_range_minutes">%1$d-%2$d minutes</string>
+    <string name="prescription_per_side">%1$s per side</string>
     <plurals name="minutes">
         <item quantity="one">%d min</item>
         <item quantity="other">%d mins</item>
@@ -172,6 +172,8 @@
     <string name="completed">Completed</string>
     <string name="status_in_progress">In Progress</string>
     <string name="not_started">Not started</string>
+    <string name="hide_how_to_perform">Hide how to perform</string>
+    <string name="show_how_to_perform">How to perform</string>
     <string name="hide_video_tutorial">Hide video tutorial</string>
     <string name="show_video_tutorial">Show video tutorial</string>
     <string name="start_timer">Start timer</string>
@@ -183,8 +185,8 @@
     <string name="previous_column">Previous</string>
     <string name="delete_set">Delete set</string>
     <string name="plan_options">Workout plan options</string>
-    <string name="app_about_message">Your workout plans are written for you by AI from the fitness profile you set.</string>
-    <string name="health_disclaimer">Plans are generated by AI and are not medical advice. Check with a doctor before you start, and stop if something hurts.</string>
+    <string name="app_about_message">Your workout plans are built on your phone from the fitness profile you set.</string>
+    <string name="health_disclaimer">Plans are built by the app and are not medical advice. Check with a doctor before you start, and stop if something hurts.</string>
     <string name="app_version_format">Version %1$s</string>
     <string name="about_the_app">About Trainr</string>
     <string name="profile_and_app">Profile and app</string>
@@ -201,15 +203,12 @@
     <string name="regenerate_week_title">Generate this week again?</string>
     <string name="regenerate_week_confirm">Generate again</string>
     <plurals name="regenerate_week_message_trained">
-        <item quantity="one">%1$d of %2$d workouts is logged in this week. A new week replaces it for good.</item>
-        <item quantity="other">%1$d of %2$d workouts are logged in this week. A new week replaces them for good.</item>
+        <item quantity="one">%1$d of %2$d workouts is logged in this week. New movements are chosen, and the new week replaces it for good.</item>
+        <item quantity="other">%1$d of %2$d workouts are logged in this week. New movements are chosen, and the new week replaces them for good.</item>
     </plurals>
     <string name="generation_failed_title">Could not create your workout plan</string>
-    <string name="generation_failed_offline">Trainr is offline. Check your connection and try again.</string>
     <string name="generation_failed_message">Something went wrong while writing your workout plan. Please try again.</string>
-    <string name="generation_limit_title">Daily limit reached</string>
-    <string name="generation_limit_message">Trainr can only write a few plans a day at the moment. The limit resets each day, so trying again now will not help.\n\nYour answers are saved. Come back later and create your plan in one tap.</string>
-    <string name="got_it">Got it</string>
+    <string name="estimated_weight">Estimated weight</string>
     <string name="try_again">Try again</string>
     <string name="back_to_profile">Back to profile</string>
     <string name="missed">Missed</string>
@@ -246,7 +245,7 @@
     <string name="submit">SUBMIT</string>
     <string name="back">Back</string>
     <string name="trainr">Trainr</string>
-    <string name="ai_powered">AI-powered</string>
+    <string name="trainer_adjective">pocket</string>
     <string name="your">Your</string>
     <string name="personal_trainer">personal trainer.</string>
     <string name="version_format">v%s</string>
@@ -260,18 +259,15 @@
     <string name="experience_label">Experience</string>
     <string name="fitness_goals_label">Fitness Goals</string>
     <string name="main_goal_label">Main Goal</string>
-    <string name="workout_style_label">Workout Style</string>
     <string name="workout_setup_label">Workout Setup</string>
-    <string name="location_label">Location</string>
     <string name="equipment_label_full">Equipment</string>
     <string name="weights_in_label">Weights in</string>
     <string name="schedule_label">Schedule</string>
     <string name="duration_label">Duration</string>
-    <string name="preferred_time_label">Preferred Time</string>
     <string name="limitations_label">Limitations</string>
     <string name="injuries_concerns_label">Injuries/Concerns</string>
-    <string name="ai_routine_preview_label">AI Workout Plan</string>
-    <string name="ai_routine_description">Based on your profile, we\'ll create a %1$s %2$s plan focused on %3$s.</string>
+    <string name="routine_preview_label">Your Workout Plan</string>
+    <string name="routine_description">Based on your profile, we\'ll create a %1$s plan focused on %2$s.</string>
     <string name="bodyweight_only_label">Bodyweight only</string>
     <string name="flexible_schedule">Flexible</string>
     <plurals name="days_per_week_format">
@@ -319,30 +315,12 @@
     <string name="goal_focus_improve_endurance">improving endurance</string>
     <string name="goal_focus_general_fitness">general fitness</string>
     <string name="goal_focus_flexibility">flexibility and mobility</string>
-    <string name="program_strength">strength</string>
-    <string name="program_cardio">cardio</string>
-    <string name="program_hiit">HIIT</string>
-    <string name="program_flexibility">mobility</string>
-    <string name="program_mixed">balanced</string>
     
     <!-- Workout Locations -->
-    <string name="home_location">Home</string>
-    <string name="gym_location">Gym</string>
-    <string name="both_location">Both</string>
     
     <!-- Workout Styles -->
-    <string name="strength_training_style">Strength Training</string>
-    <string name="cardio_style">Cardio</string>
-    <string name="hiit_style">HIIT</string>
-    <string name="flexibility_mobility_style">Flexibility &amp; Mobility</string>
-    <string name="mixed_balanced_style">Mixed/Balanced</string>
     
     <!-- Workout Times -->
-    <string name="early_morning">Early Morning</string>
-    <string name="morning">Morning</string>
-    <string name="afternoon">Afternoon</string>
-    <string name="evening">Evening</string>
-    <string name="flexible_anytime_time">Flexible/Anytime</string>
     
     <!-- Injury Options -->
     <string name="lower_back_pain_injury">Lower Back Pain</string>
@@ -353,42 +331,20 @@
     <string name="hip_problems_injury">Hip Problems</string>
     <string name="neck_pain_injury">Neck Pain</string>
     <string name="none_injury">None</string>
+    <!-- One line on an exercise card when the movement touches an injury the
+         client declared. Care, not a diagnosis. -->
+    <string name="caution_lower_back">Brace and keep your back flat. Stop if it pinches.</string>
+    <string name="caution_knee">Keep your knee in line with your toes. Stop if it hurts.</string>
+    <string name="caution_shoulder">Stay in a range your shoulder is comfortable in.</string>
+    <string name="caution_wrist">Keep your wrist straight rather than bent back.</string>
+    <string name="caution_ankle">Keep your weight through the whole foot, and move softly.</string>
+    <string name="caution_hip">Only go as deep as your hip moves without pain.</string>
+    <string name="caution_neck">Keep your chin tucked and your neck relaxed.</string>
     
-    <!-- Language Selection -->
-    <string name="language_english">English</string>
-    <string name="language_tagalog">Tagalog</string>
-    <string name="language_japanese">日本語</string>
-    
-    <!-- String Arrays -->
-    
-    <string-array name="language_codes">
-        <item>en</item>
-        <item>tl</item>
-        <item>ja</item>
-    </string-array>
-    
-    <string-array name="language_display_names">
-        <item>@string/language_english</item>
-        <item>@string/language_tagalog</item>
-        <item>@string/language_japanese</item>
-    </string-array>
-    
-    <string-array name="language_native_names">
-        <item>English</item>
-        <item>Tagalog</item>
-        <item>日本語</item>
-    </string-array>
-
     <!-- Trainr Pro -->
     <string name="pro_name">Trainr Pro</string>
-    <string name="pro_headline">Keep the coach writing</string>
-    <string name="pro_benefit_next_week">A new week each week, written from what you actually lifted</string>
-    <string name="pro_benefit_regenerate">Rewrite a week that does not suit you</string>
-    <string name="pro_benefit_fresh_plan">Start a fresh plan whenever your goal changes</string>
-    <string name="pro_free_note">Your first week, every set you log, and repeating a week all stay free.</string>
     <string name="pro_monthly">Monthly</string>
     <string name="pro_yearly">Yearly</string>
-    <string name="pro_best_value">Best value</string>
     <string name="pro_trial_then">%1$s free, then %2$s</string>
     <string name="pro_subscribe">Subscribe</string>
     <string name="pro_not_now">Not now</string>
@@ -400,11 +356,10 @@
     <string name="pro_unavailable">Subscriptions are not available right now. Please try again later.</string>
     <string name="pro_terms">Terms of Use</string>
     <string name="pro_privacy">Privacy Policy</string>
-    <string name="pro_renewal_apple">Payment is charged to your Apple ID at confirmation. It renews automatically unless you cancel at least 24 hours before the period ends. Manage it in Settings.</string>
     <string name="pro_renewal_google">Payment is charged to your Google Play account at confirmation. It renews automatically unless you cancel at least 24 hours before the period ends. Manage it in Play Store subscriptions.</string>
 
     <!-- Trainr Pro paywall -->
-    <string name="pro_full_access">Get the full coach</string>
+    <string name="pro_full_access">Unlock every week</string>
     <string name="pro_lifetime">Lifetime</string>
     <string name="pro_billed_monthly">Billed monthly</string>
     <string name="pro_billed_annually">Billed annually</string>
@@ -420,7 +375,7 @@
     <string name="pro_feature_fresh_title">Start a fresh plan</string>
     <string name="pro_feature_fresh_body">Change your goal, your kit or your days and begin again</string>
     <string name="pro_feature_support_title">Support a one-person team</string>
-    <string name="pro_feature_support_body">Subscriptions pay for the model that writes your plans</string>
+    <string name="pro_feature_support_body">Trainr is made by one person, with no accounts, ads or server of its own</string>
     <string name="pro_compare_title">Need to compare?</string>
     <string name="pro_compare_free">Free</string>
     <string name="pro_compare_pro">Pro</string>
@@ -428,32 +383,32 @@
     <string name="pro_compare_timer">Rest timer and exercise videos</string>
     <string name="pro_compare_history">Weekly progress and past weeks</string>
     <string name="pro_compare_repeat">Repeat a week</string>
-    <string name="pro_compare_generated">AI-written weeks</string>
+    <string name="pro_compare_generated">Weeks built for you</string>
     <string name="pro_compare_rewrite">Rewrite a week</string>
     <string name="pro_compare_fresh">Start a fresh plan</string>
     <string name="pro_compare_one">1</string>
     <string name="pro_compare_every_week">Every week</string>
     <string name="pro_questions">Any questions?</string>
     <string name="pro_faq_includes_q">What does Trainr Pro include?</string>
-    <string name="pro_faq_includes_a">Pro unlocks new AI-written weeks: generate next week from what you lifted, rewrite a week that does not suit you, and start a fresh plan whenever your goal changes.</string>
+    <string name="pro_faq_includes_a">Pro unlocks new weeks: build next week from what you lifted, rewrite a week that does not suit you, and start a fresh plan whenever your goal changes.</string>
     <string name="pro_faq_human_q">Is my plan written by a real trainer?</string>
-    <string name="pro_faq_human_a">No. A Gemini model writes it from the answers you gave, and progresses it from the sets you log. Plans are guidance, not medical advice.</string>
+    <string name="pro_faq_human_a">No. Trainr builds it on your phone from the answers you gave, and progresses it from the sets you log. Plans are guidance, not medical advice.</string>
     <string name="pro_faq_renew_q">Does Pro renew automatically?</string>
     <string name="pro_faq_renew_a">Yes. Monthly and Yearly renew at the end of each period, until you cancel.</string>
     <string name="pro_faq_cancel_q">Can I cancel any time?</string>
     <string name="pro_faq_cancel_a">Yes. You keep Pro until the period you have paid for ends, and nothing you have generated or logged is taken away.</string>
     <string name="pro_faq_devices_q">What happens if I get a new phone?</string>
-    <string name="pro_faq_devices_a">Pro follows your App Store account, not the device. Sign in with the same Apple ID and tap Restore purchase. Trainr has no accounts of its own, so a purchase made on Android does not unlock iOS.</string>
+    <string name="pro_faq_devices_a">Pro follows your Google account, not the device. Sign in with the same Google account and tap Restore purchase. Trainr has no accounts of its own, so a purchase made on iOS does not unlock Android.</string>
     <string name="pro_faq_free_q">What stays free?</string>
-    <string name="pro_faq_free_a">Your first AI-written week, every set you log, the rest timer, the video on every exercise, all your past weeks and progress, and repeating a week as often as you like.</string>
+    <string name="pro_faq_free_a">Your first week, every set you log, the rest timer, the video on every exercise, all your past weeks and progress, and repeating a week as often as you like.</string>
     <string name="pro_support_trouble">Having trouble with your subscription?</string>
 
     <!-- Trainr Pro contextual prompt -->
     <string name="pro_upgrade_title">Upgrade to Trainr Pro</string>
     <string name="pro_continue">Continue</string>
-    <string name="pro_free_limit">Free limit: one AI-written week</string>
+    <string name="pro_free_limit">Free limit: your first week</string>
     <string name="pro_and_more">And more included with Pro</string>
-    <string name="pro_prompt_next_week">You have used your free AI-written week. Pro writes you a new one each week, from the sets you actually logged.</string>
-    <string name="pro_prompt_rewrite">You have used your free AI-written week. Pro lets you ask for a different week whenever one does not suit you.</string>
-    <string name="pro_prompt_fresh">You have used your free AI-written week. Pro lets you start a fresh plan whenever your goal, your kit or your days change.</string>
+    <string name="pro_prompt_next_week">You have used your free week. Pro builds you a new one each week, from the sets you actually logged.</string>
+    <string name="pro_prompt_rewrite">You have used your free week. Pro lets you ask for a different week whenever one does not suit you.</string>
+    <string name="pro_prompt_fresh">You have used your free week. Pro lets you start a fresh plan whenever your goal, your kit or your days change.</string>
 </resources>

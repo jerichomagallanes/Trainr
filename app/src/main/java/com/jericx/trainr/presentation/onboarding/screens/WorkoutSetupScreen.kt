@@ -11,10 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -28,27 +24,20 @@ import com.jericx.trainr.R
 import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.common.Constants
 import com.jericx.trainr.domain.model.Equipment
+import com.jericx.trainr.domain.model.EquipmentChoices
+import com.jericx.trainr.domain.model.equipmentFor
 import com.jericx.trainr.domain.model.LoadedEquipment
 import com.jericx.trainr.domain.model.UnitSystem
-import com.jericx.trainr.domain.model.WorkoutLocation
-import com.jericx.trainr.domain.model.WorkoutTime
-import com.jericx.trainr.presentation.common.components.cards.TrainrLocationCard
-import com.jericx.trainr.presentation.common.components.cards.TrainrSelectionCard
+import com.jericx.trainr.presentation.common.getLocalizedName
 import com.jericx.trainr.presentation.common.components.core.TrainrButton
-import com.jericx.trainr.presentation.common.components.core.TrainrCheckboxChip
 import com.jericx.trainr.presentation.common.components.core.TrainrDropdown
-import com.jericx.trainr.presentation.common.components.core.TrainrMultiSelectChip
 import com.jericx.trainr.presentation.common.components.core.TrainrProgress
-import com.jericx.trainr.presentation.common.components.core.TrainrRadioChip
 import com.jericx.trainr.presentation.common.components.core.TrainrToggleChip
-import com.jericx.trainr.presentation.common.components.layout.TrainrChipGroup
-import com.jericx.trainr.presentation.common.components.layout.TrainrFlowRow
 import com.jericx.trainr.presentation.common.components.layout.TrainrFormSection
 import com.jericx.trainr.presentation.common.components.layout.TrainrScaffold
 import com.jericx.trainr.presentation.common.components.layout.TrainrScreenContent
 import com.jericx.trainr.presentation.common.components.layout.TrainrTopBar
 import com.jericx.trainr.presentation.common.components.typography.TrainrScreenTitle
-import com.jericx.trainr.presentation.common.components.typography.TrainrSectionTitle
 import com.jericx.trainr.presentation.common.theme.ComponentHeight
 import com.jericx.trainr.presentation.common.theme.Spacing
 
@@ -58,17 +47,15 @@ import com.jericx.trainr.presentation.common.theme.Spacing
 fun WorkoutSetupScreen(
     initial: UserProfile? = null,
     isEditing: Boolean = false,
+    stockedEquipment: Set<Equipment> = EquipmentChoices.toSet(),
     onNextClick: (
-        location: WorkoutLocation,
         equipment: List<Equipment>,
         liftingUnits: UnitSystem?,
         daysPerWeek: Int,
-        duration: Int,
-        preferredTime: WorkoutTime
+        duration: Int
     ) -> Unit,
     onBackClick: () -> Unit
 ) {
-    var selectedLocation by remember { mutableStateOf(initial?.workoutLocation) }
     var selectedEquipment by remember {
         mutableStateOf(initial?.availableEquipment?.toSet() ?: emptySet())
     }
@@ -76,7 +63,6 @@ fun WorkoutSetupScreen(
     // answer the plan is built around.
     var selectedDays by remember { mutableStateOf(initial?.workoutDaysPerWeek?.takeIf { it > 0 }) }
     var selectedDuration by remember { mutableStateOf(initial?.workoutDuration?.takeIf { it > 0 }) }
-    var selectedTime by remember { mutableStateOf(initial?.preferredWorkoutTime) }
     var selectedLiftingUnits by remember { mutableStateOf(initial?.liftingUnitSystem) }
 
     // A bodyweight setup has no plates to read, so lifting units stay unasked
@@ -96,29 +82,23 @@ fun WorkoutSetupScreen(
             TrainrButton(
                 text = stringResource(if (isEditing) R.string.save else R.string.next),
                 onClick = {
-                    val location = selectedLocation
                     val days = selectedDays
                     val duration = selectedDuration
-                    val time = selectedTime
-                    if (location != null && days != null && duration != null && time != null) {
+                    if (days != null && duration != null) {
                         onNextClick(
-                            location,
                             selectedEquipment.toList(),
                             if (hasLoadedEquipment) selectedLiftingUnits else null,
                             days,
-                            duration,
-                            time
+                            duration
                         )
                     }
                 },
                 // An empty equipment set means unanswered, not "nothing
                 // available": "bodyweight only" is itself one of the choices.
-                enabled = selectedLocation != null &&
-                    selectedEquipment.isNotEmpty() &&
+                enabled = selectedEquipment.isNotEmpty() &&
                     (!hasLoadedEquipment || selectedLiftingUnits != null) &&
                     selectedDays != null &&
-                    selectedDuration != null &&
-                    selectedTime != null
+                    selectedDuration != null
             )
         }
     ) { paddingValues ->
@@ -142,101 +122,42 @@ fun WorkoutSetupScreen(
 
                 Spacer(modifier = Modifier.height(Spacing.extraLarge))
 
-                TrainrSectionTitle(stringResource(R.string.where_will_you_work_out))
-
-                Spacer(modifier = Modifier.height(Spacing.card))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
+                TrainrFormSection(
+                    title = stringResource(R.string.available_equipment),
+                    verticalPadding = 0.dp,
+                    titleGap = Spacing.card
                 ) {
-                    TrainrLocationCard(
-                        text = stringResource(R.string.home),
-                        iconRes = R.drawable.ic_house,
-                        isSelected = selectedLocation == WorkoutLocation.HOME,
-                        onClick = {
-                            selectedLocation = WorkoutLocation.HOME
-                            selectedEquipment = emptySet()
-                        },
-                        modifier = Modifier.weight(1f)
-                    )
-                    TrainrLocationCard(
-                        text = stringResource(R.string.gym),
-                        iconRes = R.drawable.ic_fitness_center,
-                        isSelected = selectedLocation == WorkoutLocation.GYM,
-                        onClick = {
-                            selectedLocation = WorkoutLocation.GYM
-                            selectedEquipment = emptySet()
-                        },
-                        modifier = Modifier.weight(1f)
-                    )
-                    TrainrLocationCard(
-                        text = stringResource(R.string.both),
-                        iconRes = R.drawable.ic_sync_alt,
-                        isSelected = selectedLocation == WorkoutLocation.BOTH,
-                        onClick = {
-                            selectedLocation = WorkoutLocation.BOTH
-                            selectedEquipment = emptySet()
-                        },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
+                    val equipmentOptions = equipmentFor(stockedEquipment)
+                        .map { it to it.getLocalizedName() }
 
-                if (selectedLocation != null) {
-                    Spacer(modifier = Modifier.height(Spacing.sectionGap))
-
-                    TrainrFormSection(
-                        title = stringResource(R.string.available_equipment),
-                        verticalPadding = 0.dp,
-                        titleGap = Spacing.card
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.tight),
+                        verticalArrangement = Arrangement.spacedBy(Spacing.card)
                     ) {
-                        val equipmentOptions = when (selectedLocation) {
-                            WorkoutLocation.HOME -> listOf(
-                                Equipment.NONE to stringResource(R.string.bodyweight_only),
-                                Equipment.DUMBBELLS to stringResource(R.string.dumbbells),
-                                Equipment.RESISTANCE_BANDS to stringResource(R.string.resistance_bands),
-                                Equipment.PULL_UP_BAR to stringResource(R.string.pull_up_bar),
-                                Equipment.KETTLEBELLS to stringResource(R.string.kettlebells)
-                            )
-                            WorkoutLocation.GYM, WorkoutLocation.BOTH -> listOf(
-                                Equipment.BARBELL to stringResource(R.string.barbell_plates),
-                                Equipment.BENCH to stringResource(R.string.bench),
-                                Equipment.CARDIO_MACHINES to stringResource(R.string.cardio_equipment),
-                                Equipment.CABLE_MACHINE to stringResource(R.string.cable_machine),
-                                Equipment.DUMBBELLS to stringResource(R.string.dumbbells),
-                                Equipment.SQUAT_RACK to stringResource(R.string.squat_rack),
-                                Equipment.OTHERS to stringResource(R.string.others)
-                            )
-                            else -> emptyList()
-                        }
-
-                        FlowRow(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(Spacing.tight),
-                            verticalArrangement = Arrangement.spacedBy(Spacing.card)
-                        ) {
-                            equipmentOptions.forEach { (equipment, label) ->
-                                TrainrToggleChip(
-                                    text = label,
-                                    selected = selectedEquipment.contains(equipment),
-                                    onClick = {
-                                        selectedEquipment = if (equipment == Equipment.NONE) {
-                                            if (selectedEquipment.contains(equipment)) {
-                                                emptySet()
-                                            } else {
-                                                setOf(Equipment.NONE)
-                                            }
+                        equipmentOptions.forEach { (equipment, label) ->
+                            TrainrToggleChip(
+                                text = label,
+                                selected = selectedEquipment.contains(equipment),
+                                onClick = {
+                                    // "No equipment" is an answer, not an
+                                    // absence: it cannot share the row with kit.
+                                    selectedEquipment = if (equipment == Equipment.NONE) {
+                                        if (selectedEquipment.contains(equipment)) {
+                                            emptySet()
                                         } else {
-                                            val newSet = selectedEquipment - Equipment.NONE
-                                            if (newSet.contains(equipment)) {
-                                                newSet - equipment
-                                            } else {
-                                                newSet + equipment
-                                            }
+                                            setOf(Equipment.NONE)
+                                        }
+                                    } else {
+                                        val newSet = selectedEquipment - Equipment.NONE
+                                        if (newSet.contains(equipment)) {
+                                            newSet - equipment
+                                        } else {
+                                            newSet + equipment
                                         }
                                     }
-                                )
-                            }
+                                }
+                            )
                         }
                     }
                 }
@@ -321,44 +242,6 @@ fun WorkoutSetupScreen(
                                 modifier = Modifier.weight(1f)
                             )
                         }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(Spacing.sectionGap))
-
-                TrainrFormSection(
-                    title = stringResource(R.string.preferred_workout_time),
-                    verticalPadding = 0.dp,
-                    titleGap = Spacing.card
-                ) {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(Spacing.card)
-                    ) {
-                        TrainrRadioChip(
-                            text = stringResource(R.string.early_morning_time),
-                            selected = selectedTime == WorkoutTime.EARLY_MORNING,
-                            onClick = { selectedTime = WorkoutTime.EARLY_MORNING }
-                        )
-                        TrainrRadioChip(
-                            text = stringResource(R.string.morning_time),
-                            selected = selectedTime == WorkoutTime.MORNING,
-                            onClick = { selectedTime = WorkoutTime.MORNING }
-                        )
-                        TrainrRadioChip(
-                            text = stringResource(R.string.afternoon_time),
-                            selected = selectedTime == WorkoutTime.AFTERNOON,
-                            onClick = { selectedTime = WorkoutTime.AFTERNOON }
-                        )
-                        TrainrRadioChip(
-                            text = stringResource(R.string.evening_time),
-                            selected = selectedTime == WorkoutTime.EVENING,
-                            onClick = { selectedTime = WorkoutTime.EVENING }
-                        )
-                        TrainrRadioChip(
-                            text = stringResource(R.string.flexible_anytime),
-                            selected = selectedTime == WorkoutTime.ANYTIME,
-                            onClick = { selectedTime = WorkoutTime.ANYTIME }
-                        )
                     }
                 }
             }

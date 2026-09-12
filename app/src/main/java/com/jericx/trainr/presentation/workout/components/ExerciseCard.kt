@@ -35,6 +35,12 @@ import com.jericx.trainr.domain.model.UnitSystem
 import com.jericx.trainr.presentation.workout.model.ExerciseUi
 import com.jericx.trainr.presentation.workout.model.toRoutineUi
 import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import com.jericx.trainr.presentation.workout.util.asText
+import com.jericx.trainr.presentation.common.cautionText
 
 @Composable
 fun ExerciseCard(
@@ -118,11 +124,45 @@ fun ExerciseCard(
             ),
             verticalArrangement = Arrangement.spacedBy(Spacing.screen)
         ) {
-            Text(
-                text = exercise.description,
-                style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 18.sp),
-                color = colors.onSurface
-            )
+            // The muscles belong to the movement's name, not to the coaching
+            // note under it, so the pair sits closer than the card's rhythm.
+            Column(verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
+                if (exercise.primaryMuscle.isNotBlank()) {
+                    Text(
+                        text = buildAnnotatedString {
+                            withStyle(
+                                SpanStyle(color = accentInk, fontWeight = FontWeight.Medium)
+                            ) {
+                                append(exercise.primaryMuscle)
+                            }
+                            if (exercise.secondaryMuscles.isNotEmpty()) {
+                                append(MUSCLE_SEPARATOR)
+                                append(exercise.secondaryMuscles.joinToString(", "))
+                            }
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.onSurfaceMuted
+                    )
+                }
+
+                if (exercise.description.isNotBlank()) {
+                    Text(
+                        text = exercise.description,
+                        style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 18.sp),
+                        color = colors.onSurface
+                    )
+                }
+
+                // One line, for the first injury the client declared that this
+                // movement asks care with.
+                exercise.caution?.let { injury ->
+                    Text(
+                        text = injury.cautionText(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.dangerInk
+                    )
+                }
+            }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
@@ -141,16 +181,30 @@ fun ExerciseCard(
                     color = colors.onSurface,
                     modifier = Modifier.padding(start = Spacing.extraSmall)
                 )
-                Text(
-                    text = exercise.detail,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = colors.onSurfaceEmphasis,
-                    modifier = Modifier
-                        .weight(1f, fill = false)
-                        .padding(start = Spacing.small)
-                        .background(colors.surfaceEmphasis, MaterialTheme.shapes.medium)
-                        .padding(horizontal = Spacing.tight, vertical = 3.dp)
-                )
+                val chip = exercise.prescription.asText()
+                if (chip.isNotBlank()) {
+                    Text(
+                        text = chip,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colors.onSurfaceEmphasis,
+                        modifier = Modifier
+                            .weight(1f, fill = false)
+                            .padding(start = Spacing.small)
+                            .background(colors.surfaceEmphasis, MaterialTheme.shapes.medium)
+                            .padding(horizontal = Spacing.tight, vertical = 3.dp)
+                    )
+                }
+                if (exercise.isEstimated) {
+                    Text(
+                        text = stringResource(R.string.estimated_weight),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.onSurfaceMuted,
+                        modifier = Modifier
+                            .padding(start = Spacing.small)
+                            .border(1.dp, colors.cardEdge, MaterialTheme.shapes.medium)
+                            .padding(horizontal = Spacing.tight, vertical = 3.dp)
+                    )
+                }
             }
 
             // Drawn even when empty: gating it on sets takes away the only
@@ -170,6 +224,11 @@ fun ExerciseCard(
     }
 }
 
+// A middot rather than a label on each side: the line is read at a glance
+// twelve times down a day, and "Primary:"/"Secondary:" twice per card is more
+// words than the names themselves.
+private const val MUSCLE_SEPARATOR = "  \u00b7  "
+
 @Preview(showBackground = true, heightDp = 700)
 @Composable
 private fun ExerciseCardPreview() {
@@ -179,7 +238,7 @@ private fun ExerciseCardPreview() {
             modifier = Modifier.padding(Spacing.screen)
         ) {
             SampleWorkoutData.dayFor(SampleWorkoutData.DEFAULT_DAY_NUMBER)
-                .toRoutineUi().exercises.take(3).forEach { exercise ->
+                .toRoutineUi(catalog = SampleWorkoutData.catalog).exercises.take(3).forEach { exercise ->
                 ExerciseCard(exercise = exercise, onToggleCompleted = {})
             }
         }

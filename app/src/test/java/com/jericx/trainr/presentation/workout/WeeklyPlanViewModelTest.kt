@@ -10,6 +10,7 @@ import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.domain.repository.UserRepository
 import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
 import com.jericx.trainr.presentation.workout.util.WorkoutWeek
+import com.jericx.trainr.presentation.workout.util.mondayOf
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -169,7 +170,7 @@ class WeeklyPlanViewModelTest {
     fun todaysWorkoutIsTheFirstDayStillOutstanding() {
         val state = WeeklyPlanViewModel.stateFor(SampleWorkoutData.weekOne)
 
-        assertThat(state.todaysDay?.title).isEqualTo("Cardio & Core")
+        assertThat(state.nextWorkout?.day?.title).isEqualTo("Cardio & Core")
     }
     private fun weekStarting(start: Long, vararg statuses: WorkoutStatus) = storedPlan.copy(
         startDateMillis = start,
@@ -180,10 +181,9 @@ class WeeklyPlanViewModelTest {
 
     @Test
     fun aFinishedWeekCanStartTheNextOne() {
-        val start = WorkoutWeek.mondayOf(1_755_000_000_000L)
+        val start = mondayOf(1_755_000_000_000L)
         val state = WeeklyPlanViewModel.stateFor(
             plan = weekStarting(start, WorkoutStatus.COMPLETED, WorkoutStatus.COMPLETED),
-            isSample = false,
             nowMillis = start + TimeUnit.DAYS.toMillis(2)
         )
 
@@ -193,10 +193,9 @@ class WeeklyPlanViewModelTest {
     // A missed day must not strand the plan, so a week whose dates have run out also leads on
     @Test
     fun anExpiredWeekCanStartTheNextOneEvenUnfinished() {
-        val start = WorkoutWeek.mondayOf(1_755_000_000_000L)
+        val start = mondayOf(1_755_000_000_000L)
         val state = WeeklyPlanViewModel.stateFor(
             plan = weekStarting(start, WorkoutStatus.COMPLETED, WorkoutStatus.NOT_STARTED),
-            isSample = false,
             nowMillis = start + TimeUnit.DAYS.toMillis(8)
         )
 
@@ -205,10 +204,9 @@ class WeeklyPlanViewModelTest {
 
     @Test
     fun anUnfinishedWeekStillRunningCannotSkipAhead() {
-        val start = WorkoutWeek.mondayOf(1_755_000_000_000L)
+        val start = mondayOf(1_755_000_000_000L)
         val state = WeeklyPlanViewModel.stateFor(
             plan = weekStarting(start, WorkoutStatus.COMPLETED, WorkoutStatus.NOT_STARTED),
-            isSample = false,
             nowMillis = start + TimeUnit.DAYS.toMillis(2)
         )
 
@@ -310,10 +308,9 @@ class WeeklyPlanViewModelTest {
     // Missed is derived from the calendar, never stored, so moving a day later un-misses it
     @Test
     fun anUnfinishedDayThatHasPassedReadsAsMissed() {
-        val start = WorkoutWeek.mondayOf(1_755_000_000_000L)
+        val start = mondayOf(1_755_000_000_000L)
         val state = WeeklyPlanViewModel.stateFor(
             plan = weekOfSessions(start, WorkoutStatus.NOT_STARTED, WorkoutStatus.NOT_STARTED),
-            isSample = false,
             nowMillis = start + TimeUnit.DAYS.toMillis(1)
         )
 
@@ -323,10 +320,9 @@ class WeeklyPlanViewModelTest {
 
     @Test
     fun aFinishedDayInThePastIsNotMissed() {
-        val start = WorkoutWeek.mondayOf(1_755_000_000_000L)
+        val start = mondayOf(1_755_000_000_000L)
         val state = WeeklyPlanViewModel.stateFor(
             plan = weekOfSessions(start, WorkoutStatus.COMPLETED),
-            isSample = false,
             nowMillis = start + TimeUnit.DAYS.toMillis(3)
         )
 
@@ -336,10 +332,9 @@ class WeeklyPlanViewModelTest {
     // Frozen means a day whose date has gone: it can be neither dragged nor dropped onto
     @Test
     fun everyDayThatHasPassedIsFrozen() {
-        val start = WorkoutWeek.mondayOf(1_755_000_000_000L)
+        val start = mondayOf(1_755_000_000_000L)
         val state = WeeklyPlanViewModel.stateFor(
             plan = weekOfSessions(start, WorkoutStatus.NOT_STARTED, WorkoutStatus.NOT_STARTED),
-            isSample = false,
             nowMillis = start + TimeUnit.DAYS.toMillis(1)
         )
 
@@ -349,10 +344,9 @@ class WeeklyPlanViewModelTest {
 
     @Test
     fun theStartButtonSkipsDaysThatHavePassed() {
-        val start = WorkoutWeek.mondayOf(1_755_000_000_000L)
+        val start = mondayOf(1_755_000_000_000L)
         val state = WeeklyPlanViewModel.stateFor(
             plan = weekOfSessions(start, WorkoutStatus.NOT_STARTED, WorkoutStatus.NOT_STARTED),
-            isSample = false,
             nowMillis = start + TimeUnit.DAYS.toMillis(1)
         )
 
@@ -362,7 +356,7 @@ class WeeklyPlanViewModelTest {
 
     @Test
     fun theStartButtonNamesTheNextDayWhenThereIsNoneToday() {
-        val start = WorkoutWeek.mondayOf(1_755_000_000_000L)
+        val start = mondayOf(1_755_000_000_000L)
         val state = WeeklyPlanViewModel.stateFor(
             // Sessions on Monday and Wednesday, looked at on Tuesday.
             plan = storedPlan.copy(
@@ -376,7 +370,6 @@ class WeeklyPlanViewModelTest {
                     )
                 }
             ),
-            isSample = false,
             nowMillis = start + TimeUnit.DAYS.toMillis(1)
         )
 
@@ -386,10 +379,9 @@ class WeeklyPlanViewModelTest {
 
     @Test
     fun theStartButtonFallsBackToAMissedDayWhenNothingIsLeft() {
-        val start = WorkoutWeek.mondayOf(1_755_000_000_000L)
+        val start = mondayOf(1_755_000_000_000L)
         val state = WeeklyPlanViewModel.stateFor(
             plan = weekOfSessions(start, WorkoutStatus.NOT_STARTED),
-            isSample = false,
             nowMillis = start + TimeUnit.DAYS.toMillis(5)
         )
 
@@ -413,7 +405,7 @@ class WeeklyPlanViewModelTest {
 
     @Test
     fun aFinishedWeekHasNoNextWorkoutToStart() {
-        val start = WorkoutWeek.mondayOf(1_755_000_000_000L)
+        val start = mondayOf(1_755_000_000_000L)
         val state = WeeklyPlanViewModel.stateFor(
             plan = weekOfSessions(start, WorkoutStatus.COMPLETED, WorkoutStatus.COMPLETED),
             nowMillis = start + TimeUnit.DAYS.toMillis(2)
@@ -425,7 +417,7 @@ class WeeklyPlanViewModelTest {
 
     @Test
     fun aWeekWithWorkLeftStillOffersIt() {
-        val start = WorkoutWeek.mondayOf(1_755_000_000_000L)
+        val start = mondayOf(1_755_000_000_000L)
         val state = WeeklyPlanViewModel.stateFor(
             plan = weekOfSessions(start, WorkoutStatus.COMPLETED, WorkoutStatus.NOT_STARTED),
             nowMillis = start + TimeUnit.DAYS.toMillis(1)

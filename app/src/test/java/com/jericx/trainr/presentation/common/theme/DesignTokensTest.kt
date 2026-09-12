@@ -56,7 +56,7 @@ class DesignTokensTest {
             assertThat(onSurface).isEqualTo(Slate800)
             assertThat(onSurfaceMuted).isEqualTo(TextMuted)
             assertThat(outlineControl).isEqualTo(Color(0xFF808E95))
-            assertThat(statusDoneEdge).isEqualTo(StatusCompleted)
+            assertThat(statusDoneEdge).isEqualTo(Color(0xFF5F8C32))
             assertThat(outlineDivider).isEqualTo(DividerGray)
             assertThat(raisedEdge).isEqualTo(Color.Transparent)
             assertThat(accentRule).isEqualTo(Color.Transparent)
@@ -97,7 +97,7 @@ class DesignTokensTest {
     @Test
     fun addedTokensKeepTheLightValuesTheirSitesRendered() {
         with(LightTrainrColors) {
-            assertThat(surfacePanel).isEqualTo(SurfaceLight)
+            assertThat(surfacePanel).isEqualTo(Color(0xFFFAFAFA))
             assertThat(onSurfaceStrong).isEqualTo(Color.Black)
             assertThat(cardEdge).isEqualTo(Slate800)
             assertThat(cardRule).isEqualTo(Slate800)

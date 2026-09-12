@@ -1,9 +1,14 @@
 package com.jericx.trainr.presentation.workout.model
 
 import com.google.common.truth.Truth.assertThat
+import com.jericx.trainr.data.catalog.ExerciseCatalogReader
+import com.jericx.trainr.domain.catalog.InjuryGuard
+import com.jericx.trainr.domain.generation.Prescription
+import com.jericx.trainr.domain.generation.PrescriptionUnit
+import com.jericx.trainr.domain.model.ExerciseMeasure
+import com.jericx.trainr.domain.model.Injury
+import java.io.File
 import com.jericx.trainr.domain.model.ExerciseSet
-import com.jericx.trainr.domain.model.UnitSystem
-import com.jericx.trainr.domain.model.WeightUnit
 import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.model.WorkoutExercise
 import com.jericx.trainr.domain.model.WorkoutStatus
@@ -15,8 +20,6 @@ class RoutineMapperTest {
         name: String,
         exerciseKey: String = "",
         durationMinutes: Int = 5,
-        prescription: String = "3 sets of 10 reps",
-        instructions: String = "Do the thing.",
         videoTutorialUrl: String? = null,
         isCompleted: Boolean = false,
         sets: List<ExerciseSet> = emptyList()
@@ -24,8 +27,6 @@ class RoutineMapperTest {
         name = name,
         exerciseKey = exerciseKey,
         durationMinutes = durationMinutes,
-        prescription = prescription,
-        instructions = instructions,
         videoTutorialUrl = videoTutorialUrl,
         isCompleted = isCompleted,
         sets = sets
@@ -52,8 +53,6 @@ class RoutineMapperTest {
             exercise(
                 name = "Bicycle Crunches",
                 durationMinutes = 5,
-                prescription = "3 sets of 20 reps",
-                instructions = "Alternating elbow-to-knee twists.",
                 videoTutorialUrl = "https://youtu.be/kDPxFoCmb-w",
                 isCompleted = true
             )
@@ -64,8 +63,7 @@ class RoutineMapperTest {
             assertThat(position).isEqualTo(1)
             assertThat(name).isEqualTo("Bicycle Crunches")
             assertThat(minutes).isEqualTo(5)
-            assertThat(detail).isEqualTo("3 sets of 20 reps")
-            assertThat(description).isEqualTo("Alternating elbow-to-knee twists.")
+            assertThat(description).isEmpty()
             assertThat(videoUrl).isEqualTo("https://youtu.be/kDPxFoCmb-w")
             assertThat(isCompleted).isTrue()
         }
@@ -83,7 +81,7 @@ class RoutineMapperTest {
     @Test
     fun keepsTheTotalSeparateFromThePrescription() {
         val routine = day(
-            exercise(name = "Intervals", durationMinutes = 10, prescription = "5 sets of 1 minute")
+            exercise(name = "Intervals", durationMinutes = 10)
         ).toRoutineUi()
 
         assertThat(routine.exercises.single().minutes).isEqualTo(10)
@@ -146,30 +144,61 @@ class RoutineMapperTest {
         assertThat(routine.exercises.single().videoUrl).isEqualTo("https://youtu.be/abcdefghijk")
     }
 
-    // 20 kg is 44.09 lb, which is not a dumbbell anyone owns.
-    @Test
-    fun aClientInPoundsIsPrescribedAWeightTheyCanLoad() {
-        val routine = day(loaded(20f)).toRoutineUi(units = UnitSystem.IMPERIAL)
+    private val catalog = ExerciseCatalogReader.read(File("src/main/assets/exercise-catalog.json").readText())
 
-        val target = routine.exercises.single().sets.single().targetWeightKg!!
-        assertThat(WeightUnit.forDisplay(target, UnitSystem.IMPERIAL)).isEqualTo(45f)
+    @Test
+    fun theCatalogSaysHowAMovementIsDone() {
+        val routine = day(exercise("Goblet Squat", exerciseKey = "goblet_squat"))
+            .toRoutineUi(catalog = catalog)
+
+        assertThat(routine.exercises.single().description).isEqualTo(catalog["goblet_squat"]!!.summary)
     }
 
     @Test
-    fun aClientInKilogramsKeepsThePrescriptionAsWritten() {
-        val routine = day(loaded(12f)).toRoutineUi(units = UnitSystem.METRIC)
+    fun theChipIsReadOffTheSets() {
+        val routine = day(
+            exercise(
+                "Squat",
+                sets = (1..3).map { ExerciseSet(setNumber = it, targetReps = 10) }
+            )
+        ).toRoutineUi()
 
-        assertThat(routine.exercises.single().sets.single().targetWeightKg).isEqualTo(12f)
+        assertThat(routine.exercises.single().prescription)
+            .isEqualTo(Prescription.Fixed(3, PrescriptionUnit.REPS, 10, perSide = false))
     }
 
-    // Ticking an exercise off logs its target, so the stored number must be the one shown
     @Test
-    fun loggingAPrescriptionRecordsTheWeightThatWasShown() {
-        val logged = day(loaded(20f))
-            .toRoutineUi(units = UnitSystem.IMPERIAL)
-            .toggleCompleted(1)
+    fun aOneSidedMovementIsCountedPerSide() {
+        val oneSided = catalog.all.first { it.unilateral && it.measure != ExerciseMeasure.DURATION }
 
-        val actual = logged.exercises.single().sets.single().actualWeightKg!!
-        assertThat(WeightUnit.forDisplay(actual, UnitSystem.IMPERIAL)).isEqualTo(45f)
+        val routine = day(
+            exercise(oneSided.name, exerciseKey = oneSided.key, sets = listOf(ExerciseSet(setNumber = 1, targetReps = 8)))
+        ).toRoutineUi(catalog = catalog)
+
+        assertThat((routine.exercises.single().prescription as Prescription.Fixed).perSide).isTrue()
+    }
+
+    @Test
+    fun aMovementAnInjuryAsksCareWithSaysWhichOnlyForThatClient() {
+        val squat = catalog.all.first { InjuryGuard.cautionFor(it, listOf(Injury.KNEE)) != null }
+        val day = day(exercise(squat.name, exerciseKey = squat.key))
+
+        assertThat(day.toRoutineUi(catalog = catalog, injuries = listOf(Injury.KNEE)).exercises.single().caution)
+            .isEqualTo(Injury.KNEE)
+        assertThat(day.toRoutineUi(catalog = catalog).exercises.single().caution).isNull()
+    }
+
+    // Never lifted before means the weight is the app's guess; once there is
+    // history, it is the client's own number moved on.
+    @Test
+    fun aWeightNeverLiftedBeforeIsMarkedAsAGuess() {
+        val weighted = loaded(20f).copy(exerciseKey = "goblet_squat", measure = ExerciseMeasure.WEIGHT_AND_REPS)
+        val history = listOf(ExerciseSet(setNumber = 1, actualReps = 10, actualWeightKg = 20f, isCompleted = true))
+
+        assertThat(day(weighted).toRoutineUi().exercises.single().isEstimated).isTrue()
+        assertThat(day(weighted).toRoutineUi(previousByKey = mapOf("goblet_squat" to history)).exercises.single().isEstimated)
+            .isFalse()
+        assertThat(day(exercise("Push Up", sets = listOf(ExerciseSet(setNumber = 1, targetReps = 10))))
+            .toRoutineUi().exercises.single().isEstimated).isFalse()
     }
 }

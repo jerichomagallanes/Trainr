@@ -20,7 +20,7 @@ object BodyMetricsConverter {
     // A pasted measurement often carries the prime marks, and iOS substitutes curly
     // quotes as they are typed. The filter and the parser both speak straight quotes,
     // and both apps accept the same input.
-    fun straightenQuotes(text: String): String {
+    private fun straightenQuotes(text: String): String {
         var straightened = text
         for (curly in listOf('\u2018', '\u2019', '\u2032')) {
             straightened = straightened.replace(curly, '\'')
