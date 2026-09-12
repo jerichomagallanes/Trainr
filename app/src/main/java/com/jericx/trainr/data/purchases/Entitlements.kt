@@ -81,7 +81,7 @@ class Entitlements(
     }
 
     companion object {
-        private const val ENTITLEMENT = "trainr_ai_workout_plans_pro"
+        private const val ENTITLEMENT = "trainr_workout_planner_pro"
 
         // A public SDK key is meant to ship in the binary; the secret key is
         // never in the app.

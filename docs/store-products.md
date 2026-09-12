@@ -21,9 +21,9 @@ move between them and the store handles proration.
 
 RevenueCat:
 
-- Entitlement: `trainr_ai_workout_plans_pro` (the name predates the on-device
-  generator; it is an internal id, so it was left alone rather than migrated).
-  All three products attach to it.
+- Entitlement: `trainr_workout_planner_pro`. All three products attach to it.
+  Both apps hard-code this string, so renaming it in the dashboard un-Pros every
+  build already installed until it is updated.
 - Offering: `default`, current. Packages `$rc_monthly`, `$rc_annual` and
   `$rc_lifetime`, each pointing at the matching product on both stores.
 - App keys: the iOS app's public key (`appl_…`) lives in
@@ -87,7 +87,7 @@ the internal-testing build are not charged.
    `.p8` key, Key ID, Issuer ID) and *Play Store* (package `com.jericx.trainr`,
    the service-account JSON).
 2. **Products** → import or add the six store products above.
-3. **Entitlements** → `trainr_ai_workout_plans_pro` → attach all six.
+3. **Entitlements** → `trainr_workout_planner_pro` → attach all six.
 4. **Offerings** → `default` → packages `$rc_monthly`, `$rc_annual`,
    `$rc_lifetime`, each with its Apple and Google product. Mark the offering
    current.
