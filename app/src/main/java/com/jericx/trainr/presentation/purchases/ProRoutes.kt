@@ -28,9 +28,11 @@ fun ProPaywallRoute(reason: PaywallReason?, onClose: () -> Unit) {
         plans = state.plans,
         selectedId = state.selectedId,
         isWorking = state.isWorking,
+        noticeRes = state.noticeRes,
         onSelect = viewModel::select,
         onBuy = { (context as? ComponentActivity)?.let(viewModel::buy) },
         onRestore = viewModel::restore,
+        onNoticeShown = viewModel::noticeShown,
         onClose = onClose,
         onOpenLink = { context.openLink(it) }
     )
@@ -49,7 +51,9 @@ fun ProRoute(onClose: () -> Unit) {
     if (state.isPro) {
         ProStatusScreen(
             isWorking = state.isWorking,
+            noticeRes = state.noticeRes,
             onRestore = viewModel::restore,
+            onNoticeShown = viewModel::noticeShown,
             onOpenLink = { context.openLink(it) }
         )
     } else {
@@ -58,9 +62,11 @@ fun ProRoute(onClose: () -> Unit) {
             plans = state.plans,
             selectedId = state.selectedId,
             isWorking = state.isWorking,
+            noticeRes = state.noticeRes,
             onSelect = viewModel::select,
             onBuy = { (context as? ComponentActivity)?.let(viewModel::buy) },
             onRestore = viewModel::restore,
+            onNoticeShown = viewModel::noticeShown,
             onClose = onClose,
             onOpenLink = { context.openLink(it) }
         )

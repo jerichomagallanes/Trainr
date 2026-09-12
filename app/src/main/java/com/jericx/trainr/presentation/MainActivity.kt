@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.NavHost
 import androidx.navigation.NavType
@@ -36,6 +37,7 @@ import com.jericx.trainr.BuildConfig
 import com.jericx.trainr.domain.diagnostics.Breadcrumbs
 import com.jericx.trainr.data.preferences.AppearanceMode
 import com.jericx.trainr.data.preferences.ThemePreferences
+import com.jericx.trainr.data.purchases.Entitlements
 import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.presentation.common.theme.DarkTrainrColors
@@ -66,7 +68,9 @@ import com.jericx.trainr.presentation.workout.NextWeekViewModel
 import com.jericx.trainr.presentation.workout.WeekCompletedScreen
 import com.jericx.trainr.presentation.workout.WeeklyProgressRoute
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import java.util.Locale
 
@@ -123,6 +127,9 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var breadcrumbs: Breadcrumbs
 
+    @Inject
+    lateinit var entitlements: Entitlements
+
     // The app ships English copy only, so dates and numbers have to be English
     // too, whatever the device says. The configured context must become the
     // activity's base before any resources are read, so it cannot move to
@@ -143,6 +150,8 @@ class MainActivity : ComponentActivity() {
         // starting window was drawn from: painting it either way replaces the
         // platform theme's background and shifts the navigation bar strip.
         startupOverride()?.let { window.setBackgroundDrawable(ColorDrawable(it)) }
+
+        lifecycleScope.launch(Dispatchers.IO) { entitlements.refresh() }
 
         val versionName = BuildConfig.VERSION_NAME
 

@@ -44,9 +44,11 @@ fun ProPaywallScreen(
     plans: List<PaywallPlan>,
     selectedId: String?,
     isWorking: Boolean,
+    @StringRes noticeRes: Int?,
     onSelect: (String) -> Unit,
     onBuy: () -> Unit,
     onRestore: () -> Unit,
+    onNoticeShown: () -> Unit,
     onClose: () -> Unit,
     onOpenLink: (String) -> Unit
 ) {
@@ -163,6 +165,7 @@ fun ProPaywallScreen(
             onBuy = onBuy,
             onClose = onClose
         )
+        ProNoticeDialog(noticeRes = noticeRes, onDismiss = onNoticeShown)
     }
 }
 
