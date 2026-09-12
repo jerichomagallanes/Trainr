@@ -51,6 +51,7 @@ fun ProRoute(onClose: () -> Unit) {
     if (state.isPro) {
         ProStatusScreen(
             isWorking = state.isWorking,
+            isLifetime = state.isLifetime,
             noticeRes = state.noticeRes,
             onRestore = viewModel::restore,
             onNoticeShown = viewModel::noticeShown,

@@ -25,6 +25,7 @@ class ProStatusScreenTest {
 
     private fun setScreen(
         noticeRes: Int? = null,
+        isLifetime: Boolean = false,
         onRestore: () -> Unit = {},
         onNoticeShown: () -> Unit = {},
         onOpenLink: (String) -> Unit = {}
@@ -33,6 +34,7 @@ class ProStatusScreenTest {
             TrainrTheme {
                 ProStatusScreen(
                     isWorking = false,
+                    isLifetime = isLifetime,
                     noticeRes = noticeRes,
                     onRestore = onRestore,
                     onNoticeShown = onNoticeShown,
@@ -43,10 +45,20 @@ class ProStatusScreenTest {
     }
 
     @Test
-    fun itSaysTheSubscriptionIsActive() {
+    fun itSaysProIsActive() {
         setScreen()
 
         composeTestRule.onNodeWithText(string(R.string.pro_active)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.pro_restore)).assertIsDisplayed()
+    }
+
+    // A lifetime purchase never renews, so there is no subscription to manage.
+    @Test
+    fun aLifetimeBuyerIsToldItIsForGoodAndHasNothingToManage() {
+        setScreen(isLifetime = true)
+
+        composeTestRule.onNodeWithText(string(R.string.pro_active_lifetime)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.pro_manage)).assertDoesNotExist()
         composeTestRule.onNodeWithText(string(R.string.pro_restore)).assertIsDisplayed()
     }
 

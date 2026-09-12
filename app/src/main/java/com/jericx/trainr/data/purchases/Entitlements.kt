@@ -27,6 +27,10 @@ class Entitlements(
     private val _isPro = MutableStateFlow(false)
     val isPro: StateFlow<Boolean> = _isPro.asStateFlow()
 
+    // A lifetime purchase has no expiry, and nothing to manage or cancel.
+    private val _isLifetime = MutableStateFlow(false)
+    val isLifetime: StateFlow<Boolean> = _isLifetime.asStateFlow()
+
     var offering: Offering? = null
         private set
 
@@ -69,8 +73,10 @@ class Entitlements(
     }
 
     private fun read(info: CustomerInfo): Boolean {
-        val active = info.entitlements.all[ENTITLEMENT]?.isActive == true
+        val pro = info.entitlements.all[ENTITLEMENT]
+        val active = pro?.isActive == true
         _isPro.value = active
+        _isLifetime.value = active && pro?.expirationDate == null
         return active
     }
 

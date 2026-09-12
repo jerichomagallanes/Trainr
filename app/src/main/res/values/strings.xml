@@ -329,11 +329,12 @@
     <string name="pro_subscribe">Subscribe</string>
     <string name="pro_not_now">Not now</string>
     <string name="pro_restore">Restore purchase</string>
-    <string name="pro_restored">Your subscription is back.</string>
+    <string name="pro_restored">Pro is back.</string>
     <string name="pro_nothing_to_restore">No purchase was found on this account.</string>
-    <string name="pro_active">Your subscription is active</string>
+    <string name="pro_active">Pro is active</string>
+    <string name="pro_active_lifetime">Pro is yours for good</string>
     <string name="pro_manage">Manage subscription</string>
-    <string name="pro_unavailable">Subscriptions are not available right now. Please try again later.</string>
+    <string name="pro_unavailable">Pro is not available right now. Please try again later.</string>
     <string name="pro_terms">Terms of Use</string>
     <string name="pro_privacy">Privacy Policy</string>
     <string name="pro_renewal_apple">Payment is charged to your Apple ID at confirmation. It renews automatically unless you cancel at least 24 hours before the period ends. Manage it in Settings.</string>
@@ -375,14 +376,14 @@
     <string name="pro_faq_human_q">Is my plan written by a real trainer?</string>
     <string name="pro_faq_human_a">No. Trainr builds it on your phone from the answers you gave, and progresses it from the sets you log. Plans are guidance, not medical advice.</string>
     <string name="pro_faq_renew_q">Does Pro renew automatically?</string>
-    <string name="pro_faq_renew_a">Yes. Monthly and Yearly renew at the end of each period, until you cancel.</string>
+    <string name="pro_faq_renew_a">Monthly and Yearly renew at the end of each period until you cancel. Lifetime is a single payment and never renews.</string>
     <string name="pro_faq_cancel_q">Can I cancel any time?</string>
     <string name="pro_faq_cancel_a">Yes. You keep Pro until the period you have paid for ends, and nothing you have generated or logged is taken away.</string>
     <string name="pro_faq_devices_q">What happens if I get a new phone?</string>
     <string name="pro_faq_devices_a">Pro follows your Google account, not the device. Sign in with the same Google account and tap Restore purchase. Trainr has no accounts of its own, so a purchase made on iOS does not unlock Android.</string>
     <string name="pro_faq_free_q">What stays free?</string>
     <string name="pro_faq_free_a">Your first week, every set you log, the rest timer, the video on every exercise, all your past weeks and progress, and repeating a week as often as you like.</string>
-    <string name="pro_support_trouble">Having trouble with your subscription?</string>
+    <string name="pro_support_trouble">Having trouble with your purchase?</string>
 
     <!-- Trainr Pro contextual prompt -->
     <string name="pro_upgrade_title">Upgrade to Trainr Pro</string>
