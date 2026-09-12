@@ -3,8 +3,8 @@
 How a week is made. Two owners now, no model: the **app** decides everything
 numeric and which movement fills each slot, and the **catalog** says what every
 movement is and how it is done. The executable authority is the code on both
-platforms and its tests: `PlanSkeletonBuilder`, `TemplatePlanGenerator`,
-`CarryForwardPlanGenerator`, `PlanExpander` and `GeneratedPlanParser`. This
+platforms and its tests: `PlanSkeletonBuilder`, `WeekPlanGenerator`,
+`PlanExpander` and `GeneratedPlanParser`. This
 document is the annotated version.
 
 A remote model used to choose the movements. It was measured against the app's
@@ -19,8 +19,8 @@ that came with them.
 | --- | --- | --- |
 | The split, which weekdays, how many slots a day holds, what each slot is for | App | `PlanSkeletonBuilder` |
 | Each slot's candidates: owned kit only, nothing an injury rules out, ranked, last week's first | App | `PlanSkeletonBuilder`, `InjuryGuard` |
-| Which candidate fills each open slot | App: last week's, or one of the slot's best two, seeded from the client's answers | `CarryForwardPlanGenerator`, `TemplatePlanGenerator` |
-| Each session's title | App: the session's focus, or last week's title when the week is carried forward | `PlanSkeletonBuilder`, `CarryForwardPlanGenerator` |
+| Which candidate fills each open slot | App: last week's, or one of the slot's best two, seeded from the client's answers | `WeekPlanGenerator` |
+| Each session's title | App: the session's focus, or last week's title when the week is carried forward | `PlanSkeletonBuilder`, `WeekPlanGenerator` |
 | Sets per slot, rest between them, the session's length | App | `SessionBudget`, `PlanSkeletonBuilder` |
 | Reps, seconds and weight for every set | App | `ProgressionEngine`, `SeedLoad`, `LoadStep`, `RepWindow` |
 | A lighter week | App | `DeloadCheck` |
@@ -35,17 +35,21 @@ skeleton. Each was once a rule a model could disobey; each is now a mechanism
 nothing reaches around. A movement an injury rules out is on no slot's list, so the
 filter is the whole of that obligation, and it has a test per injury.
 
-## Two tiers
+## One generator, two ways to choose
 
-1. **Progressed** — `CarryForwardPlanGenerator`. Next week is last week's
-   movements, progressed from what was lifted. Taken only when every one of
-   last week's movements still has a slot that offers it on the same day; a
-   profile edit that rules one out, or a different number of days, hands the
-   week on. Regenerating a week asks for new movements
-   (`PlanRequest.freshCast`) and never takes this tier.
-2. **Template** — `TemplatePlanGenerator`. A movement for every slot from the
-   catalog, chosen as described below, then expanded. It fails only when the
-   catalog is empty or cannot fill the skeleton.
+`WeekPlanGenerator` builds the skeleton once, then:
+
+1. **Carries last week forward** when there is a previous week, the request is
+   not for a fresh cast, and every one of last week's movements still has a
+   slot that offers it on the same day. A profile edit that rules one out, or a
+   different number of days, means it cannot. Regenerating a week asks for new
+   movements (`PlanRequest.freshCast`) and never carries.
+2. **Chooses** otherwise — a movement for every slot from the catalog, as
+   described below.
+
+Either selection is expanded and parsed against the skeleton's own limits. A
+carried week the parser turns down falls back to a fresh choice; a chosen week
+it turns down is `Failed`, which only an empty or unfillable catalog produces.
 
 **One free week.** Every path that produces a week — the first plan, next
 week, regenerating this week, and repeating a week — goes through `ProGate`,
@@ -60,7 +64,7 @@ keyed by the skeleton's own ids. An empty selection is a complete answer: the
 top of every list. A slot with a single candidate is already decided and is not
 chosen for.
 
-`TemplatePlanGenerator` fills it so that two clients who answered the same way
+`WeekPlanGenerator` fills it so that two clients who answered the same way
 do not train the same week for ever, and the same client rebuilding the same
 week gets the same movements:
 
@@ -97,8 +101,8 @@ give the same week for the same answers.
 - A starting weight lighter than an empty bar, or a movement the client has
   outgrown, is answered with the next candidate on the list, at most three.
 - Rest is the skeleton's; timed sets never exceed what the day budgeted.
-- The how-to is the catalog's summary; the stored prescription is blank,
-  because the chip is read off the sets.
+- The how-to and the chip are not stored with the week: the card reads the
+  catalog's summary and derives the chip from the sets.
 - A session's title falls back to its focus and is cut to 40 characters.
 
 ## Parser — a net over the app's own arithmetic
