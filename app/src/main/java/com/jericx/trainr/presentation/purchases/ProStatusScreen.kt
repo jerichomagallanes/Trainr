@@ -6,13 +6,19 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.jericx.trainr.R
@@ -37,45 +43,56 @@ fun ProStatusScreen(
     val colors = MaterialTheme.trainrColors
 
     TrainrScreenContent(modifier = Modifier.background(colors.surfacePage)) {
-        Text(
-            text = stringResource(R.string.pro_name).uppercase(),
-            style = MaterialTheme.typography.labelSmall,
-            color = colors.onBrand,
-            modifier = Modifier
-                .clip(RoundedCornerShape(Spacing.extraSmall))
-                .background(colors.brandLarge)
-                .padding(horizontal = Spacing.extraSmall, vertical = 3.dp)
-        )
-        TrainrScreenTitle(
-            text = stringResource(if (isLifetime) R.string.pro_active_lifetime else R.string.pro_active)
-        )
-        Column(
-            modifier = Modifier.padding(top = Spacing.section),
-            verticalArrangement = Arrangement.spacedBy(Spacing.medium)
-        ) {
-            PaywallReason.entries.forEach { feature ->
-                Text(
-                    text = stringResource(feature.heading),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = colors.onSurface
+        Column(verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
+            Text(
+                text = stringResource(R.string.pro_name).uppercase(),
+                style = MaterialTheme.typography.labelSmall,
+                color = colors.onBrand,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(Spacing.extraSmall))
+                    .background(colors.brandLarge)
+                    .padding(horizontal = Spacing.extraSmall, vertical = 3.dp)
+            )
+            TrainrScreenTitle(
+                text = stringResource(
+                    if (isLifetime) R.string.pro_active_lifetime else R.string.pro_active
                 )
+            )
+        }
+        Spacer(modifier = Modifier.height(Spacing.section))
+        Column(verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
+            PaywallReason.entries.forEach { feature ->
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Icon(
+                        painter = painterResource(feature.icon),
+                        contentDescription = null,
+                        tint = colors.brandStrong,
+                        modifier = Modifier.size(FEATURE_ICON)
+                    )
+                    Text(
+                        text = stringResource(feature.heading),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = colors.onSurface
+                    )
+                }
             }
         }
-        Column(
-            modifier = Modifier.padding(top = Spacing.section),
-            verticalArrangement = Arrangement.spacedBy(Spacing.medium)
-        ) {
+        Spacer(modifier = Modifier.height(Spacing.sectionGap))
+        Column(verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
             if (!isLifetime) {
                 Text(
                     text = stringResource(R.string.pro_manage),
-                    style = MaterialTheme.typography.labelLarge,
+                    style = MaterialTheme.typography.labelMedium,
                     color = colors.brandStrong,
                     modifier = Modifier.clickable { onOpenLink(ProLinks.SUBSCRIPTIONS) }
                 )
             }
             Text(
                 text = stringResource(R.string.pro_restore),
-                style = MaterialTheme.typography.labelLarge,
+                style = MaterialTheme.typography.labelMedium,
                 color = colors.brandStrong,
                 modifier = Modifier.clickable(enabled = !isWorking, onClick = onRestore)
             )
@@ -94,6 +111,9 @@ fun ProStatusScreen(
                 )
             }
         }
+        Spacer(modifier = Modifier.height(Spacing.large))
         ProNoticeDialog(noticeRes = noticeRes, onDismiss = onNoticeShown)
     }
 }
+
+internal val FEATURE_ICON = 28.dp
