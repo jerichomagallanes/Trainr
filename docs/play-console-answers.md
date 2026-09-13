@@ -21,8 +21,9 @@ Play's Families policy draw around collecting personal data, which this app does
 **Yes.**
 
 ### Is all of the user data collected by your app encrypted in transit?
-**Yes.** The only thing that leaves the device is a crash report to Firebase
-Crashlytics, over HTTPS.
+**Yes.** Everything that leaves the device goes over HTTPS: crash reports to
+Firebase Crashlytics, purchase receipts to RevenueCat, and ad requests to
+Google AdMob.
 
 ### Do you provide a way for users to request that their data is deleted?
 **Yes.** Uninstalling the app deletes everything; Android's Clear storage does
@@ -30,8 +31,9 @@ the same without uninstalling. Nothing is held off the device to delete.
 
 ### Data types
 
-Eight rows. For the five Trainr rows: **collected = yes, shared = no, processed
-ephemerally = no, required = yes**. The three AdMob rows are **shared = yes**,
+Nine rows. For the six Trainr and RevenueCat rows: **collected = yes, shared =
+no, processed ephemerally = no, required = yes**. The three AdMob rows are
+**shared = yes**,
 because Google uses them for its own advertising business, not only on our
 behalf; Google's own answer sheet for its SDK is at
 https://developers.google.com/admob/android/privacy/play-data-disclosure and
@@ -43,6 +45,7 @@ these rows follow it. Purpose differs per row, so it is in the table.
 | Health and fitness | **Health info** | **No** | App functionality | Height, weight and injuries. Used on the device to write the plan; never sent. |
 | Health and fitness | **Fitness info** | **No** | App functionality | Goal, experience, equipment, schedule, and the sets and reps you log. Used on the device so the next week progresses from the last; never sent. |
 | App info and performance | **Crash logs** | **No** | Analytics | Stack traces, device state and the hand-written trail. Play defines the Analytics purpose as "monitoring app health, diagnose and fix bugs or crashes", which is exactly this and is not App functionality. |
+| Financial info | **Purchase history** | **No** | App functionality, Analytics | Trainr Pro purchases, verified through RevenueCat, which is a service provider and keeps them so a reinstall can restore Pro. RevenueCat's own guidance names exactly this row and no other: https://www.revenuecat.com/docs/platform-resources/google-platform-resources/google-plays-data-safety |
 | Device or other IDs | **Device or other IDs** | **No** | Analytics | The Crashlytics installation UUID, which tells one crash apart from the same crash twice. Play's definition of this type names Firebase installation IDs, so it is declarable. |
 | Device or other IDs | **Device or other IDs** | **Yes** | Advertising or marketing | The advertising ID, read by the AdMob SDK for the one banner on the free tier's weekly plan. The SDK adds `com.google.android.gms.permission.AD_ID` to the manifest itself. |
 | Location | **Approximate location** | **Yes** | Advertising or marketing, Analytics | Inferred by Google from the IP address of the ad request; the app never asks for location permission. |
@@ -60,8 +63,10 @@ processes user data on behalf of the developer and based on the developer's
 instructions". The distinction Google draws is whether the recipient uses the
 data for its own purposes.
 
-**Crashlytics is a service provider.** It processes crash reports on our behalf
-and for no purpose of its own, so those rows are collected but not shared. The
+**Crashlytics and RevenueCat are service providers.** They process crash reports
+and purchase receipts on our behalf and for no purpose of their own, so those
+rows are collected but not shared. **AdMob is not**: Google uses ad data for its
+own advertising business, which is why its three rows are shared. The
 profile and training rows never leave the device at all: the plan is built by
 the app from the bundled catalog.
 
