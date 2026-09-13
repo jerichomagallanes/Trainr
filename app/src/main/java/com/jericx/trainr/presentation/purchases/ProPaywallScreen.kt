@@ -1,18 +1,23 @@
 package com.jericx.trainr.presentation.purchases
 
 import androidx.compose.foundation.background
+import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,6 +28,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -75,11 +82,17 @@ fun ProPaywallScreen(
             )
             TrainrScreenTitle(text = stringResource(R.string.pro_full_access))
             Column(
-                modifier = Modifier.padding(top = Spacing.large),
+                modifier = Modifier.padding(top = Spacing.section),
                 verticalArrangement = Arrangement.spacedBy(Spacing.medium)
             ) {
                 if (reason != null) {
                     Column(verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
+                        Icon(
+                            painter = painterResource(reason.icon),
+                            contentDescription = null,
+                            tint = colors.brandStrong,
+                            modifier = Modifier.size(REASON_ICON)
+                        )
                         TrainrSectionTitle(text = stringResource(reason.heading))
                         Text(
                             text = stringResource(reason.detail),
@@ -94,7 +107,7 @@ fun ProPaywallScreen(
                     }
                     Text(
                         text = stringResource(R.string.pro_and_more),
-                        style = MaterialTheme.typography.labelLarge,
+                        style = MaterialTheme.typography.labelMedium,
                         color = colors.onSurface
                     )
                 } else {
@@ -106,11 +119,13 @@ fun ProPaywallScreen(
                 }
                 (reason?.others ?: PaywallReason.entries).forEach { feature ->
                     Feature(
+                        iconRes = feature.icon,
                         heading = stringResource(feature.heading),
                         detail = stringResource(feature.detail)
                     )
                 }
                 Feature(
+                    iconRes = R.drawable.ic_favorite,
                     heading = stringResource(R.string.pro_feature_support_title),
                     detail = stringResource(R.string.pro_feature_support_body)
                 )
@@ -118,7 +133,7 @@ fun ProPaywallScreen(
             Comparison()
             Questions()
             Column(
-                modifier = Modifier.padding(top = Spacing.section),
+                modifier = Modifier.padding(top = Spacing.sectionGap),
                 verticalArrangement = Arrangement.spacedBy(Spacing.small)
             ) {
                 // The full disclosure lives here rather than under the button:
@@ -176,28 +191,38 @@ private fun Comparison() {
     val colors = MaterialTheme.trainrColors
 
     Column(
-        modifier = Modifier.padding(top = Spacing.section),
+        modifier = Modifier.padding(top = Spacing.sectionGap),
         verticalArrangement = Arrangement.spacedBy(Spacing.small)
     ) {
         TrainrSectionTitle(text = stringResource(R.string.pro_compare_title))
         Row(modifier = Modifier.fillMaxWidth()) {
             Spacer(modifier = Modifier.weight(1f))
-            ColumnHead(stringResource(R.string.pro_compare_free))
-            ColumnHead(stringResource(R.string.pro_compare_pro))
+            ColumnHead(stringResource(R.string.pro_compare_free), isPro = false)
+            ColumnHead(stringResource(R.string.pro_compare_pro), isPro = true)
         }
         COMPARISON.forEach { row ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = stringResource(row.label),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = colors.onSurface,
-                    modifier = Modifier.weight(1f)
+            Column {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(1.dp)
+                        .background(colors.outlineDivider)
                 )
-                MarkCell(row.free, isPro = false)
-                MarkCell(row.pro, isPro = true)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = Spacing.small),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(row.label),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colors.onSurface,
+                        modifier = Modifier.weight(1f)
+                    )
+                    MarkCell(row.free)
+                    MarkCell(row.pro)
+                }
             }
         }
     }
@@ -235,27 +260,31 @@ private val COMPARISON = listOf(
 )
 
 @Composable
-private fun ColumnHead(text: String) {
+private fun ColumnHead(text: String, isPro: Boolean) {
+    val colors = MaterialTheme.trainrColors
     Text(
         text = text,
         style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.trainrColors.onSurfaceMuted,
+        color = if (isPro) colors.brandStrong else colors.onSurfaceMuted,
         textAlign = TextAlign.Center,
         modifier = Modifier.width(MARK_WIDTH)
     )
 }
 
 @Composable
-private fun MarkCell(mark: Mark, isPro: Boolean) {
+private fun MarkCell(mark: Mark) {
     val colors = MaterialTheme.trainrColors
     Text(
         text = when (mark) {
             Mark.Yes -> "\u2713"
-            Mark.No -> "\u2014"
+            Mark.No -> "\u2715"
             is Mark.Count -> stringResource(mark.res)
         },
-        style = MaterialTheme.typography.bodyMedium,
-        color = if (isPro) colors.brandStrong else colors.onSurfaceMuted,
+        style = when (mark) {
+            is Mark.Count -> MaterialTheme.typography.bodySmall
+            else -> MaterialTheme.typography.labelLarge
+        },
+        color = if (mark == Mark.Yes) colors.statusDoneInk else colors.onSurfaceMuted,
         textAlign = TextAlign.Center,
         modifier = Modifier.width(MARK_WIDTH)
     )
@@ -277,26 +306,42 @@ private fun Questions() {
     )
 
     Column(
-        modifier = Modifier.padding(top = Spacing.section),
+        modifier = Modifier.padding(top = Spacing.sectionGap),
         verticalArrangement = Arrangement.spacedBy(Spacing.small)
     ) {
         TrainrSectionTitle(text = stringResource(R.string.pro_questions))
         questions.forEach { (question, answer) ->
+            val isOpen = open == question
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(Spacing.small))
+                    .clip(MaterialTheme.shapes.medium)
                     .background(colors.surfaceSunken)
-                    .clickable { open = if (open == question) null else question }
-                    .padding(Spacing.medium),
-                verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)
+                    .clickable { open = if (isOpen) null else question }
+                    .padding(Spacing.card),
+                verticalArrangement = Arrangement.spacedBy(Spacing.small)
             ) {
-                Text(
-                    text = stringResource(question),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = colors.onSurface
-                )
-                if (open == question) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Text(
+                        text = stringResource(question),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = colors.onSurface,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Icon(
+                        painter = painterResource(R.drawable.ic_keyboard_arrow_up),
+                        contentDescription = null,
+                        tint = colors.onSurfaceMuted,
+                        modifier = Modifier
+                            .size(CHEVRON)
+                            .rotate(if (isOpen) 0f else 180f)
+                    )
+                }
+                if (isOpen) {
                     Text(
                         text = stringResource(answer),
                         style = MaterialTheme.typography.bodyMedium,
@@ -308,22 +353,35 @@ private fun Questions() {
     }
 }
 
-private val MARK_WIDTH = 64.dp
+private val MARK_WIDTH = 72.dp
+private val REASON_ICON = 30.dp
+private val CHEVRON = 16.dp
 
 @Composable
-private fun Feature(heading: String, detail: String) {
+private fun Feature(@DrawableRes iconRes: Int, heading: String, detail: String) {
     val colors = MaterialTheme.trainrColors
-    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(
-            text = heading,
-            style = MaterialTheme.typography.labelLarge,
-            color = colors.onSurface
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+        verticalAlignment = Alignment.Top
+    ) {
+        Icon(
+            painter = painterResource(iconRes),
+            contentDescription = null,
+            tint = colors.brandStrong,
+            modifier = Modifier.size(FEATURE_ICON)
         )
-        Text(
-            text = detail,
-            style = MaterialTheme.typography.bodyMedium,
-            color = colors.onSurfaceMuted
-        )
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                text = heading,
+                style = MaterialTheme.typography.labelLarge,
+                color = colors.onSurface
+            )
+            Text(
+                text = detail,
+                style = MaterialTheme.typography.bodyMedium,
+                color = colors.onSurfaceMuted
+            )
+        }
     }
 }
 
@@ -383,7 +441,7 @@ private fun PurchaseBar(
         }
         Text(
             text = stringResource(R.string.pro_not_now),
-            style = MaterialTheme.typography.labelLarge,
+            style = MaterialTheme.typography.labelMedium,
             color = colors.onSurfaceMuted,
             textAlign = TextAlign.Center,
             modifier = Modifier
@@ -419,10 +477,10 @@ private fun PlanCard(
 
     Column(
         modifier = modifier
-            .clip(RoundedCornerShape(Spacing.small))
+            .clip(MaterialTheme.shapes.medium)
             .background(if (isSelected) colors.surfaceSelected else colors.surfaceCard)
             .border(1.dp, if (isSelected) colors.brandLarge else colors.outlineControl,
-                RoundedCornerShape(Spacing.small))
+                MaterialTheme.shapes.medium)
             .clickable(onClick = onClick)
     ) {
         plan.savePercent?.let { saved ->
@@ -446,7 +504,7 @@ private fun PlanCard(
         ) {
             Text(
                 text = stringResource(plan.termRes),
-                style = MaterialTheme.typography.labelLarge,
+                style = MaterialTheme.typography.labelMedium,
                 color = ink
             )
             Text(text = plan.price, style = MaterialTheme.typography.titleSmall, color = ink)
