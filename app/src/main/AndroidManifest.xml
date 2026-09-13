@@ -15,6 +15,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Trainr"
         tools:targetApi="31">
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="${admobAppId}" />
         <!--
             Portrait is a design decision, not an oversight, so both lint
             warnings about it are answered here rather than left open.

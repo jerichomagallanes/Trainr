@@ -92,6 +92,14 @@ class ProPaywallScreenTest {
 
     // Opened from the profile menu, nothing was reached for, so nothing leads.
     @Test
+    fun itSellsTheEndOfAdsAsAFeatureAndARow() {
+        setScreen()
+
+        composeTestRule.onNodeWithText(string(R.string.pro_feature_ads_title)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.pro_compare_ads)).assertExists()
+    }
+
+    @Test
     fun withNoReasonNoFeatureLeads() {
         setScreen(reason = null)
 

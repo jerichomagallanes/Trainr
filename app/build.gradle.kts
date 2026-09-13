@@ -50,6 +50,18 @@ android {
         // Fallback for components that are not app variants (e.g. the unit test
         // manifest); real variants get a labelled name from androidComponents below.
         manifestPlaceholders["appName"] = "Trainr"
+
+        // AdMob identifiers are public, not secrets, but they are yours: they
+        // come from ~/.gradle/gradle.properties like the signing details, and a
+        // machine without them (CI included) builds against Google's test ids,
+        // which serve test ads and pay nothing.
+        manifestPlaceholders["admobAppId"] =
+            findProperty("ADMOB_APP_ID") as String? ?: "ca-app-pub-3940256099942544~3347511713"
+        buildConfigField(
+            "String",
+            "ADMOB_PLAN_BANNER_ID",
+            "\"${findProperty("ADMOB_PLAN_BANNER_ID") as String? ?: "ca-app-pub-3940256099942544/9214589741"}\""
+        )
     }
 
     buildFeatures {
@@ -221,6 +233,8 @@ dependencies {
     implementation(libs.youtube.player)
 
     implementation(libs.revenuecat)
+    implementation(libs.play.services.ads)
+    implementation(libs.user.messaging.platform)
 
     // Unit tests
     testImplementation(libs.junit)

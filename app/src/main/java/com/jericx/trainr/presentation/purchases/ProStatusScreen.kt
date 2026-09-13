@@ -76,6 +76,17 @@ fun ProStatusScreen(
                     )
                 }
             }
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+                    verticalAlignment = Alignment.Top
+                ) {
+                    FeatureGlyph(R.drawable.ic_ads_off)
+                    Text(
+                        text = stringResource(R.string.pro_feature_ads_title),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = colors.onSurface
+                    )
+                }
         }
         Spacer(modifier = Modifier.height(Spacing.sectionGap))
         Column(verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {

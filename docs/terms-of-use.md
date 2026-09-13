@@ -37,6 +37,16 @@ you tap play.
 The videos are free and stay free. Trainr Pro is sold for the plans it writes,
 never for access to a video, and nothing you pay for unlocks one.
 
+
+## The free tier carries an advertisement
+
+Without Trainr Pro the weekly plan shows one banner advertisement, served by
+Google AdMob under its own [terms](https://policies.google.com/terms) and the
+[Google Privacy Policy](http://www.google.com/policies/privacy). Trainr does
+not choose, endorse or control what is advertised, and a purchase you make from
+an advertiser is between you and them. Trainr Pro removes the advertisement for
+as long as it is active.
+
 ## Training is your risk to take
 
 **Trainr is not medical advice, and the plans are not written by a doctor or a

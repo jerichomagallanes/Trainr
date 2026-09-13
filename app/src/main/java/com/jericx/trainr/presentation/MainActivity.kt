@@ -37,6 +37,7 @@ import com.jericx.trainr.BuildConfig
 import com.jericx.trainr.domain.diagnostics.Breadcrumbs
 import com.jericx.trainr.data.preferences.AppearanceMode
 import com.jericx.trainr.data.preferences.ThemePreferences
+import com.jericx.trainr.data.ads.Ads
 import com.jericx.trainr.data.purchases.Entitlements
 import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.model.WorkoutDay
@@ -130,6 +131,9 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var entitlements: Entitlements
 
+    @Inject
+    lateinit var ads: Ads
+
     // The app ships English copy only, so dates and numbers have to be English
     // too, whatever the device says. The configured context must become the
     // activity's base before any resources are read, so it cannot move to
@@ -152,6 +156,7 @@ class MainActivity : ComponentActivity() {
         startupOverride()?.let { window.setBackgroundDrawable(ColorDrawable(it)) }
 
         lifecycleScope.launch(Dispatchers.IO) { entitlements.refresh() }
+        ads.gatherConsent(this)
 
         val versionName = BuildConfig.VERSION_NAME
 
