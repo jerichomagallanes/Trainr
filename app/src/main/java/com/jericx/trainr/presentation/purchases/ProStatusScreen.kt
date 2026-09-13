@@ -1,9 +1,11 @@
 package com.jericx.trainr.presentation.purchases
 
+import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -66,12 +68,7 @@ fun ProStatusScreen(
                     horizontalArrangement = Arrangement.spacedBy(Spacing.small),
                     verticalAlignment = Alignment.Top
                 ) {
-                    Icon(
-                        painter = painterResource(feature.icon),
-                        contentDescription = null,
-                        tint = colors.brandStrong,
-                        modifier = Modifier.size(FEATURE_ICON)
-                    )
+                    FeatureGlyph(feature.icon)
                     Text(
                         text = stringResource(feature.heading),
                         style = MaterialTheme.typography.labelLarge,
@@ -116,4 +113,19 @@ fun ProStatusScreen(
     }
 }
 
+// The glyph sits inside a fixed box, the way a symbol sits in its frame on iOS,
+// so a heart and a runner line up and neither fills the whole row height.
+@Composable
+internal fun FeatureGlyph(@DrawableRes iconRes: Int) {
+    Box(modifier = Modifier.size(FEATURE_ICON), contentAlignment = Alignment.Center) {
+        Icon(
+            painter = painterResource(iconRes),
+            contentDescription = null,
+            tint = MaterialTheme.trainrColors.brandStrong,
+            modifier = Modifier.size(FEATURE_GLYPH)
+        )
+    }
+}
+
 internal val FEATURE_ICON = 28.dp
+private val FEATURE_GLYPH = 20.dp

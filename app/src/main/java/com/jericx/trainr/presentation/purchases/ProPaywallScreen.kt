@@ -355,7 +355,7 @@ private fun Questions() {
 
 private val MARK_WIDTH = 72.dp
 private val REASON_ICON = 30.dp
-private val CHEVRON = 16.dp
+private val CHEVRON = 24.dp
 
 @Composable
 private fun Feature(@DrawableRes iconRes: Int, heading: String, detail: String) {
@@ -364,12 +364,7 @@ private fun Feature(@DrawableRes iconRes: Int, heading: String, detail: String) 
         horizontalArrangement = Arrangement.spacedBy(Spacing.small),
         verticalAlignment = Alignment.Top
     ) {
-        Icon(
-            painter = painterResource(iconRes),
-            contentDescription = null,
-            tint = colors.brandStrong,
-            modifier = Modifier.size(FEATURE_ICON)
-        )
+        FeatureGlyph(iconRes)
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
                 text = heading,
