@@ -17,19 +17,19 @@ enum class PaywallReason(
         prompt = R.string.pro_prompt_next_week,
         heading = R.string.pro_feature_next_week_title,
         detail = R.string.pro_feature_next_week_body,
-        icon = R.drawable.ic_calendar_today
+        icon = R.drawable.ic_sparkles
     ),
     REWRITE(
         prompt = R.string.pro_prompt_rewrite,
         heading = R.string.pro_feature_rewrite_title,
         detail = R.string.pro_feature_rewrite_body,
-        icon = R.drawable.ic_restart
+        icon = R.drawable.ic_rewrite
     ),
     FRESH_PLAN(
         prompt = R.string.pro_prompt_fresh,
         heading = R.string.pro_feature_fresh_title,
         detail = R.string.pro_feature_fresh_body,
-        icon = R.drawable.ic_directions_run
+        icon = R.drawable.ic_fresh_plan
     );
 
     // The rest of Pro, shown under the one that brought them here.
