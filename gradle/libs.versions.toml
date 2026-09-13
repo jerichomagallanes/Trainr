@@ -30,6 +30,8 @@ room = "2.8.4"
 youtube-player = "13.0.0"
 firebase-bom = "34.18.0"
 revenuecat = "10.20.0"
+play-services-ads = "25.4.0"
+user-messaging-platform = "4.0.0"
 google-services = "4.5.0"
 firebase-crashlytics-plugin = "3.0.8"
 
@@ -92,6 +94,8 @@ truth = { group = "com.google.truth", name = "truth", version.ref = "truth" }
 youtube-player = { group = "com.pierfrancescosoffritti.androidyoutubeplayer", name = "core", version.ref = "youtube-player" }
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebase-bom" }
 revenuecat = { group = "com.revenuecat.purchases", name = "purchases", version.ref = "revenuecat" }
+play-services-ads = { group = "com.google.android.gms", name = "play-services-ads", version.ref = "play-services-ads" }
+user-messaging-platform = { group = "com.google.android.ump", name = "user-messaging-platform", version.ref = "user-messaging-platform" }
 firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics" }
 
 [plugins]

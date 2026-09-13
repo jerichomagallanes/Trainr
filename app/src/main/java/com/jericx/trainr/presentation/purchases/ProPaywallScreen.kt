@@ -125,6 +125,11 @@ fun ProPaywallScreen(
                     )
                 }
                 Feature(
+                    iconRes = R.drawable.ic_ads_off,
+                    heading = stringResource(R.string.pro_feature_ads_title),
+                    detail = stringResource(R.string.pro_feature_ads_body)
+                )
+                Feature(
                     iconRes = R.drawable.ic_favorite,
                     heading = stringResource(R.string.pro_feature_support_title),
                     detail = stringResource(R.string.pro_feature_support_body)
@@ -256,7 +261,8 @@ private val COMPARISON = listOf(
     ),
     ComparisonRow(R.string.pro_compare_repeat, Mark.No, Mark.Yes),
     ComparisonRow(R.string.pro_compare_rewrite, Mark.No, Mark.Yes),
-    ComparisonRow(R.string.pro_compare_fresh, Mark.No, Mark.Yes)
+    ComparisonRow(R.string.pro_compare_fresh, Mark.No, Mark.Yes),
+    ComparisonRow(R.string.pro_compare_ads, Mark.No, Mark.Yes)
 )
 
 @Composable

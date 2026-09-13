@@ -49,6 +49,9 @@ import com.jericx.trainr.data.preferences.AppearanceMode
 import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.presentation.common.components.layout.TrainrTopBar
+import androidx.activity.compose.LocalActivity
+import com.jericx.trainr.data.ads.Ads
+import com.jericx.trainr.presentation.common.components.ads.AdBanner
 import com.jericx.trainr.presentation.common.components.core.TrainrButton
 import com.jericx.trainr.presentation.common.components.core.TrainrRadioDot
 import androidx.compose.ui.text.style.TextAlign
@@ -76,9 +79,13 @@ fun WeeklyPlanRoute(
     versionName: String = "",
     appearance: AppearanceMode = AppearanceMode.SYSTEM,
     onAppearanceChange: (AppearanceMode) -> Unit = {},
-    viewModel: WeeklyPlanViewModel = hiltViewModel()
+    viewModel: WeeklyPlanViewModel = hiltViewModel(),
+    adSlot: AdSlotViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val showAds by adSlot.showAds.collectAsStateWithLifecycle()
+    val privacyOptionsRequired by adSlot.privacyOptionsRequired.collectAsStateWithLifecycle()
+    val activity = LocalActivity.current
 
     // Returning from a routine re-reads the plan, so a day completed there shows here.
     LaunchedEffect(Unit) { viewModel.refresh() }
@@ -99,7 +106,13 @@ fun WeeklyPlanRoute(
         appearance = appearance,
         onAppearanceChange = onAppearanceChange,
         onMoveDay = viewModel::moveDay,
-        onBackClick = onBackClick
+        onBackClick = onBackClick,
+        showAds = showAds,
+        onPrivacyOptionsClick = if (privacyOptionsRequired && activity != null) {
+            { adSlot.ads.showPrivacyOptions(activity) }
+        } else {
+            null
+        }
     )
 }
 
@@ -121,7 +134,9 @@ fun WeeklyPlanScreen(
     appearance: AppearanceMode = AppearanceMode.SYSTEM,
     onAppearanceChange: (AppearanceMode) -> Unit = {},
     onMoveDay: (Int, Int) -> Unit = { _, _ -> },
-    onBackClick: (() -> Unit)? = null
+    onBackClick: (() -> Unit)? = null,
+    showAds: Boolean = false,
+    onPrivacyOptionsClick: (() -> Unit)? = null
 ) {
     // Any week but the newest is a record: its dates, order and contents are fixed.
     val isBrowsedWeek = state.hasPlan && !state.isCurrentWeek
@@ -167,7 +182,8 @@ fun WeeklyPlanScreen(
                         onUpdateProfileClick = onUpdateProfileClick,
                         onOpenProClick = onOpenProClick,
                         appearance = appearance,
-                        onAppearanceChange = onAppearanceChange
+                        onAppearanceChange = onAppearanceChange,
+                        onPrivacyOptionsClick = onPrivacyOptionsClick
                     )
                 }
             }
@@ -344,6 +360,15 @@ fun WeeklyPlanScreen(
                     .padding(horizontal = Spacing.screen, vertical = Spacing.medium)
             )
         }
+
+        // The one ad in the app, under the action rather than beside anything
+        // that scrolls, and gone the moment Pro is active.
+        if (showAds) {
+            AdBanner(
+                adUnitId = Ads.PLAN_BANNER_UNIT_ID,
+                modifier = Modifier.padding(bottom = Spacing.small)
+            )
+        }
     }
 }
 
@@ -353,7 +378,8 @@ private fun ProfileMenu(
     onUpdateProfileClick: () -> Unit,
     onOpenProClick: () -> Unit,
     appearance: AppearanceMode,
-    onAppearanceChange: (AppearanceMode) -> Unit
+    onAppearanceChange: (AppearanceMode) -> Unit,
+    onPrivacyOptionsClick: (() -> Unit)? = null
 ) {
     var expanded by remember { mutableStateOf(false) }
     var showAbout by remember { mutableStateOf(false) }
@@ -406,6 +432,17 @@ private fun ProfileMenu(
                     showAppearance = true
                 }
             )
+            // Only where consent law gives people something to change: Google
+            // reports whether this region does, and the item follows it.
+            if (onPrivacyOptionsClick != null) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.ads_privacy_options)) },
+                    onClick = {
+                        expanded = false
+                        onPrivacyOptionsClick()
+                    }
+                )
+            }
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.about_the_app)) },
                 onClick = {

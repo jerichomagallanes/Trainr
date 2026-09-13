@@ -7,6 +7,7 @@ import com.jericx.trainr.data.local.TrainrDatabase
 import com.jericx.trainr.data.local.UserDao
 import com.jericx.trainr.data.local.UserMapper
 import com.jericx.trainr.data.preferences.ThemePreferences
+import com.jericx.trainr.data.ads.Ads
 import com.jericx.trainr.data.purchases.Entitlements
 import com.jericx.trainr.data.purchases.StoredGenerationAllowance
 import com.jericx.trainr.data.repository.UserRepositoryImpl
@@ -56,6 +57,10 @@ object AppModule {
         @ApplicationContext context: Context,
         breadcrumbs: Breadcrumbs
     ): Entitlements = Entitlements(context, breadcrumbs)
+
+    @Provides
+    @Singleton
+    fun provideAds(breadcrumbs: Breadcrumbs): Ads = Ads(breadcrumbs)
 
     @Provides
     @Singleton

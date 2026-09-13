@@ -51,6 +51,30 @@ If you are signed in to Google in the player and want to review what that
 account has stored, [Google's security
 settings](https://myaccount.google.com/permissions) are where it is managed.
 
+
+## Advertising
+
+The free tier shows one advertisement: a banner at the bottom of your weekly
+plan, served by Google AdMob. Trainr Pro has none, and while Pro is active no
+ad is requested at all.
+
+To serve and measure that banner, Google's advertising SDK receives the
+advertising identifier your phone assigns to apps, your IP address (from which
+it infers an approximate location), and technical details of the device and
+the app, all governed by the [Google Privacy
+Policy](http://www.google.com/policies/privacy) and described in [how Google
+uses information from sites or apps that use its
+services](https://policies.google.com/technologies/partner-sites). Trainr sends
+it nothing about your profile, your plan or your logged sets.
+
+Where the law requires consent before ads can be personalised, in the European
+Economic Area and the United Kingdom, the app asks you first with Google's own
+consent form, and you can change your answer at any time from **Privacy
+options** in the profile menu. On iOS the app also asks for App Tracking
+Transparency permission; declining it leaves the ads in place but
+unpersonalised. Everywhere else you can turn off personalised ads in your
+phone's own advertising settings.
+
 ## Crash reports
 
 Trainr uses **Firebase Crashlytics** so that when the app crashes, the developer

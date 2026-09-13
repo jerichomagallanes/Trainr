@@ -357,7 +357,9 @@
     <string name="pro_feature_fresh_title">Start a fresh plan</string>
     <string name="pro_feature_fresh_body">Change your goal, your kit or your days and begin again</string>
     <string name="pro_feature_support_title">Support a one-person team</string>
-    <string name="pro_feature_support_body">Trainr is made by one person, with no accounts, ads or server of its own</string>
+    <string name="pro_feature_support_body">Trainr is made by one person, with no accounts or server of its own</string>
+    <string name="pro_feature_ads_title">No ads</string>
+    <string name="pro_feature_ads_body">The banner on your plan goes, and stays gone</string>
     <string name="pro_compare_title">Need to compare?</string>
     <string name="pro_compare_free">Free</string>
     <string name="pro_compare_pro">Pro</string>
@@ -368,11 +370,12 @@
     <string name="pro_compare_generated">Weeks built for you</string>
     <string name="pro_compare_rewrite">Rewrite a week</string>
     <string name="pro_compare_fresh">Start a fresh plan</string>
+    <string name="pro_compare_ads">Ad-free</string>
     <string name="pro_compare_one">1</string>
     <string name="pro_compare_every_week">Every week</string>
     <string name="pro_questions">Any questions?</string>
     <string name="pro_faq_includes_q">What does Trainr Pro include?</string>
-    <string name="pro_faq_includes_a">Pro unlocks every week after your first: build next week from what you lifted, repeat a week that went well, rewrite one that does not suit you, and start a fresh plan whenever your goal changes.</string>
+    <string name="pro_faq_includes_a">Pro unlocks every week after your first: build next week from what you lifted, repeat a week that went well, rewrite one that does not suit you, start a fresh plan whenever your goal changes, and removes the ad from your plan.</string>
     <string name="pro_faq_human_q">Is my plan written by a real trainer?</string>
     <string name="pro_faq_human_a">No. Trainr builds it on your phone from the answers you gave, and progresses it from the sets you log. Plans are guidance, not medical advice.</string>
     <string name="pro_faq_renew_q">Does Pro renew automatically?</string>
@@ -384,6 +387,7 @@
     <string name="pro_faq_free_q">What stays free?</string>
     <string name="pro_faq_free_a">Your first week, every set you log, the rest timer, the video on every exercise, and all your past weeks and progress.</string>
     <string name="pro_support_trouble">Having trouble with your purchase?</string>
+    <string name="ads_privacy_options">Privacy options</string>
 
     <!-- Trainr Pro contextual prompt -->
     <string name="pro_upgrade_title">Upgrade to Trainr Pro</string>
