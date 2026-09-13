@@ -22,6 +22,21 @@ from what you actually lifted.
 The plans are written by the app itself, on your device, not by a person.
 Everything you answer and log stays on your device.
 
+## The exercise videos come from YouTube
+
+Some exercises carry a tutorial video. Trainr does not host any video: each one
+plays inside YouTube's own embedded player, streamed from YouTube, with its
+controls, branding and any advertising intact.
+
+Using that player means you also agree to [YouTube's Terms of
+Service](https://www.youtube.com/t/terms), and what YouTube collects when you
+play a video is governed by the [Google Privacy
+Policy](http://www.google.com/policies/privacy). Nothing reaches YouTube until
+you tap play.
+
+The videos are free and stay free. Trainr Pro is sold for the plans it writes,
+never for access to a video, and nothing you pay for unlocks one.
+
 ## Training is your risk to take
 
 **Trainr is not medical advice, and the plans are not written by a doctor or a

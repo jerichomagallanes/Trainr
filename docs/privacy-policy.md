@@ -36,6 +36,21 @@ Nothing from your profile or your training. Your weekly plan is written by the
 app itself, on your device, from an exercise catalog that ships inside it. None
 of the answers above, and nothing you log, is sent anywhere to write it.
 
+## The exercise videos
+
+Tutorial videos play in YouTube's own embedded player. Until you tap play,
+nothing is requested from YouTube and nothing about you leaves the app: the
+player shows a still frame and waits. Once you play one, YouTube receives the
+request as it would on youtube.com, including your IP address and whatever its
+own cookies hold, all of it governed by the [Google Privacy
+Policy](http://www.google.com/policies/privacy). Trainr sends YouTube nothing
+about your profile, your plan or your logged sets, and never has.
+
+Trainr asks you to sign in to nothing, so no Google account is connected to it.
+If you are signed in to Google in the player and want to review what that
+account has stored, [Google's security
+settings](https://myaccount.google.com/permissions) are where it is managed.
+
 ## Crash reports
 
 Trainr uses **Firebase Crashlytics** so that when the app crashes, the developer
