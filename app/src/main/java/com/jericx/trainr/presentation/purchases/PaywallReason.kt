@@ -1,5 +1,6 @@
 package com.jericx.trainr.presentation.purchases
 
+import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import com.jericx.trainr.R
 
@@ -9,22 +10,26 @@ import com.jericx.trainr.R
 enum class PaywallReason(
     @StringRes val prompt: Int,
     @StringRes val heading: Int,
-    @StringRes val detail: Int
+    @StringRes val detail: Int,
+    @DrawableRes val icon: Int
 ) {
     NEXT_WEEK(
         prompt = R.string.pro_prompt_next_week,
         heading = R.string.pro_feature_next_week_title,
-        detail = R.string.pro_feature_next_week_body
+        detail = R.string.pro_feature_next_week_body,
+        icon = R.drawable.ic_calendar_today
     ),
     REWRITE(
         prompt = R.string.pro_prompt_rewrite,
         heading = R.string.pro_feature_rewrite_title,
-        detail = R.string.pro_feature_rewrite_body
+        detail = R.string.pro_feature_rewrite_body,
+        icon = R.drawable.ic_restart
     ),
     FRESH_PLAN(
         prompt = R.string.pro_prompt_fresh,
         heading = R.string.pro_feature_fresh_title,
-        detail = R.string.pro_feature_fresh_body
+        detail = R.string.pro_feature_fresh_body,
+        icon = R.drawable.ic_directions_run
     );
 
     // The rest of Pro, shown under the one that brought them here.

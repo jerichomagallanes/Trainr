@@ -21,17 +21,17 @@ move between them and the store handles proration.
 
 RevenueCat:
 
-- Entitlement: `trainr_ai_workout_plans_pro` (the name predates the on-device
-  generator; it is an internal id, so it was left alone rather than migrated).
-  All three products attach to it.
+- Entitlement: `trainr_workout_planner_pro`. All three products attach to it.
+  Both apps hard-code this string, so renaming it in the dashboard un-Pros every
+  build already installed until it is updated.
 - Offering: `default`, current. Packages `$rc_monthly`, `$rc_annual` and
   `$rc_lifetime`, each pointing at the matching product on both stores.
-- App keys: the iOS app's public key (`appl_…`) goes in
-  `Trainr-iOS/Trainr/Services/Purchases/Entitlements.swift`; the Android app's
+- App keys: the iOS app's public key (`appl_…`) lives in
+  `Trainr-iOS/Trainr/Services/Purchases/Entitlements.swift`, the Android app's
   (`goog_…`) in `app/src/main/java/com/jericx/trainr/data/purchases/Entitlements.kt`.
-  Until then both hold the Test Store key (`test_…`), and a release build with
-  that key refuses to configure purchases and leaves every paid path free
-  rather than take money it cannot verify.
+  Both are public SDK keys and ship in the binaries. A release build that still
+  held a Test Store key (`test_…`) would refuse to configure purchases and leave
+  every paid path free rather than take money it cannot verify.
 
 Package types drive the copy: `$rc_lifetime` shows "Pay once" and "Unlock Pro
 forever", hides the renewal disclosure, and the Pro screen for its buyer says
@@ -87,7 +87,7 @@ the internal-testing build are not charged.
    `.p8` key, Key ID, Issuer ID) and *Play Store* (package `com.jericx.trainr`,
    the service-account JSON).
 2. **Products** → import or add the six store products above.
-3. **Entitlements** → `trainr_ai_workout_plans_pro` → attach all six.
+3. **Entitlements** → `trainr_workout_planner_pro` → attach all six.
 4. **Offerings** → `default` → packages `$rc_monthly`, `$rc_annual`,
    `$rc_lifetime`, each with its Apple and Google product. Mark the offering
    current.
