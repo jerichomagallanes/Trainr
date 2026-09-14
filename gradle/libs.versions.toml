@@ -29,7 +29,7 @@ room = "2.8.4"
 # Media
 youtube-player = "13.0.0"
 firebase-bom = "34.18.0"
-revenuecat = "10.20.0"
+revenuecat = "10.21.1"
 play-services-ads = "25.4.0"
 user-messaging-platform = "4.0.0"
 google-services = "4.5.0"
