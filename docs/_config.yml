@@ -1,0 +1,10 @@
+# The published pages share one layout so the policy a client opens from the
+# app looks like the app, rather than like a raw markdown dump.
+title: Trainr
+description: A workout planner that builds your week on your phone.
+
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default
