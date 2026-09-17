@@ -3,6 +3,20 @@
 title: Trainr
 description: A workout planner that builds your week on your phone.
 
+# Only the three pages a client or a store reviewer is meant to land on get
+# published. The rest of this folder is working material: it stays readable in
+# the repository, where it is reviewed, rather than served as a styled page and
+# indexed by search engines.
+exclude:
+  - app-store-listing.md
+  - play-store-listing.md
+  - play-console-answers.md
+  - store-products.md
+  - generation-contract.md
+  - programming-evidence.md
+  - on-device-generation.md
+  - exercise-source.txt
+
 defaults:
   - scope:
       path: ""
