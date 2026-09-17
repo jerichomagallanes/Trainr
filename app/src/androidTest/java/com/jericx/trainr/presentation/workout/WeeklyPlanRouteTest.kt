@@ -1,6 +1,5 @@
 package com.jericx.trainr.presentation.workout
 
-import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -14,18 +13,29 @@ import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
 import com.jericx.trainr.presentation.workout.util.WorkoutWeek
+import com.jericx.trainr.testing.HiltTestActivity
 import com.jericx.trainr.testing.OneWeekRepository
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
 // A callback the route accepts but never passes on draws a control that does nothing,
 // and the screen's own tests never go through the route. These do.
+//
+// Hosted in a Hilt activity because the route reaches for the ad slot itself:
+// a plain ComponentActivity holds no Hilt component, so hiltViewModel() for
+// anything this test does not hand in would fail before a single assertion.
+@HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
 class WeeklyPlanRouteTest {
 
-    @get:Rule
-    val composeTestRule = createAndroidComposeRule<ComponentActivity>()
+    @get:Rule(order = 0)
+    val hiltRule = HiltAndroidRule(this)
+
+    @get:Rule(order = 1)
+    val composeTestRule = createAndroidComposeRule<HiltTestActivity>()
 
     private fun string(id: Int) = composeTestRule.activity.getString(id)
 
