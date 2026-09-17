@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% if page.title %}{{ page.title }} — {% endif %}{{ site.title }}</title>
+<meta name="description" content="{{ site.description }}">
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #101519;
+    color: #F5F7F8;
+    font: 16px/1.7 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 40px 20px 72px; }
+  header { padding-bottom: 26px; border-bottom: 1px solid rgba(245,247,248,.1); }
+  header img { height: 28px; width: auto; display: block; }
+  main { padding-top: 30px; }
+  h1 { font-size: 26px; line-height: 1.3; margin: 0 0 22px; }
+  h2 { font-size: 19px; margin: 38px 0 12px; }
+  h3 { font-size: 16px; margin: 28px 0 10px; }
+  p, li { color: rgba(245,247,248,.84); }
+  p { margin: 0 0 16px; }
+  ul, ol { margin: 0 0 16px; padding-left: 22px; }
+  li { margin-bottom: 7px; }
+  strong { color: #F5F7F8; }
+  a { color: #E8963A; text-decoration: none; }
+  a:hover, a:focus { text-decoration: underline; }
+  hr { border: 0; border-top: 1px solid rgba(245,247,248,.1); margin: 34px 0; }
+  code {
+    background: #20282E; padding: 2px 6px; border-radius: 4px; font-size: 14px;
+  }
+  table { border-collapse: collapse; width: 100%; margin: 0 0 18px; font-size: 15px; }
+  th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid rgba(245,247,248,.1); }
+  footer {
+    margin-top: 52px; padding-top: 22px;
+    border-top: 1px solid rgba(245,247,248,.1);
+    font-size: 14px; color: rgba(245,247,248,.5);
+  }
+  footer a { color: rgba(245,247,248,.72); }
+  .sep { padding: 0 8px; color: rgba(245,247,248,.3); }
+  @media (max-width: 420px) { .sep { display: block; height: 4px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a href="{{ '/' | relative_url }}"><img src="{{ '/wordmark.png' | relative_url }}" alt="Trainr"></a>
+  </header>
+  <main>
+    {{ content }}
+  </main>
+  <footer>
+    <a href="{{ '/privacy-policy' | relative_url }}">Privacy Policy</a>
+    <span class="sep">·</span>
+    <a href="{{ '/terms-of-use' | relative_url }}">Terms of Use</a>
+    <span class="sep">·</span>
+    <a href="https://github.com/jerichomagallanes/Trainr">GitHub</a>
+    <span class="sep">·</span>
+    <a href="https://jerichomagallanes.github.io/">More apps</a>
+  </footer>
+</div>
+</body>
+</html>
