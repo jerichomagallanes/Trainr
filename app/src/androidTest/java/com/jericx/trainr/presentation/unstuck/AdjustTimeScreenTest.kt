@@ -4,6 +4,9 @@ import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -92,5 +95,44 @@ class AdjustTimeScreenTest {
         composeTestRule
             .onNodeWithText(string(R.string.adjust_time_whole_session))
             .assertIsDisplayed()
+    }
+
+    // Opt in, never opt out: nothing is remembered unless it is ticked here.
+    @Test
+    fun rememberingTheLimitIsOfferedForTheDayAndStartsUnticked() {
+        setScreen()
+
+        composeTestRule
+            .onNodeWithText(string(R.string.remember_weekday_limit_format, "Wednesday"))
+            .assertIsDisplayed()
+        composeTestRule
+            .onNodeWithText(string(R.string.future_workouts_still_ask))
+            .assertIsDisplayed()
+        composeTestRule.onNode(isToggleable()).assertIsOff()
+    }
+
+    @Test
+    fun tickingTheBoxReportsIt() {
+        var toggled = false
+        composeTestRule.setContent {
+            TrainrTheme {
+                AdjustTimeScreen(
+                    state = SampleAdjustmentStates.time,
+                    onToggleRemember = { toggled = true }
+                )
+            }
+        }
+
+        composeTestRule.onNode(isToggleable()).performClick()
+
+        assertThat(toggled).isTrue()
+    }
+
+    // A plan with no dates cannot name the weekday, so nothing is offered.
+    @Test
+    fun aDaylessPlanOffersNothingToRemember() {
+        setScreen(state = SampleAdjustmentStates.time.copy(weekdayName = null))
+
+        composeTestRule.onAllNodes(isToggleable()).assertCountEquals(0)
     }
 }

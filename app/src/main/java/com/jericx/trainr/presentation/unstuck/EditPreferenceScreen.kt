@@ -1,27 +1,23 @@
 package com.jericx.trainr.presentation.unstuck
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jericx.trainr.R
-import com.jericx.trainr.domain.unstuck.TimeScope
 import com.jericx.trainr.presentation.common.components.core.TrainrButton
 import com.jericx.trainr.presentation.common.components.core.TrainrFieldError
 import com.jericx.trainr.presentation.common.components.core.TrainrQuietButton
@@ -35,14 +31,39 @@ import com.jericx.trainr.presentation.common.theme.TrainrTheme
 import com.jericx.trainr.presentation.common.theme.trainrColors
 
 @Composable
-fun AdjustTimeScreen(
-    state: AdjustmentUiState,
+fun EditPreferenceRoute(
+    modifier: Modifier = Modifier,
+    onFinished: () -> Unit = {},
+    onBack: () -> Unit = {},
+    viewModel: EditPreferenceViewModel = hiltViewModel()
+) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(viewModel) { viewModel.savedEvents.collect { onFinished() } }
+
+    // The stored limit is the starting answer, so nothing is drawn until it
+    // has been read and the field cannot flash an empty value.
+    if (state.isLoaded) {
+        EditPreferenceScreen(
+            state = state,
+            modifier = modifier,
+            onSelectMinutes = viewModel::selectMinutes,
+            onTypeMinutes = viewModel::typeMinutes,
+            onSave = viewModel::save,
+            onCancel = onFinished,
+            onBack = onBack
+        )
+    }
+}
+
+@Composable
+fun EditPreferenceScreen(
+    state: EditPreferenceUiState,
     modifier: Modifier = Modifier,
     onSelectMinutes: (Int) -> Unit = {},
     onTypeMinutes: (String) -> Unit = {},
-    onShowRecommendation: () -> Unit = {},
-    onToggleRemember: () -> Unit = {},
-    onKeepPlan: () -> Unit = {},
+    onSave: () -> Unit = {},
+    onCancel: () -> Unit = {},
     onBack: () -> Unit = {}
 ) {
     val colors = MaterialTheme.trainrColors
@@ -52,20 +73,20 @@ fun AdjustTimeScreen(
         bottomButton = {
             Column(verticalArrangement = Arrangement.spacedBy(Spacing.tight)) {
                 TrainrButton(
-                    text = stringResource(R.string.show_recommendation),
-                    onClick = onShowRecommendation,
-                    enabled = state.canShowRecommendation
+                    text = stringResource(R.string.save),
+                    onClick = onSave,
+                    enabled = state.canSave
                 )
                 TrainrQuietButton(
-                    text = stringResource(R.string.keep_todays_plan),
-                    onClick = onKeepPlan
+                    text = stringResource(R.string.cancel),
+                    onClick = onCancel
                 )
             }
         }
     ) { padding ->
         TrainrScreenContent(modifier = modifier.padding(padding)) {
             Text(
-                text = stringResource(R.string.adjust_time_title),
+                text = stringResource(R.string.weekday_time_limit_format, state.weekdayName),
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontSize = 20.sp,
                     lineHeight = 28.sp
@@ -73,13 +94,7 @@ fun AdjustTimeScreen(
                 color = colors.onSurface
             )
             Text(
-                text = stringResource(
-                    if (state.scope == TimeScope.REMAINING) {
-                        R.string.adjust_time_remaining
-                    } else {
-                        R.string.adjust_time_whole_session
-                    }
-                ),
+                text = stringResource(R.string.time_for_whole_workout),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.onSurfaceMuted,
                 modifier = Modifier.padding(top = Spacing.small)
@@ -121,65 +136,10 @@ fun AdjustTimeScreen(
             }
 
             Text(
-                text = stringResource(R.string.your_priority),
-                style = MaterialTheme.typography.bodySmall,
-                color = colors.onSurfaceMuted,
-                modifier = Modifier.padding(top = Spacing.large)
-            )
-            Text(
-                text = stringResource(state.goalLabelRes),
-                style = MaterialTheme.typography.titleLarge,
-                color = colors.onSurface
-            )
-            Text(
-                text = stringResource(R.string.adjust_time_promise),
+                text = stringResource(R.string.edit_applies_to_future),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.onSurface,
-                modifier = Modifier.padding(top = Spacing.small)
-            )
-
-            state.weekdayName?.takeIf { state.canRemember }?.let { weekday ->
-                RememberRow(
-                    weekdayName = weekday,
-                    checked = state.remember,
-                    onToggle = onToggleRemember
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun RememberRow(weekdayName: String, checked: Boolean, onToggle: () -> Unit) {
-    val colors = MaterialTheme.trainrColors
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = Spacing.medium)
-            .toggleable(value = checked, role = Role.Checkbox, onValueChange = { onToggle() }),
-        horizontalArrangement = Arrangement.spacedBy(Spacing.small)
-    ) {
-        Image(
-            painter = painterResource(
-                if (checked) R.drawable.ic_check_box else R.drawable.ic_check_box_blank
-            ),
-            contentDescription = null,
-            colorFilter = ColorFilter.tint(
-                if (checked) colors.brandStrong else colors.outlineControl
-            ),
-            modifier = Modifier.size(24.dp)
-        )
-        Column {
-            Text(
-                text = stringResource(R.string.remember_weekday_limit_format, weekdayName),
-                style = MaterialTheme.typography.bodyLarge,
-                color = colors.onSurface
-            )
-            Text(
-                text = stringResource(R.string.future_workouts_still_ask),
-                style = MaterialTheme.typography.bodySmall,
-                color = colors.onSurfaceMuted
+                modifier = Modifier.padding(top = Spacing.large)
             )
         }
     }
@@ -187,16 +147,16 @@ private fun RememberRow(weekdayName: String, checked: Boolean, onToggle: () -> U
 
 @Preview(showBackground = true)
 @Composable
-private fun AdjustTimeScreenPreview() {
+private fun EditPreferenceScreenPreview() {
     TrainrTheme {
-        AdjustTimeScreen(state = SampleAdjustmentStates.time)
+        EditPreferenceScreen(state = SamplePreferenceStates.editing)
     }
 }
 
 @Preview(showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
 @Composable
-private fun AdjustTimeScreenDarkPreview() {
+private fun EditPreferenceScreenDarkPreview() {
     TrainrTheme(darkTheme = true) {
-        AdjustTimeScreen(state = SampleAdjustmentStates.timeWithError)
+        EditPreferenceScreen(state = SamplePreferenceStates.editingWithError)
     }
 }

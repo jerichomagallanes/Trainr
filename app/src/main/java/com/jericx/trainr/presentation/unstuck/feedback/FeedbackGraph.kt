@@ -49,7 +49,13 @@ fun NavGraphBuilder.feedbackGraph(navController: NavHostController) {
 
         composable(Screen.FeedbackDetail.route) { entry ->
             val viewModel = navController.feedbackViewModel(entry)
-            AnswerNavigation(navController, viewModel)
+            val state by viewModel.uiState.collectAsStateWithLifecycle()
+            AnswerNavigation(
+                navController,
+                viewModel,
+                debriefDayNumber = state.dayNumber,
+                debriefWeekNumber = state.weekNumber
+            )
 
             FeedbackDetailScreen(
                 onAnswer = viewModel::answer,
@@ -92,13 +98,28 @@ fun NavGraphBuilder.feedbackGraph(navController: NavHostController) {
 @Composable
 private fun AnswerNavigation(
     navController: NavHostController,
-    viewModel: AdjustmentFeedbackViewModel
+    viewModel: AdjustmentFeedbackViewModel,
+    debriefDayNumber: Int = AdjustmentFeedbackUiState.NO_DAY,
+    debriefWeekNumber: Int = Screen.RoutineDetail.LATEST_WEEK
 ) {
-    LaunchedEffect(viewModel) {
+    LaunchedEffect(viewModel, debriefDayNumber, debriefWeekNumber) {
         viewModel.savedEvents.collect { answer ->
-            when (answer) {
-                null -> navController.leaveFeedback()
-                FeedbackAnswer.DISCOMFORT -> navController.navigate(Screen.FeedbackPain.route)
+            when {
+                answer == null -> navController.leaveFeedback()
+
+                answer == FeedbackAnswer.DISCOMFORT ->
+                    navController.navigate(Screen.FeedbackPain.route)
+
+                // The answer is already recorded, so their own words take the
+                // place of the fixed outcome line rather than following it.
+                answer == FeedbackAnswer.SOMETHING_ELSE &&
+                    debriefDayNumber != AdjustmentFeedbackUiState.NO_DAY ->
+                    navController.navigate(
+                        Screen.Debrief.createRoute(debriefDayNumber, debriefWeekNumber)
+                    ) {
+                        popUpTo(Screen.Feedback.route) { inclusive = true }
+                    }
+
                 else -> navController.navigate(Screen.FeedbackOutcome.route)
             }
         }
