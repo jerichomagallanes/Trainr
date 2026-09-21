@@ -61,6 +61,7 @@ fun AdjustReviewScreen(
     applyError: ApplyErrorUi? = null,
     onApply: () -> Unit = {},
     onKeepOriginal: () -> Unit = {},
+    onContinue: () -> Unit = {},
     onFinishEarly: () -> Unit = {},
     onBack: () -> Unit = {}
 ) {
@@ -89,7 +90,7 @@ fun AdjustReviewScreen(
 
                     is ReviewUi.NoChange -> TrainrButton(
                         text = stringResource(R.string.continue_workout),
-                        onClick = onKeepOriginal
+                        onClick = onContinue
                     )
 
                     is ReviewUi.Infeasible -> {

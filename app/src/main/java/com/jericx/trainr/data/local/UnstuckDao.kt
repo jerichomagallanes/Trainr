@@ -67,6 +67,19 @@ interface UnstuckDao {
     @Query("SELECT * FROM training_preferences WHERE userId = :userId ORDER BY weekday, id")
     suspend fun getPreferencesOnce(userId: Long): List<TrainingPreferenceEntity>
 
+    @Query(
+        """
+        SELECT * FROM training_preferences
+        WHERE userId = :userId AND kind = :kind AND weekday = :weekday
+        ORDER BY id LIMIT 1
+        """
+    )
+    suspend fun getPreferenceFor(
+        userId: Long,
+        kind: String,
+        weekday: Int
+    ): TrainingPreferenceEntity?
+
     @Insert
     suspend fun insertNote(note: SessionNoteEntity): Long
 
@@ -78,6 +91,9 @@ interface UnstuckDao {
 
     @Query("SELECT * FROM session_notes WHERE userId = :userId ORDER BY createdAt DESC, id DESC")
     fun getNotes(userId: Long): Flow<List<SessionNoteEntity>>
+
+    @Query("SELECT * FROM session_notes WHERE userId = :userId ORDER BY createdAt DESC, id DESC")
+    suspend fun getNotesOnce(userId: Long): List<SessionNoteEntity>
 
     @Query("SELECT * FROM session_notes WHERE workoutDayId = :dayId ORDER BY updatedAt DESC, id DESC LIMIT 1")
     suspend fun getNoteForDay(dayId: Long): SessionNoteEntity?

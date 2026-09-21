@@ -406,6 +406,50 @@
     <string name="trend_training_performance">training performance</string>
     <string name="progress_one_session_caveat">One useful adjustment does not tell us whether your long-term results have improved.</string>
     <string name="future_workouts_unchanged">Your future workouts have not changed.</string>
+    <string name="remember_weekday_limit_format">Remember this %1$s time limit</string>
+    <string name="future_workouts_still_ask">Future workouts will still ask before changing.</string>
+    <string name="debrief_title">Anything for next time?</string>
+    <string name="your_note">Your note</string>
+    <string name="debrief_placeholder">For example: I had to leave early for work.</string>
+    <string name="notes_stay_on_device">Optional notes stay on this device.</string>
+    <string name="save_note">Save note</string>
+    <string name="skip">Skip</string>
+    <string name="leave_a_note">Leave a note</string>
+    <string name="note_saved">Note saved</string>
+    <string name="next_workout_unchanged">Your next workout has not changed.</string>
+    <string name="view_training_preferences">View training preferences</string>
+    <string name="training_preferences">Training preferences</string>
+    <string name="your_training_preferences">Your training preferences</string>
+    <string name="things_you_asked_to_remember">Things you have asked Trainr to remember.</string>
+    <string name="weekday_time_limit_format">%1$s time limit</string>
+    <plurals name="minutes_for_whole_session_format">
+        <item quantity="one">%1$d minute for the whole session</item>
+        <item quantity="other">%1$d minutes for the whole session</item>
+    </plurals>
+    <string name="confirmed_by_you_format">Confirmed by you · %1$s</string>
+    <string name="forget">Forget</string>
+    <string name="preference_forgotten">Time preference forgotten</string>
+    <string name="no_preferences_yet">No saved preferences yet. You can remember a time limit when adjusting a workout.</string>
+    <string name="your_session_note">Your session note</string>
+    <string name="delete_note">Delete note</string>
+    <string name="todays_adjustment">Today\'s adjustment</string>
+    <string name="adjustment_shorter_today">Shorter session · Today only</string>
+    <string name="adjustment_alternative_today">Equipment alternative · Today only</string>
+    <string name="no_adjustment_applied">No adjustment applied.</string>
+    <string name="forget_does_not_remove_workouts">Forgetting a preference stops future use. It does not remove past workouts.</string>
+    <string name="time_for_whole_workout">Time for the whole workout</string>
+    <string name="edit_applies_to_future">Changes apply to future recommendations. Today\'s workout stays as it is.</string>
+    <string name="ready_for_today">Ready for today</string>
+    <string name="adjusted">Adjusted</string>
+    <string name="adjusted_time_card_body">A shorter session, with your priority work kept.</string>
+    <string name="adjusted_equipment_card_body">An alternative using the equipment available.</string>
+    <string name="view_todays_workout">View today\'s workout</string>
+    <string name="weekday_preference_format">%1$s preference</string>
+    <plurals name="usually_have_minutes_format">
+        <item quantity="one">You usually have %1$d minute. Review today\'s plan before changing it.</item>
+        <item quantity="other">You usually have %1$d minutes. Review today\'s plan before changing it.</item>
+    </plurals>
+    <string name="review_shorter_version">Review a shorter version</string>
 
     <!-- Common -->
     <string name="next">NEXT</string>

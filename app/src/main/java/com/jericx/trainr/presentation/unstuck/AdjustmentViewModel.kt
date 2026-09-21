@@ -18,9 +18,12 @@ import com.jericx.trainr.domain.unstuck.AdjustmentReason
 import com.jericx.trainr.domain.unstuck.AdjustmentSnapshot
 import com.jericx.trainr.domain.unstuck.ApplyResult
 import com.jericx.trainr.domain.unstuck.PolicyDecision
+import com.jericx.trainr.domain.unstuck.PreferenceKind
 import com.jericx.trainr.domain.unstuck.SessionEstimate
+import com.jericx.trainr.domain.unstuck.SessionNote
 import com.jericx.trainr.domain.unstuck.TimePresets
 import com.jericx.trainr.domain.unstuck.TimeScope
+import com.jericx.trainr.domain.unstuck.TrainingPreference
 import com.jericx.trainr.domain.unstuck.UnstuckPolicy
 import com.jericx.trainr.domain.unstuck.intent.DirectReason
 import com.jericx.trainr.domain.unstuck.intent.IntentInterpreter
@@ -67,6 +70,7 @@ data class AdjustmentUiState(
     val enteredWithExercise: Boolean = false,
     val availableEquipment: Set<Equipment> = emptySet(),
     val note: String = "",
+    val remember: Boolean = false,
     val decision: PolicyDecision? = null,
     val review: ReviewUi? = null,
     val isApplying: Boolean = false,
@@ -78,6 +82,11 @@ data class AdjustmentUiState(
         get() = if (hasPerformedWork) TimeScope.REMAINING else TimeScope.WHOLE_SESSION
 
     val isPresetSelected: Boolean get() = customMinutesText.isEmpty() && selectedMinutes != null
+
+    // Nothing to name the limit after, and a remaining-time answer is not a
+    // limit for the whole weekday.
+    val canRemember: Boolean
+        get() = weekdayName != null && scope == TimeScope.WHOLE_SESSION
 
     val canShowRecommendation: Boolean
         get() = when (reason) {
@@ -114,11 +123,16 @@ class AdjustmentViewModel @Inject constructor(
     private val requestedExerciseId: Long? =
         savedStateHandle.get<Long>(Screen.Adjust.ARG_EXERCISE_ID)?.takeIf { it > 0 }
 
+    private val requestedMinutes: Int? = savedStateHandle
+        .get<Int>(Screen.Adjust.ARG_MINUTES)
+        ?.takeIf { TimePresets.isSupported(it) }
+
     private val _uiState = MutableStateFlow(
         AdjustmentUiState(
             reason = requestedReason,
             selectedExerciseId = requestedExerciseId,
-            enteredWithExercise = requestedExerciseId != null
+            enteredWithExercise = requestedExerciseId != null,
+            selectedMinutes = requestedMinutes
         )
     )
     val uiState: StateFlow<AdjustmentUiState> = _uiState.asStateFlow()
@@ -129,7 +143,14 @@ class AdjustmentViewModel @Inject constructor(
     private val _routeEvents = Channel<UnstuckRoute>(Channel.BUFFERED)
     val routeEvents: Flow<UnstuckRoute> = _routeEvents.receiveAsFlow()
 
+    private val _continuedEvents = Channel<Unit>(Channel.BUFFERED)
+    val continuedEvents: Flow<Unit> = _continuedEvents.receiveAsFlow()
+
     private var user: UserProfile? = null
+
+    private var dayWeekday: Int? = null
+
+    private var hasConfirmed = false
 
     init {
         viewModelScope.launch { load() }
@@ -174,6 +195,10 @@ class AdjustmentViewModel @Inject constructor(
 
     fun typeNote(text: String) {
         _uiState.update { it.copy(note = text) }
+    }
+
+    fun toggleRemember() {
+        _uiState.update { it.copy(remember = !it.remember) }
     }
 
     fun chooseFromContext(reason: DirectReason) {
@@ -228,8 +253,12 @@ class AdjustmentViewModel @Inject constructor(
                 nowMillis = System.currentTimeMillis()
             )
             when (result) {
-                is ApplyResult.Applied -> applied(proposed.proposal.proposalId)
-                is ApplyResult.AlreadyApplied -> applied(proposed.proposal.proposalId)
+                is ApplyResult.Applied ->
+                    applied(proposed.proposal.proposalId, result.adjustment.id)
+
+                is ApplyResult.AlreadyApplied ->
+                    applied(proposed.proposal.proposalId, result.adjustment.id)
+
                 is ApplyResult.Stale, is ApplyResult.Rejected -> rebuild()
                 is ApplyResult.Failed -> {
                     breadcrumbs.record("adjust_apply_failed")
@@ -243,9 +272,76 @@ class AdjustmentViewModel @Inject constructor(
 
     fun retryApply() = apply()
 
-    private suspend fun applied(proposalId: String) {
+    // The reviewed plan already fits, so continuing is the person accepting it:
+    // the same confirmation an apply is, and the other moment memory is written.
+    fun continueWorkout() {
+        viewModelScope.launch {
+            confirm(sourceAdjustmentId = null)
+            _continuedEvents.send(Unit)
+        }
+    }
+
+    private suspend fun applied(proposalId: String, adjustmentId: Long) {
+        confirm(sourceAdjustmentId = adjustmentId)
         _uiState.update { it.copy(isApplying = false, applyError = null) }
         _appliedEvents.send(proposalId)
+    }
+
+    // The only path that makes either record durable. Cancelling, keeping the
+    // original, a failed apply and leaving the graph all end without calling it.
+    private suspend fun confirm(sourceAdjustmentId: Long?) {
+        if (hasConfirmed) return
+        hasConfirmed = true
+
+        val state = _uiState.value
+        val profile = user ?: return
+        val now = System.currentTimeMillis()
+
+        val minutes = state.selectedMinutes
+        val weekday = dayWeekday
+        if (state.remember && state.canRemember && minutes != null && weekday != null) {
+            val existing = adjustmentRepository.getPreference(
+                userId = profile.id,
+                kind = PreferenceKind.TIME_LIMIT,
+                weekday = weekday
+            )
+            val preference = TrainingPreference(
+                id = existing?.id ?: 0,
+                userId = profile.id,
+                kind = PreferenceKind.TIME_LIMIT,
+                minutes = minutes,
+                weekday = weekday,
+                sourceAdjustmentId = sourceAdjustmentId,
+                confirmedAt = now,
+                updatedAt = now
+            )
+            if (existing == null) {
+                adjustmentRepository.savePreference(preference)
+            } else {
+                adjustmentRepository.updatePreference(preference)
+            }
+        }
+
+        val note = state.note.trim()
+        val day = state.day
+        if (note.isNotEmpty() && day != null) {
+            val existing = adjustmentRepository.getNote(day.id)
+            if (existing == null) {
+                adjustmentRepository.saveNote(
+                    SessionNote(
+                        userId = profile.id,
+                        workoutDayId = day.id,
+                        text = note,
+                        createdAt = now,
+                        updatedAt = now
+                    )
+                )
+            } else {
+                adjustmentRepository.updateNote(
+                    existing.copy(text = note, updatedAt = now)
+                )
+            }
+        }
     }
 
     // The plan moved under the preview, so the recommendation is built again
@@ -297,18 +393,27 @@ class AdjustmentViewModel @Inject constructor(
             return
         }
 
+        val dayDate = plan.startDateMillis?.let { WorkoutWeek.dateOfDay(it, day.dayNumber) }
+        dayWeekday = dayDate?.let { WorkoutWeek.isoWeekdayOf(it) }
+
         _uiState.update {
             it.readFrom(day, profile).copy(
                 isLoaded = true,
-                weekdayName = plan.startDateMillis?.let { start ->
-                    WorkoutDateFormatter.formatWeekday(
-                        WorkoutWeek.dateOfDay(start, day.dayNumber),
-                        Locale.getDefault()
-                    )
+                weekdayName = dayDate?.let { date ->
+                    WorkoutDateFormatter.formatWeekday(date, Locale.getDefault())
                 },
                 goalLabelRes = profile.fitnessGoal.labelRes
-            )
+            ).withRequestedMinutes()
         }
+    }
+
+    // A limit carried in from elsewhere answers the whole-session question
+    // only, and has to be visible on the screen it lands on.
+    private fun AdjustmentUiState.withRequestedMinutes(): AdjustmentUiState = when {
+        requestedMinutes == null -> this
+        scope == TimeScope.REMAINING -> copy(selectedMinutes = null)
+        requestedMinutes in presets -> this
+        else -> copy(customMinutesText = requestedMinutes.toString())
     }
 
     // Everything the request is built from moves with the day: a session that

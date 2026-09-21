@@ -1,6 +1,7 @@
 package com.jericx.trainr.presentation.workout
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -54,12 +55,16 @@ import com.jericx.trainr.data.ads.Ads
 import com.jericx.trainr.presentation.common.components.ads.AdBanner
 import com.jericx.trainr.presentation.common.components.core.TrainrButton
 import com.jericx.trainr.presentation.common.components.core.TrainrRadioDot
+import com.jericx.trainr.presentation.common.components.core.TrainrTextAction
 import androidx.compose.ui.text.style.TextAlign
 import com.jericx.trainr.presentation.common.theme.ComponentHeight
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 import com.jericx.trainr.presentation.common.theme.trainrColors
+import com.jericx.trainr.presentation.unstuck.TodayAdjustmentKind
 import com.jericx.trainr.presentation.workout.components.ReorderableDayList
+import com.jericx.trainr.presentation.workout.components.StatusChip
+import com.jericx.trainr.presentation.workout.model.StatusTone
 import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
 import com.jericx.trainr.presentation.workout.util.WorkoutDateFormatter
 
@@ -75,6 +80,8 @@ fun WeeklyPlanRoute(
     onRepeatWeekClick: () -> Unit = {},
     onRegenerateWeekClick: () -> Unit = {},
     onCreatePlanClick: () -> Unit = {},
+    onAdjustToday: (WorkoutDay, Int) -> Unit = { _, _ -> },
+    onTrainingPreferencesClick: () -> Unit = {},
     onBackClick: (() -> Unit)? = null,
     versionName: String = "",
     appearance: AppearanceMode = AppearanceMode.SYSTEM,
@@ -102,6 +109,8 @@ fun WeeklyPlanRoute(
         onRepeatWeekClick = onRepeatWeekClick,
         onRegenerateWeekClick = onRegenerateWeekClick,
         onCreatePlanClick = onCreatePlanClick,
+        onAdjustToday = onAdjustToday,
+        onTrainingPreferencesClick = onTrainingPreferencesClick,
         versionName = versionName,
         appearance = appearance,
         onAppearanceChange = onAppearanceChange,
@@ -130,6 +139,8 @@ fun WeeklyPlanScreen(
     onRepeatWeekClick: () -> Unit = {},
     onRegenerateWeekClick: () -> Unit = {},
     onCreatePlanClick: () -> Unit = {},
+    onAdjustToday: (WorkoutDay, Int) -> Unit = { _, _ -> },
+    onTrainingPreferencesClick: () -> Unit = {},
     versionName: String = "",
     appearance: AppearanceMode = AppearanceMode.SYSTEM,
     onAppearanceChange: (AppearanceMode) -> Unit = {},
@@ -181,6 +192,7 @@ fun WeeklyPlanScreen(
                         versionName = versionName,
                         onUpdateProfileClick = onUpdateProfileClick,
                         onOpenProClick = onOpenProClick,
+                        onTrainingPreferencesClick = onTrainingPreferencesClick,
                         appearance = appearance,
                         onAppearanceChange = onAppearanceChange,
                         onPrivacyOptionsClick = onPrivacyOptionsClick
@@ -312,6 +324,25 @@ fun WeeklyPlanScreen(
             }
 
             if (isHome) {
+                val today = state.days.firstOrNull { it.isToday }
+                when {
+                    state.todayAdjustment != null && today != null -> AdjustedTodayCard(
+                        kind = state.todayAdjustment,
+                        onViewWorkout = { onDayClick(today.day) }
+                    )
+
+                    state.todayPreference != null && today != null -> WeekdayPreferenceCard(
+                        weekdayName = WorkoutDateFormatter.formatWeekdayName(
+                            state.todayPreference.weekday,
+                            locale
+                        ),
+                        minutes = state.todayPreference.minutes,
+                        onReviewShorter = {
+                            onAdjustToday(today.day, state.todayPreference.minutes)
+                        }
+                    )
+                }
+
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.clickable(onClick = onTrackProgressClick)
@@ -339,6 +370,13 @@ fun WeeklyPlanScreen(
                 onMove = onMoveDay,
                 scrollState = scrollState
             )
+
+            if (isHome && state.hasMemory) {
+                TrainrTextAction(
+                    text = stringResource(R.string.training_preferences),
+                    onClick = onTrainingPreferencesClick
+                )
+            }
         }
 
         val next = state.nextWorkout
@@ -373,10 +411,80 @@ fun WeeklyPlanScreen(
 }
 
 @Composable
+private fun AdjustedTodayCard(kind: TodayAdjustmentKind, onViewWorkout: () -> Unit) {
+    val colors = MaterialTheme.trainrColors
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(1.dp, colors.outlineControl, MaterialTheme.shapes.medium)
+            .padding(Spacing.card)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = stringResource(R.string.ready_for_today),
+                style = MaterialTheme.typography.titleMedium,
+                color = colors.onSurface,
+                modifier = Modifier.weight(1f)
+            )
+            StatusChip(labelRes = R.string.adjusted, tone = StatusTone.ACTIVE, singleLine = true)
+        }
+        Text(
+            text = stringResource(
+                when (kind) {
+                    TodayAdjustmentKind.SHORTER -> R.string.adjusted_time_card_body
+                    TodayAdjustmentKind.ALTERNATIVE -> R.string.adjusted_equipment_card_body
+                }
+            ),
+            style = MaterialTheme.typography.bodyMedium,
+            color = colors.onSurfaceMuted,
+            modifier = Modifier.padding(top = Spacing.extraSmall)
+        )
+        TrainrTextAction(
+            text = stringResource(R.string.view_todays_workout),
+            onClick = onViewWorkout
+        )
+    }
+}
+
+@Composable
+private fun WeekdayPreferenceCard(
+    weekdayName: String,
+    minutes: Int,
+    onReviewShorter: () -> Unit
+) {
+    val colors = MaterialTheme.trainrColors
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(1.dp, colors.outlineControl, MaterialTheme.shapes.medium)
+            .padding(Spacing.card)
+    ) {
+        Text(
+            text = stringResource(R.string.weekday_preference_format, weekdayName),
+            style = MaterialTheme.typography.titleMedium,
+            color = colors.onSurface
+        )
+        Text(
+            text = pluralStringResource(R.plurals.usually_have_minutes_format, minutes, minutes),
+            style = MaterialTheme.typography.bodyMedium,
+            color = colors.onSurfaceMuted,
+            modifier = Modifier.padding(top = Spacing.extraSmall)
+        )
+        TrainrTextAction(
+            text = stringResource(R.string.review_shorter_version),
+            onClick = onReviewShorter
+        )
+    }
+}
+
+@Composable
 private fun ProfileMenu(
     versionName: String,
     onUpdateProfileClick: () -> Unit,
     onOpenProClick: () -> Unit,
+    onTrainingPreferencesClick: () -> Unit,
     appearance: AppearanceMode,
     onAppearanceChange: (AppearanceMode) -> Unit,
     onPrivacyOptionsClick: (() -> Unit)? = null
@@ -423,6 +531,13 @@ private fun ProfileMenu(
                 onClick = {
                     expanded = false
                     onOpenProClick()
+                }
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.training_preferences)) },
+                onClick = {
+                    expanded = false
+                    onTrainingPreferencesClick()
                 }
             )
             DropdownMenuItem(

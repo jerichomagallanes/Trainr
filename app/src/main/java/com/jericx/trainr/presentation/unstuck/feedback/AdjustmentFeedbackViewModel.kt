@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
@@ -31,10 +32,16 @@ data class AdjustmentFeedbackUiState(
     val originalName: String = "",
     @StringRes val trendLabelRes: Int = R.string.trend_training_performance,
     val answer: FeedbackAnswer? = null,
-    val guidanceKey: String? = null
+    val guidanceKey: String? = null,
+    val dayNumber: Int = NO_DAY,
+    val weekNumber: Int = Screen.RoutineDetail.LATEST_WEEK
 ) {
     val offersGuidance: Boolean
         get() = answer == FeedbackAnswer.EXERCISE_CONFUSING && guidanceKey != null
+
+    companion object {
+        const val NO_DAY = 0
+    }
 }
 
 @HiltViewModel
@@ -89,8 +96,14 @@ class AdjustmentFeedbackViewModel @Inject constructor(
     private suspend fun load() {
         val adjustment = adjustmentRepository.getAdjustmentById(adjustmentId)
         val stored = adjustmentRepository.getFeedback(adjustmentId)
-        val goal = userRepository.getCurrentUser()?.fitnessGoal
+        val profile = userRepository.getCurrentUser()
+        val goal = profile?.fitnessGoal
         val replaced = adjustment?.proposal?.replacement()
+        val session = if (adjustment != null && profile != null) {
+            sessionOf(adjustment.workoutDayId, profile.id)
+        } else {
+            null
+        }
         feedbackId = stored?.id ?: 0L
 
         _uiState.value = AdjustmentFeedbackUiState(
@@ -104,9 +117,21 @@ class AdjustmentFeedbackViewModel @Inject constructor(
                 R.string.trend_training_performance
             },
             answer = stored?.answer,
-            guidanceKey = adjustment?.proposal?.guidanceKey()
+            guidanceKey = adjustment?.proposal?.guidanceKey(),
+            dayNumber = session?.first ?: AdjustmentFeedbackUiState.NO_DAY,
+            weekNumber = session?.second ?: Screen.RoutineDetail.LATEST_WEEK
         )
     }
+
+    // A note belongs to the session the adjustment was made on, which need not
+    // be in the newest week.
+    private suspend fun sessionOf(workoutDayId: Long, userId: Long): Pair<Int, Int>? =
+        userRepository.getWeeklyWorkoutPlans(userId).first()
+            .firstNotNullOfOrNull { plan ->
+                plan.workoutDays
+                    .firstOrNull { it.id == workoutDayId }
+                    ?.let { day -> day.dayNumber to plan.weekNumber }
+            }
 }
 
 private fun AdjustmentProposal.replacement() =

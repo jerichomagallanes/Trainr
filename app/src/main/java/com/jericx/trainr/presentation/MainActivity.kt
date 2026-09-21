@@ -41,6 +41,7 @@ import com.jericx.trainr.data.ads.Ads
 import com.jericx.trainr.data.purchases.Entitlements
 import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.model.WorkoutDay
+import com.jericx.trainr.domain.unstuck.intent.DirectReason
 import com.jericx.trainr.presentation.common.theme.DarkTrainrColors
 import com.jericx.trainr.presentation.common.theme.LightTrainrColors
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
@@ -63,7 +64,11 @@ import com.jericx.trainr.presentation.onboarding.screens.ReviewScreen
 import com.jericx.trainr.presentation.onboarding.screens.WelcomeScreen
 import com.jericx.trainr.presentation.onboarding.screens.WorkoutSetupScreen
 import com.jericx.trainr.presentation.splash.SplashScreen
+import com.jericx.trainr.presentation.unstuck.DebriefRoute
+import com.jericx.trainr.presentation.unstuck.EditPreferenceRoute
 import com.jericx.trainr.presentation.unstuck.FINISH_EARLY_REQUEST
+import com.jericx.trainr.presentation.unstuck.NoteSavedRoute
+import com.jericx.trainr.presentation.unstuck.PreferencesRoute
 import com.jericx.trainr.presentation.unstuck.adjustGraph
 import com.jericx.trainr.presentation.unstuck.feedback.HOW_TO_REQUEST
 import com.jericx.trainr.presentation.unstuck.feedback.feedbackGraph
@@ -80,6 +85,14 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import java.util.Locale
+
+private fun dayAndWeekArguments(dayArg: String, weekArg: String) = listOf(
+    navArgument(dayArg) { type = NavType.IntType },
+    navArgument(weekArg) {
+        type = NavType.IntType
+        defaultValue = Screen.RoutineDetail.LATEST_WEEK
+    }
+)
 
 private val editArguments = listOf(
     navArgument(Screen.EditableStep.ARG_EDIT) {
@@ -610,6 +623,12 @@ fun AppContent(
                         }
                     )
                 ) { entry ->
+                    val dayNumber = entry.arguments
+                        ?.getInt(Screen.SessionSaved.ARG_DAY_NUMBER) ?: 1
+                    val weekNumber = entry.arguments
+                        ?.getInt(Screen.SessionSaved.ARG_WEEK_NUMBER)
+                        ?: Screen.RoutineDetail.LATEST_WEEK
+
                     SessionSavedRoute(
                         performedExercises = entry.arguments
                             ?.getInt(Screen.SessionSaved.ARG_PERFORMED) ?: 0,
@@ -623,6 +642,11 @@ fun AppContent(
                         },
                         onFeedback = { adjustmentId ->
                             navController.navigate(Screen.Feedback.createRoute(adjustmentId))
+                        },
+                        onLeaveNote = {
+                            navController.navigate(
+                                Screen.Debrief.createRoute(dayNumber, weekNumber)
+                            )
                         }
                     )
                 }
@@ -637,9 +661,14 @@ fun AppContent(
                         }
                     )
                 ) { entry ->
+                    val dayNumber = entry.arguments
+                        ?.getInt(Screen.DayCompleted.ARG_DAY_NUMBER) ?: 1
+                    val weekNumber = entry.arguments
+                        ?.getInt(Screen.DayCompleted.ARG_WEEK_NUMBER)
+                        ?: Screen.RoutineDetail.LATEST_WEEK
+
                     DayCompletedRoute(
-                        dayNumber = entry.arguments
-                            ?.getInt(Screen.DayCompleted.ARG_DAY_NUMBER) ?: 1,
+                        dayNumber = dayNumber,
                         onBackClick = { navController.popBackStack() },
                         onViewProgressClick = {
                             navController.navigate(Screen.WeeklyProgress.route)
@@ -651,6 +680,11 @@ fun AppContent(
                         },
                         onFeedback = { adjustmentId ->
                             navController.navigate(Screen.Feedback.createRoute(adjustmentId))
+                        },
+                        onLeaveNote = {
+                            navController.navigate(
+                                Screen.Debrief.createRoute(dayNumber, weekNumber)
+                            )
                         }
                     )
                 }
@@ -700,6 +734,80 @@ fun AppContent(
 
                 composable(Screen.Pro.route) {
                     ProRoute(onClose = { navController.popBackStack() })
+                }
+
+                composable(
+                    route = Screen.Debrief.route,
+                    arguments = dayAndWeekArguments(
+                        Screen.Debrief.ARG_DAY_NUMBER,
+                        Screen.Debrief.ARG_WEEK_NUMBER
+                    )
+                ) { entry ->
+                    val dayNumber = entry.arguments
+                        ?.getInt(Screen.Debrief.ARG_DAY_NUMBER) ?: 1
+                    val weekNumber = entry.arguments
+                        ?.getInt(Screen.Debrief.ARG_WEEK_NUMBER)
+                        ?: Screen.RoutineDetail.LATEST_WEEK
+
+                    DebriefRoute(
+                        // The note is written, so returning here would offer to
+                        // write it again.
+                        onSaved = {
+                            navController.navigate(
+                                Screen.NoteSaved.createRoute(dayNumber, weekNumber)
+                            ) {
+                                popUpTo(Screen.Debrief.route) { inclusive = true }
+                            }
+                        },
+                        onSkip = { navController.popBackStack() },
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+
+                composable(
+                    route = Screen.NoteSaved.route,
+                    arguments = dayAndWeekArguments(
+                        Screen.NoteSaved.ARG_DAY_NUMBER,
+                        Screen.NoteSaved.ARG_WEEK_NUMBER
+                    )
+                ) {
+                    NoteSavedRoute(
+                        onViewPreferences = {
+                            navController.navigate(Screen.Preferences.route)
+                        },
+                        onDone = {
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(Screen.Home.route) { inclusive = true }
+                            }
+                        },
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+
+                composable(Screen.Preferences.route) {
+                    PreferencesRoute(
+                        onEdit = { id ->
+                            navController.navigate(Screen.EditPreference.createRoute(id))
+                        },
+                        onBack = { navController.popBackStack() },
+                        onDone = {
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(Screen.Home.route) { inclusive = true }
+                            }
+                        }
+                    )
+                }
+
+                composable(
+                    route = Screen.EditPreference.route,
+                    arguments = listOf(
+                        navArgument(Screen.EditPreference.ARG_ID) { type = NavType.LongType }
+                    )
+                ) {
+                    EditPreferenceRoute(
+                        onFinished = { navController.popBackStack() },
+                        onBack = { navController.popBackStack() }
+                    )
                 }
 
                 composable(Screen.RegeneratingWeek.route) {
@@ -779,6 +887,19 @@ fun AppContent(
                         },
                         onCreatePlanClick = {
                             navController.navigate(Screen.Review.createRoute(fromPlan = true))
+                        },
+                        onAdjustToday = { day, minutes ->
+                            navController.navigate(
+                                Screen.Adjust.createRoute(
+                                    dayNumber = day.dayNumber,
+                                    weekNumber = Screen.RoutineDetail.LATEST_WEEK,
+                                    reason = DirectReason.LESS_TIME,
+                                    minutes = minutes
+                                )
+                            )
+                        },
+                        onTrainingPreferencesClick = {
+                            navController.navigate(Screen.Preferences.route)
                         },
                         versionName = versionName,
                         appearance = appearance,
