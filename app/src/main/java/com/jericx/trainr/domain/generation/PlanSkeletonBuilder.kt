@@ -95,7 +95,7 @@ class PlanSkeletonBuilder(private val catalog: ExerciseCatalog) {
         private val pool: List<CatalogExercise>,
         private val lastWeek: Set<String>
     ) {
-        private val shape = shapeFor(user.fitnessGoal)
+        private val shape = SessionShape.forGoal(user.fitnessGoal)
         private val usesThisWeek = mutableMapOf<String, Int>()
         private val directSets = mutableMapOf<MuscleRegion, Int>()
         private val maxSets = SessionBudget.maxSetsPerSession(user)
@@ -168,7 +168,7 @@ class PlanSkeletonBuilder(private val catalog: ExerciseCatalog) {
 
         private fun trimToCount(day: DayDraft, drop: List<String>) {
             val removable = drop.iterator()
-            while (day.slots.size > shape.count && removable.hasNext()) {
+            while (day.slots.size > shape.slotCount && removable.hasNext()) {
                 val id = removable.next()
                 day.slots.removeAll { it.id == id && it.isDroppable }
             }
@@ -370,70 +370,7 @@ class PlanSkeletonBuilder(private val catalog: ExerciseCatalog) {
             }
 
         private fun dropOrderFor(focus: SessionFocus): List<String> =
-            if (focus == SessionFocus.ACTIVE_RECOVERY) listOf("mobility_2", "core") else shape.drop
-    }
-
-    private data class Shape(
-        val count: Int,
-        val sets: Map<SlotTier, Pair<Int, Int>>,
-        val drop: List<String>,
-        // Weight loss and endurance take the rest of the session as
-        // conditioning; every other goal takes a short fixed block.
-        val conditioningFillsTheSession: Boolean = false
-    )
-
-    // A strength day sheds breadth to keep depth, a weight-loss day sheds the
-    // lifting tail to keep its conditioning, and a flexibility day has no
-    // compound slots at all.
-    private fun shapeFor(goal: FitnessGoal): Shape = when (goal) {
-        FitnessGoal.STRENGTH -> Shape(
-            count = 6,
-            sets = mapOf(
-                SlotTier.WARM_UP to (1 to 1), SlotTier.PRIMARY_COMPOUND to (3 to 5),
-                SlotTier.SECONDARY_COMPOUND to (2 to 4), SlotTier.ACCESSORY to (2 to 3),
-                SlotTier.ISOLATION to (2 to 2), SlotTier.CORE to (1 to 2), SlotTier.CONDITIONING to (1 to 1)
-            ),
-            drop = listOf("isolation_2", "conditioning", "mobility_1", "accessory", "core", "isolation_1"),
-        )
-        FitnessGoal.MUSCLE_GAIN -> Shape(
-            count = 8,
-            sets = mapOf(
-                SlotTier.WARM_UP to (1 to 1), SlotTier.PRIMARY_COMPOUND to (2 to 4),
-                SlotTier.SECONDARY_COMPOUND to (2 to 3), SlotTier.ACCESSORY to (2 to 3),
-                SlotTier.ISOLATION to (2 to 3), SlotTier.CORE to (1 to 3),
-                SlotTier.CONDITIONING to (1 to 1), SlotTier.MOBILITY to (1 to 1)
-            ),
-            drop = listOf("mobility_1", "conditioning", "isolation_2", "core", "accessory", "isolation_1"),
-        )
-        FitnessGoal.GENERAL_FITNESS -> Shape(
-            count = 8,
-            sets = mapOf(
-                SlotTier.WARM_UP to (1 to 1), SlotTier.PRIMARY_COMPOUND to (2 to 3),
-                SlotTier.SECONDARY_COMPOUND to (2 to 3), SlotTier.ACCESSORY to (2 to 3),
-                SlotTier.ISOLATION to (2 to 3), SlotTier.CORE to (1 to 3),
-                SlotTier.CONDITIONING to (1 to 1), SlotTier.MOBILITY to (1 to 1)
-            ),
-            drop = listOf("mobility_1", "isolation_2", "isolation_1", "core", "conditioning", "accessory"),
-        )
-        FitnessGoal.WEIGHT_LOSS, FitnessGoal.ENDURANCE -> Shape(
-            count = 7,
-            sets = mapOf(
-                SlotTier.WARM_UP to (1 to 1), SlotTier.PRIMARY_COMPOUND to (2 to 3),
-                SlotTier.SECONDARY_COMPOUND to (2 to 3), SlotTier.ACCESSORY to (2 to 3),
-                SlotTier.ISOLATION to (2 to 2), SlotTier.CORE to (2 to 3),
-                SlotTier.CONDITIONING to (1 to 1), SlotTier.MOBILITY to (1 to 1)
-            ),
-            drop = listOf("isolation_2", "isolation_1", "accessory", "mobility_1", "secondary", "core"),
-            conditioningFillsTheSession = true
-        )
-        FitnessGoal.FLEXIBILITY -> Shape(
-            count = 6,
-            sets = mapOf(
-                SlotTier.WARM_UP to (1 to 1), SlotTier.CORE to (1 to 2),
-                SlotTier.CONDITIONING to (1 to 1), SlotTier.MOBILITY to (3 to 4)
-            ),
-            drop = listOf("core", "conditioning", "mobility_4", "mobility_3"),
-        )
+            if (focus == SessionFocus.ACTIVE_RECOVERY) listOf("mobility_2", "core") else shape.dropOrder
     }
 
     // How many of the week's days carry a conditioning block, spread across
