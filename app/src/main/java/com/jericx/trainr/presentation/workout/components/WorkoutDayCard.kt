@@ -50,7 +50,10 @@ fun WorkoutDayCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     isMissed: Boolean = false,
-    finishedEarly: Boolean = false
+    finishedEarly: Boolean = false,
+    minutes: Int = day.duration,
+    exerciseCount: Int = day.exerciseCount,
+    equipment: List<String> = day.equipment
 ) {
     val started = day.status != WorkoutStatus.NOT_STARTED
     val colors = MaterialTheme.trainrColors
@@ -117,7 +120,7 @@ fun WorkoutDayCard(
                     )
                     Spacer(modifier = Modifier.size(Spacing.extraSmall))
                     Text(
-                        text = pluralStringResource(R.plurals.minutes, day.duration, day.duration),
+                        text = pluralStringResource(R.plurals.minutes, minutes, minutes),
                         style = MaterialTheme.typography.bodyMedium,
                         // Pure black here, not onSurface: light must stay #000000.
                         color = colors.onSurfaceStrong
@@ -125,7 +128,7 @@ fun WorkoutDayCard(
                 }
 
                 Text(
-                    text = pluralStringResource(R.plurals.exercises_count, day.exerciseCount, day.exerciseCount),
+                    text = pluralStringResource(R.plurals.exercises_count, exerciseCount, exerciseCount),
                     style = MaterialTheme.typography.labelLarge,
                     color = colors.onSurface,
                     modifier = Modifier
@@ -133,13 +136,13 @@ fun WorkoutDayCard(
                         .padding(horizontal = Spacing.small, vertical = 3.dp)
                 )
 
-                if (day.equipment.isNotEmpty()) {
+                if (equipment.isNotEmpty()) {
                     Text(
                         text = buildAnnotatedString {
                             withStyle(SpanStyle(fontWeight = FontWeight.Medium)) {
                                 append(stringResource(R.string.equipment_label) + " ")
                             }
-                            append(day.equipment.joinToString(", "))
+                            append(equipment.joinToString(", "))
                         },
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.onSurface

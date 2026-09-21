@@ -1,5 +1,6 @@
 package com.jericx.trainr.presentation
 
+import com.jericx.trainr.domain.unstuck.intent.DirectReason
 import com.jericx.trainr.presentation.purchases.PaywallReason
 
 sealed class Screen(val route: String) {
@@ -66,6 +67,35 @@ sealed class Screen(val route: String) {
         fun createRoute(dayNumber: Int, weekNumber: Int = LATEST_WEEK) =
             "routine_detail_screen/$dayNumber?weekNumber=$weekNumber"
     }
+    // A nested graph so the draft lives exactly as long as the flow does: the
+    // shared view model is scoped to this entry and dies when the graph pops.
+    data object Adjust : Screen(
+        "adjust_graph/{dayNumber}?weekNumber={weekNumber}&reason={reason}&exerciseId={exerciseId}"
+    ) {
+        const val ARG_DAY_NUMBER = "dayNumber"
+        const val ARG_WEEK_NUMBER = "weekNumber"
+        const val ARG_REASON = "reason"
+        const val ARG_EXERCISE_ID = "exerciseId"
+
+        const val NO_EXERCISE = -1L
+
+        fun createRoute(
+            dayNumber: Int,
+            weekNumber: Int,
+            reason: DirectReason,
+            exerciseId: Long? = null
+        ) = "adjust_graph/$dayNumber?weekNumber=$weekNumber&reason=${reason.name}" +
+            "&exerciseId=${exerciseId ?: NO_EXERCISE}"
+    }
+    // The graph carries the arguments, so its first screen is picked from the
+    // reason rather than from four graphs that differ only in where they open.
+    data object AdjustEntry : Screen("adjust_entry")
+    data object AdjustTime : Screen("adjust_time")
+    data object AdjustEquipment : Screen("adjust_equipment")
+    data object AdjustReview : Screen("adjust_review")
+    data object AdjustContext : Screen("adjust_context")
+    data object AdjustPain : Screen("adjust_pain")
+
     data object DayCompleted : Screen("day_completed_screen/{dayNumber}") {
         const val ARG_DAY_NUMBER = "dayNumber"
 
