@@ -314,8 +314,9 @@ fun RoutineDetailScreen(
 
             if (finishedEarly) {
                 Text(
-                    text = stringResource(
-                        R.string.finished_early_summary_format,
+                    text = pluralStringResource(
+                        R.plurals.finished_early_summary_format,
+                        routine.plannedExerciseCount,
                         routine.performedExerciseCount,
                         routine.plannedExerciseCount
                     ),
@@ -517,8 +518,9 @@ private fun FinishEarlyContent(
                         color = colors.onSurface
                     )
                     Text(
-                        text = stringResource(
-                            R.string.exercises_completed_of_format,
+                        text = pluralStringResource(
+                            R.plurals.exercises_completed_of_format,
+                            plannedExercises,
                             performedExercises,
                             plannedExercises
                         ),
