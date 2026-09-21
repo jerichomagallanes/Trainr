@@ -12,7 +12,9 @@ import com.jericx.trainr.domain.unstuck.AppliedAdjustment
 import com.jericx.trainr.domain.unstuck.ApplyRejection
 import com.jericx.trainr.domain.unstuck.ApplyResult
 import com.jericx.trainr.domain.unstuck.PolicyDecision
+import com.jericx.trainr.domain.unstuck.PreferenceKind
 import com.jericx.trainr.domain.unstuck.TimeScope
+import com.jericx.trainr.domain.unstuck.TrainingPreference
 import com.jericx.trainr.domain.unstuck.intent.DirectReason
 import com.jericx.trainr.domain.unstuck.intent.IntentInterpreter
 import com.jericx.trainr.domain.unstuck.intent.UnavailableInterpreter
@@ -26,6 +28,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
@@ -36,6 +39,8 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import java.util.Calendar
+import java.util.TimeZone
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -69,7 +74,7 @@ class AdjustmentViewModelTest {
         planned("dumbbell_bicep_curl", sets = 3, id = 4, reps = 10)
     )
 
-    private fun repositoryWith(day: WorkoutDay): UserRepository =
+    private fun repositoryWith(day: WorkoutDay, startDateMillis: Long = 0L): UserRepository =
         mockk<UserRepository>(relaxed = true).also {
             coEvery { it.getCurrentUser() } returns testUser()
             every { it.getWeeklyWorkoutPlans(any()) } returns flowOf(
@@ -79,7 +84,7 @@ class AdjustmentViewModelTest {
                         userId = 0,
                         weekNumber = 1,
                         title = "Week 1",
-                        startDateMillis = 0L,
+                        startDateMillis = startDateMillis,
                         workoutDays = listOf(day)
                     )
                 )
@@ -87,12 +92,18 @@ class AdjustmentViewModelTest {
             coEvery { it.getWorkoutDay(day.id) } returns day
         }
 
-    private fun adjustments(): AdjustmentRepository = mockk(relaxed = true)
+    // A relaxed mock answers every nullable read with a stand-in, which would
+    // make each weekday look as though it already had a stored limit.
+    private fun adjustments(): AdjustmentRepository =
+        mockk<AdjustmentRepository>(relaxed = true).also {
+            coEvery { it.getPreference(any(), any(), any()) } returns null
+        }
 
     private fun TestScope.viewModel(
         day: WorkoutDay = fullDay,
         reason: DirectReason = DirectReason.LESS_TIME,
         exerciseId: Long = Screen.Adjust.NO_EXERCISE,
+        minutes: Int = Screen.Adjust.NO_MINUTES,
         repository: UserRepository = repositoryWith(day),
         adjustmentRepository: AdjustmentRepository = adjustments(),
         interpreter: IntentInterpreter = UnavailableInterpreter,
@@ -103,7 +114,8 @@ class AdjustmentViewModelTest {
                 Screen.Adjust.ARG_DAY_NUMBER to day.dayNumber,
                 Screen.Adjust.ARG_WEEK_NUMBER to 1,
                 Screen.Adjust.ARG_REASON to reason.name,
-                Screen.Adjust.ARG_EXERCISE_ID to exerciseId
+                Screen.Adjust.ARG_EXERCISE_ID to exerciseId,
+                Screen.Adjust.ARG_MINUTES to minutes
             )
         ),
         repository,
@@ -289,6 +301,191 @@ class AdjustmentViewModelTest {
         assertThat(viewModel.showRecommendation()).isNotNull()
     }
 
+    // A whole-session limit is no answer to how much time is left, so the
+    // carried value is dropped rather than shown as one.
+    @Test
+    fun aCarriedLimitIsDroppedOnceTheSessionIsUnderWay() = runTest {
+        val viewModel = viewModel(day = partlyDoneDay, minutes = CARRIED_MINUTES)
+
+        with(viewModel.uiState.value) {
+            assertThat(scope).isEqualTo(TimeScope.REMAINING)
+            assertThat(selectedMinutes).isNull()
+            assertThat(canShowRecommendation).isFalse()
+        }
+    }
+
+    // Nothing may be recommended off an answer the screen never showed.
+    @Test
+    fun aCarriedLimitThatIsNoPresetIsShownInTheField() = runTest {
+        val viewModel = viewModel(minutes = CARRIED_MINUTES)
+
+        with(viewModel.uiState.value) {
+            assertThat(presets).doesNotContain(CARRIED_MINUTES)
+            assertThat(selectedMinutes).isEqualTo(CARRIED_MINUTES)
+            assertThat(customMinutesText).isEqualTo(CARRIED_MINUTES.toString())
+        }
+    }
+
+    // Remaining time is a different question, and its answer is not a limit
+    // for the whole weekday.
+    @Test
+    fun aSessionUnderWayOffersNothingToRemember() = runTest {
+        assertThat(viewModel().uiState.value.canRemember).isTrue()
+        assertThat(viewModel(day = partlyDoneDay).uiState.value.canRemember).isFalse()
+    }
+
+    // T21: the box is the only thing that makes a limit durable.
+    @Test
+    fun rememberUncheckedWritesNoPreference() = runTest {
+        val repository = adjustments()
+        val viewModel = viewModel(adjustmentRepository = repository)
+        viewModel.selectMinutes(viewModel.uiState.value.plannedMinutes - 10)
+        viewModel.showRecommendation()
+        applies(repository, viewModel)
+
+        viewModel.apply()
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { repository.savePreference(any()) }
+        coVerify(exactly = 0) { repository.updatePreference(any()) }
+    }
+
+    // T22: ticking the box is a request, not the confirmation itself.
+    @Test
+    fun rememberCheckedButKeepOriginalWritesNothing() = runTest {
+        val repository = adjustments()
+        val viewModel = viewModel(adjustmentRepository = repository)
+        viewModel.selectMinutes(viewModel.uiState.value.plannedMinutes - 10)
+        viewModel.toggleRemember()
+        viewModel.showRecommendation()
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { repository.savePreference(any()) }
+        coVerify(exactly = 0) { repository.updatePreference(any()) }
+    }
+
+    @Test
+    fun rememberCheckedAndAppliedWritesTheWeekdayLimit() = runTest {
+        val repository = adjustments()
+        val viewModel = viewModel(adjustmentRepository = repository)
+        val budget = viewModel.uiState.value.plannedMinutes - 10
+        viewModel.selectMinutes(budget)
+        viewModel.toggleRemember()
+        viewModel.showRecommendation()
+        applies(repository, viewModel)
+        val written = slot<TrainingPreference>()
+
+        viewModel.apply()
+        advanceUntilIdle()
+
+        coVerify { repository.savePreference(capture(written)) }
+        with(written.captured) {
+            assertThat(kind).isEqualTo(PreferenceKind.TIME_LIMIT)
+            assertThat(minutes).isEqualTo(budget)
+            assertThat(sourceAdjustmentId).isEqualTo(APPLIED_ID)
+            assertThat(confirmedAt).isEqualTo(updatedAt)
+        }
+    }
+
+    @Test
+    fun rememberCheckedAndNoChangeContinueWritesTheLimit() = runTest {
+        val repository = adjustments()
+        val viewModel = viewModel(adjustmentRepository = repository)
+        val budget = viewModel.uiState.value.plannedMinutes + 5
+        viewModel.selectMinutes(budget)
+        viewModel.toggleRemember()
+        viewModel.showRecommendation()
+        val written = slot<TrainingPreference>()
+
+        viewModel.continueWorkout()
+        advanceUntilIdle()
+
+        coVerify { repository.savePreference(capture(written)) }
+        assertThat(written.captured.minutes).isEqualTo(budget)
+        assertThat(written.captured.sourceAdjustmentId).isNull()
+    }
+
+    @Test
+    fun aLimitAlreadyStoredForThatWeekdayIsReplacedInPlace() = runTest {
+        val repository = adjustments()
+        val viewModel = viewModel(adjustmentRepository = repository)
+        coEvery { repository.getPreference(any(), any(), any()) } returns TrainingPreference(
+            id = 12,
+            userId = 0,
+            kind = PreferenceKind.TIME_LIMIT,
+            minutes = 40,
+            weekday = 1,
+            sourceAdjustmentId = null,
+            confirmedAt = 1L,
+            updatedAt = 1L
+        )
+        viewModel.selectMinutes(viewModel.uiState.value.plannedMinutes + 5)
+        viewModel.toggleRemember()
+        viewModel.showRecommendation()
+        val written = slot<TrainingPreference>()
+
+        viewModel.continueWorkout()
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { repository.savePreference(any()) }
+        coVerify { repository.updatePreference(capture(written)) }
+        assertThat(written.captured.id).isEqualTo(12L)
+    }
+
+    // T30: the same instant is a different weekday in UTC either side of
+    // midnight, and the day belongs to the person's own calendar.
+    @Test
+    fun theWeekdayComesFromTheLocalDate() = runTest {
+        val original = TimeZone.getDefault()
+        TimeZone.setDefault(TimeZone.getTimeZone("Asia/Tokyo"))
+        try {
+            val sundayEveningInUtc = utcMillis(2026, Calendar.SEPTEMBER, 20, 23)
+            val repository = adjustments()
+            val viewModel = viewModel(
+                repository = repositoryWith(fullDay, startDateMillis = sundayEveningInUtc),
+                adjustmentRepository = repository
+            )
+            viewModel.selectMinutes(viewModel.uiState.value.plannedMinutes + 5)
+            viewModel.toggleRemember()
+            viewModel.showRecommendation()
+            val written = slot<TrainingPreference>()
+
+            viewModel.continueWorkout()
+            advanceUntilIdle()
+
+            coVerify { repository.savePreference(capture(written)) }
+            assertThat(written.captured.weekday).isEqualTo(MONDAY)
+        } finally {
+            TimeZone.setDefault(original)
+        }
+    }
+
+    private fun applies(repository: AdjustmentRepository, viewModel: AdjustmentViewModel) {
+        coEvery { repository.apply(any(), any(), any(), any()) } returns ApplyResult.Applied(
+            AppliedAdjustment(
+                id = APPLIED_ID,
+                workoutDayId = fullDay.id,
+                proposal = proposed(viewModel).proposal,
+                reason = com.jericx.trainr.domain.unstuck.AdjustmentReason.LESS_TIME,
+                appliedAt = 0L
+            ),
+            null
+        )
+    }
+
+    private fun utcMillis(year: Int, month: Int, day: Int, hour: Int) =
+        Calendar.getInstance(TimeZone.getTimeZone("UTC")).run {
+            clear()
+            set(year, month, day, hour, 0)
+            timeInMillis
+        }
+
     private fun proposed(viewModel: AdjustmentViewModel) =
         viewModel.uiState.value.decision as PolicyDecision.Proposed
+
+    private companion object {
+        const val APPLIED_ID = 1L
+        const val MONDAY = 1
+        const val CARRIED_MINUTES = 20
+    }
 }

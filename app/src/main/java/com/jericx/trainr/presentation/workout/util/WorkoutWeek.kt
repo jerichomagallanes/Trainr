@@ -23,4 +23,12 @@ object WorkoutWeek {
             add(Calendar.DAY_OF_YEAR, dayNumber - 1)
             timeInMillis
         }
+
+    // ISO numbering, Monday 1 to Sunday 7, read in the device's own zone: the
+    // same instant is a different weekday in UTC either side of midnight.
+    fun isoWeekdayOf(dateMillis: Long): Int =
+        Calendar.getInstance().run {
+            timeInMillis = dateMillis
+            (get(Calendar.DAY_OF_WEEK) + 5) % 7 + 1
+        }
 }

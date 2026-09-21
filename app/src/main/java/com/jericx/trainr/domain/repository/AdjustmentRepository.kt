@@ -5,6 +5,7 @@ import com.jericx.trainr.domain.unstuck.AdjustmentProposal
 import com.jericx.trainr.domain.unstuck.AdjustmentReason
 import com.jericx.trainr.domain.unstuck.AppliedAdjustment
 import com.jericx.trainr.domain.unstuck.ApplyResult
+import com.jericx.trainr.domain.unstuck.PreferenceKind
 import com.jericx.trainr.domain.unstuck.SessionNote
 import com.jericx.trainr.domain.unstuck.SessionOutcome
 import com.jericx.trainr.domain.unstuck.TrainingPreference
@@ -42,10 +43,16 @@ interface AdjustmentRepository {
     suspend fun deletePreference(id: Long)
     fun observePreferences(userId: Long): Flow<List<TrainingPreference>>
     suspend fun getPreferences(userId: Long): List<TrainingPreference>
+    suspend fun getPreference(
+        userId: Long,
+        kind: PreferenceKind,
+        weekday: Int
+    ): TrainingPreference?
 
     suspend fun saveNote(note: SessionNote): Long
     suspend fun updateNote(note: SessionNote)
     suspend fun deleteNote(id: Long)
     fun observeNotes(userId: Long): Flow<List<SessionNote>>
+    suspend fun getNotes(userId: Long): List<SessionNote>
     suspend fun getNote(dayId: Long): SessionNote?
 }

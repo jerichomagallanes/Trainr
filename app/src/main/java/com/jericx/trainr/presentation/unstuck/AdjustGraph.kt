@@ -42,6 +42,10 @@ fun NavGraphBuilder.adjustGraph(
             navArgument(Screen.Adjust.ARG_EXERCISE_ID) {
                 type = NavType.LongType
                 defaultValue = Screen.Adjust.NO_EXERCISE
+            },
+            navArgument(Screen.Adjust.ARG_MINUTES) {
+                type = NavType.IntType
+                defaultValue = Screen.Adjust.NO_MINUTES
             }
         )
     ) {
@@ -97,6 +101,12 @@ fun NavGraphBuilder.adjustGraph(
                 }
             }
 
+            // Leaving pops the graph and its view model, so the flow waits for
+            // the write rather than racing it.
+            LaunchedEffect(viewModel) {
+                viewModel.continuedEvents.collect { navController.leaveAdjustment() }
+            }
+
             val review = state.review
             if (review == null) {
                 // The answer lives in memory only: restored after process death
@@ -114,6 +124,7 @@ fun NavGraphBuilder.adjustGraph(
                         }
                     },
                     onKeepOriginal = { navController.leaveAdjustment() },
+                    onContinue = viewModel::continueWorkout,
                     onFinishEarly = { navController.requestFinishEarly() },
                     onBack = { navController.popBackStack() }
                 )
@@ -137,6 +148,7 @@ private fun TimeStep(
         onSelectMinutes = viewModel::selectMinutes,
         onTypeMinutes = viewModel::typeMinutes,
         onShowRecommendation = { navController.review(viewModel, adjustmentGate, onAskForPro) },
+        onToggleRemember = viewModel::toggleRemember,
         onKeepPlan = { navController.leaveAdjustment() },
         onBack = { navController.popBackStack() }
     )
@@ -220,15 +232,21 @@ private fun NavHostController.review(
     if (ask) onAskForPro(PaywallReason.ADJUST) else navigate(Screen.AdjustReview.route)
 }
 
+// Opened from home there is no session screen behind the flow, so leaving
+// means dropping the graph itself.
 private fun NavHostController.leaveAdjustment() {
-    popBackStack(Screen.RoutineDetail.route, inclusive = false)
+    if (!popBackStack(Screen.RoutineDetail.route, inclusive = false)) {
+        popBackStack(Screen.Adjust.route, inclusive = true)
+    }
 }
 
 private fun NavHostController.requestFinishEarly() {
-    getBackStackEntry(Screen.RoutineDetail.route)
-        .savedStateHandle[FINISH_EARLY_REQUEST] = true
+    routineDetailEntry()?.savedStateHandle?.set(FINISH_EARLY_REQUEST, true)
     leaveAdjustment()
 }
+
+private fun NavHostController.routineDetailEntry(): NavBackStackEntry? =
+    runCatching { getBackStackEntry(Screen.RoutineDetail.route) }.getOrNull()
 
 private fun android.os.Bundle?.reason(): DirectReason =
     this?.getString(Screen.Adjust.ARG_REASON)
