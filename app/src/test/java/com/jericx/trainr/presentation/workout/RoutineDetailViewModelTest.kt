@@ -11,7 +11,11 @@ import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
 import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.model.WorkoutExercise
 import com.jericx.trainr.domain.model.WorkoutStatus
+import com.jericx.trainr.domain.repository.AdjustmentRepository
 import com.jericx.trainr.domain.repository.UserRepository
+import com.jericx.trainr.domain.unstuck.ActualOrigin
+import com.jericx.trainr.domain.unstuck.FinishKind
+import com.jericx.trainr.domain.unstuck.SessionOutcome
 import com.jericx.trainr.presentation.workout.model.ExerciseUi
 import io.mockk.coEvery
 import io.mockk.every
@@ -19,6 +23,8 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -50,10 +56,14 @@ class RoutineDetailViewModelTest {
     private fun emptyRepository(): UserRepository = mockk<UserRepository>(relaxed = true)
         .also { coEvery { it.getCurrentUser() } returns null }
 
+    private fun emptyAdjustments(): AdjustmentRepository = mockk<AdjustmentRepository>(relaxed = true)
+        .also { coEvery { it.getOutcome(any()) } returns null }
+
     private fun viewModel(
         dayNumber: Int = SampleWorkoutData.DEFAULT_DAY_NUMBER,
         repository: UserRepository = emptyRepository(),
-        weekNumber: Int = Screen.RoutineDetail.LATEST_WEEK
+        weekNumber: Int = Screen.RoutineDetail.LATEST_WEEK,
+        adjustments: AdjustmentRepository = emptyAdjustments()
     ) = RoutineDetailViewModel(
         SavedStateHandle(
             mapOf(
@@ -62,6 +72,7 @@ class RoutineDetailViewModelTest {
             )
         ),
         repository,
+        adjustments,
         SampleWorkoutData.catalog
     )
 
@@ -533,6 +544,23 @@ class RoutineDetailViewModelTest {
     }
 
     @Test
+    fun aTypedNumberIsStoredAsTyped() = runTest {
+        val repository = repositoryWith(storedPlan)
+        val viewModel = viewModel(dayNumber = 3, repository = repository)
+        advanceUntilIdle()
+
+        viewModel.updateSet(1, viewModel.exercise(1).sets.first().copy(actualReps = 9))
+        advanceUntilIdle()
+
+        coVerify {
+            repository.updateExerciseSet(
+                match { it.id == 320L && it.actualReps == 9 && it.actualOrigin == ActualOrigin.TYPED },
+                32L
+            )
+        }
+    }
+
+    @Test
     fun deletingASetRemovesItsRowAndRenumbersTheRest() = runTest {
         val repository = repositoryWith(storedPlan)
         val viewModel = viewModel(dayNumber = 3, repository = repository)
@@ -661,4 +689,174 @@ class RoutineDetailViewModelTest {
         }
     }
 
+    private fun partialOutcome(dayId: Long = 22L) = SessionOutcome(
+        id = 5,
+        workoutDayId = dayId,
+        finishKind = FinishKind.PARTIAL,
+        finishedAt = 2L,
+        performedSetCount = 1,
+        plannedSetCount = 4
+    )
+
+    @Test
+    fun finishingEarlyMarksTheDayCompleteWithoutFillingASet() = runTest {
+        val repository = repositoryWith(storedPlan)
+        val adjustments = emptyAdjustments()
+        val viewModel = viewModel(dayNumber = 3, repository = repository, adjustments = adjustments)
+        advanceUntilIdle()
+
+        viewModel.updateSet(1, viewModel.exercise(1).sets.first().copy(actualReps = 9, isCompleted = true))
+        advanceUntilIdle()
+        viewModel.askToFinishEarly()
+        viewModel.finishEarly()
+        advanceUntilIdle()
+
+        coVerify {
+            repository.updateWorkoutDay(
+                match { it.id == 22L && it.status == WorkoutStatus.COMPLETED && it.completedAt != null },
+                7L
+            )
+            adjustments.saveOutcome(
+                match {
+                    it.workoutDayId == 22L && it.finishKind == FinishKind.PARTIAL &&
+                        it.performedSetCount == 1 && it.plannedSetCount == 4
+                }
+            )
+        }
+        coVerify(exactly = 1) { repository.updateExerciseSet(any(), any()) }
+        coVerify(exactly = 0) { repository.updateWorkoutExercise(any(), any()) }
+        with(viewModel.uiState.value) {
+            assertThat(outcome?.finishKind).isEqualTo(FinishKind.PARTIAL)
+            assertThat(isConfirmingFinishEarly).isFalse()
+            assertThat(routine.exercises.count { it.isCompleted }).isEqualTo(0)
+        }
+    }
+
+    @Test
+    fun finishingEarlyReportsAFailedSaveAndRetries() = runTest {
+        val repository = repositoryWith(storedPlan)
+        val adjustments = emptyAdjustments()
+        coEvery { adjustments.saveOutcome(any()) } throws IllegalStateException("disk full") andThen 1L
+        val viewModel = viewModel(dayNumber = 3, repository = repository, adjustments = adjustments)
+        advanceUntilIdle()
+
+        viewModel.askToFinishEarly()
+        viewModel.finishEarly()
+        advanceUntilIdle()
+
+        with(viewModel.uiState.value) {
+            assertThat(saveFailed).isTrue()
+            assertThat(outcome).isNull()
+            assertThat(isConfirmingFinishEarly).isTrue()
+        }
+        coVerify {
+            repository.updateWorkoutDay(match { it.id == 22L && it.status == WorkoutStatus.COMPLETED }, 7L)
+            repository.updateWorkoutDay(match { it.id == 22L && it.status == WorkoutStatus.NOT_STARTED }, 7L)
+        }
+
+        viewModel.retryFinishEarly()
+        advanceUntilIdle()
+
+        with(viewModel.uiState.value) {
+            assertThat(saveFailed).isFalse()
+            assertThat(outcome?.finishKind).isEqualTo(FinishKind.PARTIAL)
+            assertThat(isConfirmingFinishEarly).isFalse()
+        }
+        coVerify(exactly = 2) { adjustments.saveOutcome(any()) }
+    }
+
+    @Test
+    fun aSecondTapWhileSavingIsIgnored() = runTest {
+        val adjustments = emptyAdjustments()
+        val viewModel = viewModel(dayNumber = 3, repository = repositoryWith(storedPlan), adjustments = adjustments)
+        advanceUntilIdle()
+        val events = mutableListOf<SessionSavedEvent>()
+        val collecting = launch { viewModel.savedEvents.toList(events) }
+
+        viewModel.finishEarly()
+        viewModel.finishEarly()
+        advanceUntilIdle()
+
+        assertThat(events).hasSize(1)
+        coVerify(exactly = 1) { adjustments.saveOutcome(any()) }
+        collecting.cancel()
+    }
+
+    @Test
+    fun slidingToCompleteRecordsAFullOutcome() = runTest {
+        val adjustments = emptyAdjustments()
+        val viewModel = viewModel(dayNumber = 3, repository = repositoryWith(storedPlan), adjustments = adjustments)
+        advanceUntilIdle()
+
+        viewModel.completeRoutine()
+        advanceUntilIdle()
+
+        coVerify {
+            adjustments.saveOutcome(
+                match {
+                    it.workoutDayId == 22L && it.finishKind == FinishKind.FULL &&
+                        it.performedSetCount == 4 && it.plannedSetCount == 4
+                }
+            )
+        }
+        assertThat(viewModel.uiState.value.outcome?.finishKind).isEqualTo(FinishKind.FULL)
+    }
+
+    @Test
+    fun aFinishedEarlyDayStaysCompleteWhenASetIsEdited() = runTest {
+        val repository = repositoryWith(storedPlan)
+        val viewModel = viewModel(dayNumber = 3, repository = repository)
+        advanceUntilIdle()
+
+        viewModel.finishEarly()
+        advanceUntilIdle()
+        viewModel.updateSet(1, viewModel.exercise(1).sets.first().copy(actualReps = 9, isCompleted = true))
+        viewModel.toggleExercise(2)
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) {
+            repository.updateWorkoutDay(match { it.status != WorkoutStatus.COMPLETED }, any())
+        }
+        coVerify { repository.updateExerciseSet(match { it.id == 320L && it.actualReps == 9 }, 32L) }
+    }
+
+    @Test
+    fun aStoredOutcomeIsLoadedIntoState() = runTest {
+        val adjustments = emptyAdjustments()
+        coEvery { adjustments.getOutcome(22L) } returns partialOutcome()
+
+        val viewModel = viewModel(dayNumber = 3, repository = repositoryWith(storedPlan), adjustments = adjustments)
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.outcome).isEqualTo(partialOutcome())
+    }
+
+    // The event is what navigates, and only a save sends one: a screen rebuilt
+    // around a stored outcome must not be sent to the saved screen again.
+    @Test
+    fun theSavedEventFiresOnce() = runTest {
+        val viewModel = viewModel(dayNumber = 3, repository = repositoryWith(storedPlan))
+        advanceUntilIdle()
+        val events = mutableListOf<SessionSavedEvent>()
+        val collecting = launch { viewModel.savedEvents.toList(events) }
+
+        viewModel.finishEarly()
+        advanceUntilIdle()
+
+        assertThat(events).containsExactly(
+            SessionSavedEvent(dayNumber = 2, performedExercises = 0, plannedExercises = 2)
+        )
+
+        val adjustments = emptyAdjustments()
+        coEvery { adjustments.getOutcome(22L) } returns partialOutcome()
+        val restored = viewModel(dayNumber = 3, repository = repositoryWith(storedPlan), adjustments = adjustments)
+        val restoredEvents = mutableListOf<SessionSavedEvent>()
+        val collectingRestored = launch { restored.savedEvents.toList(restoredEvents) }
+        advanceUntilIdle()
+
+        assertThat(restoredEvents).isEmpty()
+        assertThat(restored.uiState.value.outcome?.finishKind).isEqualTo(FinishKind.PARTIAL)
+        collecting.cancel()
+        collectingRestored.cancel()
+    }
 }

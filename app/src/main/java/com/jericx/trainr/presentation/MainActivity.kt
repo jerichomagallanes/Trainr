@@ -64,6 +64,7 @@ import com.jericx.trainr.presentation.onboarding.screens.WorkoutSetupScreen
 import com.jericx.trainr.presentation.splash.SplashScreen
 import com.jericx.trainr.presentation.workout.DayCompletedScreen
 import com.jericx.trainr.presentation.workout.RoutineDetailRoute
+import com.jericx.trainr.presentation.workout.SessionSavedScreen
 import com.jericx.trainr.presentation.workout.WeeklyPlanRoute
 import com.jericx.trainr.presentation.workout.NextWeekViewModel
 import com.jericx.trainr.presentation.workout.WeekCompletedScreen
@@ -527,6 +528,43 @@ fun AppContent(
                         },
                         onWeekCompleted = { weekNumber ->
                             navController.navigate(Screen.WeekCompleted.createRoute(weekNumber))
+                        },
+                        onSessionSaved = { saved ->
+                            navController.navigate(
+                                Screen.SessionSaved.createRoute(
+                                    saved.dayNumber,
+                                    saved.performedExercises,
+                                    saved.plannedExercises
+                                )
+                            )
+                        }
+                    )
+                }
+
+                composable(
+                    route = Screen.SessionSaved.route,
+                    arguments = listOf(
+                        navArgument(Screen.SessionSaved.ARG_DAY_NUMBER) { type = NavType.IntType },
+                        navArgument(Screen.SessionSaved.ARG_PERFORMED) {
+                            type = NavType.IntType
+                            defaultValue = 0
+                        },
+                        navArgument(Screen.SessionSaved.ARG_PLANNED) {
+                            type = NavType.IntType
+                            defaultValue = 0
+                        }
+                    )
+                ) { entry ->
+                    SessionSavedScreen(
+                        performedExercises = entry.arguments
+                            ?.getInt(Screen.SessionSaved.ARG_PERFORMED) ?: 0,
+                        plannedExercises = entry.arguments
+                            ?.getInt(Screen.SessionSaved.ARG_PLANNED) ?: 0,
+                        onBackClick = { navController.popBackStack() },
+                        onDoneClick = {
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(Screen.Home.route) { inclusive = true }
+                            }
                         }
                     )
                 }

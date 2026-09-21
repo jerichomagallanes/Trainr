@@ -14,6 +14,7 @@ import com.jericx.trainr.presentation.common.theme.TrainrTheme
 import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
 import com.jericx.trainr.presentation.workout.util.WorkoutWeek
 import com.jericx.trainr.testing.HiltTestActivity
+import com.jericx.trainr.testing.InMemoryAdjustmentRepository
 import com.jericx.trainr.testing.OneWeekRepository
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -55,7 +56,11 @@ class WeeklyPlanRouteTest {
         onUpdateProfileClick: () -> Unit = {}
     ) {
         // One view model for the whole test, and nothing constructed during composition.
-        val viewModel = WeeklyPlanViewModel(SavedStateHandle(), OneWeekRepository(liveWeek))
+        val viewModel = WeeklyPlanViewModel(
+            SavedStateHandle(),
+            OneWeekRepository(liveWeek),
+            InMemoryAdjustmentRepository()
+        )
 
         composeTestRule.setContent {
             TrainrTheme {

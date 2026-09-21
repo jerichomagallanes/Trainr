@@ -1,6 +1,7 @@
 package com.jericx.trainr.presentation.workout.model
 
 import com.jericx.trainr.domain.model.ExerciseSet
+import com.jericx.trainr.domain.unstuck.ActualOrigin
 
 import kotlin.math.roundToInt
 
@@ -16,6 +17,10 @@ data class RoutineUi(
         get() = if (exercises.isEmpty()) 0 else (completedCount * 100.0 / exercises.size).roundToInt()
 
     val isComplete: Boolean get() = exercises.isNotEmpty() && completedCount == exercises.size
+
+    val plannedExerciseCount: Int get() = exercises.count { !it.isOmitted }
+
+    val performedExerciseCount: Int get() = exercises.count { !it.isOmitted && it.isPerformed }
 
     fun toggleCompleted(position: Int): RoutineUi = copy(
         exercises = exercises.map {
@@ -39,7 +44,9 @@ data class RoutineUi(
                 exercise
             } else {
                 exercise.copy(
-                    sets = exercise.sets.map { if (it.setNumber == set.setNumber) set else it }
+                    sets = exercise.sets.map {
+                        if (it.setNumber == set.setNumber) set.withOriginAfter(it) else it
+                    }
                 ).tickedFromItsSets()
             }
         }
@@ -94,7 +101,8 @@ data class RoutineUi(
                         actualReps = null,
                         actualWeightKg = null,
                         actualSeconds = null,
-                        isCompleted = false
+                        isCompleted = false,
+                        actualOrigin = ActualOrigin.NONE
                     )
                 }
             )
@@ -123,13 +131,39 @@ private fun ExerciseUi.loggedAsPrescribed(): ExerciseUi = copy(
             actualReps = it.actualReps ?: it.targetReps,
             actualWeightKg = it.actualWeightKg ?: it.targetWeightKg,
             actualSeconds = it.actualSeconds ?: it.targetSeconds,
-            isCompleted = true
+            isCompleted = true,
+            actualOrigin = if (it.hasActuals) it.actualOrigin else ActualOrigin.CONFIRMED_TARGET
         )
     }
 )
 
-// Un-ticking clears the marks and leaves the numbers: hand-typed logs stay.
+// Un-ticking clears the marks and leaves the numbers with their origin: hand-typed logs stay.
 private fun ExerciseUi.notLogged(): ExerciseUi = copy(
     isCompleted = false,
     sets = sets.map { it.copy(isCompleted = false) }
 )
+
+private val ExerciseUi.isOmitted: Boolean
+    get() = sets.isNotEmpty() && sets.all { it.omittedBy != null }
+
+private val ExerciseUi.isPerformed: Boolean
+    get() {
+        val planned = sets.filter { it.omittedBy == null }
+        return if (planned.isEmpty()) isCompleted else planned.all { it.isCompleted }
+    }
+
+private val ExerciseSet.hasActuals: Boolean
+    get() = actualReps != null || actualWeightKg != null || actualSeconds != null
+
+private fun ExerciseSet.withOriginAfter(stored: ExerciseSet): ExerciseSet {
+    val changed = actualReps != stored.actualReps ||
+        actualWeightKg != stored.actualWeightKg ||
+        actualSeconds != stored.actualSeconds
+    return copy(
+        actualOrigin = when {
+            !hasActuals -> ActualOrigin.NONE
+            changed -> ActualOrigin.TYPED
+            else -> stored.actualOrigin
+        }
+    )
+}
