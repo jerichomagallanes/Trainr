@@ -39,6 +39,9 @@ class SessionSavedScreenTest {
     private fun string(id: Int, vararg args: Any) =
         composeTestRule.activity.getString(id, *args)
 
+    private fun plural(id: Int, count: Int, vararg args: Any) =
+        composeTestRule.activity.resources.getQuantityString(id, count, *args)
+
     private val day = SampleWorkoutData.weekOne.workoutDays.first()
 
     private fun setScreen(onDoneClick: () -> Unit = {}) {
@@ -128,7 +131,7 @@ class SessionSavedScreenTest {
         setScreen()
 
         composeTestRule.onNodeWithText(string(R.string.workout_saved)).assertIsDisplayed()
-        composeTestRule.onNodeWithText(string(R.string.finished_early_summary_format, 4, 6))
+        composeTestRule.onNodeWithText(plural(R.plurals.finished_early_summary_format, 6, 4, 6))
             .assertIsDisplayed()
     }
 

@@ -141,7 +141,10 @@
     <string name="finish_early">Finish early</string>
     <string name="finish_early_title">Finish early?</string>
     <string name="finish_early_card_title">Save only what you performed</string>
-    <string name="exercises_completed_of_format">%1$d of %2$d exercises completed</string>
+    <plurals name="exercises_completed_of_format">
+        <item quantity="one">%1$d of %2$d exercise completed</item>
+        <item quantity="other">%1$d of %2$d exercises completed</item>
+    </plurals>
     <string name="finish_early_card_message">Unchecked sets stay unperformed. Your logged work is kept.</string>
     <string name="finish_early_hint">No need to make up the remaining sets right now.</string>
     <string name="finish_early_failed">Your workout was not saved. Try again.</string>
@@ -149,7 +152,10 @@
     <string name="keep_training">Keep training</string>
     <string name="workout_saved">Workout saved</string>
     <string name="finished_early">Finished early</string>
-    <string name="finished_early_summary_format">%1$d of %2$d exercises · Finished early</string>
+    <plurals name="finished_early_summary_format">
+        <item quantity="one">%1$d of %2$d exercise · Finished early</item>
+        <item quantity="other">%1$d of %2$d exercises · Finished early</item>
+    </plurals>
     <string name="done">Done</string>
     <plurals name="minutes">
         <item quantity="one">%d min</item>
@@ -266,8 +272,14 @@
     <string name="adjust_equipment_available">What can you use instead?</string>
     <string name="adjust_review_time_title">A shorter workout for today</string>
     <string name="adjust_review_equipment_title_format">Use the %1$s today</string>
-    <string name="adjust_review_time_line_format">Your time today: %1$d minutes</string>
-    <string name="adjust_review_remaining_line_format">Your remaining time: %1$d minutes</string>
+    <plurals name="adjust_review_time_line_format">
+        <item quantity="one">Your time today: %1$d minute</item>
+        <item quantity="other">Your time today: %1$d minutes</item>
+    </plurals>
+    <plurals name="adjust_review_remaining_line_format">
+        <item quantity="one">Your remaining time: %1$d minute</item>
+        <item quantity="other">Your remaining time: %1$d minutes</item>
+    </plurals>
     <string name="today_only">Today only</string>
     <string name="undo_available">· Undo available</string>
     <string name="restore_remaining_plan">· Restore remaining plan</string>
@@ -304,10 +316,16 @@
     <string name="review_not_applied">Not applied. Try again.</string>
     <string name="keep_current_workout">Keep your current workout</string>
     <string name="already_fits">Your planned session already fits the time you selected. There\'s no need to change it.</string>
-    <string name="original_workout_planned_format">Original workout · %1$d minutes planned</string>
+    <plurals name="original_workout_planned_format">
+        <item quantity="one">Original workout · %1$d minute planned</item>
+        <item quantity="other">Original workout · %1$d minutes planned</item>
+    </plurals>
     <string name="continue_workout">Continue workout</string>
     <string name="no_short_version_title">Today\'s plan can\'t fit that time</string>
-    <string name="no_short_version_body_format">Even the shortest version of today\'s plan needs about %1$d minutes. You can keep the original, or save what you\'ve done and finish early.</string>
+    <plurals name="no_short_version_body_format">
+        <item quantity="one">Even the shortest version of today\'s plan needs about %1$d minute. You can keep the original, or save what you\'ve done and finish early.</item>
+        <item quantity="other">Even the shortest version of today\'s plan needs about %1$d minutes. You can keep the original, or save what you\'ve done and finish early.</item>
+    </plurals>
     <string name="no_alternative_title">No supported alternative</string>
     <string name="no_alternative_body">Trainr\'s catalog has no matching exercise for the equipment you selected. Keep the original, or finish early and save what you\'ve done.</string>
     <string name="no_adjustment_title">Today\'s plan can\'t be adjusted</string>

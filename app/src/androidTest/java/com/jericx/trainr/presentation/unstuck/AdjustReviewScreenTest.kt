@@ -57,7 +57,7 @@ class AdjustReviewScreenTest {
         composeTestRule.onNodeWithText(string(R.string.today_only)).assertIsDisplayed()
         composeTestRule.onNodeWithText(string(R.string.undo_available)).assertIsDisplayed()
         composeTestRule
-            .onNodeWithText(string(R.string.adjust_review_time_line_format, 35))
+            .onNodeWithText(plural(R.plurals.adjust_review_time_line_format, 35, 35))
             .assertIsDisplayed()
     }
 
@@ -111,7 +111,7 @@ class AdjustReviewScreenTest {
     fun noDurationEstimateIsShown() {
         setScreen(SampleAdjustmentStates.shorterReview)
 
-        composeTestRule.onNodeWithText(string(R.string.adjust_review_time_line_format, 28))
+        composeTestRule.onNodeWithText(plural(R.plurals.adjust_review_time_line_format, 28, 28))
             .assertDoesNotExist()
     }
 
@@ -161,7 +161,7 @@ class AdjustReviewScreenTest {
         setScreen(ReviewUi.Infeasible(InfeasibleReason.INVALID_MINUTES, null))
 
         composeTestRule.onNodeWithText(string(R.string.no_adjustment_title)).assertIsDisplayed()
-        composeTestRule.onNodeWithText(string(R.string.no_short_version_body_format, 0))
+        composeTestRule.onNodeWithText(plural(R.plurals.no_short_version_body_format, 0, 0))
             .assertDoesNotExist()
     }
 
