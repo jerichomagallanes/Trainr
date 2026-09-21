@@ -1,0 +1,211 @@
+[
+  {
+    "id": "home",
+    "screen": "home",
+    "goal": "strength",
+    "state": {}
+  },
+  {
+    "id": "workout",
+    "screen": "workout",
+    "goal": "strength",
+    "state": {}
+  },
+  {
+    "id": "reasons",
+    "screen": "reasons",
+    "goal": "strength",
+    "state": {}
+  },
+  {
+    "id": "time",
+    "screen": "time",
+    "goal": "strength",
+    "state": {}
+  },
+  {
+    "id": "review",
+    "screen": "review",
+    "goal": "strength",
+    "state": {}
+  },
+  {
+    "id": "early",
+    "screen": "early",
+    "goal": "strength",
+    "state": {}
+  },
+  {
+    "id": "finish",
+    "screen": "finish",
+    "goal": "strength",
+    "state": {}
+  },
+  {
+    "id": "saved",
+    "screen": "saved",
+    "goal": "strength",
+    "state": {
+      "finished": true
+    }
+  },
+  {
+    "id": "debrief",
+    "screen": "debrief",
+    "goal": "strength",
+    "state": {
+      "finished": true
+    }
+  },
+  {
+    "id": "noteSaved",
+    "screen": "noteSaved",
+    "goal": "strength",
+    "state": {
+      "finished": true,
+      "note": "I had less time today."
+    }
+  },
+  {
+    "id": "context",
+    "screen": "context",
+    "goal": "strength",
+    "state": {}
+  },
+  {
+    "id": "guide",
+    "screen": "guide",
+    "goal": "strength",
+    "state": {}
+  },
+  {
+    "id": "pain",
+    "screen": "pain",
+    "goal": "strength",
+    "state": {}
+  },
+  {
+    "id": "feedback",
+    "screen": "feedback",
+    "goal": "strength",
+    "state": {
+      "finished": true,
+      "applied": {
+        "reason": "time",
+        "minutes": 35,
+        "goal": "strength"
+      }
+    }
+  },
+  {
+    "id": "feedbackDetail",
+    "screen": "feedbackDetail",
+    "goal": "strength",
+    "state": {
+      "finished": true,
+      "applied": {
+        "reason": "time",
+        "minutes": 35,
+        "goal": "strength"
+      }
+    }
+  },
+  {
+    "id": "outcome",
+    "screen": "outcome",
+    "goal": "strength",
+    "state": {
+      "finished": true,
+      "applied": {
+        "reason": "time",
+        "minutes": 35,
+        "goal": "strength"
+      },
+      "feedback": "yes"
+    }
+  },
+  {
+    "id": "preferences",
+    "screen": "preferences",
+    "goal": "strength",
+    "state": {
+      "preference": 35
+    }
+  },
+  {
+    "id": "editPreference",
+    "screen": "editPreference",
+    "goal": "strength",
+    "state": {
+      "preference": 35
+    }
+  },
+  {
+    "id": "progress",
+    "screen": "progress",
+    "goal": "strength",
+    "state": {
+      "finished": true
+    }
+  },
+  {
+    "id": "pro",
+    "screen": "pro",
+    "goal": "strength",
+    "state": {
+      "previewUsed": true
+    }
+  },
+  {
+    "id": "review-shoulders-25",
+    "screen": "review",
+    "goal": "growth",
+    "state": {
+      "minutes": 25
+    }
+  },
+  {
+    "id": "review-equipment",
+    "screen": "review",
+    "goal": "strength",
+    "state": {
+      "reason": "equipment",
+      "swap": "bench"
+    }
+  },
+  {
+    "id": "review-no-change",
+    "screen": "review",
+    "goal": "strength",
+    "state": {
+      "minutes": 45
+    }
+  },
+  {
+    "id": "workout-adjusted",
+    "screen": "workout",
+    "goal": "strength",
+    "state": {
+      "applied": {
+        "reason": "time",
+        "minutes": 35,
+        "goal": "strength"
+      }
+    }
+  },
+  {
+    "id": "saved-partial",
+    "screen": "saved",
+    "goal": "strength",
+    "state": {
+      "finished": true,
+      "partial": true
+    }
+  },
+  {
+    "id": "preferences-empty",
+    "screen": "preferences",
+    "goal": "strength",
+    "state": {}
+  }
+]

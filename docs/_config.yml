@@ -16,6 +16,7 @@ exclude:
   - programming-evidence.md
   - on-device-generation.md
   - exercise-source.txt
+  - unstuck-handoff/
 
 defaults:
   - scope:
