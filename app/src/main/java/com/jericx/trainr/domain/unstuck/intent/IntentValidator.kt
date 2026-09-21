@@ -44,6 +44,12 @@ object IntentValidator {
     private const val MAX_QUOTE_CODE_POINTS = 500
 
     fun validate(rawJson: String, input: String): IntentValidation {
+        // A key answered twice decodes to one of its two answers and the
+        // duplicate is gone before any check can see it, so the document is
+        // refused rather than read.
+        if (RepeatedKeys.present(rawJson)) {
+            return IntentValidation.Rejected(listOf(RejectionReason.MALFORMED_JSON))
+        }
         val extraction = try {
             IntentJson.format.decodeFromString<IntentExtraction>(rawJson)
         } catch (error: Exception) {
@@ -136,4 +142,68 @@ object IntentValidator {
 
     private fun String.codePointSlice(start: Int, end: Int): String =
         substring(offsetByCodePoints(0, start), offsetByCodePoints(0, end))
+}
+
+private object RepeatedKeys {
+
+    fun present(json: String): Boolean {
+        val frames = ArrayDeque<MutableSet<String>?>()
+        var index = 0
+        while (index < json.length) {
+            when (json[index]) {
+                '{' -> frames.addLast(mutableSetOf())
+                '[' -> frames.addLast(null)
+                '}', ']' -> frames.removeLastOrNull()
+                '"' -> {
+                    val token = StringBuilder()
+                    index = readString(json, index, token)
+                    val keys = frames.lastOrNull()
+                    if (keys != null && nextMeaningful(json, index) == ':' &&
+                        !keys.add(token.toString())
+                    ) {
+                        return true
+                    }
+                    continue
+                }
+            }
+            index++
+        }
+        return false
+    }
+
+    // Returns the index just past the closing quote, unescaping as it goes so
+    // a key spelled with \u escapes cannot pass as a different key.
+    private fun readString(json: String, start: Int, into: StringBuilder): Int {
+        var index = start + 1
+        while (index < json.length) {
+            when (val char = json[index]) {
+                '\\' -> {
+                    index++
+                    if (index >= json.length) return index
+                    when (val escape = json[index]) {
+                        'u' -> {
+                            val hex = json.substring(index + 1, minOf(index + 5, json.length))
+                            hex.toIntOrNull(16)?.let { into.append(it.toChar()) }
+                            index += 4
+                        }
+                        'n' -> into.append('\n')
+                        't' -> into.append('\t')
+                        'r' -> into.append('\r')
+                        'b' -> into.append('\b')
+                        else -> into.append(escape)
+                    }
+                }
+                '"' -> return index + 1
+                else -> into.append(char)
+            }
+            index++
+        }
+        return index
+    }
+
+    private fun nextMeaningful(json: String, from: Int): Char? {
+        var index = from
+        while (index < json.length && json[index].isWhitespace()) index++
+        return json.getOrNull(index)
+    }
 }
