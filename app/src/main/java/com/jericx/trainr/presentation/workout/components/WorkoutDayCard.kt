@@ -49,7 +49,8 @@ fun WorkoutDayCard(
     day: WorkoutDay,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    isMissed: Boolean = false
+    isMissed: Boolean = false,
+    finishedEarly: Boolean = false
 ) {
     val started = day.status != WorkoutStatus.NOT_STARTED
     val colors = MaterialTheme.trainrColors
@@ -87,10 +88,10 @@ fun WorkoutDayCard(
                 )
             }
             // Missed deliberately reads in the same grey as "not started".
-            if (isMissed) {
-                StatusChip(labelRes = R.string.missed, tone = StatusTone.IDLE)
-            } else {
-                StatusChip(labelRes = day.status.labelRes, tone = day.status.chipTone)
+            when {
+                isMissed -> StatusChip(labelRes = R.string.missed, tone = StatusTone.IDLE)
+                finishedEarly -> StatusChip(labelRes = R.string.finished_early, tone = StatusTone.DONE)
+                else -> StatusChip(labelRes = day.status.labelRes, tone = day.status.chipTone)
             }
         }
 
