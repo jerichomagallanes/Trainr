@@ -55,7 +55,7 @@ interface UserDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertWorkoutExercise(exercise: WorkoutExerciseEntity): Long
 
-    @Query("SELECT * FROM workout_exercises WHERE workoutDayId = :workoutDayId")
+    @Query("SELECT * FROM workout_exercises WHERE workoutDayId = :workoutDayId ORDER BY sortOrder, id")
     suspend fun getExercisesForWorkoutDay(workoutDayId: Long): List<WorkoutExerciseEntity>
 
     @Query("SELECT * FROM workout_exercises WHERE id = :exerciseId")
@@ -78,6 +78,15 @@ interface UserDao {
 
     @Query("DELETE FROM exercise_sets WHERE id = :setId")
     suspend fun deleteExerciseSet(setId: Long)
+
+    @Query("SELECT * FROM exercise_sets WHERE id IN (:setIds)")
+    suspend fun getSetsByIds(setIds: List<Long>): List<ExerciseSetEntity>
+
+    @Query("UPDATE exercise_sets SET omittedBy = :adjustmentId WHERE id IN (:setIds) AND isCompleted = 0")
+    suspend fun omitSets(setIds: List<Long>, adjustmentId: Long): Int
+
+    @Query("UPDATE exercise_sets SET omittedBy = NULL WHERE omittedBy = :adjustmentId")
+    suspend fun restoreOmittedSets(adjustmentId: Long): Int
 
     // The most recent completed performance of the same movement, matched on
     // exerciseKey because display names drift. The EXISTS guard stops a day

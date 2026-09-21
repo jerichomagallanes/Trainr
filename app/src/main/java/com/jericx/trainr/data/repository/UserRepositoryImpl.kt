@@ -107,7 +107,9 @@ class UserRepositoryImpl(
     }
 
     override suspend fun saveWorkoutExercises(exercises: List<WorkoutExercise>, workoutDayId: Long) {
-        exercises.forEach { saveWorkoutExercise(it, workoutDayId) }
+        exercises.forEachIndexed { index, exercise ->
+            saveWorkoutExercise(exercise.copy(sortOrder = index), workoutDayId)
+        }
     }
 
     override suspend fun getExercisesForWorkoutDay(workoutDayId: Long): List<WorkoutExercise> {
