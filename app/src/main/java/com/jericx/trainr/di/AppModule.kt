@@ -24,6 +24,8 @@ import com.jericx.trainr.domain.purchases.FreeGenerationAllowance
 import com.jericx.trainr.domain.purchases.ProGate
 import com.jericx.trainr.domain.repository.UserRepository
 import com.jericx.trainr.domain.repository.AdjustmentRepository
+import com.jericx.trainr.domain.unstuck.intent.IntentInterpreter
+import com.jericx.trainr.domain.unstuck.intent.UnavailableInterpreter
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -131,6 +133,10 @@ object AppModule {
     @Singleton
     fun provideExerciseCatalog(@ApplicationContext context: Context): ExerciseCatalog =
         AssetExerciseCatalog(context)
+
+    @Provides
+    @Singleton
+    fun provideIntentInterpreter(): IntentInterpreter = UnavailableInterpreter
 
     @Provides
     @Singleton
