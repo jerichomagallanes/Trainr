@@ -24,7 +24,9 @@ import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.R
 import com.jericx.trainr.domain.unstuck.FinishKind
 import com.jericx.trainr.domain.unstuck.SessionOutcome
+import com.jericx.trainr.domain.catalog.MuscleRegion
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
+import com.jericx.trainr.presentation.workout.model.AdjustedBannerUi
 import com.jericx.trainr.presentation.workout.util.WorkoutDateFormatter
 import java.util.Locale
 import org.junit.Rule
@@ -452,5 +454,85 @@ class RoutineDetailScreenTest {
         composeTestRule.onNodeWithText(string(R.string.slide_to_complete_routine)).assertDoesNotExist()
         composeTestRule.onNodeWithText(string(R.string.finish_early)).assertDoesNotExist()
         composeTestRule.onNodeWithText(string(R.string.start_workout_over)).assertDoesNotExist()
+    }
+
+    @Test
+    fun aSessionStillRunningOffersToAdjustToday() {
+        setScreen()
+
+        composeTestRule.onNodeWithText(string(R.string.adjust_today)).performScrollTo()
+            .assertIsDisplayed()
+        composeTestRule.onAllNodesWithText(string(R.string.need_an_alternative)).onFirst()
+            .performScrollTo()
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun aFinishedSessionIsNotOfferedAnAdjustment() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                RoutineDetailScreen(
+                    state = state.copy(
+                        outcome = SessionOutcome(
+                            workoutDayId = 1,
+                            finishKind = FinishKind.PARTIAL,
+                            finishedAt = 1L,
+                            performedSetCount = 1,
+                            plannedSetCount = 4
+                        )
+                    )
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.adjust_today)).assertDoesNotExist()
+        assertThat(
+            composeTestRule.onAllNodesWithText(string(R.string.need_an_alternative))
+                .fetchSemanticsNodes()
+        ).isEmpty()
+    }
+
+    @Test
+    fun anAppliedAdjustmentIsAnnouncedAndCanBeUndone() {
+        var undone = false
+        composeTestRule.setContent {
+            TrainrTheme {
+                RoutineDetailScreen(
+                    state = state.copy(
+                        adjustedBanner = AdjustedBannerUi(
+                            messageRes = R.string.adjusted_time_banner_format,
+                            regions = listOf(MuscleRegion.ARMS)
+                        )
+                    ),
+                    onUndoAdjustment = { undone = true }
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.adjusted_for_today)).performScrollTo()
+            .assertIsDisplayed()
+        composeTestRule
+            .onNodeWithText(
+                string(R.string.adjusted_time_banner_format, string(R.string.region_arms))
+            )
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.undo_adjustment)).performClick()
+
+        assertThat(undone).isTrue()
+    }
+
+    @Test
+    fun tappingAdjustTodayOpensTheChooser() {
+        var opened = false
+        composeTestRule.setContent {
+            TrainrTheme {
+                RoutineDetailScreen(state = state, onOpenAdjustSheet = { opened = true })
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.adjust_today)).performScrollTo()
+            .performClick()
+
+        assertThat(opened).isTrue()
     }
 }

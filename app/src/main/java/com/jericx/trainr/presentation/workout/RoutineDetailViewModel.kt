@@ -3,6 +3,7 @@ package com.jericx.trainr.presentation.workout
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.jericx.trainr.R
 import com.jericx.trainr.domain.model.ExerciseSet
 import com.jericx.trainr.domain.catalog.ExerciseCatalog
 import com.jericx.trainr.domain.model.UnitSystem
@@ -12,11 +13,20 @@ import com.jericx.trainr.presentation.Screen
 import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.domain.repository.AdjustmentRepository
 import com.jericx.trainr.domain.repository.UserRepository
+import com.jericx.trainr.domain.unstuck.AdjustmentProposal
+import com.jericx.trainr.domain.unstuck.AppliedAdjustment
+import com.jericx.trainr.domain.unstuck.ChangeKind
 import com.jericx.trainr.domain.unstuck.FinishKind
+import com.jericx.trainr.domain.unstuck.UndoResult
 import com.jericx.trainr.domain.unstuck.SessionOutcome
 import com.jericx.trainr.presentation.workout.model.ExerciseTimerUi
 import com.jericx.trainr.presentation.workout.model.ExerciseUi
+import com.jericx.trainr.presentation.workout.model.AdjustedBannerUi
 import com.jericx.trainr.presentation.workout.model.RoutineUi
+import com.jericx.trainr.presentation.workout.model.derivedEquipment
+import com.jericx.trainr.presentation.workout.model.isAdjustedToday
+import com.jericx.trainr.presentation.workout.model.remainingMinutes
+import com.jericx.trainr.presentation.workout.model.visibleExercises
 import com.jericx.trainr.presentation.workout.model.toRoutineUi
 import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
 import com.jericx.trainr.presentation.workout.util.WorkoutWeek
@@ -52,7 +62,15 @@ data class RoutineDetailUiState(
     val isLoaded: Boolean = true,
     val outcome: SessionOutcome? = null,
     val isConfirmingFinishEarly: Boolean = false,
-    val saveFailed: Boolean = false
+    val saveFailed: Boolean = false,
+    val activeAdjustment: AppliedAdjustment? = null,
+    val adjustedBanner: AdjustedBannerUi? = null,
+    val showAdjustSheet: Boolean = false,
+    val scrollToPosition: Int? = null,
+    val undoKeptSets: Int? = null,
+    // Null while the stored day is unadjusted: the header then reads the
+    // planned per-exercise minutes as it always has.
+    val totalMinutes: Int? = null
 )
 
 data class SessionSavedEvent(
@@ -102,51 +120,132 @@ class RoutineDetailViewModel @Inject constructor(
     private var weeklyPlanId = 0L
 
     init {
-        viewModelScope.launch {
-            val user = userRepository.getCurrentUser()
-            val units = user?.weightUnits ?: UnitSystem.Default
-            val plan = user
-                ?.let { profile ->
-                    val plans = userRepository.getWeeklyWorkoutPlans(profile.id).first()
-                    if (requestedWeekNumber == null) {
-                        plans.maxByOrNull { it.weekNumber }
-                    } else {
-                        plans.firstOrNull { it.weekNumber == requestedWeekNumber }
-                    }
-                }
-            val index = plan?.workoutDays
-                ?.indexOfFirst { it.dayNumber == requestedDayNumber } ?: -1
+        refresh()
+    }
 
-            if (plan == null || index < 0) {
-                _uiState.update { it.copy(isLoaded = true, unitSystem = units) }
+    // Re-reads the stored day without losing what the screen is doing: the
+    // timer, the open tutorial and the scroll request all survive.
+    fun refresh() {
+        viewModelScope.launch { read() }
+    }
+
+    private suspend fun read() {
+        val user = userRepository.getCurrentUser()
+        val units = user?.weightUnits ?: UnitSystem.Default
+        val plan = user?.let { profile ->
+            val plans = userRepository.getWeeklyWorkoutPlans(profile.id).first()
+            if (requestedWeekNumber == null) {
+                plans.maxByOrNull { it.weekNumber }
             } else {
-                val day = plan.workoutDays[index]
-                storedDay = day
-                weeklyPlanId = plan.id
-                // History stops at this day's own completion, so a finished day
-                // reviewed later still shows what "previous" meant at the time.
-                val before = day.completedAt ?: Long.MAX_VALUE
-                val previousByKey = day.exercises
-                    .filter { it.exerciseKey.isNotBlank() }
-                    .associate {
-                        it.exerciseKey to userRepository.getPreviousSets(
-                            plan.userId, it.exerciseKey, day.id, before
-                        )
-                    }
-                    .filterValues { sets -> sets.isNotEmpty() }
-                _uiState.value = RoutineDetailUiState(
-                    unitSystem = units,
-                    routine = day.toRoutineUi(previousByKey, catalog, user?.injuries.orEmpty()),
-                    equipment = day.equipment,
-                    dateMillis = plan.startDateMillis
-                        ?.let { WorkoutWeek.dateOfDay(it, day.dayNumber) }
-                        ?: SampleWorkoutData.dateOf(day.dayNumber),
-                    dayNumber = index + 1,
-                    weekNumber = plan.weekNumber,
-                    completesTheWeek = completesTheWeek(plan.workoutDays, index + 1),
-                    outcome = adjustmentRepository.getOutcome(day.id)
+                plans.firstOrNull { it.weekNumber == requestedWeekNumber }
+            }
+        }
+        val index = plan?.workoutDays
+            ?.indexOfFirst { it.dayNumber == requestedDayNumber } ?: -1
+
+        if (plan == null || index < 0) {
+            _uiState.update { it.copy(isLoaded = true, unitSystem = units) }
+            return
+        }
+
+        val day = plan.workoutDays[index]
+        storedDay = day
+        weeklyPlanId = plan.id
+        // History stops at this day's own completion, so a finished day
+        // reviewed later still shows what "previous" meant at the time.
+        val before = day.completedAt ?: Long.MAX_VALUE
+        val previousByKey = day.exercises
+            .filter { it.exerciseKey.isNotBlank() }
+            .associate {
+                it.exerciseKey to userRepository.getPreviousSets(
+                    plan.userId, it.exerciseKey, day.id, before
                 )
             }
+            .filterValues { sets -> sets.isNotEmpty() }
+        val adjustment = adjustmentRepository.getActiveAdjustment(day.id)
+
+        _uiState.update {
+            it.copy(
+                unitSystem = units,
+                routine = day.toRoutineUi(previousByKey, catalog, user?.injuries.orEmpty()),
+                equipment = day.derivedEquipment(catalog),
+                totalMinutes = user
+                    ?.takeIf { day.isAdjustedToday }
+                    ?.let { profile -> day.remainingMinutes(profile, catalog) },
+                dateMillis = plan.startDateMillis
+                    ?.let { start -> WorkoutWeek.dateOfDay(start, day.dayNumber) }
+                    ?: SampleWorkoutData.dateOf(day.dayNumber),
+                dayNumber = index + 1,
+                weekNumber = plan.weekNumber,
+                completesTheWeek = completesTheWeek(plan.workoutDays, index + 1),
+                outcome = adjustmentRepository.getOutcome(day.id),
+                activeAdjustment = adjustment,
+                adjustedBanner = adjustment?.let { applied -> bannerFor(applied.proposal) },
+                // The note belongs to one undo, not to whatever the day shows next.
+                undoKeptSets = null,
+                isLoaded = true
+            )
+        }
+    }
+
+    fun openAdjustSheet() {
+        _uiState.update { it.copy(showAdjustSheet = true) }
+    }
+
+    fun dismissAdjustSheet() {
+        _uiState.update { it.copy(showAdjustSheet = false) }
+    }
+
+    // "Show me how" is the existing tutorial on the card, not a new screen.
+    fun showHowTo(position: Int) {
+        val exercise = _uiState.value.routine.exercises
+            .firstOrNull { it.position == position } ?: return
+        val hasSteps = exercise.steps.isNotEmpty()
+        _uiState.update {
+            it.copy(
+                showAdjustSheet = false,
+                expandedHowTo = if (hasSteps) position else it.expandedHowTo,
+                expandedVideo = if (hasSteps) it.expandedVideo else position,
+                scrollToPosition = position
+            )
+        }
+    }
+
+    fun scrolled() {
+        _uiState.update { it.copy(scrollToPosition = null) }
+    }
+
+    fun undoAdjustment() {
+        val adjustment = _uiState.value.activeAdjustment ?: return
+
+        viewModelScope.launch {
+            val result = adjustmentRepository.undo(adjustment.id, System.currentTimeMillis())
+            val kept = (result as? UndoResult.Restored)?.keptPerformedSubstituteSets ?: 0
+            read()
+            _uiState.update { it.copy(undoKeptSets = kept.takeIf { count -> count > 0 }) }
+        }
+    }
+
+    private fun bannerFor(proposal: AdjustmentProposal): AdjustedBannerUi {
+        val replaced = proposal.changes.firstOrNull { it.kind == ChangeKind.REPLACE_UNPERFORMED }
+        if (replaced != null) {
+            return AdjustedBannerUi(
+                messageRes = R.string.adjusted_replaced_banner_format,
+                fromName = catalog[replaced.before.catalogKey]?.name.orEmpty(),
+                toName = replaced.after?.catalogKey?.let { catalog[it]?.name }.orEmpty()
+            )
+        }
+        val regions = proposal.changes
+            .mapNotNull { catalog[it.before.catalogKey]?.primary?.region }
+            .distinct()
+        val omitted = proposal.changes.any { it.kind == ChangeKind.OMIT_UNPERFORMED }
+        return if (omitted || regions.isEmpty()) {
+            AdjustedBannerUi(messageRes = R.string.adjusted_reduced_banner)
+        } else {
+            AdjustedBannerUi(
+                messageRes = R.string.adjusted_time_banner_format,
+                regions = regions
+            )
         }
     }
 
@@ -222,10 +321,14 @@ class RoutineDetailViewModel @Inject constructor(
         _uiState.update { it.copy(routine = it.routine.completeAll(), timer = null) }
 
         val day = storedDay ?: return
-        val completed = day.copy(exercises = day.exercises.map { it.copy(isCompleted = true) })
+        val completed = day.copy(
+            exercises = day.exercises.map {
+                if (it.isOmittedToday) it else it.copy(isCompleted = true)
+            }
+        )
         storedDay = completed
         viewModelScope.launch {
-            completed.exercises.forEach { userRepository.updateWorkoutExercise(it, day.id) }
+            completed.visibleExercises.forEach { userRepository.updateWorkoutExercise(it, day.id) }
             persistFilledSets(_uiState.value.routine.exercises.map { it.position })
             persistDayStatus()
             val planned = plannedSetCount()
@@ -407,16 +510,26 @@ class RoutineDetailViewModel @Inject constructor(
         if (now != was) persistExerciseCompleted(position, now)
     }
 
+    // A card's position counts the exercises still in today's session; the
+    // stored day also holds the ones an adjustment omitted, so the two lists
+    // index differently and only the visible one may be counted from.
+    private fun storedIndexAt(position: Int): Int {
+        val day = storedDay ?: return -1
+        val target = day.visibleExercises.getOrNull(position - 1) ?: return -1
+        return day.exercises.indexOfFirst { it === target }
+    }
+
     private fun storedExerciseAt(position: Int): WorkoutExercise? =
-        storedDay?.exercises?.getOrNull(position - 1)
+        storedDay?.exercises?.getOrNull(storedIndexAt(position))
 
     private fun persistExerciseCompleted(position: Int, completed: Boolean) {
         val day = storedDay ?: return
+        val storedIndex = storedIndexAt(position)
         val exercise = storedExerciseAt(position)?.copy(isCompleted = completed) ?: return
 
         storedDay = day.copy(
             exercises = day.exercises.mapIndexed { index, e ->
-                if (index == position - 1) exercise else e
+                if (index == storedIndex) exercise else e
             }
         )
         viewModelScope.launch {
@@ -432,7 +545,8 @@ class RoutineDetailViewModel @Inject constructor(
     private suspend fun persistFilledSets(positions: List<Int>) {
         var day = storedDay ?: return
         positions.forEach { position ->
-            val stored = day.exercises.getOrNull(position - 1) ?: return@forEach
+            val storedIndex = storedIndexAt(position)
+            val stored = day.exercises.getOrNull(storedIndex) ?: return@forEach
             val logged = _uiState.value.routine.exercises
                 .firstOrNull { it.position == position }?.sets.orEmpty()
             val before = stored.sets.associateBy { it.id }
@@ -443,7 +557,16 @@ class RoutineDetailViewModel @Inject constructor(
 
             day = day.copy(
                 exercises = day.exercises.mapIndexed { index, exercise ->
-                    if (index == position - 1) exercise.copy(sets = logged) else exercise
+                    if (index != storedIndex) {
+                        exercise
+                    } else {
+                        // The omitted rows are not on screen and must survive:
+                        // undo puts them back.
+                        exercise.copy(
+                            sets = (exercise.sets.filter { it.omittedBy != null } + logged)
+                                .sortedBy { it.setNumber }
+                        )
+                    }
                 }
             )
         }
@@ -458,10 +581,10 @@ class RoutineDetailViewModel @Inject constructor(
         // A day finished early is closed for good: correcting a number on it
         // must not reopen it as in progress.
         if (_uiState.value.outcome?.finishKind == FinishKind.PARTIAL) return
-        val completedCount = day.exercises.count { it.isCompleted }
-        val status = when (completedCount) {
+        val visible = day.visibleExercises
+        val status = when (visible.count { it.isCompleted }) {
             0 -> WorkoutStatus.NOT_STARTED
-            day.exercises.size -> WorkoutStatus.COMPLETED
+            visible.size -> WorkoutStatus.COMPLETED
             else -> WorkoutStatus.IN_PROGRESS
         }
         val updated = day.copy(

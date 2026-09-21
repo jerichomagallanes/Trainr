@@ -3,6 +3,8 @@ package com.jericx.trainr.presentation.workout
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.jericx.trainr.domain.catalog.ExerciseCatalog
+import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
 import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.model.WorkoutStatus
@@ -11,6 +13,10 @@ import com.jericx.trainr.domain.repository.UserRepository
 import com.jericx.trainr.domain.unstuck.FinishKind
 import com.jericx.trainr.domain.unstuck.SessionOutcome
 import com.jericx.trainr.presentation.Screen
+import com.jericx.trainr.presentation.workout.model.derivedEquipment
+import com.jericx.trainr.presentation.workout.model.derivedExerciseCount
+import com.jericx.trainr.presentation.workout.model.isAdjustedToday
+import com.jericx.trainr.presentation.workout.model.remainingMinutes
 import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
 import com.jericx.trainr.presentation.workout.util.WorkoutWeek
 import com.jericx.trainr.presentation.workout.util.isReadyForTheNextWeek
@@ -27,7 +33,12 @@ data class WeeklyPlanDay(
     val dateMillis: Long,
     val isToday: Boolean = false,
     val isPast: Boolean = false,
-    val finishKind: FinishKind? = null
+    val finishKind: FinishKind? = null,
+    // Derived from the sets that remain: an adjusted day's stored duration,
+    // exercise count and equipment still describe the plan as generated.
+    val minutes: Int = day.duration,
+    val exerciseCount: Int = day.exerciseCount,
+    val equipment: List<String> = day.equipment
 ) {
     // Derived, not stored: a session moved to a later day stops being missed
     // on its own, with no flag to correct.
@@ -63,7 +74,8 @@ data class WeeklyPlanUiState(
 class WeeklyPlanViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val userRepository: UserRepository,
-    private val adjustmentRepository: AdjustmentRepository
+    private val adjustmentRepository: AdjustmentRepository,
+    private val catalog: ExerciseCatalog
 ) : ViewModel() {
 
     // Absent on home, which shows the newest week; set when opened from Weekly Progress.
@@ -74,6 +86,7 @@ class WeeklyPlanViewModel @Inject constructor(
     val uiState: StateFlow<WeeklyPlanUiState> = _uiState.asStateFlow()
 
     private var outcomes: Map<Long, SessionOutcome> = emptyMap()
+    private var user: UserProfile? = null
 
     init {
         refresh()
@@ -81,7 +94,8 @@ class WeeklyPlanViewModel @Inject constructor(
 
     fun refresh() {
         viewModelScope.launch {
-            val plans = userRepository.getCurrentUser()
+            user = userRepository.getCurrentUser()
+            val plans = user
                 ?.let { userRepository.getWeeklyWorkoutPlans(it.id).first() }
                 .orEmpty()
             val newest = plans.maxByOrNull { it.weekNumber }
@@ -102,7 +116,9 @@ class WeeklyPlanViewModel @Inject constructor(
                     // Read off the newest week, not the one being looked at: an old
                     // week is always finished and says nothing about the plan.
                     canAddWeek = newest?.isReadyForTheNextWeek() ?: false,
-                    outcomes = outcomes
+                    outcomes = outcomes,
+                    user = user,
+                    catalog = catalog
                 )
             }
         }
@@ -121,7 +137,9 @@ class WeeklyPlanViewModel @Inject constructor(
             plan = plan.copy(workoutDays = reordered.sortedBy { it.dayNumber }),
             canAddWeek = state.canAddWeek,
             isCurrentWeek = state.isCurrentWeek,
-            outcomes = outcomes
+            outcomes = outcomes,
+            user = user,
+            catalog = catalog
         )
 
         viewModelScope.launch {
@@ -154,7 +172,9 @@ class WeeklyPlanViewModel @Inject constructor(
             // while one is still being trained would move home onto the copy.
             canAddWeek: Boolean? = null,
             nowMillis: Long = System.currentTimeMillis(),
-            outcomes: Map<Long, SessionOutcome> = emptyMap()
+            outcomes: Map<Long, SessionOutcome> = emptyMap(),
+            user: UserProfile? = null,
+            catalog: ExerciseCatalog? = null
         ): WeeklyPlanUiState {
             val start = plan.startDateMillis ?: SampleWorkoutData.weekStartMillis
             val readyForTheNext = plan.isReadyForTheNextWeek(nowMillis)
@@ -165,12 +185,21 @@ class WeeklyPlanViewModel @Inject constructor(
                 plan = plan,
                 days = plan.workoutDays.map {
                     val date = WorkoutWeek.dateOfDay(start, it.dayNumber)
+                    val adjusted = it.isAdjustedToday
                     WeeklyPlanDay(
                         day = it,
                         dateMillis = date,
                         isToday = WorkoutWeek.startOfDay(date) == today,
                         isPast = WorkoutWeek.startOfDay(date) < today,
-                        finishKind = outcomes[it.id]?.finishKind
+                        finishKind = outcomes[it.id]?.finishKind,
+                        minutes = if (adjusted && user != null && catalog != null) {
+                            it.remainingMinutes(user, catalog)
+                        } else {
+                            it.duration
+                        },
+                        exerciseCount = it.derivedExerciseCount(),
+                        equipment = catalog?.let { entries -> it.derivedEquipment(entries) }
+                            ?: it.equipment
                     )
                 },
                 weekStartMillis = start,

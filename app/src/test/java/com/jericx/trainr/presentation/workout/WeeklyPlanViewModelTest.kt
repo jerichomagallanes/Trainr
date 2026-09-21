@@ -57,7 +57,8 @@ class WeeklyPlanViewModelTest {
             weekNumber?.let { mapOf(Screen.WeekPlan.ARG_WEEK_NUMBER to it) } ?: emptyMap()
         ),
         userRepository,
-        adjustmentRepository
+        adjustmentRepository,
+        SampleWorkoutData.catalog
     )
 
     private val storedPlan = WeeklyWorkoutPlan(

@@ -147,6 +147,9 @@ fun ReorderableDayList(
                     day = planDay.day,
                     isMissed = planDay.isMissed,
                     finishedEarly = planDay.finishKind == FinishKind.PARTIAL,
+                    minutes = planDay.minutes,
+                    exerciseCount = planDay.exerciseCount,
+                    equipment = planDay.equipment,
                     onClick = { onDayClick(planDay.day) },
                     modifier = Modifier
                         .zIndex(if (isDragged) 1f else 0f)
