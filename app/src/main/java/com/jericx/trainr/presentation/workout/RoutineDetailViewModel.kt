@@ -75,6 +75,7 @@ data class RoutineDetailUiState(
 
 data class SessionSavedEvent(
     val dayNumber: Int,
+    val weekNumber: Int,
     val performedExercises: Int,
     val plannedExercises: Int
 )
@@ -209,6 +210,14 @@ class RoutineDetailViewModel @Inject constructor(
                 scrollToPosition = position
             )
         }
+    }
+
+    // The key, not the position: a replaced exercise is a new row whose place
+    // in the day only the stored plan knows.
+    fun showHowToFor(exerciseKey: String) {
+        val index = storedDay?.visibleExercises?.indexOfFirst { it.exerciseKey == exerciseKey }
+        if (index == null || index < 0) return
+        showHowTo(index + 1)
     }
 
     fun scrolled() {
@@ -394,6 +403,7 @@ class RoutineDetailViewModel @Inject constructor(
             _savedEvents.send(
                 SessionSavedEvent(
                     dayNumber = _uiState.value.dayNumber,
+                    weekNumber = _uiState.value.weekNumber,
                     performedExercises = routine.performedExerciseCount,
                     plannedExercises = routine.plannedExerciseCount
                 )

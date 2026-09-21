@@ -96,24 +96,49 @@ sealed class Screen(val route: String) {
     data object AdjustContext : Screen("adjust_context")
     data object AdjustPain : Screen("adjust_pain")
 
-    data object DayCompleted : Screen("day_completed_screen/{dayNumber}") {
+    // The week travels with the day: the follow-up has to find the session
+    // that was just saved, which need not be in the newest week.
+    data object DayCompleted : Screen("day_completed_screen/{dayNumber}?weekNumber={weekNumber}") {
         const val ARG_DAY_NUMBER = "dayNumber"
+        const val ARG_WEEK_NUMBER = "weekNumber"
 
-        fun createRoute(dayNumber: Int) = "day_completed_screen/$dayNumber"
+        fun createRoute(dayNumber: Int, weekNumber: Int) =
+            "day_completed_screen/$dayNumber?weekNumber=$weekNumber"
     }
     data object SessionSaved : Screen(
-        "session_saved_screen/{dayNumber}?performed={performed}&planned={planned}"
+        "session_saved_screen/{dayNumber}?performed={performed}&planned={planned}" +
+            "&weekNumber={weekNumber}"
     ) {
         const val ARG_DAY_NUMBER = "dayNumber"
         const val ARG_PERFORMED = "performed"
         const val ARG_PLANNED = "planned"
-
-        fun createRoute(dayNumber: Int, performed: Int, planned: Int) =
-            "session_saved_screen/$dayNumber?performed=$performed&planned=$planned"
-    }
-    data object WeekCompleted : Screen("week_completed_screen/{weekNumber}") {
         const val ARG_WEEK_NUMBER = "weekNumber"
 
-        fun createRoute(weekNumber: Int) = "week_completed_screen/$weekNumber"
+        fun createRoute(dayNumber: Int, performed: Int, planned: Int, weekNumber: Int) =
+            "session_saved_screen/$dayNumber?performed=$performed&planned=$planned" +
+                "&weekNumber=$weekNumber"
     }
+    // The week is what is celebrated; the day is carried so the follow-up can
+    // ask about the session that has just been saved.
+    data object WeekCompleted : Screen("week_completed_screen/{weekNumber}?dayNumber={dayNumber}") {
+        const val ARG_WEEK_NUMBER = "weekNumber"
+        const val ARG_DAY_NUMBER = "dayNumber"
+
+        const val NO_DAY = -1
+
+        fun createRoute(weekNumber: Int, dayNumber: Int = NO_DAY) =
+            "week_completed_screen/$weekNumber?dayNumber=$dayNumber"
+    }
+
+    // The question and its follow-up write against one adjustment, so the graph
+    // owns the id and every step reads the same view model scoped to it.
+    data object Feedback : Screen("feedback_graph/{adjustmentId}") {
+        const val ARG_ADJUSTMENT_ID = "adjustmentId"
+
+        fun createRoute(adjustmentId: Long) = "feedback_graph/$adjustmentId"
+    }
+    data object AdjustmentFeedback : Screen("adjustment_feedback")
+    data object FeedbackDetail : Screen("feedback_detail")
+    data object FeedbackOutcome : Screen("feedback_outcome")
+    data object FeedbackPain : Screen("feedback_pain")
 }

@@ -857,7 +857,12 @@ class RoutineDetailViewModelTest {
         advanceUntilIdle()
 
         assertThat(events).containsExactly(
-            SessionSavedEvent(dayNumber = 2, performedExercises = 0, plannedExercises = 2)
+            SessionSavedEvent(
+                dayNumber = 2,
+                weekNumber = 1,
+                performedExercises = 0,
+                plannedExercises = 2
+            )
         )
 
         val adjustments = emptyAdjustments()

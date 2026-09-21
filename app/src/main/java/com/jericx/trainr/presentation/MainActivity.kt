@@ -65,12 +65,14 @@ import com.jericx.trainr.presentation.onboarding.screens.WorkoutSetupScreen
 import com.jericx.trainr.presentation.splash.SplashScreen
 import com.jericx.trainr.presentation.unstuck.FINISH_EARLY_REQUEST
 import com.jericx.trainr.presentation.unstuck.adjustGraph
-import com.jericx.trainr.presentation.workout.DayCompletedScreen
+import com.jericx.trainr.presentation.unstuck.feedback.HOW_TO_REQUEST
+import com.jericx.trainr.presentation.unstuck.feedback.feedbackGraph
+import com.jericx.trainr.presentation.workout.DayCompletedRoute
 import com.jericx.trainr.presentation.workout.RoutineDetailRoute
-import com.jericx.trainr.presentation.workout.SessionSavedScreen
+import com.jericx.trainr.presentation.workout.SessionSavedRoute
 import com.jericx.trainr.presentation.workout.WeeklyPlanRoute
 import com.jericx.trainr.presentation.workout.NextWeekViewModel
-import com.jericx.trainr.presentation.workout.WeekCompletedScreen
+import com.jericx.trainr.presentation.workout.WeekCompletedRoute
 import com.jericx.trainr.presentation.workout.WeeklyProgressRoute
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
@@ -534,24 +536,32 @@ fun AppContent(
                     val finishEarlyRequested by entry.savedStateHandle
                         .getStateFlow(FINISH_EARLY_REQUEST, false)
                         .collectAsStateWithLifecycle()
+                    val howToRequested by entry.savedStateHandle
+                        .getStateFlow<String?>(HOW_TO_REQUEST, null)
+                        .collectAsStateWithLifecycle()
 
                     RoutineDetailRoute(
                         onBackClick = { navController.popBackStack() },
                         // The session stays on the stack behind the
                         // congratulations, so back returns to the finished
                         // workout where a mistyped number gets corrected.
-                        onDayCompleted = { completed ->
-                            navController.navigate(Screen.DayCompleted.createRoute(completed))
+                        onDayCompleted = { completed, week ->
+                            navController.navigate(
+                                Screen.DayCompleted.createRoute(completed, week)
+                            )
                         },
                         onWeekCompleted = { completed ->
-                            navController.navigate(Screen.WeekCompleted.createRoute(completed))
+                            navController.navigate(
+                                Screen.WeekCompleted.createRoute(completed, dayNumber)
+                            )
                         },
                         onSessionSaved = { saved ->
                             navController.navigate(
                                 Screen.SessionSaved.createRoute(
                                     saved.dayNumber,
                                     saved.performedExercises,
-                                    saved.plannedExercises
+                                    saved.plannedExercises,
+                                    saved.weekNumber
                                 )
                             )
                         },
@@ -568,7 +578,9 @@ fun AppContent(
                         finishEarlyRequested = finishEarlyRequested,
                         onFinishEarlyHandled = {
                             entry.savedStateHandle[FINISH_EARLY_REQUEST] = false
-                        }
+                        },
+                        howToRequested = howToRequested,
+                        onHowToHandled = { entry.savedStateHandle[HOW_TO_REQUEST] = null }
                     )
                 }
 
@@ -577,6 +589,8 @@ fun AppContent(
                     adjustmentGate = adjustmentGate,
                     onAskForPro = { reason -> prompt = reason }
                 )
+
+                feedbackGraph(navController = navController)
 
                 composable(
                     route = Screen.SessionSaved.route,
@@ -589,10 +603,14 @@ fun AppContent(
                         navArgument(Screen.SessionSaved.ARG_PLANNED) {
                             type = NavType.IntType
                             defaultValue = 0
+                        },
+                        navArgument(Screen.SessionSaved.ARG_WEEK_NUMBER) {
+                            type = NavType.IntType
+                            defaultValue = Screen.RoutineDetail.LATEST_WEEK
                         }
                     )
                 ) { entry ->
-                    SessionSavedScreen(
+                    SessionSavedRoute(
                         performedExercises = entry.arguments
                             ?.getInt(Screen.SessionSaved.ARG_PERFORMED) ?: 0,
                         plannedExercises = entry.arguments
@@ -602,6 +620,9 @@ fun AppContent(
                             navController.navigate(Screen.Home.route) {
                                 popUpTo(Screen.Home.route) { inclusive = true }
                             }
+                        },
+                        onFeedback = { adjustmentId ->
+                            navController.navigate(Screen.Feedback.createRoute(adjustmentId))
                         }
                     )
                 }
@@ -609,10 +630,14 @@ fun AppContent(
                 composable(
                     route = Screen.DayCompleted.route,
                     arguments = listOf(
-                        navArgument(Screen.DayCompleted.ARG_DAY_NUMBER) { type = NavType.IntType }
+                        navArgument(Screen.DayCompleted.ARG_DAY_NUMBER) { type = NavType.IntType },
+                        navArgument(Screen.DayCompleted.ARG_WEEK_NUMBER) {
+                            type = NavType.IntType
+                            defaultValue = Screen.RoutineDetail.LATEST_WEEK
+                        }
                     )
                 ) { entry ->
-                    DayCompletedScreen(
+                    DayCompletedRoute(
                         dayNumber = entry.arguments
                             ?.getInt(Screen.DayCompleted.ARG_DAY_NUMBER) ?: 1,
                         onBackClick = { navController.popBackStack() },
@@ -623,6 +648,9 @@ fun AppContent(
                             navController.navigate(Screen.Home.route) {
                                 popUpTo(Screen.Home.route) { inclusive = true }
                             }
+                        },
+                        onFeedback = { adjustmentId ->
+                            navController.navigate(Screen.Feedback.createRoute(adjustmentId))
                         }
                     )
                 }
@@ -630,10 +658,14 @@ fun AppContent(
                 composable(
                     route = Screen.WeekCompleted.route,
                     arguments = listOf(
-                        navArgument(Screen.WeekCompleted.ARG_WEEK_NUMBER) { type = NavType.IntType }
+                        navArgument(Screen.WeekCompleted.ARG_WEEK_NUMBER) { type = NavType.IntType },
+                        navArgument(Screen.WeekCompleted.ARG_DAY_NUMBER) {
+                            type = NavType.IntType
+                            defaultValue = Screen.WeekCompleted.NO_DAY
+                        }
                     )
                 ) { entry ->
-                    WeekCompletedScreen(
+                    WeekCompletedRoute(
                         weekNumber = entry.arguments
                             ?.getInt(Screen.WeekCompleted.ARG_WEEK_NUMBER) ?: 1,
                         onBackClick = { navController.popBackStack() },
@@ -642,6 +674,9 @@ fun AppContent(
                         },
                         onPreviewNextWeekClick = {
                             askThen(PaywallReason.NEXT_WEEK) { navController.navigate(Screen.GeneratingNextWeek.route) }
+                        },
+                        onFeedback = { adjustmentId ->
+                            navController.navigate(Screen.Feedback.createRoute(adjustmentId))
                         }
                     )
                 }

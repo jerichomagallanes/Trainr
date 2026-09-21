@@ -48,6 +48,8 @@ class InMemoryAdjustmentRepository : AdjustmentRepository {
     override suspend fun getAdjustment(proposalId: String): AppliedAdjustment? =
         adjustments.values.firstOrNull { it.proposal.proposalId == proposalId }
 
+    override suspend fun getAdjustmentById(id: Long): AppliedAdjustment? = adjustments[id]
+
     override suspend fun getActiveAdjustment(dayId: Long): AppliedAdjustment? =
         adjustments.values.firstOrNull { it.workoutDayId == dayId && it.isActive }
 
@@ -98,8 +100,10 @@ class InMemoryAdjustmentRepository : AdjustmentRepository {
         return ApplyResult.Applied(adjustments.getValue(adjustmentId), null)
     }
 
+    // One row per adjustment, as the unique index on the stored table enforces.
     override suspend fun saveFeedback(feedback: AdjustmentFeedback): Long {
-        val id = idFor(feedback.id)
+        val existing = this.feedback.values.firstOrNull { it.adjustmentId == feedback.adjustmentId }
+        val id = existing?.id ?: idFor(feedback.id)
         this.feedback[id] = feedback.copy(id = id)
         return id
     }
