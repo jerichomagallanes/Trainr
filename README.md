@@ -13,6 +13,7 @@ App Demo
 - **Equipment Adaptation**: Workouts adapt to your available equipment (bodyweight, dumbbells, barbells, etc.)
 - **Goal-Oriented Training**: Specialized programs for weight loss, muscle gain, strength, endurance, and general fitness
 - **Injury Considerations**: Safe workout modifications based on reported limitations
+- **Adjust Today**: Shorten a session, swap an exercise you cannot reach the kit for, or stop early, with every change previewed before it applies and undoable after — see [`docs/unstuck-status.md`](docs/unstuck-status.md) for what ships and which gates are still open
 - **Session Logging**: Record weight, reps and time per set, with last week's numbers shown beside each one
 - **Built-in Timer**: Count down a timed exercise without leaving the session
 - **Video Tutorials**: A hand-checked YouTube demonstration for each exercise in the catalog
