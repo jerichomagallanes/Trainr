@@ -81,12 +81,14 @@ import com.jericx.trainr.presentation.workout.util.WorkoutDateFormatter
 @Composable
 fun RoutineDetailRoute(
     onBackClick: () -> Unit = {},
-    onDayCompleted: (Int) -> Unit = {},
+    onDayCompleted: (dayNumber: Int, weekNumber: Int) -> Unit = { _, _ -> },
     onWeekCompleted: (Int) -> Unit = {},
     onSessionSaved: (SessionSavedEvent) -> Unit = {},
     onAdjust: (DirectReason, Long?) -> Unit = { _, _ -> },
     finishEarlyRequested: Boolean = false,
     onFinishEarlyHandled: () -> Unit = {},
+    howToRequested: String? = null,
+    onHowToHandled: () -> Unit = {},
     viewModel: RoutineDetailViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -103,6 +105,15 @@ fun RoutineDetailRoute(
         if (!finishEarlyRequested) return@LaunchedEffect
         onFinishEarlyHandled()
         viewModel.askToFinishEarly()
+    }
+
+    // Waits for the stored day: the exercise to open is found in it, and the
+    // request can arrive before the read that comes back with the route.
+    LaunchedEffect(howToRequested, state.isLoaded) {
+        val key = howToRequested ?: return@LaunchedEffect
+        if (!state.isLoaded) return@LaunchedEffect
+        onHowToHandled()
+        viewModel.showHowToFor(key)
     }
 
     RoutineDetailScreen(
@@ -158,7 +169,7 @@ fun RoutineDetailScreen(
     onStopTimer: () -> Unit = {},
     onToggleVideo: (Int) -> Unit = {},
     onToggleHowTo: (Int) -> Unit = {},
-    onDayCompleted: (Int) -> Unit = {},
+    onDayCompleted: (dayNumber: Int, weekNumber: Int) -> Unit = { _, _ -> },
     onWeekCompleted: (Int) -> Unit = {},
     onAskToFinishEarly: () -> Unit = {},
     onKeepTraining: () -> Unit = {},
@@ -203,7 +214,7 @@ fun RoutineDetailScreen(
             if (state.completesTheWeek) {
                 onWeekCompleted(state.weekNumber)
             } else {
-                onDayCompleted(state.dayNumber)
+                onDayCompleted(state.dayNumber, state.weekNumber)
             }
         }
     }

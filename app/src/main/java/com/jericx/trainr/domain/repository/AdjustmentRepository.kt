@@ -18,6 +18,7 @@ interface AdjustmentRepository {
 
     suspend fun recordAdjustment(applied: AppliedAdjustment): Long
     suspend fun getAdjustment(proposalId: String): AppliedAdjustment?
+    suspend fun getAdjustmentById(id: Long): AppliedAdjustment?
     suspend fun getActiveAdjustment(dayId: Long): AppliedAdjustment?
     suspend fun getAdjustments(dayId: Long): List<AppliedAdjustment>
     suspend fun markUndone(id: Long, at: Long)

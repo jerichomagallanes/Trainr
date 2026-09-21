@@ -28,7 +28,7 @@ import com.jericx.trainr.presentation.common.theme.trainrColors
 @Composable
 fun TrainrOptionRow(
     title: String,
-    description: String,
+    description: String?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     selected: Boolean = false
@@ -55,11 +55,13 @@ fun TrainrOptionRow(
                 style = MaterialTheme.typography.titleMedium,
                 color = colors.onSurface
             )
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodySmall,
-                color = colors.onSurfaceMuted
-            )
+            description?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.onSurfaceMuted
+                )
+            }
         }
         Icon(
             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
