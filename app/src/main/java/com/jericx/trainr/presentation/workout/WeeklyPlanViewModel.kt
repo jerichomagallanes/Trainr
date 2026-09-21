@@ -10,9 +10,13 @@ import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.domain.repository.AdjustmentRepository
 import com.jericx.trainr.domain.repository.UserRepository
+import com.jericx.trainr.domain.unstuck.AdjustmentReason
 import com.jericx.trainr.domain.unstuck.FinishKind
+import com.jericx.trainr.domain.unstuck.PreferenceKind
 import com.jericx.trainr.domain.unstuck.SessionOutcome
+import com.jericx.trainr.domain.unstuck.TrainingPreference
 import com.jericx.trainr.presentation.Screen
+import com.jericx.trainr.presentation.unstuck.TodayAdjustmentKind
 import com.jericx.trainr.presentation.workout.model.derivedEquipment
 import com.jericx.trainr.presentation.workout.model.derivedExerciseCount
 import com.jericx.trainr.presentation.workout.model.isAdjustedToday
@@ -59,7 +63,10 @@ data class WeeklyPlanUiState(
     val isCurrentWeek: Boolean = false,
     // Dates running out counts as finished, so a missed day cannot strand the plan.
     val canStartNextWeek: Boolean = false,
-    val canAddWeek: Boolean = false
+    val canAddWeek: Boolean = false,
+    val todayAdjustment: TodayAdjustmentKind? = null,
+    val todayPreference: TrainingPreference? = null,
+    val hasMemory: Boolean = false
 ) {
     // Never a completed day, so nothing finished can be offered as the next
     // session; null once the week is done, which leads to the next week.
@@ -119,9 +126,42 @@ class WeeklyPlanViewModel @Inject constructor(
                     outcomes = outcomes,
                     user = user,
                     catalog = catalog
-                )
+                ).withMemory(user)
             }
         }
+    }
+
+    // Only ever about today, and only while today is still to be trained: a
+    // card about a session that is over has nothing to offer.
+    private suspend fun WeeklyPlanUiState.withMemory(
+        profile: UserProfile?
+    ): WeeklyPlanUiState {
+        if (profile == null || !isCurrentWeek) return this
+
+        val hasMemory = adjustmentRepository.getPreferences(profile.id).isNotEmpty() ||
+            adjustmentRepository.getNotes(profile.id).isNotEmpty()
+        val today = days.firstOrNull { it.isToday && !it.isFrozen && outcomes[it.day.id] == null }
+            ?: return copy(hasMemory = hasMemory)
+
+        val adjustment = when (adjustmentRepository.getActiveAdjustment(today.day.id)?.reason) {
+            AdjustmentReason.LESS_TIME -> TodayAdjustmentKind.SHORTER
+            AdjustmentReason.EQUIPMENT_UNAVAILABLE -> TodayAdjustmentKind.ALTERNATIVE
+            null -> null
+        }
+
+        return copy(
+            hasMemory = hasMemory,
+            todayAdjustment = adjustment,
+            todayPreference = if (adjustment == null) {
+                adjustmentRepository.getPreference(
+                    userId = profile.id,
+                    kind = PreferenceKind.TIME_LIMIT,
+                    weekday = WorkoutWeek.isoWeekdayOf(today.dateMillis)
+                )
+            } else {
+                null
+            }
+        )
     }
 
     // Sessions swap; the weekday slots themselves never move.
@@ -140,13 +180,16 @@ class WeeklyPlanViewModel @Inject constructor(
             outcomes = outcomes,
             user = user,
             catalog = catalog
-        )
+        ).copy(hasMemory = state.hasMemory)
 
         viewModelScope.launch {
             val before = plan.workoutDays.associateBy { it.id }
             reordered
                 .filter { before[it.id]?.dayNumber != it.dayNumber }
                 .forEach { userRepository.updateWorkoutDay(it, plan.id) }
+            // The cards describe the session sitting in today's slot, which the
+            // drag may have changed.
+            _uiState.value = _uiState.value.withMemory(user)
         }
     }
 

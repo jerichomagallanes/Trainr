@@ -10,14 +10,18 @@ import com.jericx.trainr.domain.unstuck.AdjustmentFeedback
 import com.jericx.trainr.domain.unstuck.AdjustmentProposal
 import com.jericx.trainr.domain.unstuck.FeedbackAnswer
 import com.jericx.trainr.domain.unstuck.testCatalog
+import com.jericx.trainr.domain.unstuck.testDay
 import com.jericx.trainr.domain.unstuck.testUser
 import com.jericx.trainr.presentation.Screen
+import com.jericx.trainr.presentation.unstuck.planStartingToday
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -44,9 +48,16 @@ class AdjustmentFeedbackViewModelTest {
         Dispatchers.resetMain()
     }
 
+    // The adjusted session sits in week 1 while week 2 is the newest one.
+    private val weeks = listOf(
+        planStartingToday(),
+        planStartingToday(testDay(id = 99L)).copy(id = 2, weekNumber = 2)
+    )
+
     private fun users(goal: FitnessGoal = FitnessGoal.MUSCLE_GAIN): UserRepository =
         mockk<UserRepository>(relaxed = true).also {
             coEvery { it.getCurrentUser() } returns testUser(goal = goal)
+            every { it.getWeeklyWorkoutPlans(any()) } returns flowOf(weeks)
         }
 
     private fun adjustments(
@@ -139,6 +150,16 @@ class AdjustmentFeedbackViewModelTest {
         with(viewModel.uiState.value) {
             assertThat(guidanceKey).isNull()
             assertThat(offersGuidance).isFalse()
+        }
+    }
+
+    // A note belongs to the session the adjustment was made on, which need not
+    // be in the newest week.
+    @Test
+    fun theFollowUpCarriesTheWeekTheAdjustmentWasMadeIn() = runTest {
+        with(viewModel().uiState.value) {
+            assertThat(dayNumber).isEqualTo(1)
+            assertThat(weekNumber).isEqualTo(1)
         }
     }
 
