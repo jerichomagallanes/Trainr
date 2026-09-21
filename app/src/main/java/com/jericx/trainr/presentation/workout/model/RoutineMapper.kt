@@ -8,22 +8,26 @@ import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.model.asDisplayText
 
 // What a movement is and how it is done come from the catalog; a stored week
-// only says which movement and how much.
+// only says which movement and how much. Omitted sets and the exercises left
+// with none of them are today's adjustment and are not part of the routine.
 fun WorkoutDay.toRoutineUi(
     previousByKey: Map<String, List<ExerciseSet>> = emptyMap(),
     catalog: ExerciseCatalog? = null,
     injuries: List<Injury> = emptyList()
 ): RoutineUi = RoutineUi(
     title = title,
-    exercises = exercises.mapIndexed { index, exercise ->
+    exercises = visibleExercises.mapIndexed { index, exercise ->
         val movement = catalog?.get(exercise.exerciseKey)
         ExerciseUi(
             position = index + 1,
+            exerciseId = exercise.id,
             name = exercise.name,
             description = movement?.summary.orEmpty(),
             minutes = exercise.durationMinutes,
             measure = exercise.measure,
-            sets = exercise.sets,
+            sets = exercise.sets.filter { it.omittedBy == null },
+            omittedSetNumbers = exercise.sets.filter { it.omittedBy != null }
+                .map { it.setNumber },
             previousSets = previousByKey[exercise.exerciseKey].orEmpty(),
             videoUrl = exercise.videoTutorialUrl
                 ?: ExerciseVideoCatalog.urlFor(exercise.exerciseKey),
