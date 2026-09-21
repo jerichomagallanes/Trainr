@@ -158,7 +158,7 @@ class RoutineDetailScreenTest {
         composeTestRule.setContent {
             var current by remember { mutableStateOf(state.copy(isLoaded = false)) }
             TrainrTheme {
-                RoutineDetailScreen(state = current, onDayCompleted = { reported = it })
+                RoutineDetailScreen(state = current, onDayCompleted = { day, _ -> reported = day })
                 LaunchedEffect(Unit) {
                     current = state.copy(routine = state.routine.completeAll())
                 }
@@ -177,7 +177,7 @@ class RoutineDetailScreenTest {
 
         composeTestRule.setContent {
             TrainrTheme {
-                RoutineDetailScreen(state = finished, onDayCompleted = { reported = it })
+                RoutineDetailScreen(state = finished, onDayCompleted = { day, _ -> reported = day })
             }
         }
 
@@ -196,7 +196,7 @@ class RoutineDetailScreenTest {
                 RoutineDetailScreen(
                     state = current,
                     onToggleExercise = { current = current.copy(routine = current.routine.completeAll()) },
-                    onDayCompleted = { reported = it }
+                    onDayCompleted = { day, _ -> reported = day }
                 )
             }
         }
@@ -422,7 +422,7 @@ class RoutineDetailScreenTest {
                 RoutineDetailScreen(
                     state = current,
                     onToggleExercise = { current = current.copy(routine = current.routine.completeAll()) },
-                    onDayCompleted = { reported = it },
+                    onDayCompleted = { day, _ -> reported = day },
                     onWeekCompleted = { reported = it }
                 )
             }

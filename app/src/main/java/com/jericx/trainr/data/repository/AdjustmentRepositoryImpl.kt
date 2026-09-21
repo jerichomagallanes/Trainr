@@ -66,6 +66,10 @@ class AdjustmentRepositoryImpl(
         return dao.getAdjustmentByProposalId(proposalId)?.let { mapper.mapToDomain(it) }
     }
 
+    override suspend fun getAdjustmentById(id: Long): AppliedAdjustment? {
+        return dao.getAdjustmentById(id)?.let { mapper.mapToDomain(it) }
+    }
+
     override suspend fun getActiveAdjustment(dayId: Long): AppliedAdjustment? {
         return dao.getActiveAdjustmentForDay(dayId)?.let { mapper.mapToDomain(it) }
     }

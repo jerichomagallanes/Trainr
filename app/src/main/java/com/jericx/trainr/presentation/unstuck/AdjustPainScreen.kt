@@ -27,6 +27,7 @@ import com.jericx.trainr.presentation.common.theme.trainrColors
 @Composable
 fun AdjustPainScreen(
     modifier: Modifier = Modifier,
+    canFinishEarly: Boolean = true,
     onSaveAndFinishEarly: () -> Unit = {},
     onReturn: () -> Unit = {},
     onBack: () -> Unit = {}
@@ -36,13 +37,20 @@ fun AdjustPainScreen(
     TrainrScaffold(
         onBackClick = onBack,
         bottomButton = {
-            Column(verticalArrangement = Arrangement.spacedBy(Spacing.tight)) {
+            if (canFinishEarly) {
+                Column(verticalArrangement = Arrangement.spacedBy(Spacing.tight)) {
+                    TrainrButton(
+                        text = stringResource(R.string.save_and_finish_early),
+                        onClick = onSaveAndFinishEarly
+                    )
+                    TrainrQuietButton(
+                        text = stringResource(R.string.return_to_workout),
+                        onClick = onReturn
+                    )
+                }
+            } else {
                 TrainrButton(
-                    text = stringResource(R.string.save_and_finish_early),
-                    onClick = onSaveAndFinishEarly
-                )
-                TrainrQuietButton(
-                    text = stringResource(R.string.return_to_workout),
+                    text = stringResource(R.string.back_to_workout_plan),
                     onClick = onReturn
                 )
             }
@@ -89,12 +97,14 @@ fun AdjustPainScreen(
                 )
             }
 
-            Text(
-                text = stringResource(R.string.pain_save_hint),
-                style = MaterialTheme.typography.bodyMedium,
-                color = colors.onSurfaceMuted,
-                modifier = Modifier.padding(top = Spacing.medium)
-            )
+            if (canFinishEarly) {
+                Text(
+                    text = stringResource(R.string.pain_save_hint),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.onSurfaceMuted,
+                    modifier = Modifier.padding(top = Spacing.medium)
+                )
+            }
         }
     }
 }
@@ -112,5 +122,13 @@ private fun AdjustPainScreenPreview() {
 private fun AdjustPainScreenDarkPreview() {
     TrainrTheme(darkTheme = true) {
         AdjustPainScreen()
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun AdjustPainAfterSavingPreview() {
+    TrainrTheme {
+        AdjustPainScreen(canFinishEarly = false)
     }
 }
