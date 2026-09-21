@@ -25,6 +25,9 @@ interface UnstuckDao {
     @Query("SELECT * FROM applied_adjustments WHERE proposalId = :proposalId")
     suspend fun getAdjustmentByProposalId(proposalId: String): AppliedAdjustmentEntity?
 
+    @Query("SELECT * FROM applied_adjustments WHERE id = :id")
+    suspend fun getAdjustmentById(id: Long): AppliedAdjustmentEntity?
+
     @Query(
         """
         SELECT * FROM applied_adjustments

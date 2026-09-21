@@ -31,6 +31,7 @@ import com.jericx.trainr.domain.unstuck.SessionNote
 import com.jericx.trainr.domain.unstuck.SessionOutcome
 import com.jericx.trainr.domain.unstuck.SetSnapshot
 import com.jericx.trainr.domain.unstuck.TrainingPreference
+import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -53,7 +54,9 @@ class UnstuckPersistenceTest {
             .allowMainThreadQueries()
             .build()
         workouts = UserRepositoryImpl(db.userDao, UserMapper())
-        adjustments = AdjustmentRepositoryImpl(db.unstuckDao, UnstuckMapper())
+        adjustments = AdjustmentRepositoryImpl(
+            db, db.userDao, db.unstuckDao, UnstuckMapper(), UserMapper(), SampleWorkoutData.catalog
+        )
     }
 
     @After

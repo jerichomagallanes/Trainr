@@ -1,10 +1,14 @@
 package com.jericx.trainr.domain.repository
 
 import com.jericx.trainr.domain.unstuck.AdjustmentFeedback
+import com.jericx.trainr.domain.unstuck.AdjustmentProposal
+import com.jericx.trainr.domain.unstuck.AdjustmentReason
 import com.jericx.trainr.domain.unstuck.AppliedAdjustment
+import com.jericx.trainr.domain.unstuck.ApplyResult
 import com.jericx.trainr.domain.unstuck.SessionNote
 import com.jericx.trainr.domain.unstuck.SessionOutcome
 import com.jericx.trainr.domain.unstuck.TrainingPreference
+import com.jericx.trainr.domain.unstuck.UndoResult
 import kotlinx.coroutines.flow.Flow
 
 interface AdjustmentRepository {
@@ -18,6 +22,16 @@ interface AdjustmentRepository {
     suspend fun getAdjustments(dayId: Long): List<AppliedAdjustment>
     suspend fun markUndone(id: Long, at: Long)
     suspend fun markReapplied(id: Long)
+
+    suspend fun apply(
+        proposal: AdjustmentProposal,
+        dayId: Long,
+        reason: AdjustmentReason,
+        nowMillis: Long
+    ): ApplyResult
+
+    suspend fun undo(adjustmentId: Long, nowMillis: Long): UndoResult
+    suspend fun reapply(adjustmentId: Long, nowMillis: Long): ApplyResult
 
     suspend fun saveFeedback(feedback: AdjustmentFeedback): Long
     suspend fun getFeedback(adjustmentId: Long): AdjustmentFeedback?
