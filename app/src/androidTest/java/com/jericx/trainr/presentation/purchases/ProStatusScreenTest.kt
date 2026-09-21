@@ -44,6 +44,14 @@ class ProStatusScreenTest {
         }
     }
 
+    @Test
+    fun itListsAdjustingAmongWhatProIncludes() {
+        setScreen()
+
+        composeTestRule.onNodeWithText(string(R.string.pro_feature_adjust_title))
+            .assertIsDisplayed()
+    }
+
     // Ads are the price of the free tier, so a subscriber is told they are gone.
     @Test
     fun itListsNoAdsAmongWhatProIncludes() {

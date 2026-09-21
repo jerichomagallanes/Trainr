@@ -11,25 +11,36 @@ enum class PaywallReason(
     @StringRes val prompt: Int,
     @StringRes val heading: Int,
     @StringRes val detail: Int,
+    @StringRes val freeLimit: Int,
     @DrawableRes val icon: Int
 ) {
     NEXT_WEEK(
         prompt = R.string.pro_prompt_next_week,
         heading = R.string.pro_feature_next_week_title,
         detail = R.string.pro_feature_next_week_body,
+        freeLimit = R.string.pro_free_limit,
         icon = R.drawable.ic_sparkles
     ),
     REWRITE(
         prompt = R.string.pro_prompt_rewrite,
         heading = R.string.pro_feature_rewrite_title,
         detail = R.string.pro_feature_rewrite_body,
+        freeLimit = R.string.pro_free_limit,
         icon = R.drawable.ic_rewrite
     ),
     FRESH_PLAN(
         prompt = R.string.pro_prompt_fresh,
         heading = R.string.pro_feature_fresh_title,
         detail = R.string.pro_feature_fresh_body,
+        freeLimit = R.string.pro_free_limit,
         icon = R.drawable.ic_fresh_plan
+    ),
+    ADJUST(
+        prompt = R.string.pro_prompt_adjust,
+        heading = R.string.pro_feature_adjust_title,
+        detail = R.string.pro_feature_adjust_body,
+        freeLimit = R.string.pro_free_limit_adjust,
+        icon = R.drawable.ic_adjust
     );
 
     // The rest of Pro, shown under the one that brought them here.
