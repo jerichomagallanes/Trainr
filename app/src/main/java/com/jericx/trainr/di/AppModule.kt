@@ -11,6 +11,7 @@ import com.jericx.trainr.data.local.UnstuckMapper
 import com.jericx.trainr.data.preferences.ThemePreferences
 import com.jericx.trainr.data.ads.Ads
 import com.jericx.trainr.data.purchases.Entitlements
+import com.jericx.trainr.data.purchases.StoredAdjustmentAllowance
 import com.jericx.trainr.data.purchases.StoredGenerationAllowance
 import com.jericx.trainr.data.repository.UserRepositoryImpl
 import com.jericx.trainr.data.repository.AdjustmentRepositoryImpl
@@ -20,6 +21,8 @@ import com.jericx.trainr.data.diagnostics.CrashlyticsBreadcrumbs
 import com.jericx.trainr.domain.generation.PlanGenerator
 import com.jericx.trainr.data.catalog.AssetExerciseCatalog
 import com.jericx.trainr.domain.catalog.ExerciseCatalog
+import com.jericx.trainr.domain.purchases.AdjustmentAllowance
+import com.jericx.trainr.domain.purchases.AdjustmentGate
 import com.jericx.trainr.domain.purchases.FreeGenerationAllowance
 import com.jericx.trainr.domain.purchases.ProGate
 import com.jericx.trainr.domain.repository.UserRepository
@@ -77,6 +80,23 @@ object AppModule {
         entitlements: Entitlements,
         allowance: FreeGenerationAllowance
     ): ProGate = ProGate(
+        isPro = { entitlements.isPro.value },
+        canSell = { entitlements.canSell },
+        allowance = allowance
+    )
+
+    @Provides
+    @Singleton
+    fun provideAdjustmentAllowance(
+        @ApplicationContext context: Context
+    ): AdjustmentAllowance = StoredAdjustmentAllowance(context)
+
+    @Provides
+    @Singleton
+    fun provideAdjustmentGate(
+        entitlements: Entitlements,
+        allowance: AdjustmentAllowance
+    ): AdjustmentGate = AdjustmentGate(
         isPro = { entitlements.isPro.value },
         canSell = { entitlements.canSell },
         allowance = allowance
