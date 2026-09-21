@@ -51,6 +51,7 @@ import com.jericx.trainr.presentation.onboarding.OnboardingViewModel
 import com.jericx.trainr.presentation.onboarding.screens.BasicInfoScreen
 import com.jericx.trainr.presentation.onboarding.screens.BodyMetricsScreen
 import com.jericx.trainr.presentation.onboarding.screens.FitnessGoalScreen
+import com.jericx.trainr.domain.purchases.AdjustmentGate
 import com.jericx.trainr.domain.purchases.ProGate
 import com.jericx.trainr.presentation.onboarding.screens.GeneratingScreen
 import com.jericx.trainr.presentation.purchases.PaywallReason
@@ -62,6 +63,8 @@ import com.jericx.trainr.presentation.onboarding.screens.ReviewScreen
 import com.jericx.trainr.presentation.onboarding.screens.WelcomeScreen
 import com.jericx.trainr.presentation.onboarding.screens.WorkoutSetupScreen
 import com.jericx.trainr.presentation.splash.SplashScreen
+import com.jericx.trainr.presentation.unstuck.FINISH_EARLY_REQUEST
+import com.jericx.trainr.presentation.unstuck.adjustGraph
 import com.jericx.trainr.presentation.workout.DayCompletedScreen
 import com.jericx.trainr.presentation.workout.RoutineDetailRoute
 import com.jericx.trainr.presentation.workout.SessionSavedScreen
@@ -127,6 +130,9 @@ class MainActivity : ComponentActivity() {
     lateinit var proGate: ProGate
 
     @Inject
+    lateinit var adjustmentGate: AdjustmentGate
+
+    @Inject
     lateinit var breadcrumbs: Breadcrumbs
 
     @Inject
@@ -166,6 +172,7 @@ class MainActivity : ComponentActivity() {
                 versionName = versionName,
                 themePreferences = themePreferences,
                 proGate = proGate,
+                adjustmentGate = adjustmentGate,
                 breadcrumbs = breadcrumbs
             )
         }
@@ -189,6 +196,7 @@ fun AppContent(
     versionName: String,
     themePreferences: ThemePreferences,
     proGate: ProGate,
+    adjustmentGate: AdjustmentGate,
     breadcrumbs: Breadcrumbs,
     // Where the app opens. Only a test starts anywhere else: the splash decides
     // between the plan and the welcome on a timer, which a test would spend two
@@ -517,17 +525,26 @@ fun AppContent(
                             defaultValue = Screen.RoutineDetail.LATEST_WEEK
                         }
                     )
-                ) {
+                ) { entry ->
+                    val dayNumber = entry.arguments
+                        ?.getInt(Screen.RoutineDetail.ARG_DAY_NUMBER) ?: 1
+                    val weekNumber = entry.arguments
+                        ?.getInt(Screen.RoutineDetail.ARG_WEEK_NUMBER)
+                        ?: Screen.RoutineDetail.LATEST_WEEK
+                    val finishEarlyRequested by entry.savedStateHandle
+                        .getStateFlow(FINISH_EARLY_REQUEST, false)
+                        .collectAsStateWithLifecycle()
+
                     RoutineDetailRoute(
                         onBackClick = { navController.popBackStack() },
                         // The session stays on the stack behind the
                         // congratulations, so back returns to the finished
                         // workout where a mistyped number gets corrected.
-                        onDayCompleted = { dayNumber ->
-                            navController.navigate(Screen.DayCompleted.createRoute(dayNumber))
+                        onDayCompleted = { completed ->
+                            navController.navigate(Screen.DayCompleted.createRoute(completed))
                         },
-                        onWeekCompleted = { weekNumber ->
-                            navController.navigate(Screen.WeekCompleted.createRoute(weekNumber))
+                        onWeekCompleted = { completed ->
+                            navController.navigate(Screen.WeekCompleted.createRoute(completed))
                         },
                         onSessionSaved = { saved ->
                             navController.navigate(
@@ -537,9 +554,29 @@ fun AppContent(
                                     saved.plannedExercises
                                 )
                             )
+                        },
+                        onAdjust = { reason, exerciseId ->
+                            navController.navigate(
+                                Screen.Adjust.createRoute(
+                                    dayNumber = dayNumber,
+                                    weekNumber = weekNumber,
+                                    reason = reason,
+                                    exerciseId = exerciseId
+                                )
+                            )
+                        },
+                        finishEarlyRequested = finishEarlyRequested,
+                        onFinishEarlyHandled = {
+                            entry.savedStateHandle[FINISH_EARLY_REQUEST] = false
                         }
                     )
                 }
+
+                adjustGraph(
+                    navController = navController,
+                    adjustmentGate = adjustmentGate,
+                    onAskForPro = { reason -> prompt = reason }
+                )
 
                 composable(
                     route = Screen.SessionSaved.route,

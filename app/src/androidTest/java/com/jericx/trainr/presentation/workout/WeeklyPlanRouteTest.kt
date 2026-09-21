@@ -59,7 +59,8 @@ class WeeklyPlanRouteTest {
         val viewModel = WeeklyPlanViewModel(
             SavedStateHandle(),
             OneWeekRepository(liveWeek),
-            InMemoryAdjustmentRepository()
+            InMemoryAdjustmentRepository(),
+            SampleWorkoutData.catalog
         )
 
         composeTestRule.setContent {

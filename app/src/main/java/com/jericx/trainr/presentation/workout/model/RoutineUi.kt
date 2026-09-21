@@ -58,9 +58,10 @@ data class RoutineUi(
                 exercise
             } else {
                 val last = exercise.sets.lastOrNull()
+                val taken = exercise.sets.map { it.setNumber } + exercise.omittedSetNumbers
                 exercise.copy(
                     sets = exercise.sets + ExerciseSet(
-                        setNumber = exercise.sets.size + 1,
+                        setNumber = (taken.maxOrNull() ?: 0) + 1,
                         targetReps = last?.targetReps,
                         targetWeightKg = last?.targetWeightKg,
                         targetSeconds = last?.targetSeconds
