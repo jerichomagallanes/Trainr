@@ -10,6 +10,7 @@ import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
 import com.jericx.trainr.domain.model.withoutWeekNumber
 import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.domain.repository.UserRepository
+import com.jericx.trainr.domain.unstuck.ActualOrigin
 import com.jericx.trainr.presentation.workout.util.WorkoutWeek
 import com.jericx.trainr.presentation.workout.util.isReadyForTheNextWeek
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -199,21 +200,26 @@ class NextWeekViewModel @Inject constructor(
                         id = 0,
                         status = WorkoutStatus.NOT_STARTED,
                         completedAt = null,
-                        exercises = day.exercises.map { exercise ->
-                            exercise.copy(
-                                id = 0,
-                                isCompleted = false,
-                                sets = exercise.sets.map {
-                                    it.copy(
-                                        id = 0,
-                                        actualReps = null,
-                                        actualWeightKg = null,
-                                        actualSeconds = null,
-                                        isCompleted = false
-                                    )
-                                }
-                            )
-                        }
+                        exercises = day.exercises
+                            .filter { it.addedBy == null }
+                            .mapIndexed { index, exercise ->
+                                exercise.copy(
+                                    id = 0,
+                                    isCompleted = false,
+                                    sortOrder = index,
+                                    sets = exercise.sets.map {
+                                        it.copy(
+                                            id = 0,
+                                            actualReps = null,
+                                            actualWeightKg = null,
+                                            actualSeconds = null,
+                                            isCompleted = false,
+                                            actualOrigin = ActualOrigin.NONE,
+                                            omittedBy = null
+                                        )
+                                    }
+                                )
+                            }
                     )
                 }
             )

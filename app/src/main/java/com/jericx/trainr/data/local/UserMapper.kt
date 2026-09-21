@@ -1,6 +1,7 @@
 package com.jericx.trainr.data.local
 
 import com.jericx.trainr.domain.model.*
+import com.jericx.trainr.domain.unstuck.ActualOrigin
 
 class UserMapper {
 
@@ -116,7 +117,9 @@ class UserMapper {
             equipment = exercise.equipment,
             videoTutorialUrl = exercise.videoTutorialUrl,
             isCompleted = exercise.isCompleted,
-            notes = exercise.notes
+            notes = exercise.notes,
+            sortOrder = exercise.sortOrder,
+            addedBy = exercise.addedBy
         )
     }
 
@@ -135,7 +138,9 @@ class UserMapper {
             equipment = entity.equipment,
             videoTutorialUrl = entity.videoTutorialUrl,
             isCompleted = entity.isCompleted,
-            notes = entity.notes
+            notes = entity.notes,
+            sortOrder = entity.sortOrder,
+            addedBy = entity.addedBy
         )
     }
 
@@ -150,8 +155,15 @@ class UserMapper {
             actualReps = set.actualReps,
             actualWeightKg = set.actualWeightKg,
             actualSeconds = set.actualSeconds,
-            isCompleted = set.isCompleted
+            isCompleted = set.isCompleted,
+            actualOrigin = storedOrigin(set).name,
+            omittedBy = set.omittedBy
         )
+    }
+
+    private fun storedOrigin(set: ExerciseSet): ActualOrigin {
+        val hasActuals = set.actualReps != null || set.actualWeightKg != null || set.actualSeconds != null
+        return if (set.actualOrigin == ActualOrigin.NONE && hasActuals) ActualOrigin.LEGACY_UNKNOWN else set.actualOrigin
     }
 
     fun mapToDomain(entity: ExerciseSetEntity): ExerciseSet {
@@ -164,7 +176,10 @@ class UserMapper {
             actualReps = entity.actualReps,
             actualWeightKg = entity.actualWeightKg,
             actualSeconds = entity.actualSeconds,
-            isCompleted = entity.isCompleted
+            isCompleted = entity.isCompleted,
+            actualOrigin = runCatching { ActualOrigin.valueOf(entity.actualOrigin) }
+                .getOrDefault(ActualOrigin.LEGACY_UNKNOWN),
+            omittedBy = entity.omittedBy
         )
     }
 }

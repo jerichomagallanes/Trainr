@@ -1,5 +1,7 @@
 package com.jericx.trainr.domain.model
 
+import com.jericx.trainr.domain.unstuck.ActualOrigin
+
 data class WeeklyWorkoutPlan(
     val id: Long = 0,
     val userId: Long,
@@ -43,8 +45,12 @@ data class WorkoutExercise(
     val equipment: List<String> = emptyList(),
     val videoTutorialUrl: String? = null,
     val isCompleted: Boolean = false,
-    val notes: String = ""
-)
+    val notes: String = "",
+    val sortOrder: Int = 0,
+    val addedBy: Long? = null
+) {
+    val isOmittedToday: Boolean get() = sets.isNotEmpty() && sets.all { it.omittedBy != null }
+}
 
 data class ExerciseSet(
     val id: Long = 0,
@@ -55,7 +61,9 @@ data class ExerciseSet(
     val actualReps: Int? = null,
     val actualWeightKg: Float? = null,
     val actualSeconds: Int? = null,
-    val isCompleted: Boolean = false
+    val isCompleted: Boolean = false,
+    val actualOrigin: ActualOrigin = ActualOrigin.NONE,
+    val omittedBy: Long? = null
 )
 
 enum class ExerciseMeasure {
