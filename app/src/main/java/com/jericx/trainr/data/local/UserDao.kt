@@ -61,6 +61,12 @@ interface UserDao {
     @Query("SELECT * FROM workout_exercises WHERE id = :exerciseId")
     suspend fun getWorkoutExerciseById(exerciseId: Long): WorkoutExerciseEntity?
 
+    @Query("SELECT * FROM workout_exercises WHERE addedBy = :adjustmentId ORDER BY sortOrder, id")
+    suspend fun getExercisesAddedBy(adjustmentId: Long): List<WorkoutExerciseEntity>
+
+    @Query("DELETE FROM workout_exercises WHERE id = :id AND addedBy IS NOT NULL")
+    suspend fun deleteAddedExercise(id: Long)
+
     @Update
     suspend fun updateWorkoutExercise(exercise: WorkoutExerciseEntity)
 
@@ -78,6 +84,9 @@ interface UserDao {
 
     @Query("DELETE FROM exercise_sets WHERE id = :setId")
     suspend fun deleteExerciseSet(setId: Long)
+
+    @Query("DELETE FROM exercise_sets WHERE workoutExerciseId = :exerciseId AND isCompleted = 0")
+    suspend fun deleteUnperformedSets(exerciseId: Long)
 
     @Query("SELECT * FROM exercise_sets WHERE id IN (:setIds)")
     suspend fun getSetsByIds(setIds: List<Long>): List<ExerciseSetEntity>
