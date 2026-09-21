@@ -150,12 +150,13 @@ private fun ColumnScope.ProposedContent(review: ReviewUi.Proposed) {
 
     review.budgetMinutes?.let { minutes ->
         Text(
-            text = stringResource(
+            text = pluralStringResource(
                 if (review.scope == TimeScope.REMAINING) {
-                    R.string.adjust_review_remaining_line_format
+                    R.plurals.adjust_review_remaining_line_format
                 } else {
-                    R.string.adjust_review_time_line_format
+                    R.plurals.adjust_review_time_line_format
                 },
+                minutes,
                 minutes
             ),
             style = MaterialTheme.typography.bodyMedium,
@@ -301,8 +302,9 @@ private fun ColumnScope.NoChangeContent(review: ReviewUi.NoChange) {
         modifier = Modifier.padding(top = Spacing.small)
     )
     ScopeRow(
-        leading = stringResource(
-            R.string.original_workout_planned_format,
+        leading = pluralStringResource(
+            R.plurals.original_workout_planned_format,
+            review.plannedMinutes,
             review.plannedMinutes
         ),
         trailing = null
@@ -329,7 +331,11 @@ private fun ColumnScope.InfeasibleContent(review: ReviewUi.Infeasible) {
 
         else -> InfeasibleLines(
             title = stringResource(R.string.no_short_version_title),
-            body = stringResource(R.string.no_short_version_body_format, minimumMinutes)
+            body = pluralStringResource(
+                R.plurals.no_short_version_body_format,
+                minimumMinutes,
+                minimumMinutes
+            )
         )
     }
 }
