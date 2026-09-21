@@ -44,6 +44,9 @@ class RoutineDetailScreenTest {
     private fun string(id: Int, vararg args: Any) =
         composeTestRule.activity.getString(id, *args)
 
+    private fun plural(id: Int, count: Int, vararg args: Any) =
+        composeTestRule.activity.resources.getQuantityString(id, count, *args)
+
     private fun setScreen(
         onToggleExercise: (Int) -> Unit = {},
         onCompleteRoutine: () -> Unit = {}
@@ -362,8 +365,9 @@ class RoutineDetailScreenTest {
 
         composeTestRule.onNodeWithText(string(R.string.finish_early_title)).assertIsDisplayed()
         composeTestRule.onNodeWithText(
-            string(
-                R.string.exercises_completed_of_format,
+            plural(
+                R.plurals.exercises_completed_of_format,
+                state.routine.plannedExerciseCount,
                 state.routine.performedExerciseCount,
                 state.routine.plannedExerciseCount
             )
@@ -445,8 +449,9 @@ class RoutineDetailScreenTest {
         }
 
         composeTestRule.onNodeWithText(
-            string(
-                R.string.finished_early_summary_format,
+            plural(
+                R.plurals.finished_early_summary_format,
+                state.routine.plannedExerciseCount,
                 state.routine.performedExerciseCount,
                 state.routine.plannedExerciseCount
             )
