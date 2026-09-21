@@ -152,6 +152,10 @@ android {
         abortOnError = true
     }
 
+    sourceSets {
+        getByName("androidTest").assets.srcDirs("$projectDir/schemas")
+    }
+
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
@@ -198,6 +202,7 @@ kotlin {
 ksp {
     arg("dagger.fastInit", "enabled")
     arg("dagger.hilt.android.internal.disableAndroidSuperclassValidation", "true")
+    arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 dependencies {
@@ -249,6 +254,7 @@ dependencies {
     androidTestImplementation(libs.compose.ui.test.junit4)
     androidTestImplementation(libs.truth)
     androidTestImplementation(libs.hilt.android.testing)
+    androidTestImplementation(libs.room.testing)
     kspAndroidTest(libs.hilt.android.compiler)
 }
 
