@@ -58,7 +58,7 @@ class WeekPlanGenerator(private val catalog: ExerciseCatalog) : PlanGenerator {
         if (previous.workoutDays.size != skeleton.days.size) return null
         val days = skeleton.days.associate { day ->
             val before = previous.workoutDays.firstOrNull { it.dayNumber == day.dayNumber } ?: return null
-            val remaining = before.exercises.map { it.exerciseKey }.toMutableList()
+            val remaining = before.exercises.filter { it.addedBy == null }.map { it.exerciseKey }.toMutableList()
             day.slots.filter { it.isDecided }.forEach { remaining.remove(it.candidates.single()) }
             val slots = day.openSlots.associate { slot ->
                 val key = remaining.firstOrNull { it in slot.candidates } ?: return null

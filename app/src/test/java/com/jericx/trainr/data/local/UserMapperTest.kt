@@ -3,10 +3,12 @@ package com.jericx.trainr.data.local
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.domain.model.Injury
 import com.jericx.trainr.domain.model.Equipment
+import com.jericx.trainr.domain.model.ExerciseSet
 import com.jericx.trainr.domain.model.ExperienceLevel
 import com.jericx.trainr.domain.model.FitnessGoal
 import com.jericx.trainr.domain.model.Gender
 import com.jericx.trainr.domain.model.UserProfile
+import com.jericx.trainr.domain.unstuck.ActualOrigin
 import org.junit.Test
 
 class UserMapperTest {
@@ -77,5 +79,21 @@ class UserMapperTest {
 
         assertThat(mapper.mapToDomain(entity).availableEquipment)
             .containsExactly(Equipment.DUMBBELL, Equipment.MACHINE, Equipment.BARBELL)
+    }
+
+    @Test
+    fun `a set with actuals but no origin is stored as legacy unknown`() {
+        val set = ExerciseSet(setNumber = 1, targetReps = 8, actualReps = 8, isCompleted = true)
+
+        assertThat(mapper.mapToEntity(set, 1L).actualOrigin).isEqualTo("LEGACY_UNKNOWN")
+    }
+
+    @Test
+    fun `a set with no actuals keeps origin none and a typed set keeps typed`() {
+        val blank = ExerciseSet(setNumber = 1, targetReps = 8)
+        val typed = blank.copy(actualReps = 6, actualOrigin = ActualOrigin.TYPED)
+
+        assertThat(mapper.mapToEntity(blank, 1L).actualOrigin).isEqualTo("NONE")
+        assertThat(mapper.mapToEntity(typed, 1L).actualOrigin).isEqualTo("TYPED")
     }
 }

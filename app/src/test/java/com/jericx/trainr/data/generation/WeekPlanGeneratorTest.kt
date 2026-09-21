@@ -257,6 +257,28 @@ class WeekPlanGeneratorTest {
         assertThat(second.movements()).isNotEqualTo(first.movements())
     }
 
+    // A substitute swapped in for one day is not one of last week's movements,
+    // so it neither breaks the carry nor earns a place next week.
+    @Test
+    fun aSubstituteAddedForOneDayIsNotCarriedIntoNextWeek() {
+        val first = planFor(user(), fresh = true).logged()
+        val spare = catalog.all.first { it.key !in first.movements().flatten() }
+        val substituted = first.copy(
+            workoutDays = first.workoutDays.mapIndexed { index, day ->
+                if (index > 0) day else day.copy(
+                    exercises = day.exercises + day.exercises.first().copy(
+                        id = 0, exerciseKey = spare.key, name = spare.name, addedBy = 1
+                    )
+                )
+            }
+        )
+
+        val second = planFor(user(), listOf(substituted))
+
+        assertThat(second.movements()).isEqualTo(first.movements())
+        assertThat(second.movements()).isNotEqualTo(planFor(user(), week = 2).movements())
+    }
+
     @Test
     fun askingForNewMovementsIsNeverAnsweredWithLastWeeks() {
         val first = planFor(user()).logged()
