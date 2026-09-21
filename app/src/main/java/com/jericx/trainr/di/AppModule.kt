@@ -118,10 +118,14 @@ object AppModule {
     @Provides
     @Singleton
     fun provideAdjustmentRepository(
+        database: TrainrDatabase,
+        userDao: UserDao,
         dao: UnstuckDao,
-        mapper: UnstuckMapper
+        mapper: UnstuckMapper,
+        userMapper: UserMapper,
+        catalog: ExerciseCatalog
     ): AdjustmentRepository {
-        return AdjustmentRepositoryImpl(dao, mapper)
+        return AdjustmentRepositoryImpl(database, userDao, dao, mapper, userMapper, catalog)
     }
 
     @Provides
