@@ -1,0 +1,256 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "proposalId",
+    "requestId",
+    "sessionId",
+    "baseRevision",
+    "policyVersion",
+    "scope",
+    "changes",
+    "preservedPerformedSetIds",
+    "reasonCode",
+    "tradeoffCode",
+    "factReferences"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "proposalId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "requestId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "sessionId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "baseRevision": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "policyVersion": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "scope": {
+      "const": "today_only"
+    },
+    "changes": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 50,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kind",
+          "before",
+          "after"
+        ],
+        "properties": {
+          "kind": {
+            "enum": [
+              "reduce_unperformed",
+              "omit_unperformed",
+              "replace_unperformed"
+            ]
+          },
+          "before": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "exerciseInstanceId",
+              "catalogKey",
+              "sets"
+            ],
+            "properties": {
+              "exerciseInstanceId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 160
+              },
+              "catalogKey": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 160
+              },
+              "sets": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "setId",
+                    "targetReps",
+                    "targetWeightKg",
+                    "targetSeconds",
+                    "restSeconds"
+                  ],
+                  "properties": {
+                    "setId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 160
+                    },
+                    "targetReps": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 1
+                    },
+                    "targetWeightKg": {
+                      "type": [
+                        "number",
+                        "null"
+                      ],
+                      "minimum": 0
+                    },
+                    "targetSeconds": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 1
+                    },
+                    "restSeconds": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    }
+                  }
+                },
+                "maxItems": 100
+              }
+            }
+          },
+          "after": {
+            "anyOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "exerciseInstanceId",
+                  "catalogKey",
+                  "sets"
+                ],
+                "properties": {
+                  "exerciseInstanceId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 160
+                  },
+                  "catalogKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 160
+                  },
+                  "sets": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "setId",
+                        "targetReps",
+                        "targetWeightKg",
+                        "targetSeconds",
+                        "restSeconds"
+                      ],
+                      "properties": {
+                        "setId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 160
+                        },
+                        "targetReps": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 1
+                        },
+                        "targetWeightKg": {
+                          "type": [
+                            "number",
+                            "null"
+                          ],
+                          "minimum": 0
+                        },
+                        "targetSeconds": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 1
+                        },
+                        "restSeconds": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0
+                        }
+                      }
+                    },
+                    "maxItems": 100
+                  }
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "preservedPerformedSetIds": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 160
+      }
+    },
+    "reasonCode": {
+      "enum": [
+        "time_constraint",
+        "equipment_constraint",
+        "combined_confirmed_constraints"
+      ]
+    },
+    "tradeoffCode": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "factReferences": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 160
+      }
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "App-generated validated proposal transport v1 (proposed)",
+  "description": "Produced by deterministic app policy, never directly by LLM. Shape alone does not certify validity. All identifiers, numbers, scope and snapshots require transactional semantic validation. No-change is a separate outcome, not this object."
+}

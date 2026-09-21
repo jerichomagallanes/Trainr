@@ -1,0 +1,125 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "intent",
+    "timeBudget",
+    "equipmentMention",
+    "concern",
+    "memoryCandidate",
+    "clarification",
+    "evidence"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "intent": {
+      "enum": [
+        "less_time",
+        "equipment_unavailable",
+        "exercise_guidance",
+        "pain_concern",
+        "other_or_unclear"
+      ]
+    },
+    "timeBudget": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "minutes",
+            "scope"
+          ],
+          "properties": {
+            "minutes": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1440
+            },
+            "scope": {
+              "enum": [
+                "whole_session",
+                "remaining",
+                "unknown"
+              ]
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "equipmentMention": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 160
+    },
+    "concern": {
+      "enum": [
+        "none_stated",
+        "pain_or_unclear_discomfort"
+      ]
+    },
+    "memoryCandidate": {
+      "type": "boolean"
+    },
+    "clarification": {
+      "enum": [
+        "none",
+        "duration",
+        "duration_scope",
+        "affected_exercise",
+        "available_equipment",
+        "primary_constraint",
+        "meaning"
+      ]
+    },
+    "evidence": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "field",
+          "quote",
+          "start",
+          "end"
+        ],
+        "properties": {
+          "field": {
+            "enum": [
+              "intent",
+              "time_budget",
+              "equipment_mention",
+              "concern",
+              "memory_candidate"
+            ]
+          },
+          "quote": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "start": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "end": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      }
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Untrusted Unstuck intent extraction v1 (proposed)",
+  "description": "Model output only, never a prescription or authorization. Evidence uses Unicode code-point offsets, end exclusive. Additional semantic validation and user confirmation required."
+}

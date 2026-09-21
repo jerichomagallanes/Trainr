@@ -1,0 +1,118 @@
+{
+  "version": "1.0",
+  "status": "design reference; contrast review required",
+  "reference": {
+    "width": 390,
+    "height": 844,
+    "previewBorder": 1,
+    "previewStatusBar": 28,
+    "topBar": 64,
+    "shipPreviewChrome": false
+  },
+  "theme": {
+    "light": {
+      "page": "#FFFFFF",
+      "card": "#FFFFFF",
+      "ink": "#243036",
+      "muted": "#626262",
+      "controlOutline": "#808E95",
+      "sunken": "#F5F5F5",
+      "brandLarge": "#D37200",
+      "action": "#AB5C00",
+      "onBrand": "#FFFFFF",
+      "emphasis": "#243036",
+      "selected": "#243036",
+      "onSelected": "#FFFFFF",
+      "success": "#567C2C"
+    },
+    "dark": {
+      "page": "#101519",
+      "card": "#20282E",
+      "ink": "#E8EDEF",
+      "muted": "#A8B5BF",
+      "controlOutline": "#82979F",
+      "sunken": "#2C363D",
+      "brandLarge": "#E8963A",
+      "action": "#E8963A",
+      "onBrand": "#101519",
+      "emphasis": "#34515F",
+      "selected": "#E4EAEC",
+      "onSelected": "#101519",
+      "success": "#8BC34A"
+    }
+  },
+  "spacing": {
+    "xs": 4,
+    "sm": 8,
+    "md": 16,
+    "lg": 24,
+    "xl": 32,
+    "tight": 10,
+    "card": 15,
+    "screen": 20,
+    "section": 30,
+    "gap": 40
+  },
+  "radius": {
+    "chip": 8,
+    "card": 10,
+    "button": 10
+  },
+  "type": {
+    "featureTitle": {
+      "family": "Rubik",
+      "weight": 700,
+      "size": 20,
+      "lineHeight": 28
+    },
+    "priority": {
+      "family": "Rubik",
+      "weight": 700,
+      "size": 16,
+      "lineHeight": 24
+    },
+    "body": {
+      "family": "system",
+      "weight": 400,
+      "size": 14,
+      "lineHeight": 21
+    },
+    "cardHeading": {
+      "family": "system",
+      "weight": 700,
+      "size": 16,
+      "lineHeight": 24
+    },
+    "eyebrow": {
+      "family": "system",
+      "weight": 400,
+      "size": 12,
+      "lineHeight": 18
+    },
+    "button": {
+      "family": "system",
+      "weight": 900,
+      "size": 16,
+      "lineHeight": 24,
+      "uppercase": true
+    }
+  },
+  "size": {
+    "primaryMinHeight": 56,
+    "optionMinHeight": 56,
+    "androidMinTouch": 48,
+    "iosMinTouch": 44,
+    "logoHeight": 32
+  },
+  "content": {
+    "paddingTop": 16,
+    "paddingHorizontal": 20,
+    "paddingBottom": 24
+  },
+  "footer": {
+    "paddingVertical": 16,
+    "paddingHorizontal": 20,
+    "gap": 10,
+    "divider": 1
+  }
+}

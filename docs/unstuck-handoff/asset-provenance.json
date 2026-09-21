@@ -1,0 +1,50 @@
+{
+  "created": "2026-09-21",
+  "androidCommit": "53ef59f4aa289b687ef7320c5164f0129b395832",
+  "iosCommit": "2eb4eb9286a3c9edf319a8b3536ac493525ba448",
+  "prototypeOrigin": "Original Trainr Unstuck interactive concept from this design session; frozen index.html and prototype.js",
+  "assets": [
+    {
+      "file": "prototype/rubik_regular.ttf",
+      "sourceRepository": "Trainr",
+      "sourcePath": "app/src/main/res/font/rubik_regular.ttf",
+      "transformation": "Copied unchanged",
+      "sha256": "d44fab4446a30c184ca862a403e638fc7a5a55edc220be03814d55c3e749eb71"
+    },
+    {
+      "file": "prototype/rubik_bold.ttf",
+      "sourceRepository": "Trainr",
+      "sourcePath": "app/src/main/res/font/rubik_bold.ttf",
+      "transformation": "Copied unchanged",
+      "sha256": "608f8c610a5b5351a7e4cd61a1a2d21494f704f8f44e4d45a032072cec0b46d3"
+    },
+    {
+      "file": "prototype/logo.svg",
+      "sourceRepository": "Trainr",
+      "sourcePath": "app/src/main/res/drawable/img_trainr.xml",
+      "transformation": "Android vector paths/fills converted to SVG",
+      "sha256": "88af93a4ce9ac32349fe7772725156ee0c63dae7a2449b1a4df0bfe82b2de772"
+    },
+    {
+      "file": "prototype/logo-night.svg",
+      "sourceRepository": "Trainr",
+      "sourcePath": "app/src/main/res/drawable/img_trainr_night.xml",
+      "transformation": "Android vector paths/fills converted to SVG",
+      "sha256": "8e2cbba601a07bc0a71322413c4ac4b1fe971a19fc00abfcc6f59b56da7c3237"
+    }
+  ],
+  "screenshots": {
+    "logicalSize": [
+      390,
+      844
+    ],
+    "source": "prototype/capture.html, scenes.json, fixtures.js",
+    "themes": [
+      "light",
+      "dark"
+    ],
+    "fixtureOnly": true,
+    "nativeAppCaptures": false,
+    "captureEncoding": "Browser supplied JPEG; exported as PNG without resizing. Source HTML/CSS/tokens are exact geometry/color authority; raster capture can contain compression artifacts."
+  }
+}

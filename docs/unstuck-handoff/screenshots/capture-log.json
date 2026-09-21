@@ -1,0 +1,262 @@
+[
+  {
+    "heading": "Your weekly workout plan",
+    "scene": "home",
+    "theme": "light"
+  },
+  {
+    "heading": "Your weekly workout plan",
+    "scene": "home",
+    "theme": "dark"
+  },
+  {
+    "heading": "Today’s workout",
+    "scene": "workout",
+    "theme": "light"
+  },
+  {
+    "heading": "Today’s workout",
+    "scene": "workout",
+    "theme": "dark"
+  },
+  {
+    "heading": "What would help today?",
+    "scene": "reasons",
+    "theme": "light"
+  },
+  {
+    "heading": "What would help today?",
+    "scene": "reasons",
+    "theme": "dark"
+  },
+  {
+    "heading": "How much time do you have?",
+    "scene": "time",
+    "theme": "light"
+  },
+  {
+    "heading": "How much time do you have?",
+    "scene": "time",
+    "theme": "dark"
+  },
+  {
+    "heading": "A shorter workout for today",
+    "scene": "review",
+    "theme": "light"
+  },
+  {
+    "heading": "A shorter workout for today",
+    "scene": "review",
+    "theme": "dark"
+  },
+  {
+    "heading": "Finish early?",
+    "scene": "early",
+    "theme": "light"
+  },
+  {
+    "heading": "Finish early?",
+    "scene": "early",
+    "theme": "dark"
+  },
+  {
+    "heading": "Save this workout?",
+    "scene": "finish",
+    "theme": "light"
+  },
+  {
+    "heading": "Save this workout?",
+    "scene": "finish",
+    "theme": "dark"
+  },
+  {
+    "heading": "Workout saved",
+    "scene": "saved",
+    "theme": "light"
+  },
+  {
+    "heading": "Workout saved",
+    "scene": "saved",
+    "theme": "dark"
+  },
+  {
+    "heading": "Anything for next time?",
+    "scene": "debrief",
+    "theme": "light"
+  },
+  {
+    "heading": "Anything for next time?",
+    "scene": "debrief",
+    "theme": "dark"
+  },
+  {
+    "heading": "Note saved",
+    "scene": "noteSaved",
+    "theme": "light"
+  },
+  {
+    "heading": "Note saved",
+    "scene": "noteSaved",
+    "theme": "dark"
+  },
+  {
+    "heading": "Tell us what you need",
+    "scene": "context",
+    "theme": "light"
+  },
+  {
+    "heading": "Tell us what you need",
+    "scene": "context",
+    "theme": "dark"
+  },
+  {
+    "heading": "Understand the exercise",
+    "scene": "guide",
+    "theme": "light"
+  },
+  {
+    "heading": "Understand the exercise",
+    "scene": "guide",
+    "theme": "dark"
+  },
+  {
+    "heading": "Pause this exercise",
+    "scene": "pain",
+    "theme": "light"
+  },
+  {
+    "heading": "Pause this exercise",
+    "scene": "pain",
+    "theme": "dark"
+  },
+  {
+    "heading": "Did the adjustment help?",
+    "scene": "feedback",
+    "theme": "light"
+  },
+  {
+    "heading": "Did the adjustment help?",
+    "scene": "feedback",
+    "theme": "dark"
+  },
+  {
+    "heading": "What still needs changing?",
+    "scene": "feedbackDetail",
+    "theme": "light"
+  },
+  {
+    "heading": "What still needs changing?",
+    "scene": "feedbackDetail",
+    "theme": "dark"
+  },
+  {
+    "heading": "Feedback saved",
+    "scene": "outcome",
+    "theme": "light"
+  },
+  {
+    "heading": "Feedback saved",
+    "scene": "outcome",
+    "theme": "dark"
+  },
+  {
+    "heading": "Your training preferences",
+    "scene": "preferences",
+    "theme": "light"
+  },
+  {
+    "heading": "Your training preferences",
+    "scene": "preferences",
+    "theme": "dark"
+  },
+  {
+    "heading": "Tuesday time limit",
+    "scene": "editPreference",
+    "theme": "light"
+  },
+  {
+    "heading": "Tuesday time limit",
+    "scene": "editPreference",
+    "theme": "dark"
+  },
+  {
+    "heading": "Your weekly progress",
+    "scene": "progress",
+    "theme": "light"
+  },
+  {
+    "heading": "Your weekly progress",
+    "scene": "progress",
+    "theme": "dark"
+  },
+  {
+    "heading": "Keep adapting your training",
+    "scene": "pro",
+    "theme": "light"
+  },
+  {
+    "heading": "Keep adapting your training",
+    "scene": "pro",
+    "theme": "dark"
+  },
+  {
+    "heading": "A shorter workout for today",
+    "scene": "review-shoulders-25",
+    "theme": "light"
+  },
+  {
+    "heading": "A shorter workout for today",
+    "scene": "review-shoulders-25",
+    "theme": "dark"
+  },
+  {
+    "heading": "Use the dumbbells today",
+    "scene": "review-equipment",
+    "theme": "light"
+  },
+  {
+    "heading": "Use the dumbbells today",
+    "scene": "review-equipment",
+    "theme": "dark"
+  },
+  {
+    "heading": "Keep your current workout",
+    "scene": "review-no-change",
+    "theme": "light"
+  },
+  {
+    "heading": "Keep your current workout",
+    "scene": "review-no-change",
+    "theme": "dark"
+  },
+  {
+    "heading": "Today’s workout",
+    "scene": "workout-adjusted",
+    "theme": "light"
+  },
+  {
+    "heading": "Today’s workout",
+    "scene": "workout-adjusted",
+    "theme": "dark"
+  },
+  {
+    "heading": "Workout saved",
+    "scene": "saved-partial",
+    "theme": "light"
+  },
+  {
+    "heading": "Workout saved",
+    "scene": "saved-partial",
+    "theme": "dark"
+  },
+  {
+    "heading": "Your training preferences",
+    "scene": "preferences-empty",
+    "theme": "light"
+  },
+  {
+    "heading": "Your training preferences",
+    "scene": "preferences-empty",
+    "theme": "dark"
+  }
+]
