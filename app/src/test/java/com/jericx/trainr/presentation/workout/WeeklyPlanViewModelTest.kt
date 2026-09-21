@@ -7,7 +7,10 @@ import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
 import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.model.WorkoutStatus
+import com.jericx.trainr.domain.repository.AdjustmentRepository
 import com.jericx.trainr.domain.repository.UserRepository
+import com.jericx.trainr.domain.unstuck.FinishKind
+import com.jericx.trainr.domain.unstuck.SessionOutcome
 import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
 import com.jericx.trainr.presentation.workout.util.WorkoutWeek
 import com.jericx.trainr.presentation.workout.util.mondayOf
@@ -33,11 +36,14 @@ class WeeklyPlanViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var userRepository: UserRepository
+    private lateinit var adjustmentRepository: AdjustmentRepository
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         userRepository = mockk(relaxed = true)
+        adjustmentRepository = mockk(relaxed = true)
+        coEvery { adjustmentRepository.getOutcomes(any()) } returns emptyList()
     }
 
     @After
@@ -50,7 +56,8 @@ class WeeklyPlanViewModelTest {
         SavedStateHandle(
             weekNumber?.let { mapOf(Screen.WeekPlan.ARG_WEEK_NUMBER to it) } ?: emptyMap()
         ),
-        userRepository
+        userRepository,
+        adjustmentRepository
     )
 
     private val storedPlan = WeeklyWorkoutPlan(
@@ -426,4 +433,23 @@ class WeeklyPlanViewModelTest {
         assertThat(state.nextWorkout?.day?.title).isEqualTo("Session 1")
     }
 
+    @Test
+    fun aDayFinishedEarlyCarriesItsFinishKind() = runTest {
+        coEvery { userRepository.getCurrentUser() } returns UserProfile(id = 1)
+        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(storedPlan))
+        coEvery { adjustmentRepository.getOutcomes(listOf(1L)) } returns listOf(
+            SessionOutcome(
+                workoutDayId = 1,
+                finishKind = FinishKind.PARTIAL,
+                finishedAt = 5L,
+                performedSetCount = 2,
+                plannedSetCount = 6
+            )
+        )
+
+        val viewModel = viewModel()
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.days.single().finishKind).isEqualTo(FinishKind.PARTIAL)
+    }
 }

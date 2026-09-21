@@ -3,6 +3,7 @@ package com.jericx.trainr.presentation.workout.model
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.domain.model.ExerciseMeasure
 import com.jericx.trainr.domain.model.ExerciseSet
+import com.jericx.trainr.domain.unstuck.ActualOrigin
 import org.junit.Test
 
 class RoutineUiTest {
@@ -291,5 +292,120 @@ class RoutineUiTest {
         assertThat(routineWithSets().hasProgress).isFalse()
         assertThat(routineWithSets().completeAll().hasProgress).isTrue()
         assertThat(routineWithSets().completeAll().clearProgress().hasProgress).isFalse()
+    }
+
+    private fun RoutineUi.firstSet() = exercises.first().sets.first()
+
+    private fun RoutineUi.origins() = exercises.first().sets.map { it.actualOrigin }
+
+    @Test
+    fun typingANumberMarksTheSetAsTyped() {
+        val routine = routineWithSets()
+
+        val typed = routine.updateSet(1, routine.firstSet().copy(actualReps = 9))
+
+        assertThat(typed.origins())
+            .containsExactly(ActualOrigin.TYPED, ActualOrigin.NONE, ActualOrigin.NONE)
+            .inOrder()
+    }
+
+    @Test
+    fun theCheckmarkConfirmsTheTargetsOnBlankSets() {
+        val ticked = routineWithSets().toggleCompleted(1)
+
+        assertThat(ticked.origins().distinct()).containsExactly(ActualOrigin.CONFIRMED_TARGET)
+        assertThat(ticked.exercises.first().sets.map { it.actualReps }).containsExactly(12, 12, 12)
+    }
+
+    @Test
+    fun aTypedSetKeepsItsOriginThroughTheCheckmark() {
+        val routine = routineWithSets()
+        val typed = routine.updateSet(1, routine.firstSet().copy(actualReps = 9))
+
+        val ticked = typed.toggleCompleted(1)
+
+        assertThat(ticked.origins())
+            .containsExactly(
+                ActualOrigin.TYPED,
+                ActualOrigin.CONFIRMED_TARGET,
+                ActualOrigin.CONFIRMED_TARGET
+            )
+            .inOrder()
+        assertThat(ticked.firstSet().actualReps).isEqualTo(9)
+    }
+
+    @Test
+    fun tickingWithoutChangingANumberKeepsTheOrigin() {
+        val confirmed = routineWithSets().toggleCompleted(1)
+
+        val unticked = confirmed.updateSet(1, confirmed.firstSet().copy(isCompleted = false))
+
+        assertThat(unticked.origins().first()).isEqualTo(ActualOrigin.CONFIRMED_TARGET)
+    }
+
+    @Test
+    fun blankingEveryNumberLeavesNoOrigin() {
+        val routine = routineWithSets()
+        val typed = routine.updateSet(1, routine.firstSet().copy(actualReps = 9))
+
+        val blanked = typed.updateSet(1, routine.firstSet())
+
+        assertThat(blanked.origins().first()).isEqualTo(ActualOrigin.NONE)
+    }
+
+    @Test
+    fun startingOverClearsEveryOrigin() {
+        val routine = routineWithSets()
+        val logged = routine
+            .updateSet(1, routine.firstSet().copy(actualReps = 9))
+            .toggleCompleted(1)
+
+        val cleared = logged.clearProgress()
+
+        assertThat(cleared.origins().distinct()).containsExactly(ActualOrigin.NONE)
+    }
+
+    @Test
+    fun untickingLeavesTheNumbersAndTheirOrigin() {
+        val unticked = routineWithSets().toggleCompleted(1).toggleCompleted(1)
+
+        assertThat(unticked.origins().distinct()).containsExactly(ActualOrigin.CONFIRMED_TARGET)
+        assertThat(unticked.exercises.first().sets.map { it.actualReps }).containsExactly(12, 12, 12)
+    }
+
+    @Test
+    fun aTypedNumberSurvivesAnUntickAndRetick() {
+        val routine = routineWithSets()
+        val cycled = routine
+            .updateSet(1, routine.firstSet().copy(actualReps = 9))
+            .toggleCompleted(1)
+            .toggleCompleted(1)
+            .toggleCompleted(1)
+
+        assertThat(cycled.origins())
+            .containsExactly(
+                ActualOrigin.TYPED,
+                ActualOrigin.CONFIRMED_TARGET,
+                ActualOrigin.CONFIRMED_TARGET
+            )
+            .inOrder()
+        assertThat(cycled.firstSet().actualReps).isEqualTo(9)
+    }
+
+    @Test
+    fun exerciseCountsFollowThePlannedSets() {
+        val planned = listOf(ExerciseSet(setNumber = 1, targetReps = 12))
+        val omitted = planned.map { it.copy(omittedBy = 4L) }
+        val routine = RoutineUi(
+            title = "Strength",
+            exercises = listOf(
+                exercise(1).copy(sets = planned),
+                exercise(2).copy(sets = omitted),
+                exercise(3).copy(sets = planned)
+            )
+        ).toggleCompleted(1)
+
+        assertThat(routine.plannedExerciseCount).isEqualTo(2)
+        assertThat(routine.performedExerciseCount).isEqualTo(1)
     }
 }

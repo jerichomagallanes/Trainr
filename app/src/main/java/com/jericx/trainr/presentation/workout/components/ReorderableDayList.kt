@@ -40,6 +40,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.zIndex
 import com.jericx.trainr.R
 import com.jericx.trainr.domain.model.WorkoutDay
+import com.jericx.trainr.domain.unstuck.FinishKind
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.trainrColors
 import com.jericx.trainr.presentation.workout.WeeklyPlanDay
@@ -145,6 +146,7 @@ fun ReorderableDayList(
                     weekday = WorkoutDateFormatter.formatWeekday(days[position].dateMillis, locale),
                     day = planDay.day,
                     isMissed = planDay.isMissed,
+                    finishedEarly = planDay.finishKind == FinishKind.PARTIAL,
                     onClick = { onDayClick(planDay.day) },
                     modifier = Modifier
                         .zIndex(if (isDragged) 1f else 0f)
