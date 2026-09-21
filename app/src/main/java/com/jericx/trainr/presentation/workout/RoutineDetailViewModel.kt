@@ -10,7 +10,10 @@ import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.model.WorkoutExercise
 import com.jericx.trainr.presentation.Screen
 import com.jericx.trainr.domain.model.WorkoutStatus
+import com.jericx.trainr.domain.repository.AdjustmentRepository
 import com.jericx.trainr.domain.repository.UserRepository
+import com.jericx.trainr.domain.unstuck.FinishKind
+import com.jericx.trainr.domain.unstuck.SessionOutcome
 import com.jericx.trainr.presentation.workout.model.ExerciseTimerUi
 import com.jericx.trainr.presentation.workout.model.ExerciseUi
 import com.jericx.trainr.presentation.workout.model.RoutineUi
@@ -20,11 +23,14 @@ import com.jericx.trainr.presentation.workout.util.WorkoutWeek
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -43,13 +49,23 @@ data class RoutineDetailUiState(
     val unitSystem: UnitSystem = UnitSystem.Default,
     // False until the stored routine has been read: nothing is drawn before then,
     // and the completion guard must not read the load as finishing the day.
-    val isLoaded: Boolean = true
+    val isLoaded: Boolean = true,
+    val outcome: SessionOutcome? = null,
+    val isConfirmingFinishEarly: Boolean = false,
+    val saveFailed: Boolean = false
+)
+
+data class SessionSavedEvent(
+    val dayNumber: Int,
+    val performedExercises: Int,
+    val plannedExercises: Int
 )
 
 @HiltViewModel
 class RoutineDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val userRepository: UserRepository,
+    private val adjustmentRepository: AdjustmentRepository,
     private val catalog: ExerciseCatalog
 ) : ViewModel() {
 
@@ -73,7 +89,13 @@ class RoutineDetailViewModel @Inject constructor(
     )
     val uiState: StateFlow<RoutineDetailUiState> = _uiState.asStateFlow()
 
+    // Fires once per save and is never rebuilt from stored state, so a screen
+    // restored after process death does not navigate a second time.
+    private val _savedEvents = Channel<SessionSavedEvent>(Channel.BUFFERED)
+    val savedEvents: Flow<SessionSavedEvent> = _savedEvents.receiveAsFlow()
+
     private var tickJob: Job? = null
+    private var finishJob: Job? = null
 
     // Null until the stored day is read, so nothing persists rows that do not exist.
     private var storedDay: WorkoutDay? = null
@@ -121,7 +143,8 @@ class RoutineDetailViewModel @Inject constructor(
                         ?: SampleWorkoutData.dateOf(day.dayNumber),
                     dayNumber = index + 1,
                     weekNumber = plan.weekNumber,
-                    completesTheWeek = completesTheWeek(plan.workoutDays, index + 1)
+                    completesTheWeek = completesTheWeek(plan.workoutDays, index + 1),
+                    outcome = adjustmentRepository.getOutcome(day.id)
                 )
             }
         }
@@ -146,8 +169,11 @@ class RoutineDetailViewModel @Inject constructor(
         reconcileCompletion(position, was)
 
         val exercise = storedExerciseAt(position) ?: return
-        if (set.id == 0L) return
-        viewModelScope.launch { userRepository.updateExerciseSet(set, exercise.id) }
+        // The state holds the origin-stamped copy; the row only knows the numbers.
+        val stamped = _uiState.value.routine.exercises.firstOrNull { it.position == position }
+            ?.sets?.firstOrNull { it.setNumber == set.setNumber } ?: return
+        if (stamped.id == 0L) return
+        viewModelScope.launch { userRepository.updateExerciseSet(stamped, exercise.id) }
     }
 
     fun addSet(position: Int) {
@@ -202,8 +228,77 @@ class RoutineDetailViewModel @Inject constructor(
             completed.exercises.forEach { userRepository.updateWorkoutExercise(it, day.id) }
             persistFilledSets(_uiState.value.routine.exercises.map { it.position })
             persistDayStatus()
+            val planned = plannedSetCount()
+            val outcome = SessionOutcome(
+                workoutDayId = day.id,
+                finishKind = FinishKind.FULL,
+                finishedAt = System.currentTimeMillis(),
+                performedSetCount = planned,
+                plannedSetCount = planned
+            )
+            adjustmentRepository.saveOutcome(outcome)
+            _uiState.update { it.copy(outcome = outcome) }
         }
     }
+
+    fun askToFinishEarly() {
+        _uiState.update { it.copy(isConfirmingFinishEarly = true, saveFailed = false) }
+    }
+
+    fun keepTraining() {
+        _uiState.update { it.copy(isConfirmingFinishEarly = false, saveFailed = false) }
+    }
+
+    // Saves what was logged and nothing more: no set is filled and no exercise
+    // is ticked, so the record reads back as the work actually done.
+    fun finishEarly() {
+        if (finishJob?.isActive == true) return
+        cancelTick()
+        _uiState.update { it.copy(timer = null) }
+
+        val day = storedDay ?: return
+        finishJob = viewModelScope.launch {
+            val now = System.currentTimeMillis()
+            val sets = _uiState.value.routine.exercises.flatMap { it.sets }
+            val finished = day.copy(
+                status = WorkoutStatus.COMPLETED,
+                completedAt = day.completedAt ?: now
+            )
+            val outcome = SessionOutcome(
+                workoutDayId = day.id,
+                finishKind = FinishKind.PARTIAL,
+                finishedAt = now,
+                performedSetCount = sets.count { it.isCompleted },
+                plannedSetCount = sets.count { it.omittedBy == null }
+            )
+            val saved = runCatching {
+                userRepository.updateWorkoutDay(finished, weeklyPlanId)
+                adjustmentRepository.saveOutcome(outcome)
+            }
+            if (saved.isFailure) {
+                // Two writes, no transaction: put the day back so home does not
+                // show a completed chip for a session that was never saved.
+                runCatching { userRepository.updateWorkoutDay(day, weeklyPlanId) }
+                _uiState.update { it.copy(saveFailed = true) }
+                return@launch
+            }
+
+            storedDay = finished
+            _uiState.update {
+                it.copy(outcome = outcome, isConfirmingFinishEarly = false, saveFailed = false)
+            }
+            val routine = _uiState.value.routine
+            _savedEvents.send(
+                SessionSavedEvent(
+                    dayNumber = _uiState.value.dayNumber,
+                    performedExercises = routine.performedExerciseCount,
+                    plannedExercises = routine.plannedExerciseCount
+                )
+            )
+        }
+    }
+
+    fun retryFinishEarly() = finishEarly()
 
     // Clears the ticks and the logged numbers; the prescribed targets were
     // never overwritten, so they need no restoring.
@@ -355,8 +450,14 @@ class RoutineDetailViewModel @Inject constructor(
         storedDay = day
     }
 
+    private fun plannedSetCount(): Int =
+        _uiState.value.routine.exercises.flatMap { it.sets }.count { it.omittedBy == null }
+
     private suspend fun persistDayStatus() {
         val day = storedDay ?: return
+        // A day finished early is closed for good: correcting a number on it
+        // must not reopen it as in progress.
+        if (_uiState.value.outcome?.finishKind == FinishKind.PARTIAL) return
         val completedCount = day.exercises.count { it.isCompleted }
         val status = when (completedCount) {
             0 -> WorkoutStatus.NOT_STARTED

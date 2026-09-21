@@ -6,7 +6,10 @@ import androidx.lifecycle.viewModelScope
 import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
 import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.model.WorkoutStatus
+import com.jericx.trainr.domain.repository.AdjustmentRepository
 import com.jericx.trainr.domain.repository.UserRepository
+import com.jericx.trainr.domain.unstuck.FinishKind
+import com.jericx.trainr.domain.unstuck.SessionOutcome
 import com.jericx.trainr.presentation.Screen
 import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
 import com.jericx.trainr.presentation.workout.util.WorkoutWeek
@@ -23,7 +26,8 @@ data class WeeklyPlanDay(
     val day: WorkoutDay,
     val dateMillis: Long,
     val isToday: Boolean = false,
-    val isPast: Boolean = false
+    val isPast: Boolean = false,
+    val finishKind: FinishKind? = null
 ) {
     // Derived, not stored: a session moved to a later day stops being missed
     // on its own, with no flag to correct.
@@ -58,7 +62,8 @@ data class WeeklyPlanUiState(
 @HiltViewModel
 class WeeklyPlanViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val adjustmentRepository: AdjustmentRepository
 ) : ViewModel() {
 
     // Absent on home, which shows the newest week; set when opened from Weekly Progress.
@@ -67,6 +72,8 @@ class WeeklyPlanViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(WeeklyPlanUiState())
     val uiState: StateFlow<WeeklyPlanUiState> = _uiState.asStateFlow()
+
+    private var outcomes: Map<Long, SessionOutcome> = emptyMap()
 
     init {
         refresh()
@@ -87,12 +94,15 @@ class WeeklyPlanViewModel @Inject constructor(
             _uiState.value = if (stored == null) {
                 WeeklyPlanUiState(hasLoaded = true, hasPlan = false)
             } else {
+                outcomes = adjustmentRepository.getOutcomes(stored.workoutDays.map { it.id })
+                    .associateBy { it.workoutDayId }
                 stateFor(
                     plan = stored,
                     isCurrentWeek = stored.weekNumber == newest?.weekNumber,
                     // Read off the newest week, not the one being looked at: an old
                     // week is always finished and says nothing about the plan.
-                    canAddWeek = newest?.isReadyForTheNextWeek() ?: false
+                    canAddWeek = newest?.isReadyForTheNextWeek() ?: false,
+                    outcomes = outcomes
                 )
             }
         }
@@ -110,7 +120,8 @@ class WeeklyPlanViewModel @Inject constructor(
         _uiState.value = stateFor(
             plan = plan.copy(workoutDays = reordered.sortedBy { it.dayNumber }),
             canAddWeek = state.canAddWeek,
-            isCurrentWeek = state.isCurrentWeek
+            isCurrentWeek = state.isCurrentWeek,
+            outcomes = outcomes
         )
 
         viewModelScope.launch {
@@ -142,7 +153,8 @@ class WeeklyPlanViewModel @Inject constructor(
             // A fact about the newest week, whatever week is being read: appending
             // while one is still being trained would move home onto the copy.
             canAddWeek: Boolean? = null,
-            nowMillis: Long = System.currentTimeMillis()
+            nowMillis: Long = System.currentTimeMillis(),
+            outcomes: Map<Long, SessionOutcome> = emptyMap()
         ): WeeklyPlanUiState {
             val start = plan.startDateMillis ?: SampleWorkoutData.weekStartMillis
             val readyForTheNext = plan.isReadyForTheNextWeek(nowMillis)
@@ -157,7 +169,8 @@ class WeeklyPlanViewModel @Inject constructor(
                         day = it,
                         dateMillis = date,
                         isToday = WorkoutWeek.startOfDay(date) == today,
-                        isPast = WorkoutWeek.startOfDay(date) < today
+                        isPast = WorkoutWeek.startOfDay(date) < today,
+                        finishKind = outcomes[it.id]?.finishKind
                     )
                 },
                 weekStartMillis = start,
