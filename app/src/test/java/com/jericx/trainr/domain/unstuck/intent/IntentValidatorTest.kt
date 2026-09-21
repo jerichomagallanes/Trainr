@@ -174,4 +174,43 @@ class IntentValidatorTest {
         assertThat(rejection(IntentValidator.validate(decoy, plainNote)))
             .containsExactly(RejectionReason.MALFORMED_JSON)
     }
+
+    @Test
+    fun aKeyAnsweredTwiceIsRefusedRatherThanReadOnce() {
+        val doc = """
+            {"schemaVersion":"1.0","intent":"pain_concern","intent":"less_time",
+             "timeBudget":null,"equipmentMention":null,"concern":"none_stated",
+             "memoryCandidate":false,"clarification":"none","evidence":[]}
+        """.trimIndent()
+
+        assertThat(rejection(IntentValidator.validate(doc, plainNote)))
+            .containsExactly(RejectionReason.MALFORMED_JSON)
+    }
+
+    @Test
+    fun aKeySpelledWithEscapesCannotSlipPastTheDuplicateCheck() {
+        val doc = """
+            {"schemaVersion":"1.0","\u0069ntent":"pain_concern","intent":"less_time",
+             "timeBudget":null,"equipmentMention":null,"concern":"none_stated",
+             "memoryCandidate":false,"clarification":"none","evidence":[]}
+        """.trimIndent()
+
+        assertThat(rejection(IntentValidator.validate(doc, plainNote)))
+            .containsExactly(RejectionReason.MALFORMED_JSON)
+    }
+
+    @Test
+    fun theSameKeyInSiblingObjectsIsNotADuplicate() {
+        val note = "I have 30 minutes today"
+        val twoEntries = extraction(
+            intent = IntentKind.LESS_TIME,
+            timeBudget = TimeBudgetMention(30, MentionScope.WHOLE_SESSION),
+            evidence = listOf(
+                Evidence(EvidenceField.TIME_BUDGET, "30 minutes", start = 7, end = 17),
+                Evidence(EvidenceField.INTENT, "30 minutes", start = 7, end = 17)
+            )
+        )
+
+        assertThat(validated(twoEntries, note).actionable.minutes).isEqualTo(30)
+    }
 }
