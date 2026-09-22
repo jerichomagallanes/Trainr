@@ -17,6 +17,7 @@ exclude:
   - on-device-generation.md
   - exercise-source.txt
   - unstuck-status.md
+  - unstuck-model-decision.md
   - unstuck-handoff/
 
 defaults:

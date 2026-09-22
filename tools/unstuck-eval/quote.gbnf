@@ -1,0 +1,6 @@
+root ::= "{" ws "\"intent\"" ws ":" ws intent ws "," ws "\"minutes\"" ws ":" ws intornull ws "," ws "\"scope\"" ws ":" ws scope ws "," ws "\"quote\"" ws ":" ws strornull ws "}"
+intent ::= "\"less_time\"" | "\"equipment_unavailable\"" | "\"exercise_guidance\"" | "\"pain_concern\"" | "\"other_or_unclear\""
+scope ::= "\"whole_session\"" | "\"remaining\"" | "\"unknown\""
+intornull ::= "null" | [0-9]+
+strornull ::= "null" | "\"" [^"]* "\""
+ws ::= [ ]*
