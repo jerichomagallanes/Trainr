@@ -9,6 +9,7 @@ description: A workout planner that builds your week on your phone.
 # indexed by search engines.
 exclude:
   - unstuck-status.md
+  - unstuck-model-decision.md
   - unstuck-handoff/
 
 defaults:

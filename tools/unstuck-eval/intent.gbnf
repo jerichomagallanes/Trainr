@@ -1,0 +1,16 @@
+root ::= "{" ws "\"schemaVersion\"" ws ":" ws "\"1.0\"" ws "," ws "\"intent\"" ws ":" ws intent ws "," ws "\"timeBudget\"" ws ":" ws budget ws "," ws "\"equipmentMention\"" ws ":" ws strornull ws "," ws "\"concern\"" ws ":" ws concern ws "," ws "\"memoryCandidate\"" ws ":" ws bool ws "," ws "\"clarification\"" ws ":" ws clar ws "," ws "\"evidence\"" ws ":" ws evlist ws "}"
+intent ::= "\"less_time\"" | "\"equipment_unavailable\"" | "\"exercise_guidance\"" | "\"pain_concern\"" | "\"other_or_unclear\""
+concern ::= "\"none_stated\"" | "\"pain_or_unclear_discomfort\""
+clar ::= "\"none\"" | "\"duration\"" | "\"duration_scope\"" | "\"affected_exercise\"" | "\"available_equipment\"" | "\"primary_constraint\"" | "\"meaning\""
+budget ::= "null" | "{" ws "\"minutes\"" ws ":" ws int ws "," ws "\"scope\"" ws ":" ws scope ws "}"
+scope ::= "\"whole_session\"" | "\"remaining\"" | "\"unknown\""
+evlist ::= "[" ws "]" | "[" ws ev evtail ws "]"
+evtail ::= "" | ws "," ws ev evtail
+ev ::= "{" ws "\"field\"" ws ":" ws field ws "," ws "\"quote\"" ws ":" ws string ws "," ws "\"start\"" ws ":" ws int ws "," ws "\"end\"" ws ":" ws int ws "}"
+field ::= "\"intent\"" | "\"time_budget\"" | "\"equipment_mention\"" | "\"concern\"" | "\"memory_candidate\""
+strornull ::= "null" | string
+string ::= "\"" strchar "\""
+strchar ::= [^"]*
+bool ::= "true" | "false"
+int ::= [0-9]+
+ws ::= [ ]*
