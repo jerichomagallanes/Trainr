@@ -47,7 +47,9 @@ class FeedbackPromptViewModel @Inject constructor(
         } else {
             plans.firstOrNull { it.weekNumber == weekNumber }
         } ?: return
-        val stored = plan.workoutDays.firstOrNull { it.dayNumber == day } ?: return
+        // The saved screens count training days, so this is an ordinal, while
+        // the stored dayNumber is the weekday: a three-day week stores 1, 3, 5.
+        val stored = plan.workoutDays.getOrNull(day - 1) ?: return
 
         val adjustment = adjustmentRepository.getActiveAdjustment(stored.id) ?: return
         if (adjustmentRepository.getFeedback(adjustment.id) != null) return

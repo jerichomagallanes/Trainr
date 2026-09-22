@@ -137,4 +137,49 @@ class FeedbackPromptViewModelTest {
 
         assertThat(viewModel(adjustments).pendingAdjustmentId.value).isNull()
     }
+
+    @Test
+    fun theSecondTrainingDayIsAskedAboutItsOwnAdjustment() = runTest {
+        // A three-day week stores weekdays 1, 3, 5 while the saved screen counts
+        // training days, so ordinal 2 must resolve to the day stored as 3.
+        val monday = testDay(planned("barbell_bench_press", sets = 3, id = 2), id = 11)
+        val wednesday = testDay(planned("barbell_bench_press", sets = 3, id = 4), id = 12)
+            .copy(dayNumber = 3)
+        val friday = testDay(planned("barbell_bench_press", sets = 3, id = 6), id = 13)
+            .copy(dayNumber = 5)
+
+        val threeDayWeek: UserRepository = mockk<UserRepository>(relaxed = true).also {
+            coEvery { it.getCurrentUser() } returns testUser()
+            every { it.getWeeklyWorkoutPlans(any()) } returns flowOf(
+                listOf(
+                    WeeklyWorkoutPlan(
+                        id = 1,
+                        userId = 0,
+                        weekNumber = 1,
+                        title = "Week 1",
+                        startDateMillis = 0L,
+                        workoutDays = listOf(monday, wednesday, friday)
+                    )
+                )
+            )
+        }
+        val adjustments: AdjustmentRepository = mockk<AdjustmentRepository>(relaxed = true).also {
+            coEvery { it.getActiveAdjustment(any()) } returns null
+            coEvery { it.getActiveAdjustment(wednesday.id) } returns appliedAdjustment(wednesday.id)
+            coEvery { it.getFeedback(ADJUSTMENT_ID) } returns null
+        }
+
+        val viewModel = FeedbackPromptViewModel(
+            SavedStateHandle(
+                mapOf(
+                    Screen.SessionSaved.ARG_DAY_NUMBER to 2,
+                    Screen.SessionSaved.ARG_WEEK_NUMBER to 1
+                )
+            ),
+            threeDayWeek,
+            adjustments
+        ).also { advanceUntilIdle() }
+
+        assertThat(viewModel.pendingAdjustmentId.value).isEqualTo(ADJUSTMENT_ID)
+    }
 }
