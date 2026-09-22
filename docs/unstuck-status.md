@@ -211,3 +211,36 @@ covered" means no automated test in this repository asserts it.
 | T32 | Not covered. Both themes are covered by previews only, and not for the two screens named in section 4; there is no automated screen-reader, large-text, narrow-screen or hardware-keyboard test |
 | T33 | `UnstuckPolicyTimeTest.fiveMinutesIsReportedAsInfeasibleNotShrunk`; `AdjustReviewScreenTest.anImpossibleBudgetOffersFinishingEarly`; `AdjustReviewScreenTest.anUnworkableRequestNamesNoMinutes` |
 | T34 | `PlanSkeletonBuilderTest`, `PlanExpanderTest` and `GeneratedPlanParserTest`, all unmodified by this stack, plus `WeekPlanGeneratorTest`, which this stack extended with `aSubstituteAddedForOneDayIsNotCarriedIntoNextWeek`, and `SessionShapeTest`, which this stack added |
+
+## 9. iOS
+
+The same feature ships in `Trainr-iOS` as a matching stack of nine pull
+requests, `#80` to `#88`, on an integration branch of the same name. Both apps
+are held to the same handoff and the same shared fixtures, so a behavioural
+difference between them is a defect rather than a platform choice. Every
+difference below is deliberate and was reviewed as such.
+
+| Difference | Why |
+| --- | --- |
+| The apply validates so that nothing past its first write can throw, rather than relying on a rollback | SwiftData has no transaction, and `ModelContext.rollback()` on iOS 26 discards inserted objects but does **not** revert edits to already-registered ones. iOS 27 reverts both, so the version that reaches CI is the one where a rejected adjustment would half-apply |
+| A note keeps its day reference when its day is deleted | Room gets this from a foreign key rule; SwiftData has no nullify-on-inverse, so the store clears it explicitly. Both guarantee the text is never deleted with the day |
+| The schema carries a full copy of the pre-feature record shapes | A versioned schema that referenced the live classes would mean the "old" store already had the new fields, and the migration test would prove nothing |
+| The gate is a pure function rather than an object | The allowance is main-actor isolated, so a gate holding it could not be tested without a view |
+| An exercise's position is part of the revision digest | Android sorts by a stored column and is immune to reordering; the iOS domain type has no such field, so position is what the digest reads. Both change and stay still under the same conditions |
+| Screen assertions are made over the rendered copy rather than the view tree | Swift Testing cannot inspect a SwiftUI hierarchy. Each screen's text comes from one value type the view renders one to one |
+
+Two defects in this Android code were found by writing the feature a second
+time, and are fixed here: a duplicated key in a model answer was read as the
+**last** value by Android and the **first** by iOS, with both accepting the
+document (`#167`); and the follow-up question matched a training-day ordinal
+against a stored weekday, so on a plan that does not train daily it asked about
+the wrong session or none at all (`#168`).
+
+Two follow-ups are recorded and not done: the free-week gate on iOS lacks the
+cannot-sell branch its Android counterpart has, and removing a set renumbers
+the visible sets on both platforms, which can collide with a hidden row's
+number while an adjustment is active.
+
+iOS verification, on both the iOS 26 and iOS 27 simulator runtimes, because the
+two behave differently: 580 unit tests, SwiftLint strict clean. Android: 643
+unit tests and 368 instrumented tests.
