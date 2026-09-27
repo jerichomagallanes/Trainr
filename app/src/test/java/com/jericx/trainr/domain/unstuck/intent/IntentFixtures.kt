@@ -7,8 +7,8 @@ import kotlinx.serialization.json.jsonObject
 import java.io.File
 
 internal fun handoffFixture(name: String): JsonObject {
-    val file = File("../docs/unstuck-handoff/fixtures/$name")
-    assertWithMessage("handoff fixture missing at ${file.absolutePath}").that(file.exists()).isTrue()
+    val file = File("src/test/resources/unstuck/$name")
+    assertWithMessage("fixture missing at ${file.absolutePath}").that(file.exists()).isTrue()
     return Json.parseToJsonElement(file.readText()).jsonObject
 }
 

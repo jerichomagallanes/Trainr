@@ -3,15 +3,6 @@
 title: Trainr
 description: A workout planner that builds your week on your phone.
 
-# Only the three pages a client or a store reviewer is meant to land on get
-# published. The handoff package is working material: it stays readable in
-# the repository, where it is reviewed, rather than served as a styled page and
-# indexed by search engines.
-exclude:
-  - unstuck-status.md
-  - unstuck-model-decision.md
-  - unstuck-handoff/
-
 defaults:
   - scope:
       path: ""

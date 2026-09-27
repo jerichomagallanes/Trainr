@@ -12,7 +12,7 @@ import java.io.File
 
 class ProposalJsonTest {
 
-    private val fixture = File("../docs/unstuck-handoff/fixtures/proposal-example.json")
+    private val fixture = File("src/test/resources/unstuck/proposal-example.json")
 
     private fun fixtureText(): String {
         assertWithMessage("fixture missing at ${fixture.absolutePath}").that(fixture.exists()).isTrue()
