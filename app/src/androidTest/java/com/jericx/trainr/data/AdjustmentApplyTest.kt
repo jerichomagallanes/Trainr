@@ -307,6 +307,54 @@ class AdjustmentApplyTest {
     }
 
     @Test
+    fun reapplyingRestoresASubstituteSetOmittedSinceTheUndo() = runTest {
+        val day = seedDay()
+        val proposal = swap(day, day.exercise("dumbbell_step_up").id)
+        val applied = adjustments
+            .apply(proposal, day.id, AdjustmentReason.EQUIPMENT_UNAVAILABLE, NOW)
+            as ApplyResult.Applied
+        val substituteId = checkNotNull(applied.addedExerciseId)
+        val performed = omitAHandAddedSubstituteSet(day.id, substituteId, applied.adjustment.id)
+
+        val result = adjustments.reapply(applied.adjustment.id, NOW + 4 * MINUTE)
+
+        assertThat((result as ApplyResult.Applied).addedExerciseId).isEqualTo(substituteId)
+        val after = checkNotNull(proposal.changes.single().after)
+        val substitute = checkNotNull(workouts.getWorkoutExercise(substituteId))
+        assertThat(substitute.setCount).isEqualTo(after.sets.size)
+        assertThat(substitute.sets.map { it.setNumber }).containsExactly(1, 2, 3).inOrder()
+        assertThat(substitute.sets.map { it.omittedBy }).containsExactly(null, null, null)
+        assertThat(substitute.sets.map { it.isCompleted }).containsExactly(true, false, false).inOrder()
+        assertThat(substitute.sets.first()).isEqualTo(performed)
+        assertThat(substitute.sets.map { it.targetReps }).isEqualTo(after.sets.map { it.targetReps })
+        assertThat(substitute.sets.map { it.targetWeightKg })
+            .isEqualTo(after.sets.map { it.targetWeightKg })
+    }
+
+    @Test
+    fun undoingAfterARestoredSubstituteSetCountsOnlyThePerformedRow() = runTest {
+        val day = seedDay()
+        val original = day.exercise("dumbbell_step_up")
+        val applied = adjustments
+            .apply(swap(day, original.id), day.id, AdjustmentReason.EQUIPMENT_UNAVAILABLE, NOW)
+            as ApplyResult.Applied
+        val substituteId = checkNotNull(applied.addedExerciseId)
+        val performed = omitAHandAddedSubstituteSet(day.id, substituteId, applied.adjustment.id)
+        adjustments.reapply(applied.adjustment.id, NOW + 4 * MINUTE)
+
+        val result = adjustments.undo(applied.adjustment.id, NOW + 5 * MINUTE)
+
+        assertThat((result as UndoResult.Restored).keptPerformedSubstituteSets).isEqualTo(1)
+        val kept = checkNotNull(workouts.getWorkoutExercise(substituteId))
+        assertThat(kept.sets).containsExactly(performed)
+        assertThat(kept.setCount).isEqualTo(1)
+        val omitting = adjustments.getAdjustments(day.id).single { it.id != applied.adjustment.id }
+        assertThat(adjustments.undo(omitting.id, NOW + 6 * MINUTE)).isInstanceOf(UndoResult.Restored::class.java)
+        assertThat(checkNotNull(workouts.getWorkoutExercise(substituteId)).sets).containsExactly(performed)
+        assertThat(reread(day.id).exercise("dumbbell_step_up").sets).isEqualTo(original.sets)
+    }
+
+    @Test
     fun aProposalIsRejectedAgainstAnyDayButItsOwn() = runTest {
         val day = seedDay()
         val proposal = shorten(day)
@@ -419,6 +467,36 @@ class AdjustmentApplyTest {
         tradeoffCode = "reduced_session",
         factReferences = emptyList()
     )
+
+    private suspend fun omitAHandAddedSubstituteSet(
+        dayId: Long,
+        substituteId: Long,
+        adjustmentId: Long
+    ): ExerciseSet {
+        val planned = checkNotNull(workouts.getWorkoutExercise(substituteId))
+        log(planned.sets.first(), substituteId)
+        adjustments.undo(adjustmentId, NOW + MINUTE)
+        workouts.addExerciseSet(ExerciseSet(setNumber = 2, targetReps = 1), substituteId)
+        val day = reread(dayId)
+        val substitute = day.exercises.single { it.id == substituteId }
+        val omitting = handBuilt(
+            day,
+            ProposalChange(
+                kind = ChangeKind.OMIT_UNPERFORMED,
+                before = ExerciseSnapshot(
+                    exerciseInstanceId = "exercise:$substituteId",
+                    catalogKey = substitute.exerciseKey,
+                    sets = substitute.sets.filter { !it.isCompleted }.map { it.snapshot() }
+                ),
+                after = null
+            )
+        )
+        val result = adjustments.apply(omitting, dayId, AdjustmentReason.LESS_TIME, NOW + 2 * MINUTE)
+        assertThat(result).isInstanceOf(ApplyResult.Applied::class.java)
+        val omitted = checkNotNull(workouts.getWorkoutExercise(substituteId)).sets
+        assertThat(omitted.map { it.omittedBy != null }).containsExactly(false, true).inOrder()
+        return omitted.first()
+    }
 
     private fun WorkoutDay.exercise(key: String) = exercises.single { it.exerciseKey == key }
 

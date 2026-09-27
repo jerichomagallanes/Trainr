@@ -289,12 +289,26 @@ class AdjustmentRepositoryImpl(
     }
 
     private suspend fun topUp(added: WorkoutExerciseEntity, after: ExerciseSnapshot): Long {
-        val present = userDao.getSetsForExercise(added.id).map { it.setNumber }.toSet()
-        val missing = after.sets.mapIndexed { index, set -> index + 1 to set }
-            .filterNot { (setNumber, _) -> setNumber in present }
-        if (missing.isNotEmpty()) {
-            userDao.insertExerciseSets(missing.map { (setNumber, set) -> plannedSet(added.id, setNumber, set) })
+        val rows = userDao.getSetsForExercise(added.id).groupBy { it.setNumber }
+        val missing = mutableListOf<ExerciseSetEntity>()
+        after.sets.forEachIndexed { index, set ->
+            val setNumber = index + 1
+            val present = rows[setNumber].orEmpty()
+            if (present.any { it.isCompleted || it.omittedBy == null }) return@forEachIndexed
+            if (present.isEmpty()) {
+                missing += plannedSet(added.id, setNumber, set)
+            } else {
+                userDao.updateExerciseSet(
+                    present.first().copy(
+                        targetReps = set.targetReps,
+                        targetWeightKg = set.targetWeightKg,
+                        targetSeconds = set.targetSeconds,
+                        omittedBy = null
+                    )
+                )
+            }
         }
+        if (missing.isNotEmpty()) userDao.insertExerciseSets(missing)
         userDao.updateWorkoutExercise(added.copy(setCount = after.sets.size))
         return added.id
     }
