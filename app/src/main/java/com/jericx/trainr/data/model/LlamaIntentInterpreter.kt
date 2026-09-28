@@ -56,6 +56,6 @@ class LlamaIntentInterpreter(
     }
 
     private companion object {
-        val TIMEOUT = 25.seconds
+        val TIMEOUT = 60.seconds
     }
 }
