@@ -6,10 +6,16 @@ enum class DirectReason { LESS_TIME, EQUIPMENT, GUIDANCE, PAIN, OTHER }
 
 object IntentRouting {
 
-    // A model returning none_stated is not a safety clearance, so a direct
-    // pain choice is answered before anything the extraction says.
-    fun routeFor(directReason: DirectReason?, validation: IntentValidation?): UnstuckRoute {
+    // A model returning none_stated is not a safety clearance, so a direct pain
+    // choice and a pain word in the note are answered before anything the
+    // extraction says.
+    fun routeFor(
+        directReason: DirectReason?,
+        noteFlagsPain: Boolean,
+        validation: IntentValidation?
+    ): UnstuckRoute {
         if (directReason == DirectReason.PAIN) return UnstuckRoute.PAIN
+        if (noteFlagsPain) return UnstuckRoute.PAIN
 
         val valid = validation as? IntentValidation.Valid
         if (valid?.actionable?.painConcern == true) return UnstuckRoute.PAIN

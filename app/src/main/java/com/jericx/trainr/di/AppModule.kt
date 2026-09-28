@@ -1,6 +1,8 @@
 package com.jericx.trainr.di
 
+import android.app.ActivityManager
 import android.content.Context
+import android.os.StatFs
 import androidx.room.Room
 import com.jericx.trainr.common.Constants
 import com.jericx.trainr.data.local.TrainrDatabase
@@ -16,6 +18,10 @@ import com.jericx.trainr.data.purchases.StoredGenerationAllowance
 import com.jericx.trainr.data.repository.UserRepositoryImpl
 import com.jericx.trainr.data.repository.AdjustmentRepositoryImpl
 import com.jericx.trainr.data.generation.WeekPlanGenerator
+import com.jericx.trainr.data.model.DeviceEligibility
+import com.jericx.trainr.data.model.HttpModelSource
+import com.jericx.trainr.data.model.LlamaIntentInterpreter
+import com.jericx.trainr.data.model.ModelInstaller
 import com.jericx.trainr.domain.diagnostics.Breadcrumbs
 import com.jericx.trainr.data.diagnostics.CrashlyticsBreadcrumbs
 import com.jericx.trainr.domain.generation.PlanGenerator
@@ -28,13 +34,16 @@ import com.jericx.trainr.domain.purchases.ProGate
 import com.jericx.trainr.domain.repository.UserRepository
 import com.jericx.trainr.domain.repository.AdjustmentRepository
 import com.jericx.trainr.domain.unstuck.intent.IntentInterpreter
-import com.jericx.trainr.domain.unstuck.intent.UnavailableInterpreter
+import com.jericx.trainr.domain.unstuck.intent.LocalModelInstaller
+import com.jericx.trainr.llama.LlamaEngine
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import java.io.File
 import javax.inject.Singleton
+import kotlinx.coroutines.Dispatchers
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -160,7 +169,54 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideIntentInterpreter(): IntentInterpreter = UnavailableInterpreter
+    fun provideDeviceEligibility(@ApplicationContext context: Context): DeviceEligibility =
+        DeviceEligibility.of(context)
+
+    @Provides
+    @Singleton
+    fun provideModelInstaller(
+        @ApplicationContext context: Context,
+        eligibility: DeviceEligibility
+    ): ModelInstaller {
+        val directory = context.getExternalFilesDir("models") ?: File(context.filesDir, "models")
+        directory.mkdirs()
+        return ModelInstaller(
+            directory = directory,
+            eligibility = eligibility,
+            source = HttpModelSource(),
+            freeSpace = { StatFs(it.path).availableBytes },
+            dispatcher = Dispatchers.IO
+        )
+    }
+
+    @Provides
+    @Singleton
+    fun provideLocalModelInstaller(installer: ModelInstaller): LocalModelInstaller = installer
+
+    @Provides
+    @Singleton
+    fun provideLlamaEngine(
+        @ApplicationContext context: Context,
+        installer: ModelInstaller
+    ): LlamaEngine {
+        val activityManager = context.getSystemService(ActivityManager::class.java)
+        return LlamaEngine(
+            modelFile = installer::readyFile,
+            nativeLibraryDir = context.applicationInfo.nativeLibraryDir,
+            availableMemory = {
+                ActivityManager.MemoryInfo().also(activityManager::getMemoryInfo).availMem
+            },
+            dispatcher = Dispatchers.IO
+        ).also(context::registerComponentCallbacks)
+    }
+
+    @Provides
+    @Singleton
+    fun provideIntentInterpreter(
+        installer: ModelInstaller,
+        eligibility: DeviceEligibility,
+        engine: LlamaEngine
+    ): IntentInterpreter = LlamaIntentInterpreter(installer, eligibility, engine)
 
     @Provides
     @Singleton

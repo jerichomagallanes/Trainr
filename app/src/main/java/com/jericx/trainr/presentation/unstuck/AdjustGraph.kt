@@ -1,9 +1,12 @@
 package com.jericx.trainr.presentation.unstuck
 
+import android.content.Intent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavBackStackEntry
@@ -13,6 +16,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.navArgument
+import com.jericx.trainr.data.model.ModelArtifact
 import com.jericx.trainr.domain.purchases.AdjustmentGate
 import com.jericx.trainr.domain.unstuck.intent.DirectReason
 import com.jericx.trainr.domain.unstuck.intent.UnstuckRoute
@@ -190,10 +194,22 @@ private fun ContextStep(navController: NavHostController, graph: NavBackStackEnt
         }
     }
 
+    val context = LocalContext.current
     AdjustContextScreen(
         note = state.note,
+        interpreter = state.interpreter,
+        isInterpreting = state.isInterpreting,
+        hint = state.contextHint,
         onTypeNote = viewModel::typeNote,
         onChoose = viewModel::chooseFromContext,
+        onUseNote = { viewModel.chooseFromContext(DirectReason.OTHER) },
+        onInstallModel = viewModel::installModel,
+        onCancelInstall = viewModel::cancelModelInstall,
+        onOpenLicence = {
+            runCatching {
+                context.startActivity(Intent(Intent.ACTION_VIEW, ModelArtifact.LICENCE_URL.toUri()))
+            }
+        },
         onBack = { navController.leaveAdjustment() }
     )
 }

@@ -32,22 +32,33 @@ class IntentRoutingTest {
             painNote
         )
 
-        assertThat(IntentRouting.routeFor(null, discomfort)).isEqualTo(UnstuckRoute.PAIN)
-        assertThat(IntentRouting.routeFor(DirectReason.LESS_TIME, discomfort)).isEqualTo(UnstuckRoute.PAIN)
+        assertThat(IntentRouting.routeFor(null, false, discomfort)).isEqualTo(UnstuckRoute.PAIN)
+        assertThat(IntentRouting.routeFor(DirectReason.LESS_TIME, false, discomfort)).isEqualTo(UnstuckRoute.PAIN)
     }
 
     @Test
     fun aDirectPainChoiceIsNotClearedByTheModel() {
         assertThat(timeOnly.actionable.painConcern).isFalse()
 
-        assertThat(IntentRouting.routeFor(DirectReason.PAIN, timeOnly)).isEqualTo(UnstuckRoute.PAIN)
+        assertThat(IntentRouting.routeFor(DirectReason.PAIN, false, timeOnly)).isEqualTo(UnstuckRoute.PAIN)
+    }
+
+    @Test
+    fun aPainWordInTheNoteRoutesToPainBeforeAnyReasonOrExtraction() {
+        assertThat(IntentRouting.routeFor(null, true, null)).isEqualTo(UnstuckRoute.PAIN)
+        assertThat(IntentRouting.routeFor(DirectReason.LESS_TIME, true, timeOnly))
+            .isEqualTo(UnstuckRoute.PAIN)
+        assertThat(IntentRouting.routeFor(DirectReason.EQUIPMENT, true, null))
+            .isEqualTo(UnstuckRoute.PAIN)
+        assertThat(IntentRouting.routeFor(DirectReason.OTHER, true, timeOnly))
+            .isEqualTo(UnstuckRoute.PAIN)
     }
 
     @Test
     fun aDirectReasonOutranksTheModelsIntent() {
-        assertThat(IntentRouting.routeFor(DirectReason.EQUIPMENT, timeOnly)).isEqualTo(UnstuckRoute.EQUIPMENT)
-        assertThat(IntentRouting.routeFor(DirectReason.GUIDANCE, timeOnly)).isEqualTo(UnstuckRoute.GUIDE)
-        assertThat(IntentRouting.routeFor(null, timeOnly)).isEqualTo(UnstuckRoute.TIME)
+        assertThat(IntentRouting.routeFor(DirectReason.EQUIPMENT, false, timeOnly)).isEqualTo(UnstuckRoute.EQUIPMENT)
+        assertThat(IntentRouting.routeFor(DirectReason.GUIDANCE, false, timeOnly)).isEqualTo(UnstuckRoute.GUIDE)
+        assertThat(IntentRouting.routeFor(null, false, timeOnly)).isEqualTo(UnstuckRoute.TIME)
     }
 
     @Test
@@ -57,7 +68,7 @@ class IntentRoutingTest {
             timeNote
         )
 
-        assertThat(IntentRouting.routeFor(DirectReason.OTHER, unsure)).isEqualTo(UnstuckRoute.CHOOSER)
+        assertThat(IntentRouting.routeFor(DirectReason.OTHER, false, unsure)).isEqualTo(UnstuckRoute.CHOOSER)
     }
 
     @Test
@@ -65,8 +76,8 @@ class IntentRoutingTest {
         val rejected = IntentValidator.validate("{\"schemaVersion\":", timeNote)
 
         assertThat(rejection(rejected)).isNotEmpty()
-        assertThat(IntentRouting.routeFor(null, rejected)).isEqualTo(UnstuckRoute.CHOOSER)
-        assertThat(IntentRouting.routeFor(DirectReason.OTHER, null)).isEqualTo(UnstuckRoute.CHOOSER)
-        assertThat(IntentRouting.routeFor(null, null)).isEqualTo(UnstuckRoute.CHOOSER)
+        assertThat(IntentRouting.routeFor(null, false, rejected)).isEqualTo(UnstuckRoute.CHOOSER)
+        assertThat(IntentRouting.routeFor(DirectReason.OTHER, false, null)).isEqualTo(UnstuckRoute.CHOOSER)
+        assertThat(IntentRouting.routeFor(null, false, null)).isEqualTo(UnstuckRoute.CHOOSER)
     }
 }

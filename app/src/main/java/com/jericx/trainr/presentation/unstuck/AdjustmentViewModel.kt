@@ -31,6 +31,10 @@ import com.jericx.trainr.domain.unstuck.intent.IntentValidation
 import com.jericx.trainr.domain.unstuck.intent.IntentRouting
 import com.jericx.trainr.domain.unstuck.intent.InterpreterAvailability
 import com.jericx.trainr.domain.unstuck.intent.InterpreterResult
+import com.jericx.trainr.domain.unstuck.intent.LocalModelInstaller
+import com.jericx.trainr.domain.unstuck.intent.MentionScope
+import com.jericx.trainr.domain.unstuck.intent.ModelState
+import com.jericx.trainr.domain.unstuck.intent.SafetyRouting
 import com.jericx.trainr.domain.unstuck.intent.UnstuckRoute
 import com.jericx.trainr.presentation.Screen
 import com.jericx.trainr.presentation.workout.util.WorkoutDateFormatter
@@ -52,6 +56,18 @@ data class ExerciseChoice(val id: Long, val name: String)
 
 enum class ApplyErrorUi { STALE_REBUILT, NOT_APPLIED }
 
+enum class ContextHint { CHOOSER, GUIDE, FAILED }
+
+sealed interface InterpreterUi {
+    data object Unsupported : InterpreterUi
+    data object NotInstalled : InterpreterUi
+    data class Downloading(val percent: Int) : InterpreterUi
+    data object Verifying : InterpreterUi
+    data object InsufficientStorage : InterpreterUi
+    data object Failed : InterpreterUi
+    data object Ready : InterpreterUi
+}
+
 data class AdjustmentUiState(
     val isLoaded: Boolean = false,
     val day: WorkoutDay? = null,
@@ -70,6 +86,9 @@ data class AdjustmentUiState(
     val enteredWithExercise: Boolean = false,
     val availableEquipment: Set<Equipment> = emptySet(),
     val note: String = "",
+    val interpreter: InterpreterUi = InterpreterUi.Unsupported,
+    val isInterpreting: Boolean = false,
+    val contextHint: ContextHint? = null,
     val remember: Boolean = false,
     val decision: PolicyDecision? = null,
     val review: ReviewUi? = null,
@@ -105,6 +124,7 @@ class AdjustmentViewModel @Inject constructor(
     private val adjustmentRepository: AdjustmentRepository,
     private val catalog: ExerciseCatalog,
     private val interpreter: IntentInterpreter,
+    private val modelInstaller: LocalModelInstaller,
     private val breadcrumbs: Breadcrumbs
 ) : ViewModel() {
 
@@ -154,6 +174,11 @@ class AdjustmentViewModel @Inject constructor(
 
     init {
         viewModelScope.launch { load() }
+        viewModelScope.launch {
+            modelInstaller.state.collect { state ->
+                _uiState.update { it.copy(interpreter = state.toUi()) }
+            }
+        }
     }
 
     fun selectMinutes(minutes: Int) {
@@ -201,11 +226,34 @@ class AdjustmentViewModel @Inject constructor(
         _uiState.update { it.copy(remember = !it.remember) }
     }
 
+    fun installModel() = modelInstaller.install()
+
+    fun cancelModelInstall() = modelInstaller.cancel()
+
+    // A pain word skips the model, so nothing it says can move that route.
     fun chooseFromContext(reason: DirectReason) {
-        _uiState.update { it.copy(reason = reason) }
+        if (_uiState.value.isInterpreting) return
+        _uiState.update { it.copy(reason = reason, contextHint = null) }
         viewModelScope.launch {
-            val validation = interpretNote()
-            _routeEvents.send(IntentRouting.routeFor(reason, validation))
+            val note = _uiState.value.note
+            val noteFlagsPain = SafetyRouting.flagsPain(note)
+            val result = if (noteFlagsPain) null else interpretNote(note)
+            val validation = (result as? InterpreterResult.Interpreted)?.validation
+            val route = IntentRouting.routeFor(reason, noteFlagsPain, validation)
+            if (route == UnstuckRoute.TIME) prefillMinutes(validation)
+            _uiState.update {
+                it.copy(
+                    reason = route.asDirectReason() ?: reason,
+                    contextHint = when (route) {
+                        UnstuckRoute.CHOOSER ->
+                            if (result is InterpreterResult.Failed) ContextHint.FAILED else ContextHint.CHOOSER
+
+                        UnstuckRoute.GUIDE -> ContextHint.GUIDE
+                        else -> null
+                    }
+                )
+            }
+            _routeEvents.send(route)
         }
     }
 
@@ -357,12 +405,28 @@ class AdjustmentViewModel @Inject constructor(
         _uiState.update { it.copy(applyError = ApplyErrorUi.STALE_REBUILT) }
     }
 
-    private suspend fun interpretNote(): IntentValidation? {
-        if (interpreter.availability != InterpreterAvailability.READY) return null
-        val note = _uiState.value.note
-        if (note.isBlank()) return null
-        val result = interpreter.interpret(note, Locale.getDefault(), DirectReason.OTHER)
-        return (result as? InterpreterResult.Interpreted)?.validation
+    private suspend fun interpretNote(note: String): InterpreterResult? {
+        if (interpreter.availability != InterpreterAvailability.READY || note.isBlank()) return null
+        _uiState.update { it.copy(isInterpreting = true) }
+        try {
+            return interpreter.interpret(note, Locale.getDefault(), DirectReason.OTHER)
+        } finally {
+            _uiState.update { it.copy(isInterpreting = false) }
+        }
+    }
+
+    // The note's number is carried as said, unless it answers the other scope's question.
+    private fun prefillMinutes(validation: IntentValidation?) {
+        val facts = (validation as? IntentValidation.Valid)?.actionable ?: return
+        val minutes = facts.minutes?.takeIf(TimePresets::isSupported) ?: return
+        if (facts.scope.contradicts(_uiState.value.scope)) return
+        _uiState.update {
+            it.copy(
+                selectedMinutes = minutes,
+                customMinutesText = if (minutes in it.presets) "" else minutes.toString(),
+                minutesError = false
+            )
+        }
     }
 
     private fun constraintFor(state: AdjustmentUiState): AdjustmentConstraint? = when (state.reason) {
@@ -439,6 +503,32 @@ class AdjustmentViewModel @Inject constructor(
                 .map { exercise -> ExerciseChoice(exercise.id, exercise.name) }
         )
     }
+}
+
+private fun MentionScope?.contradicts(scope: TimeScope): Boolean = when (this) {
+    MentionScope.WHOLE_SESSION -> scope == TimeScope.REMAINING
+    MentionScope.REMAINING -> scope == TimeScope.WHOLE_SESSION
+    else -> false
+}
+
+private fun ModelState.toUi(): InterpreterUi = when (this) {
+    ModelState.Unsupported -> InterpreterUi.Unsupported
+    ModelState.NotInstalled -> InterpreterUi.NotInstalled
+    is ModelState.Downloading ->
+        InterpreterUi.Downloading((bytesDone * 100 / bytesTotal).toInt().coerceIn(0, 100))
+
+    ModelState.Verifying -> InterpreterUi.Verifying
+    ModelState.Ready -> InterpreterUi.Ready
+    ModelState.InsufficientStorage -> InterpreterUi.InsufficientStorage
+    is ModelState.Failed -> InterpreterUi.Failed
+}
+
+private fun UnstuckRoute.asDirectReason(): DirectReason? = when (this) {
+    UnstuckRoute.TIME -> DirectReason.LESS_TIME
+    UnstuckRoute.EQUIPMENT -> DirectReason.EQUIPMENT
+    UnstuckRoute.GUIDE -> DirectReason.GUIDANCE
+    UnstuckRoute.PAIN -> DirectReason.PAIN
+    UnstuckRoute.CHOOSER -> null
 }
 
 private fun DirectReason.asAdjustmentReason(): AdjustmentReason = when (this) {

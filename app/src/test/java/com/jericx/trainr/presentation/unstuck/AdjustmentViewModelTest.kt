@@ -16,7 +16,13 @@ import com.jericx.trainr.domain.unstuck.PreferenceKind
 import com.jericx.trainr.domain.unstuck.TimeScope
 import com.jericx.trainr.domain.unstuck.TrainingPreference
 import com.jericx.trainr.domain.unstuck.intent.DirectReason
+import com.jericx.trainr.domain.unstuck.intent.FailureKind
 import com.jericx.trainr.domain.unstuck.intent.IntentInterpreter
+import com.jericx.trainr.domain.unstuck.intent.IntentValidator
+import com.jericx.trainr.domain.unstuck.intent.InterpreterAvailability
+import com.jericx.trainr.domain.unstuck.intent.InterpreterResult
+import com.jericx.trainr.domain.unstuck.intent.LocalModelInstaller
+import com.jericx.trainr.domain.unstuck.intent.ModelState
 import com.jericx.trainr.domain.unstuck.intent.UnavailableInterpreter
 import com.jericx.trainr.domain.unstuck.intent.UnstuckRoute
 import com.jericx.trainr.domain.unstuck.planned
@@ -31,6 +37,8 @@ import io.mockk.mockk
 import io.mockk.slot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -99,6 +107,23 @@ class AdjustmentViewModelTest {
             coEvery { it.getPreference(any(), any(), any()) } returns null
         }
 
+    private class FakeInstaller(state: ModelState = ModelState.NotInstalled) : LocalModelInstaller {
+        override val state = MutableStateFlow(state)
+        var installs = 0
+        var cancels = 0
+        override fun install() { installs++ }
+        override fun cancel() { cancels++ }
+    }
+
+    private fun readyInterpreter(result: InterpreterResult): IntentInterpreter =
+        mockk<IntentInterpreter>().also {
+            every { it.availability } returns InterpreterAvailability.READY
+            coEvery { it.interpret(any(), any(), any()) } returns result
+        }
+
+    private fun interpreted(note: String, json: String) =
+        InterpreterResult.Interpreted(IntentValidator.validate(json, note))
+
     private fun TestScope.viewModel(
         day: WorkoutDay = fullDay,
         reason: DirectReason = DirectReason.LESS_TIME,
@@ -107,6 +132,7 @@ class AdjustmentViewModelTest {
         repository: UserRepository = repositoryWith(day),
         adjustmentRepository: AdjustmentRepository = adjustments(),
         interpreter: IntentInterpreter = UnavailableInterpreter,
+        installer: LocalModelInstaller = FakeInstaller(),
         breadcrumbs: Breadcrumbs = mockk(relaxed = true)
     ) = AdjustmentViewModel(
         SavedStateHandle(
@@ -122,6 +148,7 @@ class AdjustmentViewModelTest {
         adjustmentRepository,
         testCatalog,
         interpreter,
+        installer,
         breadcrumbs
     ).also { advanceUntilIdle() }
 
@@ -287,6 +314,242 @@ class AdjustmentViewModelTest {
 
         assertThat(seen).containsExactly(UnstuckRoute.TIME)
         coVerify(exactly = 0) { interpreter.interpret(any(), any(), any()) }
+    }
+
+    @Test
+    fun aNamedPartOutranksWhatTheModelReadFromTheNote() = runTest {
+        val interpreter = readyInterpreter(interpreted(TIME_NOTE, TIME_ANSWER))
+        val viewModel = viewModel(reason = DirectReason.OTHER, interpreter = interpreter)
+        viewModel.typeNote(TIME_NOTE)
+
+        val seen = mutableListOf<UnstuckRoute>()
+        val job = launch { viewModel.routeEvents.collect { seen += it } }
+        viewModel.chooseFromContext(DirectReason.EQUIPMENT)
+        advanceUntilIdle()
+        job.cancel()
+
+        assertThat(seen).containsExactly(UnstuckRoute.EQUIPMENT)
+        assertThat(viewModel.uiState.value.reason).isEqualTo(DirectReason.EQUIPMENT)
+        coVerify(exactly = 1) { interpreter.interpret(TIME_NOTE, any(), DirectReason.OTHER) }
+    }
+
+    @Test
+    fun aDiscomfortTheModelReadsTurnsANamedTimeTapIntoPain() = runTest {
+        val interpreter = readyInterpreter(interpreted(DISCOMFORT_NOTE, DISCOMFORT_ANSWER))
+        val viewModel = viewModel(reason = DirectReason.OTHER, interpreter = interpreter)
+        viewModel.typeNote(DISCOMFORT_NOTE)
+
+        val seen = mutableListOf<UnstuckRoute>()
+        val job = launch { viewModel.routeEvents.collect { seen += it } }
+        viewModel.chooseFromContext(DirectReason.LESS_TIME)
+        advanceUntilIdle()
+        job.cancel()
+
+        assertThat(seen).containsExactly(UnstuckRoute.PAIN)
+        assertThat(viewModel.uiState.value.contextHint).isNull()
+    }
+
+    @Test
+    fun aNoteAboutMissingEquipmentLandsOnTheEquipmentScreenAbleToAsk() = runTest {
+        val interpreter = readyInterpreter(interpreted(EQUIPMENT_NOTE, EQUIPMENT_ANSWER))
+        val viewModel = viewModel(reason = DirectReason.OTHER, interpreter = interpreter)
+        viewModel.typeNote(EQUIPMENT_NOTE)
+
+        val seen = mutableListOf<UnstuckRoute>()
+        val job = launch { viewModel.routeEvents.collect { seen += it } }
+        viewModel.chooseFromContext(DirectReason.OTHER)
+        advanceUntilIdle()
+        job.cancel()
+
+        assertThat(seen).containsExactly(UnstuckRoute.EQUIPMENT)
+        with(viewModel.uiState.value) {
+            assertThat(reason).isEqualTo(DirectReason.EQUIPMENT)
+            assertThat(selectedExerciseId).isNull()
+        }
+        viewModel.selectExercise(fullDay.exercises.first().id)
+        viewModel.toggleEquipment(Equipment.DUMBBELL)
+        assertThat(viewModel.uiState.value.canShowRecommendation).isTrue()
+    }
+
+    @Test
+    fun aPainWordInTheNoteRoutesToPainWithoutTheModel() = runTest {
+        val interpreter = readyInterpreter(interpreted(TIME_NOTE, TIME_ANSWER))
+        val viewModel = viewModel(reason = DirectReason.OTHER, interpreter = interpreter)
+        viewModel.typeNote("35 minutes and my knee hurts")
+
+        val seen = mutableListOf<UnstuckRoute>()
+        val job = launch { viewModel.routeEvents.collect { seen += it } }
+        viewModel.chooseFromContext(DirectReason.OTHER)
+        advanceUntilIdle()
+        job.cancel()
+
+        assertThat(seen).containsExactly(UnstuckRoute.PAIN)
+        coVerify(exactly = 0) { interpreter.interpret(any(), any(), any()) }
+    }
+
+    @Test
+    fun usingTheNoteReadsItAndCarriesTheMinutesToTheTimeScreen() = runTest {
+        val interpreter = readyInterpreter(interpreted(TIME_NOTE, TIME_ANSWER))
+        val viewModel = viewModel(reason = DirectReason.OTHER, interpreter = interpreter)
+        viewModel.typeNote(TIME_NOTE)
+
+        val seen = mutableListOf<UnstuckRoute>()
+        val job = launch { viewModel.routeEvents.collect { seen += it } }
+        viewModel.chooseFromContext(DirectReason.OTHER)
+        advanceUntilIdle()
+        job.cancel()
+
+        assertThat(seen).containsExactly(UnstuckRoute.TIME)
+        with(viewModel.uiState.value) {
+            assertThat(reason).isEqualTo(DirectReason.LESS_TIME)
+            assertThat(selectedMinutes).isEqualTo(35)
+            assertThat(canShowRecommendation).isTrue()
+            assertThat(contextHint).isNull()
+            assertThat(isInterpreting).isFalse()
+            assertThat(note).isEqualTo(TIME_NOTE)
+        }
+        coVerify(exactly = 1) { interpreter.interpret(TIME_NOTE, any(), DirectReason.OTHER) }
+    }
+
+    @Test
+    fun aStatedNumberThatIsNoPresetGoesInTheField() = runTest {
+        val interpreter = mockk<IntentInterpreter>().also {
+            every { it.availability } returns InterpreterAvailability.READY
+        }
+        val viewModel = viewModel(reason = DirectReason.OTHER, interpreter = interpreter)
+        val minutes = viewModel.uiState.value.presets.first() + 3
+        val note = "Only $minutes minutes today."
+        val quote = "$minutes minutes today"
+        coEvery { interpreter.interpret(any(), any(), any()) } returns
+            interpreted(note, timeAnswer(minutes, quote, start = 5, end = 5 + quote.length))
+        viewModel.typeNote(note)
+
+        viewModel.chooseFromContext(DirectReason.OTHER)
+        advanceUntilIdle()
+
+        with(viewModel.uiState.value) {
+            assertThat(presets).doesNotContain(minutes)
+            assertThat(selectedMinutes).isEqualTo(minutes)
+            assertThat(customMinutesText).isEqualTo(minutes.toString())
+        }
+    }
+
+    @Test
+    fun aWholeSessionNumberIsNotCarriedOntoARemainingScreen() = runTest {
+        val viewModel = viewModel(
+            day = partlyDoneDay,
+            reason = DirectReason.OTHER,
+            interpreter = readyInterpreter(interpreted(TIME_NOTE, TIME_ANSWER))
+        )
+        viewModel.typeNote(TIME_NOTE)
+
+        val seen = mutableListOf<UnstuckRoute>()
+        val job = launch { viewModel.routeEvents.collect { seen += it } }
+        viewModel.chooseFromContext(DirectReason.OTHER)
+        advanceUntilIdle()
+        job.cancel()
+
+        assertThat(seen).containsExactly(UnstuckRoute.TIME)
+        assertThat(viewModel.uiState.value.scope).isEqualTo(TimeScope.REMAINING)
+        assertThat(viewModel.uiState.value.selectedMinutes).isNull()
+        assertThat(viewModel.uiState.value.customMinutesText).isEmpty()
+    }
+
+    @Test
+    fun theInterpretingFlagIsUpWhileTheModelReads() = runTest {
+        val answer = CompletableDeferred<InterpreterResult>()
+        val interpreter = mockk<IntentInterpreter>().also {
+            every { it.availability } returns InterpreterAvailability.READY
+            coEvery { it.interpret(any(), any(), any()) } coAnswers { answer.await() }
+        }
+        val viewModel = viewModel(reason = DirectReason.OTHER, interpreter = interpreter)
+        viewModel.typeNote(TIME_NOTE)
+
+        viewModel.chooseFromContext(DirectReason.OTHER)
+        testScheduler.runCurrent()
+        assertThat(viewModel.uiState.value.isInterpreting).isTrue()
+
+        viewModel.chooseFromContext(DirectReason.LESS_TIME)
+        answer.complete(interpreted(TIME_NOTE, TIME_ANSWER))
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.isInterpreting).isFalse()
+        coVerify(exactly = 1) { interpreter.interpret(any(), any(), any()) }
+    }
+
+    @Test
+    fun anUnclearNoteShowsTheChooserHintAndKeepsTheNote() = runTest {
+        val note = "Just a weird day."
+        val viewModel = viewModel(
+            reason = DirectReason.OTHER,
+            interpreter = readyInterpreter(interpreted(note, plainAnswer("other_or_unclear")))
+        )
+        viewModel.typeNote(note)
+
+        val seen = mutableListOf<UnstuckRoute>()
+        val job = launch { viewModel.routeEvents.collect { seen += it } }
+        viewModel.chooseFromContext(DirectReason.OTHER)
+        advanceUntilIdle()
+        job.cancel()
+
+        assertThat(seen).containsExactly(UnstuckRoute.CHOOSER)
+        assertThat(viewModel.uiState.value.contextHint).isEqualTo(ContextHint.CHOOSER)
+        assertThat(viewModel.uiState.value.note).isEqualTo(note)
+    }
+
+    @Test
+    fun aGuidanceNoteShowsTheGuideHint() = runTest {
+        val note = "How do I do a hip thrust?"
+        val viewModel = viewModel(
+            reason = DirectReason.OTHER,
+            interpreter = readyInterpreter(interpreted(note, plainAnswer("exercise_guidance")))
+        )
+        viewModel.typeNote(note)
+
+        viewModel.chooseFromContext(DirectReason.OTHER)
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.contextHint).isEqualTo(ContextHint.GUIDE)
+    }
+
+    @Test
+    fun aFailedReadShowsTheFailedHint() = runTest {
+        val viewModel = viewModel(
+            reason = DirectReason.OTHER,
+            interpreter = readyInterpreter(InterpreterResult.Failed(FailureKind.TIMEOUT))
+        )
+        viewModel.typeNote(TIME_NOTE)
+
+        val seen = mutableListOf<UnstuckRoute>()
+        val job = launch { viewModel.routeEvents.collect { seen += it } }
+        viewModel.chooseFromContext(DirectReason.OTHER)
+        advanceUntilIdle()
+        job.cancel()
+
+        assertThat(seen).containsExactly(UnstuckRoute.CHOOSER)
+        assertThat(viewModel.uiState.value.contextHint).isEqualTo(ContextHint.FAILED)
+        assertThat(viewModel.uiState.value.selectedMinutes).isNull()
+    }
+
+    @Test
+    fun theInstallerStateReachesTheScreen() = runTest {
+        val installer = FakeInstaller(ModelState.NotInstalled)
+        val viewModel = viewModel(installer = installer)
+
+        assertThat(viewModel.uiState.value.interpreter).isEqualTo(InterpreterUi.NotInstalled)
+
+        viewModel.installModel()
+        installer.state.value = ModelState.Downloading(bytesDone = 250, bytesTotal = 1000)
+        advanceUntilIdle()
+        assertThat(viewModel.uiState.value.interpreter).isEqualTo(InterpreterUi.Downloading(25))
+
+        viewModel.cancelModelInstall()
+        installer.state.value = ModelState.Ready
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.interpreter).isEqualTo(InterpreterUi.Ready)
+        assertThat(installer.installs).isEqualTo(1)
+        assertThat(installer.cancels).isEqualTo(1)
     }
 
     @Test
@@ -487,5 +750,19 @@ class AdjustmentViewModelTest {
         const val APPLIED_ID = 1L
         const val MONDAY = 1
         const val CARRIED_MINUTES = 20
+        const val TIME_NOTE = "I have 35 minutes for the whole workout today."
+        val TIME_ANSWER = timeAnswer(35, "35 minutes for the whole workout", start = 7, end = 39)
+        const val DISCOMFORT_NOTE = "I have 20 minutes and my knee feels off."
+        const val DISCOMFORT_ANSWER =
+            """{"schemaVersion":"1.0","intent":"less_time","timeBudget":{"minutes":20,"scope":"whole_session"},"equipmentMention":null,"concern":"pain_or_unclear_discomfort","memoryCandidate":false,"clarification":"none","evidence":[{"field":"time_budget","quote":"20 minutes","start":7,"end":17},{"field":"concern","quote":"my knee feels off","start":22,"end":39}]}"""
+        const val EQUIPMENT_NOTE = "The cable machine is taken."
+        const val EQUIPMENT_ANSWER =
+            """{"schemaVersion":"1.0","intent":"equipment_unavailable","timeBudget":null,"equipmentMention":"cable machine","concern":"none_stated","memoryCandidate":false,"clarification":"none","evidence":[{"field":"equipment_mention","quote":"cable machine","start":4,"end":17}]}"""
+
+        fun timeAnswer(minutes: Int, quote: String, start: Int, end: Int) =
+            """{"schemaVersion":"1.0","intent":"less_time","timeBudget":{"minutes":$minutes,"scope":"whole_session"},"equipmentMention":null,"concern":"none_stated","memoryCandidate":false,"clarification":"none","evidence":[{"field":"time_budget","quote":"$quote","start":$start,"end":$end}]}"""
+
+        fun plainAnswer(intent: String) =
+            """{"schemaVersion":"1.0","intent":"$intent","timeBudget":null,"equipmentMention":null,"concern":"none_stated","memoryCandidate":false,"clarification":"none","evidence":[]}"""
     }
 }
