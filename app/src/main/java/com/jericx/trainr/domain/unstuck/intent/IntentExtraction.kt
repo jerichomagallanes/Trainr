@@ -53,12 +53,7 @@ enum class Clarification {
 }
 
 @Serializable
-data class Evidence(
-    val field: EvidenceField,
-    val quote: String,
-    val start: Int,
-    val end: Int
-)
+data class Evidence(val field: EvidenceField, val quote: String)
 
 @Serializable
 enum class EvidenceField {

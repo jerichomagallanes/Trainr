@@ -25,7 +25,7 @@ class LlamaIntentInterpreterTest {
 
     private val note = "I have 35 minutes for the whole workout today."
 
-    private val validAnswer = """{"schemaVersion":"1.0","intent":"less_time","timeBudget":{"minutes":35,"scope":"whole_session"},"equipmentMention":null,"concern":"none_stated","memoryCandidate":false,"clarification":"none","evidence":[{"field":"time_budget","quote":"35 minutes for the whole workout","start":7,"end":39}]}"""
+    private val validAnswer = """{"schemaVersion":"1.1","intent":"less_time","timeBudget":{"minutes":35,"scope":"whole_session"},"equipmentMention":null,"concern":"none_stated","memoryCandidate":false,"clarification":"none","evidence":[{"field":"time_budget","quote":"35 minutes for the whole workout"}]}"""
 
     private class FakeInstaller(state: ModelState) : LocalModelInstaller {
         override val state = MutableStateFlow(state)
@@ -92,6 +92,16 @@ class LlamaIntentInterpreterTest {
 
         val result = interpreter(state = ModelState.NotInstalled, model = model)
             .interpret(note, Locale.ENGLISH, DirectReason.OTHER)
+
+        assertThat(result).isEqualTo(InterpreterResult.Unavailable)
+        assertThat(model.calls).isEqualTo(0)
+    }
+
+    @Test
+    fun aNoteWithNoQuotableWordIsNotAsked() = runTest {
+        val model = FakeModel(CompletionResult.Text(validAnswer))
+
+        val result = interpreter(model = model).interpret("\"\"", Locale.ENGLISH, DirectReason.OTHER)
 
         assertThat(result).isEqualTo(InterpreterResult.Unavailable)
         assertThat(model.calls).isEqualTo(0)

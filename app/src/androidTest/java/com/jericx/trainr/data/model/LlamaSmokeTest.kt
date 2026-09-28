@@ -5,14 +5,17 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.domain.unstuck.intent.IntentGrammar
+import com.jericx.trainr.domain.unstuck.intent.IntentKind
 import com.jericx.trainr.domain.unstuck.intent.IntentPrompt
+import com.jericx.trainr.domain.unstuck.intent.IntentValidation
+import com.jericx.trainr.domain.unstuck.intent.IntentValidator
+import com.jericx.trainr.domain.unstuck.intent.MentionScope
 import com.jericx.trainr.llama.CompletionResult
 import com.jericx.trainr.llama.LlamaEngine
 import java.io.File
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import org.json.JSONObject
 import org.junit.Assume.assumeTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -39,7 +42,7 @@ class LlamaSmokeTest {
             engine.complete(
                 system = IntentPrompt.SYSTEM_INSTRUCTION,
                 user = note,
-                grammar = IntentGrammar.forNote(note),
+                grammar = requireNotNull(IntentGrammar.forNote(note)),
                 maxTokens = IntentGrammar.MAX_TOKENS,
                 timeout = 120.seconds
             )
@@ -48,6 +51,9 @@ class LlamaSmokeTest {
         Log.i("LlamaSmokeTest", "completion took $elapsedMillis ms: $result")
 
         val text = (result as CompletionResult.Text).text
-        assertThat(JSONObject(text).getString("intent")).isEqualTo("less_time")
+        val valid = IntentValidator.validate(text, note) as IntentValidation.Valid
+        assertThat(valid.extraction.intent).isEqualTo(IntentKind.LESS_TIME)
+        assertThat(valid.actionable.minutes).isEqualTo(35)
+        assertThat(valid.actionable.scope).isEqualTo(MentionScope.WHOLE_SESSION)
     }
 }

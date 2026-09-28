@@ -13,7 +13,7 @@ internal fun handoffFixture(name: String): JsonObject {
 }
 
 internal fun extraction(
-    schemaVersion: String = "1.0",
+    schemaVersion: String = "1.1",
     intent: IntentKind = IntentKind.OTHER_OR_UNCLEAR,
     timeBudget: TimeBudgetMention? = null,
     equipmentMention: String? = null,
