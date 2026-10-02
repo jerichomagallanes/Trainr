@@ -1,15 +1,24 @@
 package com.jericx.trainr.data.purchases
 
+import android.app.Activity
 import android.content.Context
+import androidx.annotation.StringRes
 import com.jericx.trainr.BuildConfig
+import com.jericx.trainr.R
 import com.jericx.trainr.domain.diagnostics.Breadcrumbs
 import com.revenuecat.purchases.CustomerInfo
 import com.revenuecat.purchases.LogLevel
 import com.revenuecat.purchases.Offering
+import com.revenuecat.purchases.Package
+import com.revenuecat.purchases.PurchaseParams
 import com.revenuecat.purchases.Purchases
 import com.revenuecat.purchases.PurchasesConfiguration
+import com.revenuecat.purchases.PurchasesErrorCode
+import com.revenuecat.purchases.PurchasesException
+import com.revenuecat.purchases.PurchasesTransactionException
 import com.revenuecat.purchases.awaitCustomerInfo
 import com.revenuecat.purchases.awaitOfferings
+import com.revenuecat.purchases.awaitPurchase
 import com.revenuecat.purchases.awaitRestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -32,6 +41,13 @@ class Entitlements(
     val isLifetime: StateFlow<Boolean> = _isLifetime.asStateFlow()
 
     var offering: Offering? = null
+        private set
+
+    // What the last purchase or restore has to say for itself when it did not
+    // end in Pro: nothing for a cancellation, which the buyer did on purpose,
+    // and an explanation for everything else, which used to end in silence.
+    @StringRes
+    var purchaseNotice: Int? = null
         private set
 
     // False when the store SDK never came up; ProGate lets generation through
@@ -65,10 +81,41 @@ class Entitlements(
             .getOrNull()
     }
 
+    suspend fun purchase(activity: Activity, chosen: Package): Boolean {
+        purchaseNotice = null
+        if (!Purchases.isConfigured) {
+            purchaseNotice = R.string.pro_purchase_failed
+            return false
+        }
+        return runCatching {
+            Purchases.sharedInstance.awaitPurchase(PurchaseParams.Builder(activity, chosen).build())
+        }.fold(
+            onSuccess = { result ->
+                val active = read(result.customerInfo)
+                if (!active) purchaseNotice = R.string.pro_purchase_not_active
+                active
+            },
+            onFailure = { error ->
+                breadcrumbs.record("purchase_failed")
+                purchaseNotice = noticeFor(error)
+                false
+            }
+        )
+    }
+
+    // Offered as its own action because a buyer on a new phone has no other way
+    // back to what they paid for, and both stores require it.
     suspend fun restore(): Boolean {
-        if (!Purchases.isConfigured) return false
+        purchaseNotice = null
+        if (!Purchases.isConfigured) {
+            purchaseNotice = R.string.pro_restore_failed_google
+            return false
+        }
         return runCatching { read(Purchases.sharedInstance.awaitRestore()) }
-            .onFailure { breadcrumbs.record("restore_failed") }
+            .onFailure {
+                breadcrumbs.record("restore_failed")
+                purchaseNotice = R.string.pro_restore_failed_google
+            }
             .getOrDefault(false)
     }
 
@@ -82,6 +129,19 @@ class Entitlements(
 
     companion object {
         private const val ENTITLEMENT = "trainr_workout_planner_pro"
+
+        // A cancelled purchase is silent: the buyer closed the sheet and knows
+        // it. A pending one says Pro is on its way, so nobody buys it twice.
+        // Anything else, the store's error or not, says what to do next.
+        @StringRes
+        fun noticeFor(error: Throwable): Int? = when {
+            error is PurchasesTransactionException && error.userCancelled -> null
+            error is PurchasesException &&
+                error.code == PurchasesErrorCode.PurchaseCancelledError -> null
+            error is PurchasesException &&
+                error.code == PurchasesErrorCode.PaymentPendingError -> R.string.pro_purchase_pending_google
+            else -> R.string.pro_purchase_failed
+        }
 
         // A public SDK key is meant to ship in the binary; the secret key is
         // never in the app.

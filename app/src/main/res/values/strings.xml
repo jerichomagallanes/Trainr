@@ -410,4 +410,7 @@
     <string name="pro_restore_failed">Purchases could not be restored. Check your connection and try again with the Apple Account used to purchase.</string>
     <string name="pro_purchase_not_active">Your purchase has not activated Pro yet. Please wait a moment, then use Restore purchases. Do not purchase again.</string>
     <string name="pro_purchase_pending">Your purchase is awaiting approval. Pro will unlock once the App Store confirms payment.</string>
+    <!-- The Play wording of the two store-specific outcomes above. -->
+    <string name="pro_restore_failed_google">Purchases could not be restored. Check your connection and try again with the Google account used to purchase.</string>
+    <string name="pro_purchase_pending_google">Your purchase is awaiting approval. Pro will unlock once Google Play confirms payment.</string>
 </resources>

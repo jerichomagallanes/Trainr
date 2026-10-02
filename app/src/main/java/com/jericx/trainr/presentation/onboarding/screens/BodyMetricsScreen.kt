@@ -36,6 +36,8 @@ import com.jericx.trainr.common.Constants
 import com.jericx.trainr.presentation.common.components.core.touchedOnBlur
 import com.jericx.trainr.presentation.common.components.core.TrainrFieldError
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.jericx.trainr.presentation.common.theme.ComponentHeight
 import com.jericx.trainr.presentation.common.theme.trainrColors
@@ -54,6 +56,7 @@ import com.jericx.trainr.presentation.onboarding.util.BodyMetricsConverter
 @Composable
 fun BodyMetricsScreen(
     initial: UserProfile? = null,
+    age: Int? = null,
     isEditing: Boolean = false,
     onNextClick: (height: Float, weight: Float, units: UnitSystem) -> Unit,
     onBackClick: () -> Unit
@@ -86,6 +89,9 @@ fun BodyMetricsScreen(
         )
     }
     var useMetric by remember { mutableStateOf(!startsImperial) }
+
+    // The age answered one step earlier. A profile that has none yet stores 0.
+    val knownAge = age ?: initial?.age?.takeIf { it > 0 }
 
     val focusManager = LocalFocusManager.current
 
@@ -268,9 +274,10 @@ fun BodyMetricsScreen(
                 Spacer(modifier = Modifier.height(Spacing.extraLarge))
 
                 // Only for accepted measurements: a refused 300 cm and 2 kg
-                // otherwise gets a BMI of 0.2 labelled "Underweight".
+                // otherwise gets a BMI of 0.2 labelled "Underweight". And only
+                // for adults: the categories are the CDC's adult ones.
                 val bmi = BodyMetricsConverter.calculateBMI(height, weight, useMetric)
-                    ?.takeIf { isFormValid }
+                    ?.takeIf { isFormValid && BodyMetricsConverter.showsAdultBMI(knownAge) }
                 if (bmi != null) {
                     BMICard(bmi = bmi)
                 }
@@ -324,6 +331,7 @@ private fun UnitTab(
 private fun BMICard(bmi: Float) {
     // Read through the composition local so the value re-formats if the locale changes.
     val locale = LocalLocale.current.platformLocale
+    var showingSources by remember { mutableStateOf(false) }
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -360,7 +368,29 @@ private fun BMICard(bmi: Float) {
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.trainrColors.brandStrong
             )
+
+            Text(
+                text = stringResource(R.string.bmi_screening_note),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.trainrColors.onSurfaceMuted,
+                modifier = Modifier.padding(top = Spacing.extraSmall)
+            )
+
+            // The citation is one tap from the number it explains.
+            Text(
+                text = stringResource(R.string.bmi_about_sources),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.trainrColors.brandStrong,
+                modifier = Modifier
+                    .padding(top = Spacing.small)
+                    .clickable(role = Role.Button) { showingSources = true }
+                    .padding(vertical = Spacing.extraSmall)
+            )
         }
+    }
+
+    if (showingSources) {
+        BMISourcesSheet(onDismiss = { showingSources = false })
     }
 }
 

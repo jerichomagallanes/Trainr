@@ -53,17 +53,20 @@ class Ads(private val breadcrumbs: Breadcrumbs) {
     fun showPrivacyOptions(activity: Activity) {
         UserMessagingPlatform.showPrivacyOptionsForm(activity) { formError ->
             formError?.let { breadcrumbs.record("ads: privacy options ${it.errorCode}") }
+            // Consent can be withdrawn here. The banner goes with it rather
+            // than living on from the answer given before the form opened.
+            settle(activity, UserMessagingPlatform.getConsentInformation(activity))
         }
     }
 
     private fun settle(activity: Activity, consent: ConsentInformation) {
         _privacyOptionsRequired.value = consent.privacyOptionsRequirementStatus ==
             ConsentInformation.PrivacyOptionsRequirementStatus.REQUIRED
+        _canShowAds.value = consent.canRequestAds()
         if (!consent.canRequestAds()) return
         if (initialised.compareAndSet(false, true)) {
             MobileAds.initialize(activity.applicationContext) {}
         }
-        _canShowAds.value = true
     }
 
     companion object {
