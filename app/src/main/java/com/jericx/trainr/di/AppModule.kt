@@ -6,11 +6,14 @@ import com.jericx.trainr.common.Constants
 import com.jericx.trainr.data.local.TrainrDatabase
 import com.jericx.trainr.data.local.UserDao
 import com.jericx.trainr.data.local.UserMapper
+import com.jericx.trainr.data.local.UnstuckDao
+import com.jericx.trainr.data.local.UnstuckMapper
 import com.jericx.trainr.data.preferences.ThemePreferences
 import com.jericx.trainr.data.ads.Ads
 import com.jericx.trainr.data.purchases.Entitlements
 import com.jericx.trainr.data.purchases.StoredGenerationAllowance
 import com.jericx.trainr.data.repository.UserRepositoryImpl
+import com.jericx.trainr.data.repository.AdjustmentRepositoryImpl
 import com.jericx.trainr.data.generation.WeekPlanGenerator
 import com.jericx.trainr.domain.diagnostics.Breadcrumbs
 import com.jericx.trainr.data.diagnostics.CrashlyticsBreadcrumbs
@@ -20,6 +23,7 @@ import com.jericx.trainr.domain.catalog.ExerciseCatalog
 import com.jericx.trainr.domain.purchases.FreeGenerationAllowance
 import com.jericx.trainr.domain.purchases.ProGate
 import com.jericx.trainr.domain.repository.UserRepository
+import com.jericx.trainr.domain.repository.AdjustmentRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -95,6 +99,27 @@ object AppModule {
         mapper: UserMapper
     ): UserRepository {
         return UserRepositoryImpl(userDao, mapper)
+    }
+
+    @Provides
+    @Singleton
+    fun provideUnstuckDao(database: TrainrDatabase): UnstuckDao {
+        return database.unstuckDao
+    }
+
+    @Provides
+    @Singleton
+    fun provideUnstuckMapper(): UnstuckMapper {
+        return UnstuckMapper()
+    }
+
+    @Provides
+    @Singleton
+    fun provideAdjustmentRepository(
+        dao: UnstuckDao,
+        mapper: UnstuckMapper
+    ): AdjustmentRepository {
+        return AdjustmentRepositoryImpl(dao, mapper)
     }
 
     @Provides
