@@ -11,12 +11,25 @@ import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
 import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.model.WorkoutExercise
 import com.jericx.trainr.domain.model.WorkoutStatus
+import com.jericx.trainr.R
 import com.jericx.trainr.domain.repository.AdjustmentRepository
 import com.jericx.trainr.domain.repository.UserRepository
 import com.jericx.trainr.domain.unstuck.ActualOrigin
+import com.jericx.trainr.domain.unstuck.AdjustmentProposal
+import com.jericx.trainr.domain.unstuck.AdjustmentReason
+import com.jericx.trainr.domain.unstuck.AppliedAdjustment
+import com.jericx.trainr.domain.unstuck.ChangeKind
+import com.jericx.trainr.domain.unstuck.ExerciseSnapshot
+import com.jericx.trainr.domain.unstuck.ProposalChange
+import com.jericx.trainr.domain.unstuck.ReasonCode
+import com.jericx.trainr.domain.unstuck.SetSnapshot
+import com.jericx.trainr.domain.unstuck.TradeoffCode
+import com.jericx.trainr.domain.unstuck.UndoResult
 import com.jericx.trainr.domain.unstuck.FinishKind
 import com.jericx.trainr.domain.unstuck.SessionOutcome
 import com.jericx.trainr.presentation.workout.model.ExerciseUi
+import com.jericx.trainr.presentation.workout.model.derivedExerciseCount
+import com.jericx.trainr.presentation.workout.model.remainingMinutes
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.coVerify
@@ -858,5 +871,150 @@ class RoutineDetailViewModelTest {
         assertThat(restored.uiState.value.outcome?.finishKind).isEqualTo(FinishKind.PARTIAL)
         collecting.cancel()
         collectingRestored.cancel()
+    }
+
+    private fun WorkoutExercise.omitting(from: Int) = copy(
+        sets = sets.map { if (it.setNumber >= from) it.copy(omittedBy = 5L) else it }
+    )
+
+    private fun adjustedPlan() = storedPlan.copy(
+        workoutDays = storedPlan.workoutDays.map { day ->
+            if (day.id != 22L) {
+                day
+            } else {
+                day.copy(
+                    exercises = listOf(
+                        day.exercises[0].omitting(from = 1),
+                        day.exercises[1].omitting(from = 2)
+                    )
+                )
+            }
+        }
+    )
+
+    private fun replaceProposal() = AdjustmentProposal(
+        proposalId = "proposal-1",
+        requestId = "request-1",
+        sessionId = "day:22",
+        baseRevision = "revision-1",
+        policyVersion = "test",
+        changes = listOf(
+            ProposalChange(
+                kind = ChangeKind.REPLACE_UNPERFORMED,
+                before = ExerciseSnapshot(
+                    exerciseInstanceId = "exercise:33",
+                    catalogKey = "goblet_squat",
+                    sets = listOf(SetSnapshot("set:330", 12, 20f, null, null))
+                ),
+                after = ExerciseSnapshot(
+                    exerciseInstanceId = "new",
+                    catalogKey = "dumbbell_step_up",
+                    sets = listOf(SetSnapshot("new:1", 12, null, null, null))
+                )
+            )
+        ),
+        preservedPerformedSetIds = emptyList(),
+        reasonCode = ReasonCode.EQUIPMENT_CONSTRAINT,
+        tradeoffCode = TradeoffCode.DIFFERENT_RESISTANCE.wire,
+        factReferences = emptyList()
+    )
+
+    private fun applied(proposal: AdjustmentProposal = replaceProposal()) = AppliedAdjustment(
+        id = 5,
+        workoutDayId = 22,
+        proposal = proposal,
+        reason = AdjustmentReason.EQUIPMENT_UNAVAILABLE,
+        appliedAt = 1L
+    )
+
+    @Test
+    fun anOmittedSetIsHiddenFromTheRoutine() = runTest {
+        val viewModel = viewModel(dayNumber = 3, repository = repositoryWith(adjustedPlan()))
+        advanceUntilIdle()
+
+        val exercises = viewModel.uiState.value.routine.exercises
+        assertThat(exercises.map { it.name }).containsExactly("Goblet Squats")
+        assertThat(exercises.single().sets).hasSize(1)
+    }
+
+    @Test
+    fun aHiddenExerciseDoesNotBlockCompletion() = runTest {
+        val viewModel = viewModel(dayNumber = 3, repository = repositoryWith(adjustedPlan()))
+        advanceUntilIdle()
+
+        viewModel.toggleExercise(1)
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.routine.isComplete).isTrue()
+    }
+
+    @Test
+    fun anAdjustedDayReportsFewerExercisesAndMinutesThanItsStoredColumns() {
+        val day = adjustedPlan().workoutDays.first { it.id == 22L }
+
+        assertThat(day.derivedExerciseCount()).isLessThan(day.exerciseCount)
+        assertThat(day.remainingMinutes(UserProfile(id = 1), SampleWorkoutData.catalog))
+            .isLessThan(day.duration)
+    }
+
+    @Test
+    fun theBannerNamesTheReplacedExercise() = runTest {
+        val adjustments = emptyAdjustments()
+        coEvery { adjustments.getActiveAdjustment(22L) } returns applied()
+        val viewModel = viewModel(
+            dayNumber = 3,
+            repository = repositoryWith(adjustedPlan()),
+            adjustments = adjustments
+        )
+        advanceUntilIdle()
+
+        val banner = checkNotNull(viewModel.uiState.value.adjustedBanner)
+        assertThat(banner.messageRes).isEqualTo(R.string.adjusted_replaced_banner_format)
+        assertThat(banner.fromName).isEqualTo(SampleWorkoutData.catalog["goblet_squat"]?.name)
+        assertThat(banner.toName).isEqualTo(SampleWorkoutData.catalog["dumbbell_step_up"]?.name)
+    }
+
+    @Test
+    fun undoRefreshesTheDay() = runTest {
+        val adjustments = emptyAdjustments()
+        coEvery { adjustments.getActiveAdjustment(22L) } returns applied() andThen null
+        coEvery { adjustments.undo(5L, any()) } returns UndoResult.Restored(applied(), 2)
+        val repository = mockk<UserRepository>(relaxed = true).also {
+            coEvery { it.getCurrentUser() } returns UserProfile(id = 1)
+            every { it.getWeeklyWorkoutPlans(1) } returns
+                flowOf(listOf(adjustedPlan())) andThen flowOf(listOf(storedPlan))
+        }
+
+        val viewModel = viewModel(dayNumber = 3, repository = repository, adjustments = adjustments)
+        advanceUntilIdle()
+        assertThat(viewModel.uiState.value.routine.exercises).hasSize(1)
+
+        viewModel.undoAdjustment()
+        advanceUntilIdle()
+
+        coVerify { adjustments.undo(5L, any()) }
+        assertThat(viewModel.uiState.value.routine.exercises).hasSize(2)
+        assertThat(viewModel.uiState.value.adjustedBanner).isNull()
+        assertThat(viewModel.uiState.value.undoKeptSets).isEqualTo(2)
+
+        viewModel.refresh()
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.undoKeptSets).isNull()
+    }
+
+    // Undo brings the omitted rows back, and two sets numbered the same would
+    // send an edit or a swipe to the wrong row.
+    @Test
+    fun anAddedSetNumbersPastTheOmittedRows() = runTest {
+        val repository = repositoryWith(adjustedPlan())
+        val viewModel = viewModel(dayNumber = 3, repository = repository)
+        advanceUntilIdle()
+
+        viewModel.addSet(1)
+        advanceUntilIdle()
+
+        assertThat(viewModel.exercise(1).sets.map { it.setNumber }).containsExactly(1, 3).inOrder()
+        coVerify { repository.addExerciseSet(match { it.setNumber == 3 }, 33L) }
     }
 }

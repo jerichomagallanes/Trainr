@@ -3,6 +3,7 @@ package com.jericx.trainr.presentation.workout
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +14,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -23,6 +26,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -31,6 +35,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -43,8 +51,11 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jericx.trainr.R
 import com.jericx.trainr.domain.unstuck.FinishKind
+import com.jericx.trainr.domain.unstuck.intent.DirectReason
 import com.jericx.trainr.presentation.common.components.core.TrainrButton
 import com.jericx.trainr.presentation.common.components.core.TrainrFieldError
+import com.jericx.trainr.presentation.common.components.core.TrainrOptionRow
+import com.jericx.trainr.presentation.common.components.core.TrainrQuietButton
 import com.jericx.trainr.presentation.common.components.core.TrainrProgress
 import com.jericx.trainr.presentation.common.components.core.TrainrSlideToConfirm
 import com.jericx.trainr.presentation.common.components.layout.TrainrScaffold
@@ -59,6 +70,10 @@ import com.jericx.trainr.presentation.workout.components.ExerciseTimer
 import com.jericx.trainr.presentation.workout.components.HowToSection
 import com.jericx.trainr.presentation.workout.components.VideoTutorial
 import com.jericx.trainr.domain.model.ExerciseSet
+import com.jericx.trainr.presentation.unstuck.AdjustTodaySheet
+import com.jericx.trainr.presentation.unstuck.joinAnd
+import com.jericx.trainr.presentation.unstuck.labelRes
+import com.jericx.trainr.presentation.workout.model.AdjustedBannerUi
 import com.jericx.trainr.presentation.workout.model.ExerciseUi
 import com.jericx.trainr.presentation.workout.model.YouTubeVideo
 import com.jericx.trainr.presentation.workout.util.WorkoutDateFormatter
@@ -69,17 +84,40 @@ fun RoutineDetailRoute(
     onDayCompleted: (Int) -> Unit = {},
     onWeekCompleted: (Int) -> Unit = {},
     onSessionSaved: (SessionSavedEvent) -> Unit = {},
+    onAdjust: (DirectReason, Long?) -> Unit = { _, _ -> },
+    finishEarlyRequested: Boolean = false,
+    onFinishEarlyHandled: () -> Unit = {},
     viewModel: RoutineDetailViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // Returning from an adjustment brings back a different day, so the stored
+    // one is read again every time this route comes back into composition.
+    LaunchedEffect(Unit) { viewModel.refresh() }
 
     LaunchedEffect(viewModel) {
         viewModel.savedEvents.collect { onSessionSaved(it) }
     }
 
+    LaunchedEffect(finishEarlyRequested) {
+        if (!finishEarlyRequested) return@LaunchedEffect
+        onFinishEarlyHandled()
+        viewModel.askToFinishEarly()
+    }
+
     RoutineDetailScreen(
         state = state,
         onBackClick = onBackClick,
+        onOpenAdjustSheet = viewModel::openAdjustSheet,
+        onDismissAdjustSheet = viewModel::dismissAdjustSheet,
+        onChooseReason = { reason ->
+            viewModel.dismissAdjustSheet()
+            onAdjust(reason, null)
+        },
+        onShowHowTo = viewModel::showHowTo,
+        onNeedAlternative = { exerciseId -> onAdjust(DirectReason.EQUIPMENT, exerciseId) },
+        onUndoAdjustment = viewModel::undoAdjustment,
+        onScrolled = viewModel::scrolled,
         onDayCompleted = onDayCompleted,
         onWeekCompleted = onWeekCompleted,
         onAskToFinishEarly = viewModel::askToFinishEarly,
@@ -125,7 +163,14 @@ fun RoutineDetailScreen(
     onAskToFinishEarly: () -> Unit = {},
     onKeepTraining: () -> Unit = {},
     onFinishEarly: () -> Unit = {},
-    onRetryFinishEarly: () -> Unit = {}
+    onRetryFinishEarly: () -> Unit = {},
+    onOpenAdjustSheet: () -> Unit = {},
+    onDismissAdjustSheet: () -> Unit = {},
+    onChooseReason: (DirectReason) -> Unit = {},
+    onShowHowTo: (Int) -> Unit = {},
+    onNeedAlternative: (Long) -> Unit = {},
+    onUndoAdjustment: () -> Unit = {},
+    onScrolled: () -> Unit = {}
 ) {
     val locale = LocalLocale.current.platformLocale
 
@@ -137,6 +182,14 @@ fun RoutineDetailScreen(
 
     val routine = state.routine
     val finishedEarly = state.outcome?.finishKind == FinishKind.PARTIAL
+    val hasOutcome = state.outcome != null
+    val requesters = remember { mutableMapOf<Int, BringIntoViewRequester>() }
+
+    LaunchedEffect(state.scrollToPosition) {
+        val position = state.scrollToPosition ?: return@LaunchedEffect
+        requesters[position]?.bringIntoView()
+        onScrolled()
+    }
 
     LaunchedEffect(routine.isComplete, state.isLoaded) {
         if (!state.isLoaded) return@LaunchedEffect
@@ -221,8 +274,8 @@ fun RoutineDetailScreen(
                     Text(
                         text = pluralStringResource(
                             R.plurals.minutes,
-                            routine.totalMinutes,
-                            routine.totalMinutes
+                            state.totalMinutes ?: routine.totalMinutes,
+                            state.totalMinutes ?: routine.totalMinutes
                         ),
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.trainrColors.onSurface
@@ -265,47 +318,86 @@ fun RoutineDetailScreen(
                 )
             }
 
+            state.adjustedBanner?.let { banner ->
+                AdjustedBanner(
+                    banner = banner,
+                    showUndo = !hasOutcome,
+                    onUndo = onUndoAdjustment,
+                    modifier = Modifier.padding(top = Spacing.section)
+                )
+            }
+
+            state.undoKeptSets?.let { kept ->
+                Text(
+                    text = pluralStringResource(R.plurals.undo_kept_logged, kept, kept),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.trainrColors.onSurfaceMuted,
+                    modifier = Modifier.padding(top = Spacing.tight)
+                )
+            }
+
+            if (!hasOutcome) {
+                TrainrOptionRow(
+                    title = stringResource(R.string.adjust_today),
+                    description = stringResource(R.string.adjust_today_hint),
+                    onClick = onOpenAdjustSheet,
+                    modifier = Modifier.padding(top = Spacing.section)
+                )
+            }
+
             Column(
                 modifier = Modifier.padding(top = Spacing.section),
                 verticalArrangement = Arrangement.spacedBy(Spacing.section)
             ) {
                 routine.exercises.forEach { exercise ->
-                    ExerciseCard(
-                        exercise = exercise,
-                        onToggleCompleted = { onToggleExercise(exercise.position) },
-                        onSetChanged = { onSetChanged(exercise.position, it) },
-                        onAddSet = { onAddSet(exercise.position) },
-                        onDeleteSet = { onDeleteSet(exercise.position, it.setNumber) },
-                        units = state.unitSystem
-                    ) {
-                        if (!exercise.isCompleted) {
-                            ExerciseTimer(
-                                timer = state.timer?.takeIf { it.position == exercise.position },
-                                onStart = { onStartTimer(exercise) },
-                                onPause = onPauseTimer,
-                                onResume = onResumeTimer,
-                                onReset = onResetTimer,
-                                onStop = onStopTimer
-                            )
+                    key(exercise.position) {
+                        val requester = remember { BringIntoViewRequester() }
+                        requesters[exercise.position] = requester
+                        ExerciseCard(
+                            exercise = exercise,
+                            onToggleCompleted = { onToggleExercise(exercise.position) },
+                            onSetChanged = { onSetChanged(exercise.position, it) },
+                            onAddSet = { onAddSet(exercise.position) },
+                            onDeleteSet = { onDeleteSet(exercise.position, it.setNumber) },
+                            units = state.unitSystem,
+                            modifier = Modifier.bringIntoViewRequester(requester)
+                        ) {
+                            if (!exercise.isCompleted) {
+                                ExerciseTimer(
+                                    timer = state.timer?.takeIf { it.position == exercise.position },
+                                    onStart = { onStartTimer(exercise) },
+                                    onPause = onPauseTimer,
+                                    onResume = onResumeTimer,
+                                    onReset = onResetTimer,
+                                    onStop = onStopTimer
+                                )
 
-                            val video: @Composable () -> Unit = {
-                                YouTubeVideo.from(exercise.videoUrl)?.let {
-                                    VideoTutorial(
-                                        video = it,
-                                        isExpanded = state.expandedVideo == exercise.position,
-                                        onToggle = { onToggleVideo(exercise.position) }
+                                val video: @Composable () -> Unit = {
+                                    YouTubeVideo.from(exercise.videoUrl)?.let {
+                                        VideoTutorial(
+                                            video = it,
+                                            isExpanded = state.expandedVideo == exercise.position,
+                                            onToggle = { onToggleVideo(exercise.position) }
+                                        )
+                                    }
+                                }
+                                if (exercise.steps.isNotEmpty()) {
+                                    HowToSection(
+                                        steps = exercise.steps,
+                                        isExpanded = state.expandedHowTo == exercise.position,
+                                        onToggle = { onToggleHowTo(exercise.position) },
+                                        video = video
+                                    )
+                                } else {
+                                    video()
+                                }
+
+                                if (!hasOutcome && exercise.sets.any { !it.isCompleted }) {
+                                    TrainrQuietButton(
+                                        text = stringResource(R.string.need_an_alternative),
+                                        onClick = { onNeedAlternative(exercise.exerciseId) }
                                     )
                                 }
-                            }
-                            if (exercise.steps.isNotEmpty()) {
-                                HowToSection(
-                                    steps = exercise.steps,
-                                    isExpanded = state.expandedHowTo == exercise.position,
-                                    onToggle = { onToggleHowTo(exercise.position) },
-                                    video = video
-                                )
-                            } else {
-                                video()
                             }
                         }
                     }
@@ -318,7 +410,7 @@ fun RoutineDetailScreen(
                     onConfirm = onCompleteRoutine,
                     modifier = Modifier.padding(top = Spacing.section + Spacing.tight)
                 )
-                QuietAction(
+                TrainrQuietButton(
                     text = stringResource(R.string.finish_early),
                     onClick = onAskToFinishEarly,
                     modifier = Modifier.padding(top = Spacing.tight)
@@ -338,6 +430,16 @@ fun RoutineDetailScreen(
                 }
             }
         }
+    }
+
+    if (state.showAdjustSheet) {
+        AdjustTodaySheet(
+            dayTitle = routine.title,
+            exercises = routine.exercises.map { it.name },
+            onChoose = onChooseReason,
+            onShowHowTo = onShowHowTo,
+            onDismiss = onDismissAdjustSheet
+        )
     }
 
     if (showStartOver) {
@@ -373,7 +475,7 @@ private fun FinishEarlyContent(
                         ),
                         onClick = onFinishEarly
                     )
-                    QuietAction(
+                    TrainrQuietButton(
                         text = stringResource(R.string.keep_training),
                         onClick = onKeepTraining
                     )
@@ -435,18 +537,53 @@ private fun FinishEarlyContent(
 }
 
 @Composable
-private fun QuietAction(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    TextButton(
-        onClick = onClick,
+private fun AdjustedBanner(
+    banner: AdjustedBannerUi,
+    showUndo: Boolean,
+    onUndo: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val colors = MaterialTheme.trainrColors
+    val regions = banner.regions.map { stringResource(it.labelRes) }
+
+    Column(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = ComponentHeight.Medium)
+            .background(colors.surfaceSunken, MaterialTheme.shapes.small)
+            .padding(horizontal = Spacing.card, vertical = 12.dp)
     ) {
         Text(
-            text = text,
+            text = stringResource(R.string.adjusted_for_today),
             style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.trainrColors.onSurfaceMuted
+            color = colors.onSurface
         )
+        Text(
+            text = when (banner.messageRes) {
+                R.string.adjusted_replaced_banner_format ->
+                    stringResource(banner.messageRes, banner.fromName, banner.toName)
+
+                R.string.adjusted_time_banner_format ->
+                    stringResource(banner.messageRes, joinAnd(regions))
+
+                else -> stringResource(banner.messageRes)
+            },
+            style = MaterialTheme.typography.bodyMedium,
+            color = colors.onSurface,
+            // Applying or undoing changes this line and nothing else moves, so
+            // a screen reader would otherwise never hear that the day changed.
+            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
+        )
+        if (showUndo) {
+            Text(
+                text = stringResource(R.string.undo_adjustment),
+                style = MaterialTheme.typography.titleMedium,
+                color = colors.brandStrong,
+                modifier = Modifier
+                    .padding(top = Spacing.small)
+                    .heightIn(min = ComponentHeight.Medium)
+                    .clickable(role = Role.Button, onClick = onUndo)
+            )
+        }
     }
 }
 
