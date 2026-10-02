@@ -119,7 +119,7 @@ class LlamaIntentInterpreterTest {
         assertThat(model.lastSystem).isEqualTo(IntentPrompt.SYSTEM_INSTRUCTION)
         assertThat(model.lastGrammar).isEqualTo(IntentGrammar.forNote(note))
         assertThat(model.lastMaxTokens).isEqualTo(IntentGrammar.MAX_TOKENS)
-        assertThat(model.lastTimeout).isEqualTo(25.seconds)
+        assertThat(model.lastTimeout).isEqualTo(60.seconds)
     }
 
     @Test
