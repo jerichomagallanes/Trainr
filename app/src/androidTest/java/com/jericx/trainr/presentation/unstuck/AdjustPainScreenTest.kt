@@ -23,10 +23,15 @@ class AdjustPainScreenTest {
 
     private fun string(id: Int) = composeTestRule.activity.getString(id)
 
-    private fun setScreen(onSaveAndFinishEarly: () -> Unit = {}, onReturn: () -> Unit = {}) {
+    private fun setScreen(
+        canFinishEarly: Boolean = true,
+        onSaveAndFinishEarly: () -> Unit = {},
+        onReturn: () -> Unit = {}
+    ) {
         composeTestRule.setContent {
             TrainrTheme {
                 AdjustPainScreen(
+                    canFinishEarly = canFinishEarly,
                     onSaveAndFinishEarly = onSaveAndFinishEarly,
                     onReturn = onReturn
                 )
@@ -54,6 +59,22 @@ class AdjustPainScreenTest {
             R.string.pro_name,
             R.string.show_recommendation
         ).forEach { composeTestRule.onNodeWithText(string(it)).assertDoesNotExist() }
+    }
+
+    // Reached after the session was saved: there is nothing left to save, so
+    // the screen must not offer to.
+    @Test
+    fun aSavedSessionIsOfferedNoWayToSaveAgain() {
+        var returned = false
+        setScreen(canFinishEarly = false, onReturn = { returned = true })
+
+        composeTestRule.onNodeWithText(string(R.string.save_and_finish_early).uppercase())
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.pain_save_hint)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.back_to_workout_plan).uppercase())
+            .performClick()
+
+        assertThat(returned).isTrue()
     }
 
     @Test
