@@ -31,7 +31,8 @@ fun TrainrOptionRow(
     description: String?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    selected: Boolean = false
+    selected: Boolean = false,
+    enabled: Boolean = true
 ) {
     val colors = MaterialTheme.trainrColors
     val edge = if (selected) 2.dp else 1.dp
@@ -44,7 +45,7 @@ fun TrainrOptionRow(
             .fillMaxWidth()
             .heightIn(min = ComponentHeight.Large)
             .border(edge, if (selected) colors.brandStrong else colors.outlineControl, MaterialTheme.shapes.medium)
-            .clickable(role = Role.Button, onClick = onClick)
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .padding(horizontal = Spacing.card - inset, vertical = 14.dp - inset),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Spacing.small)
@@ -53,7 +54,7 @@ fun TrainrOptionRow(
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleMedium,
-                color = colors.onSurface
+                color = if (enabled) colors.onSurface else colors.onSurfaceMuted
             )
             description?.let {
                 Text(

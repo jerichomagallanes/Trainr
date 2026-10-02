@@ -144,6 +144,10 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
+        // ggml scans nativeLibraryDir for its CPU variants, so they must be extracted.
+        jniLibs {
+            useLegacyPackaging = true
+        }
     }
 
     lint {
@@ -234,6 +238,8 @@ dependencies {
 
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.crashlytics)
+
+    implementation(project(":llama"))
 
     implementation(libs.youtube.player)
 
