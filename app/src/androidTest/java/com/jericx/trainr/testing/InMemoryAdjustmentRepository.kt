@@ -2,10 +2,14 @@ package com.jericx.trainr.testing
 
 import com.jericx.trainr.domain.repository.AdjustmentRepository
 import com.jericx.trainr.domain.unstuck.AdjustmentFeedback
+import com.jericx.trainr.domain.unstuck.AdjustmentProposal
+import com.jericx.trainr.domain.unstuck.AdjustmentReason
 import com.jericx.trainr.domain.unstuck.AppliedAdjustment
+import com.jericx.trainr.domain.unstuck.ApplyResult
 import com.jericx.trainr.domain.unstuck.SessionNote
 import com.jericx.trainr.domain.unstuck.SessionOutcome
 import com.jericx.trainr.domain.unstuck.TrainingPreference
+import com.jericx.trainr.domain.unstuck.UndoResult
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -56,6 +60,42 @@ class InMemoryAdjustmentRepository : AdjustmentRepository {
 
     override suspend fun markReapplied(id: Long) {
         adjustments[id]?.let { adjustments[id] = it.copy(undoneAt = null) }
+    }
+
+    // The records only: patching a plan is Room's job and no route test needs it.
+    override suspend fun apply(
+        proposal: AdjustmentProposal,
+        dayId: Long,
+        reason: AdjustmentReason,
+        nowMillis: Long
+    ): ApplyResult {
+        adjustments.values.firstOrNull { it.proposal.proposalId == proposal.proposalId }?.let {
+            return if (it.isActive) ApplyResult.AlreadyApplied(it) else reapply(it.id, nowMillis)
+        }
+        val id = recordAdjustment(
+            AppliedAdjustment(
+                workoutDayId = dayId,
+                proposal = proposal,
+                reason = reason,
+                appliedAt = nowMillis
+            )
+        )
+        return ApplyResult.Applied(adjustments.getValue(id), null)
+    }
+
+    override suspend fun undo(adjustmentId: Long, nowMillis: Long): UndoResult {
+        val existing = adjustments[adjustmentId] ?: return UndoResult.Unknown
+        if (!existing.isActive) return UndoResult.AlreadyUndone
+        markUndone(adjustmentId, nowMillis)
+        return UndoResult.Restored(adjustments.getValue(adjustmentId), 0)
+    }
+
+    override suspend fun reapply(adjustmentId: Long, nowMillis: Long): ApplyResult {
+        val existing = adjustments[adjustmentId]
+            ?: return ApplyResult.Failed(IllegalArgumentException("No adjustment $adjustmentId"))
+        if (existing.isActive) return ApplyResult.AlreadyApplied(existing)
+        markReapplied(adjustmentId)
+        return ApplyResult.Applied(adjustments.getValue(adjustmentId), null)
     }
 
     override suspend fun saveFeedback(feedback: AdjustmentFeedback): Long {
