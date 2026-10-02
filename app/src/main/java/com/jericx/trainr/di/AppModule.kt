@@ -39,11 +39,8 @@ object AppModule {
             TrainrDatabase::class.java,
             Constants.DATABASE_NAME
         )
-            // Nothing is in production, so a schema change resets the local
-            // database rather than earning a migration. This has to become a
-            // real migration before the first release: left here, the first
-            // schema change after launch silently wipes every client.
-            .fallbackToDestructiveMigration(dropAllTables = true)
+            .addMigrations(*TrainrDatabase.MIGRATIONS)
+            .fallbackToDestructiveMigrationFrom(dropAllTables = true, *TrainrDatabase.LEGACY_VERSIONS)
             .build()
     }
 

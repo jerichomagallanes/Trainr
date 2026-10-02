@@ -11,9 +11,6 @@ import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
 
-// Before release a schema change resets the local database instead of earning
-// a migration. What must not happen is the app refusing to open: a stale file
-// is dropped, and the client starts over rather than seeing a crash.
 @RunWith(AndroidJUnit4::class)
 class StaleDatabaseTest {
 
@@ -31,7 +28,8 @@ class StaleDatabaseTest {
         writeVersionOne()
 
         val database = Room.databaseBuilder(context, TrainrDatabase::class.java, name)
-            .fallbackToDestructiveMigration(dropAllTables = true)
+            .addMigrations(*TrainrDatabase.MIGRATIONS)
+            .fallbackToDestructiveMigrationFrom(dropAllTables = true, *TrainrDatabase.LEGACY_VERSIONS)
             .build()
 
         assertThat(database.userDao.getCurrentUser()).isNull()
