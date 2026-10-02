@@ -10,12 +10,23 @@ import java.util.Locale
 object WorkoutDateFormatter {
 
     private const val RANGE_SEPARATOR = " – "
+    private const val DAYS_IN_WEEK = 7
 
     fun formatFullDate(dateMillis: Long, locale: Locale): String =
         DateFormat.getDateInstance(DateFormat.FULL, locale).format(Date(dateMillis))
 
     fun formatWeekday(dateMillis: Long, locale: Locale): String =
         SimpleDateFormat("EEEE", locale).format(Date(dateMillis))
+
+    fun formatMediumDate(dateMillis: Long, locale: Locale): String =
+        DateFormat.getDateInstance(DateFormat.MEDIUM, locale).format(Date(dateMillis))
+
+    // Takes the stored ISO number, Monday 1 to Sunday 7, not Calendar's own.
+    fun formatWeekdayName(isoWeekday: Int, locale: Locale): String =
+        Calendar.getInstance().run {
+            set(Calendar.DAY_OF_WEEK, isoWeekday % DAYS_IN_WEEK + 1)
+            SimpleDateFormat("EEEE", locale).format(time)
+        }
 
     fun formatWeekRange(
         startMillis: Long,

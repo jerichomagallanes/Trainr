@@ -70,22 +70,29 @@ sealed class Screen(val route: String) {
     // A nested graph so the draft lives exactly as long as the flow does: the
     // shared view model is scoped to this entry and dies when the graph pops.
     data object Adjust : Screen(
-        "adjust_graph/{dayNumber}?weekNumber={weekNumber}&reason={reason}&exerciseId={exerciseId}"
+        "adjust_graph/{dayNumber}?weekNumber={weekNumber}&reason={reason}" +
+            "&exerciseId={exerciseId}&minutes={minutes}"
     ) {
         const val ARG_DAY_NUMBER = "dayNumber"
         const val ARG_WEEK_NUMBER = "weekNumber"
         const val ARG_REASON = "reason"
         const val ARG_EXERCISE_ID = "exerciseId"
 
+        // A limit already confirmed for this weekday, carried from home so the
+        // flow opens on the answer instead of asking for it again.
+        const val ARG_MINUTES = "minutes"
+
         const val NO_EXERCISE = -1L
+        const val NO_MINUTES = -1
 
         fun createRoute(
             dayNumber: Int,
             weekNumber: Int,
             reason: DirectReason,
-            exerciseId: Long? = null
+            exerciseId: Long? = null,
+            minutes: Int = NO_MINUTES
         ) = "adjust_graph/$dayNumber?weekNumber=$weekNumber&reason=${reason.name}" +
-            "&exerciseId=${exerciseId ?: NO_EXERCISE}"
+            "&exerciseId=${exerciseId ?: NO_EXERCISE}&minutes=$minutes"
     }
     // The graph carries the arguments, so its first screen is picked from the
     // reason rather than from four graphs that differ only in where they open.
@@ -141,4 +148,27 @@ sealed class Screen(val route: String) {
     data object FeedbackDetail : Screen("feedback_detail")
     data object FeedbackOutcome : Screen("feedback_outcome")
     data object FeedbackPain : Screen("feedback_pain")
+
+    // The week travels with the day for the same reason the completion screens
+    // carry it: a note belongs to the session it was written about.
+    data object Debrief : Screen("debrief/{dayNumber}?weekNumber={weekNumber}") {
+        const val ARG_DAY_NUMBER = "dayNumber"
+        const val ARG_WEEK_NUMBER = "weekNumber"
+
+        fun createRoute(dayNumber: Int, weekNumber: Int = RoutineDetail.LATEST_WEEK) =
+            "debrief/$dayNumber?weekNumber=$weekNumber"
+    }
+    data object NoteSaved : Screen("note_saved/{dayNumber}?weekNumber={weekNumber}") {
+        const val ARG_DAY_NUMBER = "dayNumber"
+        const val ARG_WEEK_NUMBER = "weekNumber"
+
+        fun createRoute(dayNumber: Int, weekNumber: Int = RoutineDetail.LATEST_WEEK) =
+            "note_saved/$dayNumber?weekNumber=$weekNumber"
+    }
+    data object Preferences : Screen("training_preferences")
+    data object EditPreference : Screen("edit_preference/{id}") {
+        const val ARG_ID = "id"
+
+        fun createRoute(id: Long) = "edit_preference/$id"
+    }
 }

@@ -6,6 +6,7 @@ import com.jericx.trainr.domain.unstuck.AdjustmentProposal
 import com.jericx.trainr.domain.unstuck.AdjustmentReason
 import com.jericx.trainr.domain.unstuck.AppliedAdjustment
 import com.jericx.trainr.domain.unstuck.ApplyResult
+import com.jericx.trainr.domain.unstuck.PreferenceKind
 import com.jericx.trainr.domain.unstuck.SessionNote
 import com.jericx.trainr.domain.unstuck.SessionOutcome
 import com.jericx.trainr.domain.unstuck.TrainingPreference
@@ -131,6 +132,14 @@ class InMemoryAdjustmentRepository : AdjustmentRepository {
     override suspend fun getPreferences(userId: Long): List<TrainingPreference> =
         preferences.value.values.filter { it.userId == userId }
 
+    override suspend fun getPreference(
+        userId: Long,
+        kind: PreferenceKind,
+        weekday: Int
+    ): TrainingPreference? = preferences.value.values.firstOrNull {
+        it.userId == userId && it.kind == kind && it.weekday == weekday
+    }
+
     override suspend fun saveNote(note: SessionNote): Long {
         val id = idFor(note.id)
         notes.value = notes.value + (id to note.copy(id = id))
@@ -147,6 +156,9 @@ class InMemoryAdjustmentRepository : AdjustmentRepository {
 
     override fun observeNotes(userId: Long): Flow<List<SessionNote>> =
         notes.map { all -> all.values.filter { it.userId == userId } }
+
+    override suspend fun getNotes(userId: Long): List<SessionNote> =
+        notes.value.values.filter { it.userId == userId }
 
     override suspend fun getNote(dayId: Long): SessionNote? =
         notes.value.values.firstOrNull { it.workoutDayId == dayId }

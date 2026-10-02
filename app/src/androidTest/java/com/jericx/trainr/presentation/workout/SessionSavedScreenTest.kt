@@ -58,7 +58,8 @@ class SessionSavedScreenTest {
 
     private fun setRoute(
         adjustments: InMemoryAdjustmentRepository = InMemoryAdjustmentRepository(),
-        onFeedback: (Long) -> Unit = {}
+        onFeedback: (Long) -> Unit = {},
+        onLeaveNote: () -> Unit = {}
     ) {
         val viewModel = FeedbackPromptViewModel(
             SavedStateHandle(mapOf(Screen.SessionSaved.ARG_DAY_NUMBER to day.dayNumber)),
@@ -72,6 +73,7 @@ class SessionSavedScreenTest {
                     performedExercises = 4,
                     plannedExercises = 6,
                     onFeedback = onFeedback,
+                    onLeaveNote = onLeaveNote,
                     viewModel = viewModel
                 )
             }
@@ -147,13 +149,18 @@ class SessionSavedScreenTest {
         assertThat(done).isTrue()
     }
 
+    // A note is worth leaving whatever happened; the adjustment question is not.
     @Test
-    fun anUnadjustedSessionIsAskedNothing() {
-        setRoute()
+    fun anUnadjustedSessionIsOfferedTheNoteAndNoQuestion() {
+        var noteAsked = false
+        setRoute(onLeaveNote = { noteAsked = true })
 
         composeTestRule.onNodeWithText(string(R.string.anything_to_change_title))
-            .assertDoesNotExist()
+            .assertIsDisplayed()
         composeTestRule.onNodeWithText(string(R.string.tell_us_how_it_went)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.leave_a_note)).performClick()
+
+        assertThat(noteAsked).isTrue()
     }
 
     @Test
@@ -176,6 +183,7 @@ class SessionSavedScreenTest {
         setRoute(adjustments = adjustedDay(answer = FeedbackAnswer.HELPED, answered = true))
 
         composeTestRule.onNodeWithText(string(R.string.tell_us_how_it_went)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.leave_a_note)).assertIsDisplayed()
     }
 
     @Test

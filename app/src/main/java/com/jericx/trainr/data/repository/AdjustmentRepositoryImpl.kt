@@ -26,6 +26,7 @@ import com.jericx.trainr.domain.unstuck.ApplyResult
 import com.jericx.trainr.domain.unstuck.ChangeKind
 import com.jericx.trainr.domain.unstuck.ExerciseSnapshot
 import com.jericx.trainr.domain.unstuck.PlanRevision
+import com.jericx.trainr.domain.unstuck.PreferenceKind
 import com.jericx.trainr.domain.unstuck.ProposalChange
 import com.jericx.trainr.domain.unstuck.SessionNote
 import com.jericx.trainr.domain.unstuck.SessionOutcome
@@ -360,6 +361,14 @@ class AdjustmentRepositoryImpl(
         return dao.getPreferencesOnce(userId).map { mapper.mapToDomain(it) }
     }
 
+    override suspend fun getPreference(
+        userId: Long,
+        kind: PreferenceKind,
+        weekday: Int
+    ): TrainingPreference? {
+        return dao.getPreferenceFor(userId, kind.name, weekday)?.let { mapper.mapToDomain(it) }
+    }
+
     override suspend fun saveNote(note: SessionNote): Long {
         return dao.insertNote(mapper.mapToEntity(note))
     }
@@ -374,6 +383,10 @@ class AdjustmentRepositoryImpl(
 
     override fun observeNotes(userId: Long): Flow<List<SessionNote>> {
         return dao.getNotes(userId).map { entities -> entities.map { mapper.mapToDomain(it) } }
+    }
+
+    override suspend fun getNotes(userId: Long): List<SessionNote> {
+        return dao.getNotesOnce(userId).map { mapper.mapToDomain(it) }
     }
 
     override suspend fun getNote(dayId: Long): SessionNote? {
