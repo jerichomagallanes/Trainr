@@ -311,6 +311,7 @@ fun AppContent(
                     val editing = entry.isEditing
                     BodyMetricsScreen(
                         initial = onboardingState.filledFor(OnboardingStep.BODY_METRICS, editing),
+                        age = onboardingState.userProfile.age.takeIf { it > 0 },
                         isEditing = editing,
                         onNextClick = { height, weight, units ->
                             onboardingViewModel.updateBodyMetrics(height, weight, units)

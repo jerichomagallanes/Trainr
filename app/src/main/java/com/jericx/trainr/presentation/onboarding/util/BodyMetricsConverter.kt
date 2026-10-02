@@ -5,6 +5,11 @@ import kotlin.math.roundToInt
 
 object BodyMetricsConverter {
 
+    // CDC adult categories apply only from age 20. An unknown age is not an adult.
+    fun showsAdultBMI(age: Int?): Boolean = age != null && age >= ADULT_BMI_AGE
+
+    const val ADULT_BMI_AGE = 20
+
     fun parseMetrics(height: String, weight: String, useMetric: Boolean): Pair<Float, Float> {
         return if (useMetric) {
             val h = height.toFloatOrNull() ?: 0f
@@ -56,7 +61,7 @@ object BodyMetricsConverter {
     fun calculateBMI(height: String, weight: String, useMetric: Boolean): Float? {
         return try {
             val (h, w) = parseMetrics(height, weight, useMetric)
-            if (h > 0 && w > 0) {
+            if (h.isFinite() && w.isFinite() && h > 0 && w > 0) {
                 val heightMeters = h / 100f
                 w / (heightMeters * heightMeters)
             } else null

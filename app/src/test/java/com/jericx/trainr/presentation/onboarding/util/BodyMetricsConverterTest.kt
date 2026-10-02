@@ -5,6 +5,23 @@ import org.junit.Test
 
 class BodyMetricsConverterTest {
 
+    // The categories are the CDC's adult ones, so a teenager is never labelled
+    // with them, and neither is someone whose age the profile does not know yet.
+    @Test
+    fun `adult categories never label teenagers or an unknown age`() {
+        for (age in listOf(null, 13, 19)) {
+            assertThat(BodyMetricsConverter.showsAdultBMI(age)).isFalse()
+        }
+        assertThat(BodyMetricsConverter.showsAdultBMI(20)).isTrue()
+        assertThat(BodyMetricsConverter.showsAdultBMI(70)).isTrue()
+    }
+
+    @Test
+    fun `non-finite measurements do not produce a health result`() {
+        assertThat(BodyMetricsConverter.calculateBMI("Infinity", "70", true)).isNull()
+        assertThat(BodyMetricsConverter.calculateBMI("175", "NaN", true)).isNull()
+    }
+
     @Test
     fun `acceptedHeight straightens the quotes a keyboard or a paste may carry`() {
         assertThat(BodyMetricsConverter.acceptedHeight("5\u2019", false)).isEqualTo("5'")

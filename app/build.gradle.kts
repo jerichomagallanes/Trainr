@@ -37,7 +37,7 @@ android {
         minSdk = 24
         targetSdk = 36
         versionCode = maxOf(runCatching { commitCount.get() }.getOrDefault(0), minimumVersionCode)
-        versionName = "1.0"
+        versionName = "1.1"
 
         // Hilt's, so an instrumented test can reach the real graph: the
         // paywall gate is wired in the navigation and cannot be seen from a

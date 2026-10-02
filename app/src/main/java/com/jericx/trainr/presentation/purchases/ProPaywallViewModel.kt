@@ -10,9 +10,6 @@ import com.jericx.trainr.R
 import com.jericx.trainr.data.purchases.Entitlements
 import com.revenuecat.purchases.Package
 import com.revenuecat.purchases.PackageType
-import com.revenuecat.purchases.PurchaseParams
-import com.revenuecat.purchases.Purchases
-import com.revenuecat.purchases.awaitPurchase
 import com.revenuecat.purchases.models.Period
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -67,15 +64,12 @@ class ProPaywallViewModel @Inject constructor(
         val chosen = packages.firstOrNull { it.identifier == _state.value.selectedId } ?: return
         viewModelScope.launch {
             _state.value = _state.value.copy(isWorking = true)
-            val bought = runCatching {
-                Purchases.sharedInstance.awaitPurchase(
-                    PurchaseParams.Builder(activity, chosen).build()
-                )
-            }.isSuccess
+            val bought = entitlements.purchase(activity, chosen)
             _state.value = _state.value.copy(
                 isWorking = false,
-                isPro = if (bought) entitlements.refresh() else _state.value.isPro,
-                isLifetime = entitlements.isLifetime.value
+                isPro = bought || _state.value.isPro,
+                isLifetime = entitlements.isLifetime.value,
+                noticeRes = entitlements.purchaseNotice
             )
         }
     }
@@ -84,11 +78,15 @@ class ProPaywallViewModel @Inject constructor(
         viewModelScope.launch {
             _state.value = _state.value.copy(isWorking = true)
             val restored = entitlements.restore()
+            // A restore that could not reach the store is not an empty one: it
+            // says so, and it takes nothing away from a subscriber who has Pro.
+            val failed = entitlements.purchaseNotice != null
             _state.value = _state.value.copy(
                 isWorking = false,
-                isPro = restored,
+                isPro = if (failed) _state.value.isPro else restored,
                 isLifetime = entitlements.isLifetime.value,
-                noticeRes = if (restored) R.string.pro_restored else R.string.pro_nothing_to_restore
+                noticeRes = entitlements.purchaseNotice
+                    ?: if (restored) R.string.pro_restored else R.string.pro_nothing_to_restore
             )
         }
     }

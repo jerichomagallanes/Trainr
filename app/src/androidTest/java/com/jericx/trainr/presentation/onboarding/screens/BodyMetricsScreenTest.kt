@@ -9,6 +9,7 @@ import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
@@ -322,6 +323,76 @@ class BodyMetricsScreenTest {
             .performTextInput("2")
 
         composeTestRule.onNodeWithText(string(R.string.next)).assertIsNotEnabled()
+    }
+
+    // The categories are the CDC's adult ones, which start at 20. A teenager
+    // gets the measurements accepted and no label.
+    @Test
+    fun teenMeasurementsDoNotShowAnAdultBmi() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                BodyMetricsScreen(age = 19, onNextClick = { _, _, _ -> }, onBackClick = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.height_placeholder_cm))
+            .performTextInput("175")
+        composeTestRule.onNodeWithText(string(R.string.weight_placeholder_kg))
+            .performTextInput("72")
+
+        composeTestRule.onNodeWithText(string(R.string.next)).assertIsEnabled()
+        composeTestRule.onNodeWithText(string(R.string.bmi_label), substring = true)
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.bmi_about_sources)).assertDoesNotExist()
+    }
+
+    // App Review asked where the health number comes from: the sources sit one
+    // tap from the result, and the result says who the ranges are for.
+    @Test
+    fun theBmiSourcesAreOneTapFromTheAdultResult() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                BodyMetricsScreen(age = 20, onNextClick = { _, _, _ -> }, onBackClick = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.height_placeholder_cm))
+            .performTextInput("175")
+        composeTestRule.onNodeWithText(string(R.string.weight_placeholder_kg))
+            .performTextInput("72")
+
+        composeTestRule.onNodeWithText(string(R.string.normal_weight)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.bmi_screening_note)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.bmi_about_sources))
+            .performScrollTo()
+            .performClick()
+
+        composeTestRule.onNodeWithText(string(R.string.bmi_cdc_categories)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.bmi_cdc_about)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.bmi_limitations)).assertExists()
+    }
+
+    // An edit opened from the profile carries the stored age the same way.
+    @Test
+    fun aStoredAdultProfileShowsTheBmiWhenEditing() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                BodyMetricsScreen(
+                    initial = UserProfile(
+                        age = 34,
+                        height = 175f,
+                        weight = 72f,
+                        bodyUnitSystem = UnitSystem.METRIC
+                    ),
+                    isEditing = true,
+                    onNextClick = { _, _, _ -> },
+                    onBackClick = {}
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.bmi_label), substring = true)
+            .assertIsDisplayed()
     }
 
     @Test
