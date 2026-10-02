@@ -24,12 +24,11 @@ category word and the differentiator.
 ## Promotional text (170 max)
 
 ```
-Your first week is free. Trainr Pro unlocks every week after it: next week
-progressed from what you lifted, or a fresh plan when your goal changes.
+Build a workout week around your goals and equipment. Log every set and progress your next week from what you lifted.
 ```
 
-[150] Editable without a new build, so this is where the offer lives. It can
-say "free" because it does not name a price.
+[117] Keep promotional artwork and restricted metadata free of pricing claims.
+Offer details belong in the description and the in-app purchase interface.
 
 ## Keywords (100 max)
 

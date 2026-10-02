@@ -397,4 +397,17 @@
     <string name="pro_prompt_next_week">You have used your free week. Pro builds you a new one each week, from the sets you actually logged.</string>
     <string name="pro_prompt_rewrite">You have used your free week. Pro lets you ask for a different week whenever one does not suit you.</string>
     <string name="pro_prompt_fresh">You have used your free week. Pro lets you start a fresh plan whenever your goal, your kit or your days change.</string>
+    <!-- App Review: BMI sources and StoreKit outcomes, shared with iOS. -->
+    <string name="bmi_about_sources">About BMI &amp; sources</string>
+    <string name="bmi_screening_note">For adults 20 and older. A screening measure, not a diagnosis.</string>
+    <string name="bmi_explanation">BMI is weight in kilograms divided by height in metres squared. Imperial measurements are converted first. Trainr shows adult categories only from age 20.</string>
+    <string name="bmi_ranges">Adult ranges (kg/m²): underweight below 18.5; healthy weight 18.5 to below 25; overweight 25 to below 30; obesity 30 and above. The category uses the unrounded result; the displayed number is rounded to one decimal place.</string>
+    <string name="bmi_limitations">BMI does not distinguish muscle from fat and cannot assess your health on its own. It is not a body-fat measurement or a diagnosis. Discuss questions about your measurements or health with a qualified healthcare professional.</string>
+    <string name="bmi_cdc_categories">CDC: Adult BMI categories</string>
+    <string name="bmi_cdc_about">CDC: About BMI</string>
+    <string name="bmi_source_date">Sources reviewed 2 October 2026. Links open the CDC website in English.</string>
+    <string name="pro_purchase_failed">The purchase could not be completed. Check your connection and try again. If you were charged, use Restore purchases.</string>
+    <string name="pro_restore_failed">Purchases could not be restored. Check your connection and try again with the Apple Account used to purchase.</string>
+    <string name="pro_purchase_not_active">Your purchase has not activated Pro yet. Please wait a moment, then use Restore purchases. Do not purchase again.</string>
+    <string name="pro_purchase_pending">Your purchase is awaiting approval. Pro will unlock once the App Store confirms payment.</string>
 </resources>

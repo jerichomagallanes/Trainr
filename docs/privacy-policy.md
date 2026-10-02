@@ -1,6 +1,6 @@
 # Privacy Policy for Trainr
 
-**Last updated: 12 September 2026**
+**Last updated: 2 October 2026**
 
 Trainr is a workout planning app. This policy explains what it collects, where
 that goes, and what you can do about it. It is written to be read, not to cover
@@ -38,9 +38,8 @@ of the answers above, and nothing you log, is sent anywhere to write it.
 
 ## The exercise videos
 
-Tutorial videos play in YouTube's own embedded player. Until you tap play,
-nothing is requested from YouTube and nothing about you leaves the app: the
-player shows a still frame and waits. Once you play one, YouTube receives the
+Tutorial videos play in YouTube's own embedded player. The embedded player is loaded when you open a tutorial. YouTube may receive
+technical information when the player loads or plays. Once you play one, YouTube receives the
 request as it would on youtube.com, including your IP address and whatever its
 own cookies hold, all of it governed by the [Google Privacy
 Policy](http://www.google.com/policies/privacy). Trainr sends YouTube nothing
@@ -59,7 +58,7 @@ plan, served by Google AdMob. Trainr Pro has none, and while Pro is active no
 ad is requested at all.
 
 To serve and measure that banner, Google's advertising SDK receives the
-advertising identifier your phone assigns to apps, your IP address (from which
+advertising identifier when permission and device settings allow it, your IP address (from which
 it infers an approximate location), and technical details of the device and
 the app, all governed by the [Google Privacy
 Policy](http://www.google.com/policies/privacy) and described in [how Google
@@ -71,8 +70,8 @@ Where the law requires consent before ads can be personalised, in the European
 Economic Area and the United Kingdom, the app asks you first with Google's own
 consent form, and you can change your answer at any time from **Privacy
 options** in the profile menu. On iOS the app also asks for App Tracking
-Transparency permission; declining it leaves the ads in place but
-unpersonalised. Everywhere else you can turn off personalised ads in your
+Transparency permission; declining prevents access to the IDFA and does not
+block the app. Ad delivery remains subject to your regional consent choices. Everywhere else you can turn off personalised ads in your
 phone's own advertising settings.
 
 ## Crash reports
@@ -102,16 +101,29 @@ or used to build a profile of you.
 The injuries question is the one optional question in onboarding; leave it blank
 and the plan is written without it.
 
-## What Trainr does not do
+## Purchases
 
-- No accounts, no sign-in, no email address collected
-- No advertising, and no advertising identifiers
-- No analytics: nothing tracks which screens you open or what you tap
-- No location, contacts, photos, microphone or camera access
-- Nothing is sold or shared with third parties beyond the crash reports described above
+Apple or Google processes payments for Trainr Pro. Trainr uses RevenueCat to
+validate purchases, restore them on another installation and determine whether
+Pro is active. RevenueCat receives purchase and subscription information,
+an app-generated customer identifier, and technical information needed to
+provide this service. Trainr does not receive your payment-card details and
+does not send your fitness profile or logged sets to RevenueCat. See the
+[RevenueCat Privacy Policy](https://www.revenuecat.com/privacy/).
 
-On Android the app requests two permissions, internet access and network state,
-used for crash reports and to play the exercise videos. On iOS it requests none.
+## Permissions and limits
+
+- Trainr has no app accounts and does not ask for your email address.
+- It does not request access to contacts, photos, the microphone, camera or GPS.
+- It does not send your fitness profile or training history to advertisers.
+- Ads, purchases, exercise videos and crash reporting use the services described
+  above. Those services can collect technical, usage and purchase information.
+
+Android uses network permissions for these services. On iOS, Trainr requests
+tracking permission before allowing the advertising SDK to start. You can refuse
+this request and continue using the app. Permission can be changed in iOS
+Settings → Privacy & Security → Tracking. Some device or account restrictions
+prevent iOS from showing the request; Trainr respects that decision.
 
 ## Children
 
@@ -120,7 +132,9 @@ below 13.
 
 ## Deleting your data
 
-Uninstalling Trainr deletes everything it holds. You can also clear it without
+Uninstalling Trainr removes its local profile and training database. It does not
+cancel a subscription or delete purchase records held by Apple, Google or
+RevenueCat. Manage subscriptions through the store where you purchased them. You can also clear it without
 uninstalling: on Android, **Settings → Apps → Trainr → Storage → Clear storage**;
 on iOS, delete the app, which removes its data with it.
 
