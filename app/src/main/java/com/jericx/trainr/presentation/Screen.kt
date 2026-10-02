@@ -71,6 +71,16 @@ sealed class Screen(val route: String) {
 
         fun createRoute(dayNumber: Int) = "day_completed_screen/$dayNumber"
     }
+    data object SessionSaved : Screen(
+        "session_saved_screen/{dayNumber}?performed={performed}&planned={planned}"
+    ) {
+        const val ARG_DAY_NUMBER = "dayNumber"
+        const val ARG_PERFORMED = "performed"
+        const val ARG_PLANNED = "planned"
+
+        fun createRoute(dayNumber: Int, performed: Int, planned: Int) =
+            "session_saved_screen/$dayNumber?performed=$performed&planned=$planned"
+    }
     data object WeekCompleted : Screen("week_completed_screen/{weekNumber}") {
         const val ARG_WEEK_NUMBER = "weekNumber"
 

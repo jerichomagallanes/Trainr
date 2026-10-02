@@ -1,11 +1,16 @@
 package com.jericx.trainr.presentation.workout
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -33,12 +38,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jericx.trainr.R
+import com.jericx.trainr.domain.unstuck.FinishKind
+import com.jericx.trainr.presentation.common.components.core.TrainrButton
+import com.jericx.trainr.presentation.common.components.core.TrainrFieldError
 import com.jericx.trainr.presentation.common.components.core.TrainrProgress
 import com.jericx.trainr.presentation.common.components.core.TrainrSlideToConfirm
+import com.jericx.trainr.presentation.common.components.layout.TrainrScaffold
+import com.jericx.trainr.presentation.common.components.layout.TrainrScreenContent
 import com.jericx.trainr.presentation.common.components.layout.TrainrTopBar
+import com.jericx.trainr.presentation.common.theme.ComponentHeight
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 import com.jericx.trainr.presentation.common.theme.trainrColors
@@ -56,15 +68,24 @@ fun RoutineDetailRoute(
     onBackClick: () -> Unit = {},
     onDayCompleted: (Int) -> Unit = {},
     onWeekCompleted: (Int) -> Unit = {},
+    onSessionSaved: (SessionSavedEvent) -> Unit = {},
     viewModel: RoutineDetailViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(viewModel) {
+        viewModel.savedEvents.collect { onSessionSaved(it) }
+    }
 
     RoutineDetailScreen(
         state = state,
         onBackClick = onBackClick,
         onDayCompleted = onDayCompleted,
         onWeekCompleted = onWeekCompleted,
+        onAskToFinishEarly = viewModel::askToFinishEarly,
+        onKeepTraining = viewModel::keepTraining,
+        onFinishEarly = viewModel::finishEarly,
+        onRetryFinishEarly = viewModel::retryFinishEarly,
         onToggleExercise = viewModel::toggleExercise,
         onSetChanged = viewModel::updateSet,
         onAddSet = viewModel::addSet,
@@ -100,7 +121,11 @@ fun RoutineDetailScreen(
     onToggleVideo: (Int) -> Unit = {},
     onToggleHowTo: (Int) -> Unit = {},
     onDayCompleted: (Int) -> Unit = {},
-    onWeekCompleted: (Int) -> Unit = {}
+    onWeekCompleted: (Int) -> Unit = {},
+    onAskToFinishEarly: () -> Unit = {},
+    onKeepTraining: () -> Unit = {},
+    onFinishEarly: () -> Unit = {},
+    onRetryFinishEarly: () -> Unit = {}
 ) {
     val locale = LocalLocale.current.platformLocale
 
@@ -110,14 +135,18 @@ fun RoutineDetailScreen(
 
     var showStartOver by remember { mutableStateOf(false) }
 
-    LaunchedEffect(state.routine.isComplete, state.isLoaded) {
+    val routine = state.routine
+    val finishedEarly = state.outcome?.finishKind == FinishKind.PARTIAL
+
+    LaunchedEffect(routine.isComplete, state.isLoaded) {
         if (!state.isLoaded) return@LaunchedEffect
 
-        val isComplete = state.routine.isComplete
+        val isComplete = routine.isComplete
         val previous = wasComplete
         wasComplete = isComplete
 
-        if (previous != null && isComplete && !previous) {
+        // A session closed as finished early is not re-celebrated by ticking its last box.
+        if (previous != null && isComplete && !previous && !finishedEarly) {
             if (state.completesTheWeek) {
                 onWeekCompleted(state.weekNumber)
             } else {
@@ -125,7 +154,19 @@ fun RoutineDetailScreen(
             }
         }
     }
-    val routine = state.routine
+
+    if (state.isConfirmingFinishEarly) {
+        BackHandler(onBack = onKeepTraining)
+        FinishEarlyContent(
+            performedExercises = routine.performedExerciseCount,
+            plannedExercises = routine.plannedExerciseCount,
+            saveFailed = state.saveFailed,
+            onKeepTraining = onKeepTraining,
+            onFinishEarly = if (state.saveFailed) onRetryFinishEarly else onFinishEarly,
+            modifier = modifier
+        )
+        return
+    }
 
     Column(modifier = modifier.fillMaxSize()) {
         TrainrTopBar(onBackClick = onBackClick)
@@ -207,6 +248,23 @@ fun RoutineDetailScreen(
                 modifier = Modifier.padding(top = Spacing.section)
             )
 
+            if (finishedEarly) {
+                Text(
+                    text = stringResource(
+                        R.string.finished_early_summary_format,
+                        routine.performedExerciseCount,
+                        routine.plannedExerciseCount
+                    ),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.trainrColors.onSurface,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = Spacing.section)
+                        .background(MaterialTheme.trainrColors.surfaceSunken, MaterialTheme.shapes.small)
+                        .padding(horizontal = Spacing.card, vertical = 12.dp)
+                )
+            }
+
             Column(
                 modifier = Modifier.padding(top = Spacing.section),
                 verticalArrangement = Arrangement.spacedBy(Spacing.section)
@@ -254,13 +312,18 @@ fun RoutineDetailScreen(
                 }
             }
 
-            if (!routine.isComplete) {
+            if (!finishedEarly && !routine.isComplete) {
                 TrainrSlideToConfirm(
                     text = stringResource(R.string.slide_to_complete_routine),
                     onConfirm = onCompleteRoutine,
                     modifier = Modifier.padding(top = Spacing.section + Spacing.tight)
                 )
-            } else if (routine.hasProgress) {
+                QuietAction(
+                    text = stringResource(R.string.finish_early),
+                    onClick = onAskToFinishEarly,
+                    modifier = Modifier.padding(top = Spacing.tight)
+                )
+            } else if (!finishedEarly && routine.hasProgress) {
                 TextButton(
                     onClick = { showStartOver = true },
                     modifier = Modifier
@@ -284,6 +347,105 @@ fun RoutineDetailScreen(
                 onClearProgress()
             },
             onDismiss = { showStartOver = false }
+        )
+    }
+}
+
+@Composable
+private fun FinishEarlyContent(
+    performedExercises: Int,
+    plannedExercises: Int,
+    saveFailed: Boolean,
+    onKeepTraining: () -> Unit,
+    onFinishEarly: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val colors = MaterialTheme.trainrColors
+
+    Box(modifier = modifier) {
+        TrainrScaffold(
+            onBackClick = onKeepTraining,
+            bottomButton = {
+                Column(verticalArrangement = Arrangement.spacedBy(Spacing.tight)) {
+                    TrainrButton(
+                        text = stringResource(
+                            if (saveFailed) R.string.try_again else R.string.save_workout
+                        ),
+                        onClick = onFinishEarly
+                    )
+                    QuietAction(
+                        text = stringResource(R.string.keep_training),
+                        onClick = onKeepTraining
+                    )
+                }
+            }
+        ) { padding ->
+            TrainrScreenContent(modifier = Modifier.padding(padding)) {
+                Text(
+                    text = stringResource(R.string.finish_early_title),
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontSize = 20.sp,
+                        lineHeight = 28.sp
+                    ),
+                    color = colors.onSurface
+                )
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = Spacing.medium)
+                        .border(1.dp, colors.outlineControl, MaterialTheme.shapes.medium)
+                        .padding(Spacing.card),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.small)
+                ) {
+                    Text(
+                        text = stringResource(R.string.finish_early_card_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = colors.onSurface
+                    )
+                    Text(
+                        text = stringResource(
+                            R.string.exercises_completed_of_format,
+                            performedExercises,
+                            plannedExercises
+                        ),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colors.onSurface
+                    )
+                    Text(
+                        text = stringResource(R.string.finish_early_card_message),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colors.onSurfaceMuted
+                    )
+                }
+
+                Text(
+                    text = stringResource(R.string.finish_early_hint),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.onSurfaceMuted,
+                    modifier = Modifier.padding(top = Spacing.medium)
+                )
+
+                if (saveFailed) {
+                    TrainrFieldError(message = stringResource(R.string.finish_early_failed))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun QuietAction(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    TextButton(
+        onClick = onClick,
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = ComponentHeight.Medium)
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.trainrColors.onSurfaceMuted
         )
     }
 }
