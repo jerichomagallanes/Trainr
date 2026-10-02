@@ -12,7 +12,7 @@
 namespace {
 
 constexpr const char * TAG = "trainr_llama";
-constexpr uint32_t CONTEXT_TOKENS = 1024;
+constexpr uint32_t CONTEXT_TOKENS = 2048;
 constexpr int32_t BATCH_TOKENS = 512;
 
 struct Session {

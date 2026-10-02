@@ -421,7 +421,7 @@ class AdjustmentViewModelTest {
         val note = "Only $minutes minutes today."
         val quote = "$minutes minutes today"
         coEvery { interpreter.interpret(any(), any(), any()) } returns
-            interpreted(note, timeAnswer(minutes, quote, start = 5, end = 5 + quote.length))
+            interpreted(note, timeAnswer(minutes, quote))
         viewModel.typeNote(note)
 
         viewModel.chooseFromContext(DirectReason.OTHER)
@@ -751,18 +751,18 @@ class AdjustmentViewModelTest {
         const val MONDAY = 1
         const val CARRIED_MINUTES = 20
         const val TIME_NOTE = "I have 35 minutes for the whole workout today."
-        val TIME_ANSWER = timeAnswer(35, "35 minutes for the whole workout", start = 7, end = 39)
+        val TIME_ANSWER = timeAnswer(35, "35 minutes for the whole workout")
         const val DISCOMFORT_NOTE = "I have 20 minutes and my knee feels off."
         const val DISCOMFORT_ANSWER =
-            """{"schemaVersion":"1.0","intent":"less_time","timeBudget":{"minutes":20,"scope":"whole_session"},"equipmentMention":null,"concern":"pain_or_unclear_discomfort","memoryCandidate":false,"clarification":"none","evidence":[{"field":"time_budget","quote":"20 minutes","start":7,"end":17},{"field":"concern","quote":"my knee feels off","start":22,"end":39}]}"""
+            """{"schemaVersion":"1.1","intent":"less_time","timeBudget":{"minutes":20,"scope":"whole_session"},"equipmentMention":null,"concern":"pain_or_unclear_discomfort","memoryCandidate":false,"clarification":"none","evidence":[{"field":"time_budget","quote":"20 minutes"},{"field":"concern","quote":"my knee feels off"}]}"""
         const val EQUIPMENT_NOTE = "The cable machine is taken."
         const val EQUIPMENT_ANSWER =
-            """{"schemaVersion":"1.0","intent":"equipment_unavailable","timeBudget":null,"equipmentMention":"cable machine","concern":"none_stated","memoryCandidate":false,"clarification":"none","evidence":[{"field":"equipment_mention","quote":"cable machine","start":4,"end":17}]}"""
+            """{"schemaVersion":"1.1","intent":"equipment_unavailable","timeBudget":null,"equipmentMention":"cable machine","concern":"none_stated","memoryCandidate":false,"clarification":"none","evidence":[{"field":"equipment_mention","quote":"cable machine"}]}"""
 
-        fun timeAnswer(minutes: Int, quote: String, start: Int, end: Int) =
-            """{"schemaVersion":"1.0","intent":"less_time","timeBudget":{"minutes":$minutes,"scope":"whole_session"},"equipmentMention":null,"concern":"none_stated","memoryCandidate":false,"clarification":"none","evidence":[{"field":"time_budget","quote":"$quote","start":$start,"end":$end}]}"""
+        fun timeAnswer(minutes: Int, quote: String) =
+            """{"schemaVersion":"1.1","intent":"less_time","timeBudget":{"minutes":$minutes,"scope":"whole_session"},"equipmentMention":null,"concern":"none_stated","memoryCandidate":false,"clarification":"none","evidence":[{"field":"time_budget","quote":"$quote"}]}"""
 
         fun plainAnswer(intent: String) =
-            """{"schemaVersion":"1.0","intent":"$intent","timeBudget":null,"equipmentMention":null,"concern":"none_stated","memoryCandidate":false,"clarification":"none","evidence":[]}"""
+            """{"schemaVersion":"1.1","intent":"$intent","timeBudget":null,"equipmentMention":null,"concern":"none_stated","memoryCandidate":false,"clarification":"none","evidence":[]}"""
     }
 }

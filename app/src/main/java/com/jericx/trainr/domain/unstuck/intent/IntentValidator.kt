@@ -22,9 +22,9 @@ enum class RejectionReason {
     EQUIPMENT_MENTION_TOO_LONG,
     TOO_MUCH_EVIDENCE,
     EVIDENCE_QUOTE_LENGTH,
-    EVIDENCE_SPAN_INVALID,
     EVIDENCE_QUOTE_MISMATCH,
-    FACT_WITHOUT_EVIDENCE
+    FACT_WITHOUT_EVIDENCE,
+    MINUTES_NOT_IN_QUOTE
 }
 
 data class ActionableFacts(
@@ -37,11 +37,16 @@ data class ActionableFacts(
 
 object IntentValidator {
 
-    private const val SCHEMA_VERSION = "1.0"
+    private const val SCHEMA_VERSION = "1.1"
     private const val MINUTES_RANGE_END = 1440
     private const val MAX_EQUIPMENT_MENTION_CODE_POINTS = 160
     private const val MAX_EVIDENCE_ENTRIES = 8
     private const val MAX_QUOTE_CODE_POINTS = 500
+    private val NUMBER_WORDS = setOf(
+        "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",
+        "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen",
+        "twenty", "thirty", "forty", "fifty", "sixty", "ninety", "half", "hour", "hours"
+    )
 
     fun validate(rawJson: String, input: String): IntentValidation {
         // A key answered twice decodes to one of its two answers and the
@@ -72,8 +77,9 @@ object IntentValidator {
         }
         if (extraction.evidence.size > MAX_EVIDENCE_ENTRIES) reasons += RejectionReason.TOO_MUCH_EVIDENCE
 
-        reasons += spanFailures(extraction.evidence, normalized)
+        reasons += quoteFailures(extraction.evidence, normalized)
         if (factsWithoutEvidence(extraction)) reasons += RejectionReason.FACT_WITHOUT_EVIDENCE
+        if (minutesNotQuoted(extraction)) reasons += RejectionReason.MINUTES_NOT_IN_QUOTE
 
         return if (reasons.isEmpty()) {
             IntentValidation.Valid(extraction, actionableFacts(extraction))
@@ -82,22 +88,45 @@ object IntentValidator {
         }
     }
 
-    private fun spanFailures(evidence: List<Evidence>, normalized: String): Set<RejectionReason> {
-        val inputLength = normalized.codePointLength()
+    private fun quoteFailures(evidence: List<Evidence>, normalized: String): Set<RejectionReason> {
         val failures = linkedSetOf<RejectionReason>()
         for (entry in evidence) {
-            if (entry.quote.codePointLength() !in 1..MAX_QUOTE_CODE_POINTS) {
+            val quote = Normalizer.normalize(entry.quote, Normalizer.Form.NFC)
+            if (quote.codePointLength() !in 1..MAX_QUOTE_CODE_POINTS) {
                 failures += RejectionReason.EVIDENCE_QUOTE_LENGTH
-            }
-            if (entry.start < 0 || entry.end <= entry.start || entry.end > inputLength) {
-                failures += RejectionReason.EVIDENCE_SPAN_INVALID
-            } else if (Normalizer.normalize(entry.quote, Normalizer.Form.NFC) !=
-                normalized.codePointSlice(entry.start, entry.end)
-            ) {
+            } else if (quote !in normalized) {
                 failures += RejectionReason.EVIDENCE_QUOTE_MISMATCH
             }
         }
         return failures
+    }
+
+    private fun minutesNotQuoted(extraction: IntentExtraction): Boolean {
+        val minutes = extraction.timeBudget?.minutes ?: return false
+        val quotes = extraction.evidence.filter { it.field == EvidenceField.TIME_BUDGET }.map { it.quote }
+        if (quotes.isEmpty()) return false
+        val digits = minutes.toString()
+        return quotes.none { quote -> runs(quote).any { it == digits || it in NUMBER_WORDS } }
+    }
+
+    // Whole runs only, so "30 minutes" never licenses 3 and "often" never licenses ten.
+    private fun runs(quote: String): List<String> {
+        val runs = mutableListOf<String>()
+        val current = StringBuilder()
+        var digits = false
+        for (char in quote.lowercase()) {
+            val usable = char.isLetter() || char.isDigit()
+            if (!usable || (current.isNotEmpty() && char.isDigit() != digits)) {
+                if (current.isNotEmpty()) runs += current.toString()
+                current.clear()
+            }
+            if (usable) {
+                digits = char.isDigit()
+                current.append(char)
+            }
+        }
+        if (current.isNotEmpty()) runs += current.toString()
+        return runs
     }
 
     private fun factsWithoutEvidence(extraction: IntentExtraction): Boolean {
@@ -136,12 +165,8 @@ object IntentValidator {
         }
     }
 
-    // The contract counts Unicode code points, so UTF-16 char indices would
-    // quietly accept a shifted span in any note containing an emoji.
+    // The contract's limits count Unicode code points, not UTF-16 chars.
     private fun String.codePointLength(): Int = codePointCount(0, length)
-
-    private fun String.codePointSlice(start: Int, end: Int): String =
-        substring(offsetByCodePoints(0, start), offsetByCodePoints(0, end))
 }
 
 private object RepeatedKeys {

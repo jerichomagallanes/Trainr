@@ -35,11 +35,12 @@ class LlamaIntentInterpreter(
     ): InterpreterResult {
         if (directReason == DirectReason.PAIN) return InterpreterResult.Unavailable
         if (availability != InterpreterAvailability.READY) return InterpreterResult.Unavailable
+        val grammar = IntentGrammar.forNote(text) ?: return InterpreterResult.Unavailable
 
         val result = model.complete(
             system = IntentPrompt.SYSTEM_INSTRUCTION,
             user = text,
-            grammar = IntentGrammar.forNote(text),
+            grammar = grammar,
             maxTokens = IntentGrammar.MAX_TOKENS,
             timeout = TIMEOUT
         )

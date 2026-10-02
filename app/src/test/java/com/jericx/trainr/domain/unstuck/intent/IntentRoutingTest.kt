@@ -12,7 +12,7 @@ class IntentRoutingTest {
         extraction(
             intent = IntentKind.LESS_TIME,
             timeBudget = TimeBudgetMention(minutes = 35, scope = MentionScope.WHOLE_SESSION),
-            evidence = listOf(Evidence(EvidenceField.TIME_BUDGET, "35 minutes", start = 7, end = 17))
+            evidence = listOf(Evidence(EvidenceField.TIME_BUDGET, "35 minutes"))
         ),
         timeNote
     )
@@ -25,8 +25,8 @@ class IntentRoutingTest {
                 timeBudget = TimeBudgetMention(minutes = 20, scope = MentionScope.WHOLE_SESSION),
                 concern = Concern.PAIN_OR_UNCLEAR_DISCOMFORT,
                 evidence = listOf(
-                    Evidence(EvidenceField.TIME_BUDGET, "20 minutes", start = 7, end = 17),
-                    Evidence(EvidenceField.CONCERN, "my knee hurts", start = 22, end = 35)
+                    Evidence(EvidenceField.TIME_BUDGET, "20 minutes"),
+                    Evidence(EvidenceField.CONCERN, "my knee hurts")
                 )
             ),
             painNote
