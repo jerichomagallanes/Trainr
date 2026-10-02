@@ -1,7 +1,7 @@
 package com.jericx.trainr.data.generation
 
 // The generator writes only these fields; everything else on the domain model
-// is app state or derived. docs/generation-contract.md annotates them.
+// is app state or derived.
 data class GeneratedPlan(
     val title: String,
     val days: List<GeneratedDay>

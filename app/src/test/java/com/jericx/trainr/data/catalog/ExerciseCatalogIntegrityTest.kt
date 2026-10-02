@@ -105,12 +105,13 @@ class ExerciseCatalogIntegrityTest {
         assertThat(Equipment.entries).hasSize(9)
     }
 
-    // The catalog is generated from docs/exercise-source.txt and may hold
-    // nothing else. Checked both ways: a movement invented into the catalog
+    // The catalog is generated from the transcribed source kept beside the
+    // tests, and may hold nothing else. Checked both ways: a movement invented into the catalog
     // fails, and one transcribed but lost in generation fails too.
     @Test
     fun theCatalogIsExactlyWhatWasTranscribedFromTheSource() {
-        val source = File("../docs/exercise-source.txt").readLines()
+        val source = javaClass.getResourceAsStream("/exercise-source.txt")!!
+            .bufferedReader().readLines()
             .filterNot { it.isBlank() || it.startsWith("#") }
             .map { it.split("|") }
             .map { Triple(it[1], it[0], it[2]) }
