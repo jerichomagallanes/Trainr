@@ -90,12 +90,39 @@ class ProPaywallScreenTest {
             .assertCountEquals(2)
     }
 
+    // Reaching the paywall from Unstuck must not open on the free week, which is
+    // a limit the person may never have hit.
+    @Test
+    fun anAdjustmentThatAsksForProLeadsWithAdjusting() {
+        setScreen(reason = PaywallReason.ADJUST)
+
+        composeTestRule.onNodeWithText(string(R.string.pro_feature_adjust_title))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.pro_feature_adjust_body))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.pro_free_limit_adjust)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.pro_free_limit)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.pro_feature_next_week_title)).assertExists()
+    }
+
+    @Test
+    fun itSellsAdjustingAsAFeatureAndARow() {
+        setScreen()
+
+        composeTestRule.onNodeWithText(string(R.string.pro_feature_adjust_title))
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.pro_compare_adjust)).assertExists()
+    }
+
     // Opened from the profile menu, nothing was reached for, so nothing leads.
     @Test
     fun itSellsTheEndOfAdsAsAFeatureAndARow() {
         setScreen()
 
-        composeTestRule.onNodeWithText(string(R.string.pro_feature_ads_title)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.pro_feature_ads_title))
+            .performScrollTo()
+            .assertIsDisplayed()
         composeTestRule.onNodeWithText(string(R.string.pro_compare_ads)).assertExists()
     }
 
@@ -184,7 +211,9 @@ class ProPaywallScreenTest {
         composeTestRule.onNodeWithText(string(R.string.pro_compare_generated))
             .performScrollTo()
             .assertIsDisplayed()
-        composeTestRule.onNodeWithText(string(R.string.pro_compare_one)).assertIsDisplayed()
+        // Two rows read "1": the free week, and the adjustment included with it.
+        composeTestRule.onAllNodesWithText(string(R.string.pro_compare_one))
+            .assertCountEquals(2)
         // "Every week" and not "Unlimited": what Pro gets is a new week once the
         // current one is finished, which is a promise the plan screen keeps.
         composeTestRule.onNodeWithText(string(R.string.pro_compare_every_week))
