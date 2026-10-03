@@ -40,6 +40,10 @@ class InMemoryAdjustmentRepository : AdjustmentRepository {
     override suspend fun getOutcomes(dayIds: List<Long>): List<SessionOutcome> =
         outcomes.values.filter { it.workoutDayId in dayIds }
 
+    override suspend fun deleteOutcome(dayId: Long) {
+        outcomes.values.removeAll { it.workoutDayId == dayId }
+    }
+
     override suspend fun recordAdjustment(applied: AppliedAdjustment): Long {
         val id = idFor(applied.id)
         adjustments[id] = applied.copy(id = id)

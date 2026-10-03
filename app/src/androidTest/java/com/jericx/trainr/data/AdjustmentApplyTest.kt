@@ -18,6 +18,7 @@ import com.jericx.trainr.domain.model.FitnessGoal
 import com.jericx.trainr.domain.model.Gender
 import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.model.WorkoutDay
+import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.domain.unstuck.ActualOrigin
 import com.jericx.trainr.domain.unstuck.AdjustmentConstraint
 import com.jericx.trainr.domain.unstuck.AdjustmentProposal
@@ -27,10 +28,12 @@ import com.jericx.trainr.domain.unstuck.ApplyRejection
 import com.jericx.trainr.domain.unstuck.ApplyResult
 import com.jericx.trainr.domain.unstuck.ChangeKind
 import com.jericx.trainr.domain.unstuck.ExerciseSnapshot
+import com.jericx.trainr.domain.unstuck.FinishKind
 import com.jericx.trainr.domain.unstuck.PlanRevision
 import com.jericx.trainr.domain.unstuck.PolicyDecision
 import com.jericx.trainr.domain.unstuck.ProposalChange
 import com.jericx.trainr.domain.unstuck.ReasonCode
+import com.jericx.trainr.domain.unstuck.SessionOutcome
 import com.jericx.trainr.domain.unstuck.SetSnapshot
 import com.jericx.trainr.domain.unstuck.TimeScope
 import com.jericx.trainr.domain.unstuck.UndoResult
@@ -410,6 +413,50 @@ class AdjustmentApplyTest {
         adjustments.undo(applied.adjustment.id, NOW + MINUTE)
 
         assertThat(PlanRevision.of(reread(day.id))).isEqualTo(before)
+    }
+
+    @Test
+    fun applyingToADayFinishedEarlyReopensIt() = runTest {
+        val seeded = seedDay()
+        val planId = checkNotNull(workouts.getWeeklyWorkoutPlan(checkNotNull(workouts.getCurrentUser()).id, 1)).id
+        workouts.updateWorkoutDay(seeded.copy(status = WorkoutStatus.COMPLETED, completedAt = NOW), planId)
+        adjustments.saveOutcome(
+            SessionOutcome(
+                workoutDayId = seeded.id,
+                finishKind = FinishKind.PARTIAL,
+                finishedAt = NOW,
+                performedSetCount = 0,
+                plannedSetCount = 12
+            )
+        )
+        val day = reread(seeded.id)
+
+        val result = adjustments.apply(shorten(day), day.id, AdjustmentReason.LESS_TIME, NOW + MINUTE)
+
+        assertThat(result).isInstanceOf(ApplyResult.Applied::class.java)
+        val after = reread(day.id)
+        assertThat(after.status).isEqualTo(WorkoutStatus.NOT_STARTED)
+        assertThat(after.completedAt).isNull()
+        assertThat(adjustments.getOutcome(day.id)).isNull()
+    }
+
+    @Test
+    fun applyingToADayFinishedInFullLeavesItsOutcome() = runTest {
+        val seeded = seedDay()
+        adjustments.saveOutcome(
+            SessionOutcome(
+                workoutDayId = seeded.id,
+                finishKind = FinishKind.FULL,
+                finishedAt = NOW,
+                performedSetCount = 12,
+                plannedSetCount = 12
+            )
+        )
+        val day = reread(seeded.id)
+
+        adjustments.apply(shorten(day), day.id, AdjustmentReason.LESS_TIME, NOW + MINUTE)
+
+        assertThat(adjustments.getOutcome(day.id)?.finishKind).isEqualTo(FinishKind.FULL)
     }
 
     private suspend fun seedDay(): WorkoutDay {

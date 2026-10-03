@@ -21,6 +21,14 @@ class StoredAdjustmentAllowance(context: Context) : AdjustmentAllowance {
         }
     }
 
+    override fun restore(cycleId: String) {
+        if (prefs.getString(KEY_CYCLE, null) != cycleId) return
+        prefs.edit {
+            remove(KEY_CYCLE)
+            remove(KEY_CONSUMED_AT)
+        }
+    }
+
     companion object {
         private const val PREFS_NAME = "purchase_preferences"
         private const val KEY_CYCLE = "adjustment_included_cycle"

@@ -19,6 +19,9 @@ interface UnstuckDao {
     @Query("SELECT * FROM session_outcomes WHERE workoutDayId IN (:dayIds)")
     suspend fun getOutcomesForDays(dayIds: List<Long>): List<SessionOutcomeEntity>
 
+    @Query("DELETE FROM session_outcomes WHERE workoutDayId = :dayId")
+    suspend fun deleteOutcomeForDay(dayId: Long)
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertAdjustment(adjustment: AppliedAdjustmentEntity): Long
 

@@ -11,6 +11,7 @@ import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.model.WorkoutExercise
 import com.jericx.trainr.presentation.Screen
 import com.jericx.trainr.domain.model.WorkoutStatus
+import com.jericx.trainr.domain.purchases.AdjustmentAllowance
 import com.jericx.trainr.domain.repository.AdjustmentRepository
 import com.jericx.trainr.domain.repository.UserRepository
 import com.jericx.trainr.domain.unstuck.AdjustmentProposal
@@ -71,7 +72,10 @@ data class RoutineDetailUiState(
     // Null while the stored day is unadjusted: the header then reads the
     // planned per-exercise minutes as it always has.
     val totalMinutes: Int? = null
-)
+) {
+    val hasRemainingWork: Boolean
+        get() = outcome?.finishKind != FinishKind.FULL && routine.hasUnperformedWork
+}
 
 data class SessionSavedEvent(
     val dayNumber: Int,
@@ -85,6 +89,7 @@ class RoutineDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val userRepository: UserRepository,
     private val adjustmentRepository: AdjustmentRepository,
+    private val allowance: AdjustmentAllowance,
     private val catalog: ExerciseCatalog
 ) : ViewModel() {
 
@@ -229,8 +234,10 @@ class RoutineDetailViewModel @Inject constructor(
 
         viewModelScope.launch {
             val result = adjustmentRepository.undo(adjustment.id, System.currentTimeMillis())
+            if (result is UndoResult.Restored) allowance.restore(adjustment.proposal.proposalId)
             val kept = (result as? UndoResult.Restored)?.keptPerformedSubstituteSets ?: 0
             read()
+            if (result is UndoResult.Restored) reopen()
             _uiState.update { it.copy(undoKeptSets = kept.takeIf { count -> count > 0 }) }
         }
     }
@@ -259,6 +266,7 @@ class RoutineDetailViewModel @Inject constructor(
     }
 
     fun toggleExercise(position: Int) {
+        reopen()
         val state = _uiState.value
         val routine = state.routine.toggleCompleted(position)
         val nowCompleted = routine.exercises.any { it.position == position && it.isCompleted }
@@ -273,6 +281,7 @@ class RoutineDetailViewModel @Inject constructor(
 
     fun updateSet(position: Int, set: ExerciseSet) {
         val was = completionOf(position)
+        if (set.isCompleted != tickOf(position, set.setNumber)) reopen()
         _uiState.update { it.copy(routine = it.routine.updateSet(position, set)) }
         reconcileCompletion(position, was)
 
@@ -285,6 +294,7 @@ class RoutineDetailViewModel @Inject constructor(
     }
 
     fun addSet(position: Int) {
+        reopen()
         val was = completionOf(position)
         _uiState.update { it.copy(routine = it.routine.addSet(position)) }
         reconcileCompletion(position, was)
@@ -310,6 +320,7 @@ class RoutineDetailViewModel @Inject constructor(
             .firstOrNull { it.position == position }?.sets ?: return
         val set = sets.firstOrNull { it.setNumber == setNumber } ?: return
 
+        reopen()
         val was = completionOf(position)
         _uiState.update { it.copy(routine = it.routine.removeSet(position, setNumber)) }
         reconcileCompletion(position, was)
@@ -327,6 +338,7 @@ class RoutineDetailViewModel @Inject constructor(
 
     fun completeRoutine() {
         cancelTick()
+        reopen()
         _uiState.update { it.copy(routine = it.routine.completeAll(), timer = null) }
 
         val day = storedDay ?: return
@@ -417,6 +429,7 @@ class RoutineDetailViewModel @Inject constructor(
     // never overwritten, so they need no restoring.
     fun clearProgress() {
         cancelTick()
+        reopen()
         _uiState.update { it.copy(routine = it.routine.clearProgress(), timer = null) }
 
         val day = storedDay ?: return
@@ -503,6 +516,7 @@ class RoutineDetailViewModel @Inject constructor(
             if (remaining > 0) {
                 _uiState.update { it.copy(timer = timer.copy(remainingSeconds = remaining)) }
             } else {
+                reopen()
                 _uiState.update {
                     it.copy(routine = it.routine.markCompleted(timer.position), timer = null)
                 }
@@ -514,6 +528,22 @@ class RoutineDetailViewModel @Inject constructor(
 
     private fun completionOf(position: Int): Boolean? =
         _uiState.value.routine.exercises.firstOrNull { it.position == position }?.isCompleted
+
+    private fun tickOf(position: Int, setNumber: Int): Boolean? =
+        _uiState.value.routine.exercises.firstOrNull { it.position == position }
+            ?.sets?.firstOrNull { it.setNumber == setNumber }?.isCompleted
+
+    // A corrected number is not new work, so it leaves the day closed.
+    private fun reopen() {
+        val day = storedDay ?: return
+        if (_uiState.value.outcome?.finishKind != FinishKind.PARTIAL) return
+        storedDay = day.copy(completedAt = null)
+        _uiState.update { it.copy(outcome = null) }
+        viewModelScope.launch {
+            adjustmentRepository.deleteOutcome(day.id)
+            persistDayStatus()
+        }
+    }
 
     private fun reconcileCompletion(position: Int, was: Boolean?) {
         val now = completionOf(position) ?: return
@@ -588,15 +618,9 @@ class RoutineDetailViewModel @Inject constructor(
 
     private suspend fun persistDayStatus() {
         val day = storedDay ?: return
-        // A day finished early is closed for good: correcting a number on it
-        // must not reopen it as in progress.
         if (_uiState.value.outcome?.finishKind == FinishKind.PARTIAL) return
         val visible = day.visibleExercises
-        val status = when (visible.count { it.isCompleted }) {
-            0 -> WorkoutStatus.NOT_STARTED
-            visible.size -> WorkoutStatus.COMPLETED
-            else -> WorkoutStatus.IN_PROGRESS
-        }
+        val status = WorkoutStatus.derived(visible.count { it.isCompleted }, visible.size)
         val updated = day.copy(
             status = status,
             completedAt = if (status == WorkoutStatus.COMPLETED) {
