@@ -67,6 +67,7 @@ import com.jericx.trainr.presentation.splash.SplashScreen
 import com.jericx.trainr.presentation.unstuck.DebriefRoute
 import com.jericx.trainr.presentation.unstuck.EditPreferenceRoute
 import com.jericx.trainr.presentation.unstuck.FINISH_EARLY_REQUEST
+import com.jericx.trainr.presentation.unstuck.GUIDE_REQUEST
 import com.jericx.trainr.presentation.unstuck.NoteSavedRoute
 import com.jericx.trainr.presentation.unstuck.PreferencesRoute
 import com.jericx.trainr.presentation.unstuck.adjustGraph
@@ -553,6 +554,9 @@ fun AppContent(
                     val howToRequested by entry.savedStateHandle
                         .getStateFlow<String?>(HOW_TO_REQUEST, null)
                         .collectAsStateWithLifecycle()
+                    val guideRequested by entry.savedStateHandle
+                        .getStateFlow(GUIDE_REQUEST, false)
+                        .collectAsStateWithLifecycle()
 
                     RoutineDetailRoute(
                         onBackClick = { navController.popBackStack() },
@@ -564,9 +568,9 @@ fun AppContent(
                                 Screen.DayCompleted.createRoute(completed, week)
                             )
                         },
-                        onWeekCompleted = { completed ->
+                        onWeekCompleted = { completed, week ->
                             navController.navigate(
-                                Screen.WeekCompleted.createRoute(completed, dayNumber)
+                                Screen.WeekCompleted.createRoute(week, dayNumber = completed)
                             )
                         },
                         onSessionSaved = { saved ->
@@ -594,7 +598,9 @@ fun AppContent(
                             entry.savedStateHandle[FINISH_EARLY_REQUEST] = false
                         },
                         howToRequested = howToRequested,
-                        onHowToHandled = { entry.savedStateHandle[HOW_TO_REQUEST] = null }
+                        onHowToHandled = { entry.savedStateHandle[HOW_TO_REQUEST] = null },
+                        guideRequested = guideRequested,
+                        onGuideHandled = { entry.savedStateHandle[GUIDE_REQUEST] = false }
                     )
                 }
 
@@ -700,9 +706,14 @@ fun AppContent(
                         }
                     )
                 ) { entry ->
+                    val weekNumber = entry.arguments
+                        ?.getInt(Screen.WeekCompleted.ARG_WEEK_NUMBER) ?: 1
+                    val dayNumber = entry.arguments
+                        ?.getInt(Screen.WeekCompleted.ARG_DAY_NUMBER)
+                        ?: Screen.WeekCompleted.NO_DAY
+
                     WeekCompletedRoute(
-                        weekNumber = entry.arguments
-                            ?.getInt(Screen.WeekCompleted.ARG_WEEK_NUMBER) ?: 1,
+                        weekNumber = weekNumber,
                         onBackClick = { navController.popBackStack() },
                         onViewProgressClick = {
                             navController.navigate(Screen.WeeklyProgress.route)
@@ -712,6 +723,11 @@ fun AppContent(
                         },
                         onFeedback = { adjustmentId ->
                             navController.navigate(Screen.Feedback.createRoute(adjustmentId))
+                        },
+                        onLeaveNote = {
+                            navController.navigate(
+                                Screen.Debrief.createRoute(dayNumber, weekNumber)
+                            )
                         }
                     )
                 }

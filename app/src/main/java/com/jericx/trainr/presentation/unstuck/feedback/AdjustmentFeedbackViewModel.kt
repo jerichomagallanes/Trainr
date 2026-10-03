@@ -122,8 +122,9 @@ class AdjustmentFeedbackViewModel @Inject constructor(
     // be in the newest week.
     private suspend fun sessionOf(workoutDayId: Long): Pair<Int, Int>? {
         val week = userRepository.getWeekOutlineOf(workoutDayId) ?: return null
-        return week.days.firstOrNull { it.id == workoutDayId }
-            ?.let { day -> day.dayNumber to week.weekNumber }
+        // The debrief counts training days, not weekdays.
+        val ordinal = week.days.indexOfFirst { it.id == workoutDayId }
+        return if (ordinal < 0) null else ordinal + 1 to week.weekNumber
     }
 }
 

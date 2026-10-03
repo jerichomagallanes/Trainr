@@ -56,7 +56,7 @@ data class ExerciseChoice(val id: Long, val name: String)
 
 enum class ApplyErrorUi { STALE_REBUILT, NOT_APPLIED }
 
-enum class ContextHint { CHOOSER, GUIDE, FAILED }
+enum class ContextHint { CHOOSER, FAILED }
 
 sealed interface InterpreterUi {
     data object Unsupported : InterpreterUi
@@ -258,12 +258,10 @@ class AdjustmentViewModel @Inject constructor(
             _uiState.update {
                 it.copy(
                     reason = route.asDirectReason() ?: reason,
-                    contextHint = when (route) {
-                        UnstuckRoute.CHOOSER ->
-                            if (result is InterpreterResult.Failed) ContextHint.FAILED else ContextHint.CHOOSER
-
-                        UnstuckRoute.GUIDE -> ContextHint.GUIDE
-                        else -> null
+                    contextHint = when {
+                        route != UnstuckRoute.CHOOSER -> null
+                        result is InterpreterResult.Failed -> ContextHint.FAILED
+                        else -> ContextHint.CHOOSER
                     }
                 )
             }

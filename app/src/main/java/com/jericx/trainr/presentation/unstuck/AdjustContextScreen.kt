@@ -116,7 +116,6 @@ fun AdjustContextScreen(
                     text = stringResource(
                         when (it) {
                             ContextHint.CHOOSER -> R.string.context_hint_chooser
-                            ContextHint.GUIDE -> R.string.context_hint_guide
                             ContextHint.FAILED -> R.string.context_hint_failed
                         }
                     ),

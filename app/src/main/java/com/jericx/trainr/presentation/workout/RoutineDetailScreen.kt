@@ -82,13 +82,15 @@ import com.jericx.trainr.presentation.workout.util.WorkoutDateFormatter
 fun RoutineDetailRoute(
     onBackClick: () -> Unit = {},
     onDayCompleted: (dayNumber: Int, weekNumber: Int) -> Unit = { _, _ -> },
-    onWeekCompleted: (Int) -> Unit = {},
+    onWeekCompleted: (dayNumber: Int, weekNumber: Int) -> Unit = { _, _ -> },
     onSessionSaved: (SessionSavedEvent) -> Unit = {},
     onAdjust: (DirectReason, Long?) -> Unit = { _, _ -> },
     finishEarlyRequested: Boolean = false,
     onFinishEarlyHandled: () -> Unit = {},
     howToRequested: String? = null,
     onHowToHandled: () -> Unit = {},
+    guideRequested: Boolean = false,
+    onGuideHandled: () -> Unit = {},
     viewModel: RoutineDetailViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -114,6 +116,12 @@ fun RoutineDetailRoute(
         if (!state.isLoaded) return@LaunchedEffect
         onHowToHandled()
         viewModel.showHowToFor(key)
+    }
+
+    LaunchedEffect(guideRequested) {
+        if (!guideRequested) return@LaunchedEffect
+        onGuideHandled()
+        viewModel.openExercisePicker()
     }
 
     RoutineDetailScreen(
@@ -170,7 +178,7 @@ fun RoutineDetailScreen(
     onToggleVideo: (Int) -> Unit = {},
     onToggleHowTo: (Int) -> Unit = {},
     onDayCompleted: (dayNumber: Int, weekNumber: Int) -> Unit = { _, _ -> },
-    onWeekCompleted: (Int) -> Unit = {},
+    onWeekCompleted: (dayNumber: Int, weekNumber: Int) -> Unit = { _, _ -> },
     onAskToFinishEarly: () -> Unit = {},
     onKeepTraining: () -> Unit = {},
     onFinishEarly: () -> Unit = {},
@@ -211,7 +219,7 @@ fun RoutineDetailScreen(
         // A session closed as finished early is not re-celebrated by ticking its last box.
         if (previous != null && isComplete && !previous && !finishedEarly) {
             if (state.completesTheWeek) {
-                onWeekCompleted(state.weekNumber)
+                onWeekCompleted(state.dayNumber, state.weekNumber)
             } else {
                 onDayCompleted(state.dayNumber, state.weekNumber)
             }
@@ -442,7 +450,8 @@ fun RoutineDetailScreen(
             exercises = routine.exercises.map { it.name },
             onChoose = onChooseReason,
             onShowHowTo = onShowHowTo,
-            onDismiss = onDismissAdjustSheet
+            onDismiss = onDismissAdjustSheet,
+            startOnExercises = state.isPickingExercise
         )
     }
 

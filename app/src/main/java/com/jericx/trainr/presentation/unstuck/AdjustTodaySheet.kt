@@ -35,11 +35,12 @@ fun AdjustTodaySheet(
     exercises: List<String>,
     onChoose: (DirectReason) -> Unit,
     onShowHowTo: (Int) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    startOnExercises: Boolean = false
 ) {
     val colors = MaterialTheme.trainrColors
     val locale = LocalLocale.current.platformLocale
-    var pickingExercise by remember { mutableStateOf(false) }
+    var pickingExercise by remember { mutableStateOf(startOnExercises) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
