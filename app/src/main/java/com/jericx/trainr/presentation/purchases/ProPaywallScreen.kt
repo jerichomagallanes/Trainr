@@ -100,7 +100,7 @@ fun ProPaywallScreen(
                             color = colors.onSurfaceMuted
                         )
                         Text(
-                            text = stringResource(R.string.pro_free_limit),
+                            text = stringResource(reason.freeLimit),
                             style = MaterialTheme.typography.bodySmall,
                             color = colors.onSurfaceMuted
                         )
@@ -262,6 +262,11 @@ private val COMPARISON = listOf(
     ComparisonRow(R.string.pro_compare_repeat, Mark.No, Mark.Yes),
     ComparisonRow(R.string.pro_compare_rewrite, Mark.No, Mark.Yes),
     ComparisonRow(R.string.pro_compare_fresh, Mark.No, Mark.Yes),
+    ComparisonRow(
+        R.string.pro_compare_adjust,
+        Mark.Count(R.string.pro_compare_one),
+        Mark.Yes
+    ),
     ComparisonRow(R.string.pro_compare_ads, Mark.No, Mark.Yes)
 )
 

@@ -7,17 +7,22 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.down
 import androidx.compose.ui.test.moveBy
 import androidx.compose.ui.test.up
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.R
 import com.jericx.trainr.domain.model.WorkoutDay
+import com.jericx.trainr.domain.unstuck.PreferenceKind
+import com.jericx.trainr.domain.unstuck.TrainingPreference
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
+import com.jericx.trainr.presentation.unstuck.TodayAdjustmentKind
 import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
 import org.junit.Rule
 import org.junit.Test
@@ -654,4 +659,140 @@ class WeeklyPlanScreenTest {
         assertThat(startedNextWeek).isTrue()
     }
 
+    private fun plural(id: Int, count: Int, vararg args: Any) =
+        composeTestRule.activity.resources.getQuantityString(id, count, *args)
+
+    private val todaysDay = state.days.first { it.isToday }.day
+
+    private fun weekdayLimit(minutes: Int = 35) = TrainingPreference(
+        id = 1,
+        userId = 1,
+        kind = PreferenceKind.TIME_LIMIT,
+        minutes = minutes,
+        weekday = 3,
+        sourceAdjustmentId = null,
+        confirmedAt = 1L,
+        updatedAt = 1L
+    )
+
+    @Test
+    fun anAdjustedTodayIsAnnouncedAndOpensThatSession() {
+        var opened: WorkoutDay? = null
+        composeTestRule.setContent {
+            TrainrTheme {
+                WeeklyPlanScreen(
+                    state = state.copy(todayAdjustment = TodayAdjustmentKind.SHORTER),
+                    onDayClick = { opened = it }
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.ready_for_today)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.adjusted)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.adjusted_time_card_body))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.view_todays_workout)).performClick()
+
+        assertThat(opened).isEqualTo(todaysDay)
+    }
+
+    @Test
+    fun anAdjustedDayCarriesTheMarkerWhetherOrNotItIsToday() {
+        val later = state.days.last { !it.isToday && it.day.status != WorkoutStatus.COMPLETED }
+        composeTestRule.setContent {
+            TrainrTheme {
+                WeeklyPlanScreen(
+                    state = state.copy(
+                        days = state.days.map { if (it == later) it.copy(isAdjusted = true) else it }
+                    )
+                )
+            }
+        }
+
+        composeTestRule.onAllNodesWithText(string(R.string.adjusted)).assertCountEquals(1)
+        composeTestRule.onAllNodesWithText(string(R.string.not_started)).assertCountEquals(0)
+        composeTestRule.onNodeWithText(string(R.string.ready_for_today)).assertDoesNotExist()
+    }
+
+    @Test
+    fun anEquipmentAlternativeSaysWhatWasSwapped() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                WeeklyPlanScreen(state = state.copy(todayAdjustment = TodayAdjustmentKind.ALTERNATIVE))
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.adjusted_equipment_card_body))
+            .assertIsDisplayed()
+    }
+
+    // An offer to review, never a change already made.
+    @Test
+    fun aWeekdayLimitOffersAShorterVersionWithThatBudget() {
+        var reviewed: Pair<WorkoutDay, Int>? = null
+        composeTestRule.setContent {
+            TrainrTheme {
+                WeeklyPlanScreen(
+                    state = state.copy(todayPreference = weekdayLimit()),
+                    onAdjustToday = { day, minutes -> reviewed = day to minutes }
+                )
+            }
+        }
+
+        composeTestRule
+            .onNodeWithText(plural(R.plurals.usually_have_minutes_format, 35, 35))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.review_shorter_version)).performClick()
+
+        assertThat(reviewed).isEqualTo(todaysDay to 35)
+    }
+
+    @Test
+    fun nothingRememberedLeavesHomeWithoutACard() {
+        setScreen()
+
+        composeTestRule.onNodeWithText(string(R.string.ready_for_today)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.review_shorter_version))
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.training_preferences))
+            .assertDoesNotExist()
+    }
+
+    @Test
+    fun somethingRememberedPutsAWayIntoPreferencesUnderTheWeek() {
+        var opened = false
+        composeTestRule.setContent {
+            TrainrTheme {
+                WeeklyPlanScreen(
+                    state = state.copy(hasMemory = true),
+                    onTrainingPreferencesClick = { opened = true }
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.training_preferences))
+            .performScrollTo()
+            .performClick()
+
+        assertThat(opened).isTrue()
+    }
+
+    @Test
+    fun aBrowsedWeekCarriesNeitherCard() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                WeeklyPlanScreen(
+                    state = pastWeek.copy(
+                        todayAdjustment = TodayAdjustmentKind.SHORTER,
+                        hasMemory = true
+                    ),
+                    onBackClick = {}
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.ready_for_today)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.training_preferences))
+            .assertDoesNotExist()
+    }
 }

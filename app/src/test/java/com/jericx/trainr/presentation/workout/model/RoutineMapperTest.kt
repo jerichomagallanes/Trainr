@@ -10,6 +10,7 @@ import com.jericx.trainr.domain.model.ExerciseSet
 import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.model.WorkoutExercise
 import com.jericx.trainr.domain.model.WorkoutStatus
+import com.jericx.trainr.domain.unstuck.testUser
 import org.junit.Test
 
 class RoutineMapperTest {
@@ -143,6 +144,27 @@ class RoutineMapperTest {
     }
 
     private val catalog = ExerciseCatalogReader.read(File("src/main/assets/exercise-catalog.json").readText())
+
+    // Stored minutes describe the day as generated; with a profile to price the
+    // sets, the card counts the sets still planned, so a cut shows on it.
+    @Test
+    fun theMinutesFollowTheSetsStillPlanned() {
+        val squat = WorkoutExercise(
+            exerciseKey = "goblet_squat",
+            name = "Goblet Squat",
+            measure = ExerciseMeasure.WEIGHT_AND_REPS,
+            durationMinutes = 10,
+            restTime = 60,
+            sets = (1..3).map { ExerciseSet(setNumber = it, targetReps = 10, targetWeightKg = 20f) }
+        )
+        val cut = squat.copy(sets = squat.sets.map { if (it.setNumber == 3) it.copy(omittedBy = 1L) else it })
+
+        assertThat(day(squat).toRoutineUi(catalog = catalog).exercises.single().minutes).isEqualTo(10)
+        assertThat(day(squat).toRoutineUi(catalog = catalog, user = testUser()).exercises.single().minutes)
+            .isEqualTo(4)
+        assertThat(day(cut).toRoutineUi(catalog = catalog, user = testUser()).exercises.single().minutes)
+            .isEqualTo(2)
+    }
 
     @Test
     fun theCatalogSaysHowAMovementIsDone() {

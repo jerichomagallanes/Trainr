@@ -7,7 +7,15 @@ import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
 import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.model.WorkoutStatus
+import com.jericx.trainr.domain.repository.AdjustmentRepository
 import com.jericx.trainr.domain.repository.UserRepository
+import com.jericx.trainr.domain.unstuck.AdjustmentReason
+import com.jericx.trainr.domain.unstuck.FinishKind
+import com.jericx.trainr.domain.unstuck.PreferenceKind
+import com.jericx.trainr.domain.unstuck.SessionOutcome
+import com.jericx.trainr.domain.unstuck.TrainingPreference
+import com.jericx.trainr.presentation.unstuck.TodayAdjustmentKind
+import com.jericx.trainr.presentation.unstuck.feedback.appliedAdjustment
 import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
 import com.jericx.trainr.presentation.workout.util.WorkoutWeek
 import com.jericx.trainr.presentation.workout.util.mondayOf
@@ -33,11 +41,14 @@ class WeeklyPlanViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var userRepository: UserRepository
+    private lateinit var adjustmentRepository: AdjustmentRepository
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         userRepository = mockk(relaxed = true)
+        adjustmentRepository = mockk(relaxed = true)
+        coEvery { adjustmentRepository.getOutcomes(any()) } returns emptyList()
     }
 
     @After
@@ -50,7 +61,9 @@ class WeeklyPlanViewModelTest {
         SavedStateHandle(
             weekNumber?.let { mapOf(Screen.WeekPlan.ARG_WEEK_NUMBER to it) } ?: emptyMap()
         ),
-        userRepository
+        userRepository,
+        adjustmentRepository,
+        SampleWorkoutData.catalog
     )
 
     private val storedPlan = WeeklyWorkoutPlan(
@@ -426,4 +439,212 @@ class WeeklyPlanViewModelTest {
         assertThat(state.nextWorkout?.day?.title).isEqualTo("Session 1")
     }
 
+    @Test
+    fun aDayFinishedEarlyCarriesItsFinishKind() = runTest {
+        coEvery { userRepository.getCurrentUser() } returns UserProfile(id = 1)
+        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(storedPlan))
+        coEvery { adjustmentRepository.getOutcomes(listOf(1L)) } returns listOf(
+            SessionOutcome(
+                workoutDayId = 1,
+                finishKind = FinishKind.PARTIAL,
+                finishedAt = 5L,
+                performedSetCount = 2,
+                plannedSetCount = 6
+            )
+        )
+
+        val viewModel = viewModel()
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.days.single().finishKind).isEqualTo(FinishKind.PARTIAL)
+    }
+
+    private val todayPlan = storedPlan.copy(
+        startDateMillis = WorkoutWeek.startOfDay(),
+        workoutDays = listOf(storedPlan.workoutDays.first().copy(dayNumber = 1))
+    )
+
+    private val todayWeekday = WorkoutWeek.isoWeekdayOf(WorkoutWeek.startOfDay())
+
+    private fun planLoaded(plan: WeeklyWorkoutPlan = todayPlan) {
+        coEvery { userRepository.getCurrentUser() } returns UserProfile(id = 1)
+        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(plan))
+    }
+
+    private fun storedLimit(weekday: Int, minutes: Int = 35) = TrainingPreference(
+        id = 2,
+        userId = 1,
+        kind = PreferenceKind.TIME_LIMIT,
+        minutes = minutes,
+        weekday = weekday,
+        sourceAdjustmentId = null,
+        confirmedAt = 1L,
+        updatedAt = 1L
+    )
+
+    @Test
+    fun aDayWithAnAdjustmentStandingIsMarkedAdjusted() {
+        val adjusted = SampleWorkoutData.weekOne.workoutDays.last().id
+        val state = WeeklyPlanViewModel.stateFor(
+            plan = SampleWorkoutData.weekOne,
+            adjustedDayIds = setOf(adjusted)
+        )
+
+        assertThat(state.days.filter { it.isAdjusted }.map { it.day.id }).containsExactly(adjusted)
+    }
+
+    @Test
+    fun theStandingAdjustmentsAreReadForEveryDayOfTheWeek() = runTest {
+        planLoaded()
+        coEvery { adjustmentRepository.getActiveAdjustments(listOf(1L)) } returns
+            listOf(appliedAdjustment(1))
+
+        val viewModel = viewModel()
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.days.single().isAdjusted).isTrue()
+    }
+
+    @Test
+    fun aDraggedWeekKeepsItsAdjustedMarkers() = runTest {
+        val plan = storedPlan.copy(workoutDays = sessions())
+        val adjusted = plan.workoutDays[1].id
+        coEvery { userRepository.getCurrentUser() } returns UserProfile(id = 1)
+        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(plan))
+        coEvery { adjustmentRepository.getActiveAdjustments(plan.workoutDays.map { it.id }) } returns
+            listOf(appliedAdjustment(adjusted))
+        val viewModel = viewModel()
+        advanceUntilIdle()
+
+        viewModel.moveDay(from = 0, to = 1)
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.days.filter { it.isAdjusted }.map { it.day.id })
+            .containsExactly(adjusted)
+    }
+
+    @Test
+    fun anAdjustmentStillStandingOnTodayShowsTheReadyCard() = runTest {
+        planLoaded()
+        coEvery { adjustmentRepository.getActiveAdjustment(1) } returns
+            appliedAdjustment(1).copy(reason = AdjustmentReason.EQUIPMENT_UNAVAILABLE)
+
+        val viewModel = viewModel()
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.todayAdjustment)
+            .isEqualTo(TodayAdjustmentKind.ALTERNATIVE)
+        assertThat(viewModel.uiState.value.todayPreference).isNull()
+    }
+
+    // The session is over, so there is nothing left to be ready for.
+    @Test
+    fun aFinishedTodayShowsNeitherCard() = runTest {
+        planLoaded()
+        coEvery { adjustmentRepository.getActiveAdjustment(1) } returns appliedAdjustment(1)
+        coEvery { adjustmentRepository.getOutcomes(any()) } returns listOf(
+            SessionOutcome(
+                workoutDayId = 1,
+                finishKind = FinishKind.FULL,
+                finishedAt = 5L,
+                performedSetCount = 6,
+                plannedSetCount = 6
+            )
+        )
+        coEvery { adjustmentRepository.getPreference(any(), any(), any()) } returns
+            storedLimit(todayWeekday)
+
+        val viewModel = viewModel()
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.todayAdjustment).isNull()
+        assertThat(viewModel.uiState.value.todayPreference).isNull()
+    }
+
+    @Test
+    fun aWeekdayLimitShowsThePreferenceCardWhenNothingIsAdjusted() = runTest {
+        planLoaded()
+        coEvery { adjustmentRepository.getActiveAdjustment(1) } returns null
+        coEvery { adjustmentRepository.getPreference(1, PreferenceKind.TIME_LIMIT, todayWeekday) } returns
+            storedLimit(todayWeekday)
+
+        val viewModel = viewModel()
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.todayPreference?.minutes).isEqualTo(35)
+        assertThat(viewModel.uiState.value.todayAdjustment).isNull()
+    }
+
+    // The limit belongs to one weekday, so another day's session never reads it.
+    @Test
+    fun aLimitStoredForAnotherWeekdayShowsNoCard() = runTest {
+        planLoaded()
+        coEvery { adjustmentRepository.getActiveAdjustment(1) } returns null
+        coEvery { adjustmentRepository.getPreference(any(), any(), any()) } returns null
+
+        val viewModel = viewModel()
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.todayPreference).isNull()
+    }
+
+    @Test
+    fun anAdjustmentTakesPrecedenceOverTheWeekdayLimit() = runTest {
+        planLoaded()
+        coEvery { adjustmentRepository.getActiveAdjustment(1) } returns appliedAdjustment(1)
+        coEvery { adjustmentRepository.getPreference(any(), any(), any()) } returns
+            storedLimit(todayWeekday)
+
+        val viewModel = viewModel()
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.todayAdjustment).isEqualTo(TodayAdjustmentKind.SHORTER)
+        assertThat(viewModel.uiState.value.todayPreference).isNull()
+    }
+
+    @Test
+    fun theWayIntoPreferencesAppearsOnlyOnceSomethingIsRemembered() = runTest {
+        planLoaded()
+
+        assertThat(viewModel().also { advanceUntilIdle() }.uiState.value.hasMemory).isFalse()
+
+        coEvery { adjustmentRepository.getPreferences(1) } returns listOf(storedLimit(todayWeekday))
+
+        assertThat(viewModel().also { advanceUntilIdle() }.uiState.value.hasMemory).isTrue()
+    }
+
+    // The card is about the session sitting in today's slot, not about the slot.
+    @Test
+    fun draggingAnotherSessionIntoTodayDropsTheAdjustedCard() = runTest {
+        val today = todayPlan.workoutDays.first()
+        val tomorrow = today.copy(id = 2, dayNumber = 2, title = "Tomorrow")
+        planLoaded(todayPlan.copy(workoutDays = listOf(today, tomorrow)))
+        coEvery { adjustmentRepository.getActiveAdjustment(1) } returns appliedAdjustment(1)
+        coEvery { adjustmentRepository.getActiveAdjustment(2) } returns null
+        coEvery { adjustmentRepository.getPreference(any(), any(), any()) } returns null
+
+        val viewModel = viewModel()
+        advanceUntilIdle()
+        assertThat(viewModel.uiState.value.todayAdjustment).isEqualTo(TodayAdjustmentKind.SHORTER)
+
+        viewModel.moveDay(from = 0, to = 1)
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.todayAdjustment).isNull()
+    }
+
+    // A week being looked back on is a record; nothing about today belongs on it.
+    @Test
+    fun aBrowsedWeekCarriesNoCards() = runTest {
+        val newer = todayPlan.copy(id = 11, weekNumber = 2)
+        coEvery { userRepository.getCurrentUser() } returns UserProfile(id = 1)
+        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(todayPlan, newer))
+        coEvery { adjustmentRepository.getActiveAdjustment(1) } returns appliedAdjustment(1)
+
+        val viewModel = viewModel(weekNumber = 1)
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.todayAdjustment).isNull()
+        assertThat(viewModel.uiState.value.hasMemory).isFalse()
+    }
 }

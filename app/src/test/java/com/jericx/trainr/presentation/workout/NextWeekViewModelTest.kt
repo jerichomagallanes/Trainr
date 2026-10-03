@@ -11,6 +11,7 @@ import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.model.WorkoutExercise
 import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.domain.repository.UserRepository
+import com.jericx.trainr.domain.unstuck.ActualOrigin
 import com.jericx.trainr.presentation.workout.util.WorkoutWeek
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -335,6 +336,58 @@ class NextWeekViewModelTest {
         }
         coVerify(exactly = 0) { planGenerator.generate(any()) }
         assertThat(viewModel.isReady.value).isTrue()
+    }
+
+    @Test
+    fun repeatingAWeekLeavesOutASubstituteAddedForOneDay() = runTest {
+        val day = finishedWeek.workoutDays.single()
+        val squat = day.exercises.single().copy(sortOrder = 0)
+        val substitute = squat.copy(id = 8, name = "Split squat", exerciseKey = "split_squat", sortOrder = 1, addedBy = 5)
+        val row = squat.copy(id = 9, name = "Row", exerciseKey = "row", sortOrder = 2)
+        val adjusted = finishedWeek.copy(
+            workoutDays = listOf(day.copy(exercises = listOf(squat, substitute, row)))
+        )
+        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(adjusted))
+        val saved = slot<WeeklyWorkoutPlan>()
+        coEvery { userRepository.saveWeeklyWorkoutPlan(capture(saved)) } returns 2L
+
+        viewModel().repeatWeek()
+        advanceUntilIdle()
+
+        val exercises = saved.captured.workoutDays.single().exercises
+        assertThat(exercises.map { it.exerciseKey }).containsExactly(squat.exerciseKey, "row").inOrder()
+        assertThat(exercises.map { it.sortOrder }).containsExactly(0, 1).inOrder()
+        assertThat(exercises.map { it.addedBy }).containsExactly(null, null)
+    }
+
+    @Test
+    fun repeatingAWeekBringsBackASetOmittedForOneDay() = runTest {
+        val day = finishedWeek.workoutDays.single()
+        val exercise = day.exercises.single()
+        val omitted = ExerciseSet(id = 4, setNumber = 2, targetReps = 10, omittedBy = 5)
+        val adjusted = finishedWeek.copy(
+            workoutDays = listOf(
+                day.copy(
+                    exercises = listOf(
+                        exercise.copy(
+                            sets = listOf(exercise.sets.single().copy(actualOrigin = ActualOrigin.TYPED), omitted)
+                        )
+                    )
+                )
+            )
+        )
+        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(adjusted))
+        val saved = slot<WeeklyWorkoutPlan>()
+        coEvery { userRepository.saveWeeklyWorkoutPlan(capture(saved)) } returns 2L
+
+        viewModel().repeatWeek()
+        advanceUntilIdle()
+
+        val sets = saved.captured.workoutDays.single().exercises.single().sets
+        assertThat(sets.map { it.setNumber }).containsExactly(1, 2).inOrder()
+        assertThat(sets.map { it.omittedBy }).containsExactly(null, null)
+        assertThat(sets.map { it.actualOrigin }).containsExactly(ActualOrigin.NONE, ActualOrigin.NONE)
+        assertThat(sets.map { it.targetReps }).containsExactly(10, 10)
     }
 
     @Test
