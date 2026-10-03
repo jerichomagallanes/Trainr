@@ -4,6 +4,8 @@ import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.domain.repository.AdjustmentRepository
 import com.jericx.trainr.domain.unstuck.SessionNote
+import com.jericx.trainr.domain.unstuck.planned
+import com.jericx.trainr.domain.unstuck.testDay
 import com.jericx.trainr.presentation.Screen
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -48,7 +50,7 @@ class DebriefViewModelTest {
     private fun TestScope.viewModel(repository: AdjustmentRepository) = DebriefViewModel(
         SavedStateHandle(
             mapOf(
-                Screen.Debrief.ARG_DAY_NUMBER to preferenceDay.dayNumber,
+                Screen.Debrief.ARG_DAY_NUMBER to 1,
                 Screen.Debrief.ARG_WEEK_NUMBER to 1
             )
         ),
@@ -164,6 +166,33 @@ class DebriefViewModelTest {
         coVerify(exactly = 1) { users.getWeekOutline(any(), 1) }
         coVerify(exactly = 0) { users.getWeeklyWorkoutPlans(any()) }
         coVerify(exactly = 0) { users.getWorkoutDay(any()) }
+    }
+
+    // A three-day week stores 1, 3, 5, so the second session it holds is the
+    // day numbered 3.
+    @Test
+    fun theDayIsTheNthTrainingDayNotTheDayNumberedN() = runTest {
+        val second = testDay(planned("goblet_squat", sets = 3, id = 4), id = 8).copy(dayNumber = 3)
+        val repository = mockk<AdjustmentRepository>(relaxed = true).also {
+            coEvery { it.getNote(any()) } returns null
+            coEvery { it.saveNote(any()) } returns NEW_NOTE_ID
+        }
+        val viewModel = DebriefViewModel(
+            SavedStateHandle(
+                mapOf(
+                    Screen.Debrief.ARG_DAY_NUMBER to 2,
+                    Screen.Debrief.ARG_WEEK_NUMBER to 1
+                )
+            ),
+            usersWith(planStartingToday().copy(workoutDays = listOf(preferenceDay, second))),
+            repository
+        ).also { advanceUntilIdle() }
+
+        viewModel.typeNote("Knee felt tight.")
+        viewModel.save()
+        advanceUntilIdle()
+
+        coVerify { repository.saveNote(match { it.workoutDayId == second.id }) }
     }
 
     private companion object {

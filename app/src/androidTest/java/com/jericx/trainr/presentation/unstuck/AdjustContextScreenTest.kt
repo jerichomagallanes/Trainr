@@ -201,13 +201,6 @@ class AdjustContextScreenTest {
     }
 
     @Test
-    fun theGuideHintIsShown() {
-        setScreen(interpreter = InterpreterUi.Ready, note = "help", hint = ContextHint.GUIDE)
-
-        composeTestRule.onNodeWithText(string(R.string.context_hint_guide)).assertIsDisplayed()
-    }
-
-    @Test
     fun theFailedHintIsShown() {
         setScreen(interpreter = InterpreterUi.Ready, note = "help", hint = ContextHint.FAILED)
 

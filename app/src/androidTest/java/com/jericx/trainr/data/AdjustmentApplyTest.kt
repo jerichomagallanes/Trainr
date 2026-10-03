@@ -221,6 +221,9 @@ class AdjustmentApplyTest {
         assertThat(kept.sets.map { it.isCompleted }).containsExactly(true)
         assertThat(kept.setCount).isEqualTo(1)
         assertThat(kept.addedBy).isEqualTo(applied.adjustment.id)
+        // Every set it has left was performed, so the list and the counts
+        // would otherwise disagree about the same exercise.
+        assertThat(kept.isCompleted).isTrue()
     }
 
     @Test
@@ -345,6 +348,8 @@ class AdjustmentApplyTest {
         assertThat(substitute.setCount).isEqualTo(planned.sets.size)
         assertThat(substitute.sets.map { it.setNumber }).isEqualTo(planned.sets.map { it.setNumber })
         assertThat(substitute.sets.map { it.isCompleted }).containsExactly(true, false, false).inOrder()
+        // The undo ticked it off; its restored sets are work still to do.
+        assertThat(substitute.isCompleted).isFalse()
         assertThat(substitute.sets.map { it.targetWeightKg })
             .isEqualTo(planned.sets.map { it.targetWeightKg })
         assertThat(reread(day.id).exercise("dumbbell_step_up").sets.map { it.omittedBy })

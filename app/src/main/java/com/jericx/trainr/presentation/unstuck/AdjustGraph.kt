@@ -24,6 +24,7 @@ import com.jericx.trainr.presentation.Screen
 import com.jericx.trainr.presentation.purchases.PaywallReason
 
 const val FINISH_EARLY_REQUEST = "finishEarly"
+const val GUIDE_REQUEST = "guide"
 
 fun NavGraphBuilder.adjustGraph(
     navController: NavHostController,
@@ -193,6 +194,7 @@ private fun ContextStep(navController: NavHostController, graph: NavBackStackEnt
                 UnstuckRoute.TIME -> navController.navigate(Screen.AdjustTime.route)
                 UnstuckRoute.EQUIPMENT -> navController.navigate(Screen.AdjustEquipment.route)
                 UnstuckRoute.PAIN -> navController.navigate(Screen.AdjustPain.route)
+                UnstuckRoute.GUIDE -> navController.requestGuide()
                 else -> Unit
             }
         }
@@ -265,6 +267,13 @@ private fun NavHostController.leaveAdjustment() {
 
 private fun NavHostController.requestFinishEarly() {
     routineDetailEntry()?.savedStateHandle?.set(FINISH_EARLY_REQUEST, true)
+    leaveAdjustment()
+}
+
+// The how-to lives on the session screen, so the flow hands the question back
+// rather than growing a second way to show it.
+private fun NavHostController.requestGuide() {
+    routineDetailEntry()?.savedStateHandle?.set(GUIDE_REQUEST, true)
     leaveAdjustment()
 }
 
