@@ -16,7 +16,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -94,12 +93,11 @@ class PreferencesViewModel @Inject constructor(
     )
 
     private suspend fun todayAdjustment(userId: Long): TodayAdjustmentKind? {
-        val plan = userRepository.getWeeklyWorkoutPlans(userId).first()
-            .maxByOrNull { it.weekNumber } ?: return null
-        val start = plan.startDateMillis ?: return null
+        val week = userRepository.getWeekOutline(userId, weekNumber = null) ?: return null
+        val start = week.startDateMillis ?: return null
         val today = WorkoutWeek.startOfDay()
 
-        val day = plan.workoutDays.firstOrNull {
+        val day = week.days.firstOrNull {
             WorkoutWeek.startOfDay(WorkoutWeek.dateOfDay(start, it.dayNumber)) == today
         } ?: return null
 

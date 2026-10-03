@@ -23,18 +23,26 @@ object SessionEstimate {
         scope: TimeScope,
         catalog: ExerciseCatalog
     ): Int = SessionMinutes.forDay(
-        day.exercises.mapNotNull { exercise ->
-            val counted = exercise.counted(scope)
-            if (counted.isEmpty()) return@mapNotNull null
-            val entry = catalog[exercise.exerciseKey]
-            SessionMinutes.forExercise(
-                measure = exercise.measure,
-                perSet = counted.map { it.seconds(exercise.measure, user, entry) },
-                restSeconds = exercise.restTime ?: restFor(user, entry),
-                unilateral = entry?.unilateral == true
-            )
-        }
+        day.exercises.mapNotNull { exerciseMinutes(it, user, scope, catalog) }
     )
+
+    // Null when nothing is left to count, so the day's transitions skip it too.
+    fun exerciseMinutes(
+        exercise: WorkoutExercise,
+        user: UserProfile,
+        scope: TimeScope,
+        catalog: ExerciseCatalog
+    ): Int? {
+        val counted = exercise.counted(scope)
+        if (counted.isEmpty()) return null
+        val entry = catalog[exercise.exerciseKey]
+        return SessionMinutes.forExercise(
+            measure = exercise.measure,
+            perSet = counted.map { it.seconds(exercise.measure, user, entry) },
+            restSeconds = exercise.restTime ?: restFor(user, entry),
+            unilateral = entry?.unilateral == true
+        )
+    }
 
     private fun WorkoutExercise.counted(scope: TimeScope): List<ExerciseSet> =
         sets.filter { it.omittedBy == null && (scope == TimeScope.WHOLE_SESSION || !it.isCompleted) }

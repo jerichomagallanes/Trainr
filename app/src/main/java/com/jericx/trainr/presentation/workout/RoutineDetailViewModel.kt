@@ -25,7 +25,6 @@ import com.jericx.trainr.presentation.workout.model.ExerciseUi
 import com.jericx.trainr.presentation.workout.model.AdjustedBannerUi
 import com.jericx.trainr.presentation.workout.model.RoutineUi
 import com.jericx.trainr.presentation.workout.model.derivedEquipment
-import com.jericx.trainr.presentation.workout.model.isAdjustedToday
 import com.jericx.trainr.presentation.workout.model.remainingMinutes
 import com.jericx.trainr.presentation.workout.model.visibleExercises
 import com.jericx.trainr.presentation.workout.model.toRoutineUi
@@ -69,8 +68,8 @@ data class RoutineDetailUiState(
     val showAdjustSheet: Boolean = false,
     val scrollToPosition: Int? = null,
     val undoKeptSets: Int? = null,
-    // Null while the stored day is unadjusted: the header then reads the
-    // planned per-exercise minutes as it always has.
+    // The same estimate the plan card and the time presets use; null only
+    // without a profile to estimate for, when the header sums the cards.
     val totalMinutes: Int? = null
 ) {
     val hasRemainingWork: Boolean
@@ -173,11 +172,9 @@ class RoutineDetailViewModel @Inject constructor(
         _uiState.update {
             it.copy(
                 unitSystem = units,
-                routine = day.toRoutineUi(previousByKey, catalog, user?.injuries.orEmpty()),
+                routine = day.toRoutineUi(previousByKey, catalog, user?.injuries.orEmpty(), user),
                 equipment = day.derivedEquipment(catalog),
-                totalMinutes = user
-                    ?.takeIf { day.isAdjustedToday }
-                    ?.let { profile -> day.remainingMinutes(profile, catalog) },
+                totalMinutes = user?.let { profile -> day.remainingMinutes(profile, catalog) },
                 dateMillis = plan.startDateMillis
                     ?.let { start -> WorkoutWeek.dateOfDay(start, day.dayNumber) }
                     ?: SampleWorkoutData.dateOf(day.dayNumber),

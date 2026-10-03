@@ -31,6 +31,18 @@ interface UserDao {
     @Query("SELECT * FROM weekly_workout_plans WHERE userId = :userId AND weekNumber = :weekNumber")
     suspend fun getWeeklyWorkoutPlan(userId: Long, weekNumber: Int): WeeklyWorkoutPlanEntity?
 
+    @Query("SELECT * FROM weekly_workout_plans WHERE userId = :userId ORDER BY weekNumber DESC LIMIT 1")
+    suspend fun getLatestWeeklyWorkoutPlan(userId: Long): WeeklyWorkoutPlanEntity?
+
+    @Query(
+        """
+        SELECT p.* FROM weekly_workout_plans p
+        JOIN workout_days wd ON wd.weeklyPlanId = p.id
+        WHERE wd.id = :dayId
+        """
+    )
+    suspend fun getWeeklyWorkoutPlanOf(dayId: Long): WeeklyWorkoutPlanEntity?
+
     @Update
     suspend fun updateWeeklyWorkoutPlan(plan: WeeklyWorkoutPlanEntity)
 

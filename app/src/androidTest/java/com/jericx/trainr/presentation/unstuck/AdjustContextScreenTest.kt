@@ -3,7 +3,9 @@ package com.jericx.trainr.presentation.unstuck
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
@@ -210,5 +212,20 @@ class AdjustContextScreenTest {
         setScreen(interpreter = InterpreterUi.Ready, note = "help", hint = ContextHint.FAILED)
 
         composeTestRule.onNodeWithText(string(R.string.context_hint_failed)).assertIsDisplayed()
+    }
+
+    // The read takes a while and the answer lands on another screen, so the
+    // keyboard has nothing left to type into.
+    @Test
+    fun usingTheNoteTakesTheFocusOffTheField() {
+        var used = 0
+        setScreen(interpreter = InterpreterUi.Ready, note = "no bar today", onUseNote = { used++ })
+        composeTestRule.onNode(hasSetTextAction()).performClick()
+        composeTestRule.onNode(hasSetTextAction()).assertIsFocused()
+
+        composeTestRule.onNodeWithText(string(R.string.context_use_note).uppercase()).performClick()
+
+        assertThat(used).isEqualTo(1)
+        composeTestRule.onNode(hasSetTextAction()).assertIsNotFocused()
     }
 }

@@ -2,6 +2,7 @@ package com.jericx.trainr.domain.repository
 
 import com.jericx.trainr.domain.model.ExerciseSet
 import com.jericx.trainr.domain.model.UserProfile
+import com.jericx.trainr.domain.model.WeekOutline
 import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
 import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.model.WorkoutExercise
@@ -18,6 +19,8 @@ interface UserRepository {
     suspend fun getWeeklyWorkoutPlan(userId: Long, weekNumber: Int): WeeklyWorkoutPlan?
     suspend fun updateWeeklyWorkoutPlan(plan: WeeklyWorkoutPlan)
     suspend fun deleteWeeklyWorkoutPlan(planId: Long)
+    suspend fun getWeekOutline(userId: Long, weekNumber: Int?): WeekOutline?
+    suspend fun getWeekOutlineOf(dayId: Long): WeekOutline?
 
     suspend fun saveWorkoutDay(day: WorkoutDay, weeklyPlanId: Long): Long
     suspend fun saveWorkoutDays(days: List<WorkoutDay>, weeklyPlanId: Long)

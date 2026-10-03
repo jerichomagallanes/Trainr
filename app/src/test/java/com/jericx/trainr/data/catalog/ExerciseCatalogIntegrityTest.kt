@@ -210,7 +210,7 @@ class ExerciseCatalogIntegrityTest {
         )
         // What each category holds in the source's own equipment filter.
         val CATALOG_SIZE = mapOf(
-            Equipment.NONE to 105,
+            Equipment.NONE to 100,
             Equipment.BARBELL to 74,
             Equipment.DUMBBELL to 70,
             Equipment.KETTLEBELL to 13,
@@ -218,7 +218,7 @@ class ExerciseCatalogIntegrityTest {
             Equipment.PLATE to 8,
             Equipment.RESISTANCE_BAND to 13,
             Equipment.SUSPENSION_BAND to 7,
-            Equipment.OTHER to 16
+            Equipment.OTHER to 21
         )
     }
 

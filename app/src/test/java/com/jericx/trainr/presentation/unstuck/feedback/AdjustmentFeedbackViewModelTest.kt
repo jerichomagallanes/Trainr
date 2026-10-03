@@ -14,14 +14,13 @@ import com.jericx.trainr.domain.unstuck.testDay
 import com.jericx.trainr.domain.unstuck.testUser
 import com.jericx.trainr.presentation.Screen
 import com.jericx.trainr.presentation.unstuck.planStartingToday
+import com.jericx.trainr.presentation.unstuck.storing
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -57,7 +56,7 @@ class AdjustmentFeedbackViewModelTest {
     private fun users(goal: FitnessGoal = FitnessGoal.MUSCLE_GAIN): UserRepository =
         mockk<UserRepository>(relaxed = true).also {
             coEvery { it.getCurrentUser() } returns testUser(goal = goal)
-            every { it.getWeeklyWorkoutPlans(any()) } returns flowOf(weeks)
+            it.storing(*weeks.toTypedArray())
         }
 
     private fun adjustments(

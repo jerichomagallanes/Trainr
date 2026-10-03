@@ -143,9 +143,9 @@ class DebriefViewModelTest {
     }
 
     @Test
-    fun savingEmitsOneEventForTheScreenToFollow() = runTest {
+    fun savingEmitsTheDayOnceForTheScreenToFollow() = runTest {
         val viewModel = viewModel(adjustments())
-        val seen = mutableListOf<Unit>()
+        val seen = mutableListOf<Long>()
         val job = launch { viewModel.savedEvents.collect { seen += it } }
 
         viewModel.typeNote("Something happened.")
@@ -153,7 +153,17 @@ class DebriefViewModelTest {
         advanceUntilIdle()
         job.cancel()
 
-        assertThat(seen).hasSize(1)
+        assertThat(seen).containsExactly(preferenceDay.id)
+    }
+
+    // One week outline and one note: the whole history is never read to find a day.
+    @Test
+    fun theDayIsFoundWithoutReadingEveryPlan() = runTest {
+        viewModel(adjustments())
+
+        coVerify(exactly = 1) { users.getWeekOutline(any(), 1) }
+        coVerify(exactly = 0) { users.getWeeklyWorkoutPlans(any()) }
+        coVerify(exactly = 0) { users.getWorkoutDay(any()) }
     }
 
     private companion object {

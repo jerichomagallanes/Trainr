@@ -31,6 +31,7 @@ import com.jericx.trainr.domain.unstuck.SessionOutcome
 import com.jericx.trainr.presentation.workout.model.ExerciseUi
 import com.jericx.trainr.presentation.workout.model.derivedExerciseCount
 import com.jericx.trainr.presentation.workout.model.remainingMinutes
+import com.jericx.trainr.presentation.workout.model.visibleExercises
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.coVerify
@@ -186,17 +187,20 @@ class RoutineDetailViewModelTest {
         assertThat(viewModel.uiState.value.routine.isComplete).isTrue()
     }
 
+    // The card's minutes are the timer's length, whatever the estimate says they are.
+    private fun RoutineDetailViewModel.seconds(position: Int) = exercise(position).minutes * 60
+
     @Test
     fun startingATimerCountsDownFromTheExerciseDuration() = runTest {
         val viewModel = loadedViewModel()
 
         viewModel.startTimer(viewModel.exercise(2))
-        assertThat(viewModel.uiState.value.timer?.remainingSeconds).isEqualTo(600)
+        assertThat(viewModel.uiState.value.timer?.remainingSeconds).isEqualTo(viewModel.seconds(2))
 
         advanceTimeBy(3_000)
         runCurrent()
 
-        assertThat(viewModel.uiState.value.timer?.remainingSeconds).isEqualTo(597)
+        assertThat(viewModel.uiState.value.timer?.remainingSeconds).isEqualTo(viewModel.seconds(2) - 3)
     }
 
     @Test
@@ -210,7 +214,7 @@ class RoutineDetailViewModelTest {
         advanceTimeBy(10_000)
         runCurrent()
 
-        assertThat(viewModel.uiState.value.timer?.remainingSeconds).isEqualTo(597)
+        assertThat(viewModel.uiState.value.timer?.remainingSeconds).isEqualTo(viewModel.seconds(2) - 3)
         assertThat(viewModel.uiState.value.timer?.isRunning).isFalse()
     }
 
@@ -226,7 +230,7 @@ class RoutineDetailViewModelTest {
         advanceTimeBy(2_000)
         runCurrent()
 
-        assertThat(viewModel.uiState.value.timer?.remainingSeconds).isEqualTo(595)
+        assertThat(viewModel.uiState.value.timer?.remainingSeconds).isEqualTo(viewModel.seconds(2) - 5)
         assertThat(viewModel.uiState.value.timer?.isRunning).isTrue()
     }
 
@@ -237,11 +241,11 @@ class RoutineDetailViewModelTest {
         viewModel.startTimer(viewModel.exercise(2))
         advanceTimeBy(30_000)
         runCurrent()
-        assertThat(viewModel.uiState.value.timer?.remainingSeconds).isEqualTo(570)
+        assertThat(viewModel.uiState.value.timer?.remainingSeconds).isEqualTo(viewModel.seconds(2) - 30)
 
         viewModel.resetTimer()
 
-        assertThat(viewModel.uiState.value.timer?.remainingSeconds).isEqualTo(600)
+        assertThat(viewModel.uiState.value.timer?.remainingSeconds).isEqualTo(viewModel.seconds(2))
         assertThat(viewModel.uiState.value.timer?.isRunning).isFalse()
     }
 
@@ -256,13 +260,13 @@ class RoutineDetailViewModelTest {
         advanceTimeBy(10_000)
         runCurrent()
 
-        assertThat(viewModel.uiState.value.timer?.remainingSeconds).isEqualTo(600)
+        assertThat(viewModel.uiState.value.timer?.remainingSeconds).isEqualTo(viewModel.seconds(2))
 
         viewModel.resumeTimer()
         advanceTimeBy(3_000)
         runCurrent()
 
-        assertThat(viewModel.uiState.value.timer?.remainingSeconds).isEqualTo(597)
+        assertThat(viewModel.uiState.value.timer?.remainingSeconds).isEqualTo(viewModel.seconds(2) - 3)
     }
 
     @Test
@@ -292,7 +296,7 @@ class RoutineDetailViewModelTest {
         val viewModel = loadedViewModel()
 
         viewModel.startTimer(viewModel.exercise(4))
-        advanceTimeBy(4 * 60 * 1_000L)
+        advanceTimeBy(viewModel.seconds(4) * 1_000L)
         runCurrent()
 
         assertThat(viewModel.uiState.value.timer).isNull()
@@ -304,7 +308,7 @@ class RoutineDetailViewModelTest {
         val viewModel = loadedViewModel()
 
         viewModel.startTimer(viewModel.exercise(4))
-        advanceTimeBy(4 * 60 * 1_000L - 1_000L)
+        advanceTimeBy(viewModel.seconds(4) * 1_000L - 1_000L)
         runCurrent()
 
         assertThat(viewModel.uiState.value.timer?.remainingSeconds).isEqualTo(1)
@@ -1120,6 +1124,29 @@ class RoutineDetailViewModelTest {
         assertThat(day.derivedExerciseCount()).isLessThan(day.exerciseCount)
         assertThat(day.remainingMinutes(UserProfile(id = 1), SampleWorkoutData.catalog))
             .isLessThan(day.duration)
+    }
+
+    // One estimate for the header, the plan card and the per-exercise minutes,
+    // adjusted or not: a stale stored duration is never what the screen shows.
+    @Test
+    fun theHeaderAndThePlanCardAgreeOnTheMinutes() = runTest {
+        val plan = adjustedPlan()
+        val day = plan.workoutDays.first { it.id == 22L }
+        val card = WeeklyPlanViewModel.stateFor(
+            plan = plan,
+            user = UserProfile(id = 1),
+            catalog = SampleWorkoutData.catalog
+        ).days.first { it.day.id == 22L }
+
+        val viewModel = viewModel(dayNumber = 3, repository = repositoryWith(plan))
+        advanceUntilIdle()
+
+        val header = checkNotNull(viewModel.uiState.value.totalMinutes)
+        assertThat(header).isEqualTo(card.minutes)
+        assertThat(header).isEqualTo(day.remainingMinutes(UserProfile(id = 1), SampleWorkoutData.catalog))
+        assertThat(header).isNotEqualTo(day.duration)
+        assertThat(viewModel.uiState.value.routine.exercises.map { it.minutes })
+            .isNotEqualTo(day.visibleExercises.map { it.durationMinutes })
     }
 
     @Test

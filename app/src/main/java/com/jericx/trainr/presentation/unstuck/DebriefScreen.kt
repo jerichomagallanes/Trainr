@@ -27,14 +27,14 @@ import com.jericx.trainr.presentation.common.theme.trainrColors
 @Composable
 fun DebriefRoute(
     modifier: Modifier = Modifier,
-    onSaved: () -> Unit = {},
+    onSaved: (Long) -> Unit = {},
     onSkip: () -> Unit = {},
     onBack: () -> Unit = {},
     viewModel: DebriefViewModel = hiltViewModel()
 ) {
     val note by viewModel.note.collectAsStateWithLifecycle()
 
-    LaunchedEffect(viewModel) { viewModel.savedEvents.collect { onSaved() } }
+    LaunchedEffect(viewModel) { viewModel.savedEvents.collect { dayId -> onSaved(dayId) } }
 
     DebriefScreen(
         note = note,

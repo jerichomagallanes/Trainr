@@ -158,12 +158,10 @@ sealed class Screen(val route: String) {
         fun createRoute(dayNumber: Int, weekNumber: Int = RoutineDetail.LATEST_WEEK) =
             "debrief/$dayNumber?weekNumber=$weekNumber"
     }
-    data object NoteSaved : Screen("note_saved/{dayNumber}?weekNumber={weekNumber}") {
-        const val ARG_DAY_NUMBER = "dayNumber"
-        const val ARG_WEEK_NUMBER = "weekNumber"
+    data object NoteSaved : Screen("note_saved/{dayId}") {
+        const val ARG_DAY_ID = "dayId"
 
-        fun createRoute(dayNumber: Int, weekNumber: Int = RoutineDetail.LATEST_WEEK) =
-            "note_saved/$dayNumber?weekNumber=$weekNumber"
+        fun createRoute(dayId: Long) = "note_saved/$dayId"
     }
     data object Preferences : Screen("training_preferences")
     data object EditPreference : Screen("edit_preference/{id}") {

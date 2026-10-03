@@ -13,6 +13,8 @@ import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.R
+import com.jericx.trainr.domain.unstuck.InfeasibleReason
+import com.jericx.trainr.domain.unstuck.PolicyDecision
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 import org.junit.Rule
 import org.junit.Test
@@ -135,4 +137,19 @@ class AdjustTimeScreenTest {
 
         composeTestRule.onAllNodes(isToggleable()).assertCountEquals(0)
     }
+
+    // Back from a review that could not fit the request, the floor is on the
+    // screen the next number is typed into.
+    @Test
+    fun theFloorIsNamedOnceThePolicyHasFoundIt() {
+        val floor = PolicyDecision.NoFeasibleChange(InfeasibleReason.TOO_SHORT_FOR_REQUIRED_WORK, 22)
+        setScreen(state = SampleAdjustmentStates.time.copy(decision = floor))
+
+        composeTestRule
+            .onNodeWithText(plural(R.plurals.review_shortest_version_format, 22))
+            .assertIsDisplayed()
+    }
+
+    private fun plural(id: Int, quantity: Int) =
+        composeTestRule.activity.resources.getQuantityString(id, quantity, quantity)
 }
