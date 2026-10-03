@@ -324,6 +324,10 @@
         <item quantity="one">Original workout · %1$d minute planned</item>
         <item quantity="other">Original workout · %1$d minutes planned</item>
     </plurals>
+    <plurals name="review_original_remaining_format">
+        <item quantity="one">Original workout · %1$d minute remaining</item>
+        <item quantity="other">Original workout · %1$d minutes remaining</item>
+    </plurals>
     <string name="continue_workout">Continue workout</string>
     <string name="no_short_version_title">Today\'s plan can\'t fit that time</string>
     <plurals name="no_short_version_body_format">

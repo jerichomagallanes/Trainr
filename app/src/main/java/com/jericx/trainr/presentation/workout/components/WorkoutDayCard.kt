@@ -51,6 +51,7 @@ fun WorkoutDayCard(
     modifier: Modifier = Modifier,
     isMissed: Boolean = false,
     finishedEarly: Boolean = false,
+    isAdjusted: Boolean = false,
     minutes: Int = day.duration,
     exerciseCount: Int = day.exerciseCount,
     equipment: List<String> = day.equipment
@@ -94,6 +95,9 @@ fun WorkoutDayCard(
             when {
                 isMissed -> StatusChip(labelRes = R.string.missed, tone = StatusTone.IDLE)
                 finishedEarly -> StatusChip(labelRes = R.string.finished_early, tone = StatusTone.DONE)
+                isAdjusted && day.status != WorkoutStatus.COMPLETED ->
+                    StatusChip(labelRes = R.string.adjusted, tone = StatusTone.ACTIVE)
+
                 else -> StatusChip(labelRes = day.status.labelRes, tone = day.status.chipTone)
             }
         }

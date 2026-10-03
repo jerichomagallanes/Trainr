@@ -436,6 +436,7 @@ class RoutineDetailViewModel @Inject constructor(
             cleared.exercises.forEach { userRepository.updateWorkoutExercise(it, day.id) }
             persistFilledSets(_uiState.value.routine.exercises.map { it.position })
             persistDayStatus()
+            if (adjustmentRepository.withdrawUndoneSubstitutes(day.id) > 0) read()
         }
     }
 

@@ -13,6 +13,7 @@ import com.jericx.trainr.domain.unstuck.ApplyRejection
 import com.jericx.trainr.domain.unstuck.ApplyResult
 import com.jericx.trainr.domain.unstuck.PolicyDecision
 import com.jericx.trainr.domain.unstuck.PreferenceKind
+import com.jericx.trainr.domain.unstuck.SessionNote
 import com.jericx.trainr.domain.unstuck.TimeScope
 import com.jericx.trainr.domain.unstuck.TrainingPreference
 import com.jericx.trainr.domain.unstuck.intent.DirectReason
@@ -432,6 +433,27 @@ class AdjustmentViewModelTest {
     }
 
     @Test
+    fun aNumberWithNoScopeWordStillReachesTheTimeScreen() = runTest {
+        val note = "I only have 30 minutes today"
+        val interpreter = readyInterpreter(interpreted(note, UNSCOPED_ANSWER))
+        val viewModel = viewModel(reason = DirectReason.OTHER, interpreter = interpreter)
+        viewModel.typeNote(note)
+
+        val seen = mutableListOf<UnstuckRoute>()
+        val job = launch { viewModel.routeEvents.collect { seen += it } }
+        viewModel.chooseFromContext(DirectReason.OTHER)
+        advanceUntilIdle()
+        job.cancel()
+
+        assertThat(seen).containsExactly(UnstuckRoute.TIME)
+        with(viewModel.uiState.value) {
+            assertThat(scope).isEqualTo(TimeScope.WHOLE_SESSION)
+            assertThat(selectedMinutes).isEqualTo(30)
+            assertThat(canShowRecommendation).isTrue()
+        }
+    }
+
+    @Test
     fun aWholeSessionNumberIsNotCarriedOntoARemainingScreen() = runTest {
         val viewModel = viewModel(
             day = partlyDoneDay,
@@ -666,6 +688,65 @@ class AdjustmentViewModelTest {
     }
 
     @Test
+    fun finishingEarlyFromThePainScreenSavesTheNote() = runTest {
+        val repository = adjustments().also { coEvery { it.getNote(any()) } returns null }
+        val viewModel = viewModel(reason = DirectReason.OTHER, adjustmentRepository = repository)
+        viewModel.typeNote("my knee hurts ")
+        viewModel.chooseFromContext(DirectReason.OTHER)
+        advanceUntilIdle()
+        assertThat(viewModel.uiState.value.reason).isEqualTo(DirectReason.PAIN)
+        val seen = mutableListOf<Unit>()
+        val job = launch { viewModel.finishEarlyEvents.collect { seen += it } }
+        val written = slot<SessionNote>()
+
+        viewModel.finishEarly()
+        advanceUntilIdle()
+        job.cancel()
+
+        coVerify { repository.saveNote(capture(written)) }
+        assertThat(written.captured.text).isEqualTo("my knee hurts")
+        assertThat(written.captured.workoutDayId).isEqualTo(fullDay.id)
+        assertThat(seen).hasSize(1)
+    }
+
+    @Test
+    fun aSecondTapOnFinishEarlySavesTheNoteOnce() = runTest {
+        val repository = adjustments().also { coEvery { it.getNote(any()) } returns null }
+        val viewModel = viewModel(reason = DirectReason.PAIN, adjustmentRepository = repository)
+        viewModel.typeNote("my knee hurts")
+        advanceUntilIdle()
+        val seen = mutableListOf<Unit>()
+        val job = launch { viewModel.finishEarlyEvents.collect { seen += it } }
+
+        viewModel.finishEarly()
+        viewModel.finishEarly()
+        advanceUntilIdle()
+        job.cancel()
+
+        coVerify(exactly = 1) { repository.saveNote(any()) }
+        assertThat(seen).hasSize(1)
+    }
+
+    // Finishing early is not an apply, so a ticked box keeps nothing.
+    @Test
+    fun finishingEarlyFromAnUnworkableReviewSavesTheNoteButNoLimit() = runTest {
+        val repository = adjustments().also { coEvery { it.getNote(any()) } returns null }
+        val viewModel = viewModel(adjustmentRepository = repository)
+        viewModel.typeNote("only a few minutes")
+        viewModel.typeMinutes("5")
+        viewModel.toggleRemember()
+        viewModel.showRecommendation()
+        assertThat(viewModel.uiState.value.review).isInstanceOf(ReviewUi.Infeasible::class.java)
+
+        viewModel.finishEarly()
+        advanceUntilIdle()
+
+        coVerify { repository.saveNote(match { it.text == "only a few minutes" }) }
+        coVerify(exactly = 0) { repository.savePreference(any()) }
+        coVerify(exactly = 0) { repository.updatePreference(any()) }
+    }
+
+    @Test
     fun aLimitAlreadyStoredForThatWeekdayIsReplacedInPlace() = runTest {
         val repository = adjustments()
         val viewModel = viewModel(adjustmentRepository = repository)
@@ -778,6 +859,8 @@ class AdjustmentViewModelTest {
         const val DISCOMFORT_NOTE = "I have 20 minutes and my knee feels off."
         const val DISCOMFORT_ANSWER =
             """{"schemaVersion":"1.1","intent":"less_time","timeBudget":{"minutes":20,"scope":"whole_session"},"equipmentMention":null,"concern":"pain_or_unclear_discomfort","memoryCandidate":false,"clarification":"none","evidence":[{"field":"time_budget","quote":"20 minutes"},{"field":"concern","quote":"my knee feels off"}]}"""
+        const val UNSCOPED_ANSWER =
+            """{"schemaVersion":"1.1","intent":"less_time","timeBudget":{"minutes":30,"scope":"unknown"},"equipmentMention":null,"concern":"none_stated","memoryCandidate":false,"clarification":"duration_scope","evidence":[{"field":"time_budget","quote":"30 minutes today"}]}"""
         const val EQUIPMENT_NOTE = "The cable machine is taken."
         const val EQUIPMENT_ANSWER =
             """{"schemaVersion":"1.1","intent":"equipment_unavailable","timeBudget":null,"equipmentMention":"cable machine","concern":"none_stated","memoryCandidate":false,"clarification":"none","evidence":[{"field":"equipment_mention","quote":"cable machine"}]}"""

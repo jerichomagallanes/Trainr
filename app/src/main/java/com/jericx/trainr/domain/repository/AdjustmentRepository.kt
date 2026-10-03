@@ -22,6 +22,7 @@ interface AdjustmentRepository {
     suspend fun getAdjustment(proposalId: String): AppliedAdjustment?
     suspend fun getAdjustmentById(id: Long): AppliedAdjustment?
     suspend fun getActiveAdjustment(dayId: Long): AppliedAdjustment?
+    suspend fun getActiveAdjustments(dayIds: List<Long>): List<AppliedAdjustment>
     suspend fun getAdjustments(dayId: Long): List<AppliedAdjustment>
     suspend fun markUndone(id: Long, at: Long)
     suspend fun markReapplied(id: Long)
@@ -34,6 +35,7 @@ interface AdjustmentRepository {
     ): ApplyResult
 
     suspend fun undo(adjustmentId: Long, nowMillis: Long): UndoResult
+    suspend fun withdrawUndoneSubstitutes(dayId: Long): Int
     suspend fun reapply(adjustmentId: Long, nowMillis: Long): ApplyResult
 
     suspend fun saveFeedback(feedback: AdjustmentFeedback): Long

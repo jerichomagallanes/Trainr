@@ -145,6 +145,20 @@ class AdjustReviewScreenTest {
     }
 
     @Test
+    fun aPlanThatAlreadyFitsNamesTheTimeRemainingOnceWorkIsDone() {
+        setScreen(
+            SampleAdjustmentStates.noChangeReview.copy(plannedMinutes = 12, hasPerformedWork = true)
+        )
+
+        composeTestRule
+            .onNodeWithText(plural(R.plurals.review_original_remaining_format, 12, 12))
+            .assertIsDisplayed()
+        composeTestRule
+            .onNodeWithText(plural(R.plurals.original_workout_planned_format, 12, 12))
+            .assertDoesNotExist()
+    }
+
+    @Test
     fun anImpossibleBudgetOffersFinishingEarly() {
         var finished = false
         setScreen(SampleAdjustmentStates.infeasibleReview, onFinishEarly = { finished = true })

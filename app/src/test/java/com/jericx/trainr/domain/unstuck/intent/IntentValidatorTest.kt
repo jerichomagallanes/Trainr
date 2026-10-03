@@ -149,8 +149,9 @@ class IntentValidatorTest {
             .containsExactly(RejectionReason.FACT_WITHOUT_EVIDENCE)
     }
 
+    // The number was said; only which question it answers is still open.
     @Test
-    fun anUnknownScopeLeavesMinutesUnactionable() {
+    fun anUnknownScopeKeepsTheMinutesWithNoScope() {
         val unscoped = extraction(
             intent = IntentKind.LESS_TIME,
             timeBudget = TimeBudgetMention(minutes = 35, scope = MentionScope.UNKNOWN),
@@ -160,7 +161,7 @@ class IntentValidatorTest {
 
         val actionable = validated(unscoped, plainNote).actionable
 
-        assertThat(actionable.minutes).isNull()
+        assertThat(actionable.minutes).isEqualTo(35)
         assertThat(actionable.scope).isNull()
     }
 

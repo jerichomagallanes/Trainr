@@ -175,11 +175,16 @@ class AdjustmentViewModel @Inject constructor(
     private val _continuedEvents = Channel<Unit>(Channel.BUFFERED)
     val continuedEvents: Flow<Unit> = _continuedEvents.receiveAsFlow()
 
+    private val _finishEarlyEvents = Channel<Unit>(Channel.BUFFERED)
+    val finishEarlyEvents: Flow<Unit> = _finishEarlyEvents.receiveAsFlow()
+
     private var user: UserProfile? = null
 
     private var dayWeekday: Int? = null
 
     private var hasConfirmed = false
+
+    private var hasFinishedEarly = false
 
     init {
         viewModelScope.launch { load() }
@@ -338,13 +343,24 @@ class AdjustmentViewModel @Inject constructor(
         }
     }
 
+    // Not an apply, so no limit is kept; the note was written for this session
+    // and leaves with it.
+    fun finishEarly() {
+        if (hasFinishedEarly) return
+        hasFinishedEarly = true
+        viewModelScope.launch {
+            saveNote()
+            _finishEarlyEvents.send(Unit)
+        }
+    }
+
     private suspend fun applied(proposalId: String, adjustmentId: Long) {
         confirm(sourceAdjustmentId = adjustmentId)
         _uiState.update { it.copy(isApplying = false, applyError = null) }
         _appliedEvents.send(proposalId)
     }
 
-    // The only path that makes either record durable. Cancelling, keeping the
+    // The only path that makes the limit durable. Cancelling, keeping the
     // original, a failed apply and leaving the graph all end without calling it.
     private suspend fun confirm(sourceAdjustmentId: Long?) {
         if (hasConfirmed) return
@@ -379,25 +395,29 @@ class AdjustmentViewModel @Inject constructor(
             }
         }
 
+        saveNote()
+    }
+
+    private suspend fun saveNote() {
+        val state = _uiState.value
+        val profile = user ?: return
         val note = state.note.trim()
-        val day = state.day
-        if (note.isNotEmpty() && day != null) {
-            val existing = adjustmentRepository.getNote(day.id)
-            if (existing == null) {
-                adjustmentRepository.saveNote(
-                    SessionNote(
-                        userId = profile.id,
-                        workoutDayId = day.id,
-                        text = note,
-                        createdAt = now,
-                        updatedAt = now
-                    )
+        val day = state.day ?: return
+        if (note.isEmpty()) return
+        val now = System.currentTimeMillis()
+        val existing = adjustmentRepository.getNote(day.id)
+        if (existing == null) {
+            adjustmentRepository.saveNote(
+                SessionNote(
+                    userId = profile.id,
+                    workoutDayId = day.id,
+                    text = note,
+                    createdAt = now,
+                    updatedAt = now
                 )
-            } else {
-                adjustmentRepository.updateNote(
-                    existing.copy(text = note, updatedAt = now)
-                )
-            }
+            )
+        } else {
+            adjustmentRepository.updateNote(existing.copy(text = note, updatedAt = now))
         }
     }
 

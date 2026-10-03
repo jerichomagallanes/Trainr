@@ -69,17 +69,24 @@ class EditPreferenceViewModelTest {
         }
     }
 
-    // A limit that is not one of today's presets still has to be visible.
+    // The remembered number is an answer already given, so it is offered as one.
     @Test
-    fun aStoredLimitThatIsNoPresetIsShownInTheField() = runTest {
-        val viewModel = viewModel(adjustments(listOf(stored.copy(minutes = 30))))
+    fun aStoredLimitOffTheUsualStepsIsStillAPreset() = runTest {
+        val viewModel = viewModel(adjustments(listOf(stored.copy(minutes = 36))))
 
         with(viewModel.uiState.value) {
-            assertThat(presets).doesNotContain(30)
-            assertThat(customMinutesText).isEqualTo("30")
-            assertThat(isPresetSelected).isFalse()
+            assertThat(presets).containsExactly(25, 35, 36, 45).inOrder()
+            assertThat(customMinutesText).isEmpty()
+            assertThat(isPresetSelected).isTrue()
             assertThat(canSave).isTrue()
         }
+    }
+
+    @Test
+    fun aStoredLimitAlreadyOnTheStepsIsNotListedTwice() = runTest {
+        val viewModel = viewModel()
+
+        assertThat(viewModel.uiState.value.presets).containsExactly(25, 35, 45).inOrder()
     }
 
     // Editing the value is not the person agreeing to remember it again.
