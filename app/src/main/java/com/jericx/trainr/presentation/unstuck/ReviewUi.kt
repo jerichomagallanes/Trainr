@@ -4,6 +4,7 @@ import androidx.annotation.StringRes
 import com.jericx.trainr.R
 import com.jericx.trainr.domain.catalog.ExerciseCatalog
 import com.jericx.trainr.domain.catalog.MuscleRegion
+import com.jericx.trainr.domain.catalog.isLoadable
 import com.jericx.trainr.domain.model.Equipment
 import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.unstuck.AdjustmentProposal
@@ -13,6 +14,7 @@ import com.jericx.trainr.domain.unstuck.InfeasibleReason
 import com.jericx.trainr.domain.unstuck.PolicyDecision
 import com.jericx.trainr.domain.unstuck.ProposalKind
 import com.jericx.trainr.domain.unstuck.ProposalSummary
+import com.jericx.trainr.domain.unstuck.SessionTiers
 import com.jericx.trainr.domain.unstuck.TimeScope
 import com.jericx.trainr.domain.unstuck.Tradeoff
 import com.jericx.trainr.domain.unstuck.TradeoffCode
@@ -22,6 +24,8 @@ sealed interface ReviewUi {
     data class Proposed(
         val kind: ProposalKind,
         val substituteEquipment: Equipment?,
+        val substituteLoadable: Boolean,
+        val bodyweightFallback: Boolean,
         val priorityName: String?,
         @StringRes val goalLabelRes: Int,
         val budgetMinutes: Int?,
@@ -112,6 +116,8 @@ private fun proposed(
     return ReviewUi.Proposed(
         kind = summary.kind,
         substituteEquipment = replaced?.let { catalog[it.toKey]?.equipment },
+        substituteLoadable = replaced?.let { catalog[it.toKey]?.isLoadable } == true,
+        bodyweightFallback = summary.bodyweightFallback,
         // A catalog key is not a name, and no screen may print the slug.
         priorityName = summary.keptPriorityKey?.let { catalog[it]?.name },
         goalLabelRes = goalLabelRes,
@@ -121,7 +127,7 @@ private fun proposed(
         hasPerformedWork = hasPerformedWork,
         keptNames = day.exercises
             .filter { exercise -> exercise.sets.any { it.omittedBy == null && !it.isCompleted } }
-            .filterNot { it.exerciseKey in touched }
+            .filterNot { it.exerciseKey in touched || it.exerciseKey == SessionTiers.WARM_UP_KEY }
             .map { it.name },
         replacedFrom = replaced?.fromName,
         replacedTo = replaced?.toName,

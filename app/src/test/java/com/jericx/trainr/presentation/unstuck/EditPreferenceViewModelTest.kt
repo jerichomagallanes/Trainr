@@ -75,7 +75,7 @@ class EditPreferenceViewModelTest {
         val viewModel = viewModel(adjustments(listOf(stored.copy(minutes = 36))))
 
         with(viewModel.uiState.value) {
-            assertThat(presets).containsExactly(25, 35, 36, 45).inOrder()
+            assertThat(presets).containsExactly(15, 25, 35, 36).inOrder()
             assertThat(customMinutesText).isEmpty()
             assertThat(isPresetSelected).isTrue()
             assertThat(canSave).isTrue()
@@ -86,7 +86,7 @@ class EditPreferenceViewModelTest {
     fun aStoredLimitAlreadyOnTheStepsIsNotListedTwice() = runTest {
         val viewModel = viewModel()
 
-        assertThat(viewModel.uiState.value.presets).containsExactly(25, 35, 45).inOrder()
+        assertThat(viewModel.uiState.value.presets).containsExactly(15, 25, 35).inOrder()
     }
 
     // Editing the value is not the person agreeing to remember it again.

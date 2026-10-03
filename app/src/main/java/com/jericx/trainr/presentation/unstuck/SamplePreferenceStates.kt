@@ -32,7 +32,7 @@ object SamplePreferenceStates {
     val editing = EditPreferenceUiState(
         isLoaded = true,
         weekdayName = "Tuesday",
-        presets = listOf(25, 35, 45),
+        presets = listOf(15, 25, 35),
         selectedMinutes = 35
     )
 

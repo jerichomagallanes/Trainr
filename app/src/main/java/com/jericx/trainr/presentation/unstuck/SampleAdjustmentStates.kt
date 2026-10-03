@@ -24,7 +24,7 @@ object SampleAdjustmentStates {
         weekdayName = "Wednesday",
         goalLabelRes = R.string.build_muscle_goal,
         reason = DirectReason.LESS_TIME,
-        presets = listOf(25, 35, 45),
+        presets = listOf(15, 25, 35),
         selectedMinutes = 35
     )
 
@@ -50,6 +50,8 @@ object SampleAdjustmentStates {
     val shorterReview = ReviewUi.Proposed(
         kind = ProposalKind.SHORTER_SESSION,
         substituteEquipment = null,
+        substituteLoadable = false,
+        bodyweightFallback = false,
         priorityName = "Overhead Press (Barbell)",
         goalLabelRes = R.string.build_muscle_goal,
         budgetMinutes = 35,
@@ -71,6 +73,8 @@ object SampleAdjustmentStates {
     val substituteReview = ReviewUi.Proposed(
         kind = ProposalKind.SUBSTITUTE,
         substituteEquipment = Equipment.DUMBBELL,
+        substituteLoadable = true,
+        bodyweightFallback = false,
         priorityName = null,
         goalLabelRes = R.string.build_muscle_goal,
         budgetMinutes = null,

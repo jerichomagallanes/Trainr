@@ -6,8 +6,10 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -53,6 +55,19 @@ class AdjustTimeScreenTest {
                 .onNodeWithText(string(R.string.minutes_short_format, it))
                 .assertIsDisplayed()
         }
+    }
+
+    // Nothing below the estimate is worth a chip, so only the field is left.
+    @Test
+    fun aPlanWithNoPresetShowsOnlyTheOtherField() {
+        setScreen(state = SampleAdjustmentStates.time.copy(presets = emptyList(), selectedMinutes = null))
+
+        SampleAdjustmentStates.time.presets.forEach {
+            composeTestRule
+                .onAllNodesWithText(string(R.string.minutes_short_format, it))
+                .assertCountEquals(0)
+        }
+        composeTestRule.onNode(hasSetTextAction()).assertIsDisplayed()
     }
 
     @Test
