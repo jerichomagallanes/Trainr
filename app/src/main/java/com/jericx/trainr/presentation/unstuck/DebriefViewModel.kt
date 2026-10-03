@@ -95,7 +95,9 @@ class DebriefViewModel @Inject constructor(
         user = profile
 
         val outline = userRepository.getWeekOutline(profile.id, weekNumber) ?: return
-        val day = outline.days.firstOrNull { it.dayNumber == number }?.id ?: return
+        // The screens that reach here count training days, so this is an
+        // ordinal, while the stored dayNumber is the weekday.
+        val day = outline.days.getOrNull(number - 1)?.id ?: return
         dayId = day
 
         val existing = adjustmentRepository.getNote(day)

@@ -517,7 +517,7 @@ class AdjustmentViewModelTest {
     }
 
     @Test
-    fun aGuidanceNoteShowsTheGuideHint() = runTest {
+    fun aGuidanceNoteRoutesToTheHowToWithoutAHint() = runTest {
         val note = "How do I do a hip thrust?"
         val viewModel = viewModel(
             reason = DirectReason.OTHER,
@@ -525,10 +525,14 @@ class AdjustmentViewModelTest {
         )
         viewModel.typeNote(note)
 
+        val seen = mutableListOf<UnstuckRoute>()
+        val job = launch { viewModel.routeEvents.collect { seen += it } }
         viewModel.chooseFromContext(DirectReason.OTHER)
         advanceUntilIdle()
+        job.cancel()
 
-        assertThat(viewModel.uiState.value.contextHint).isEqualTo(ContextHint.GUIDE)
+        assertThat(seen).containsExactly(UnstuckRoute.GUIDE)
+        assertThat(viewModel.uiState.value.contextHint).isNull()
     }
 
     @Test

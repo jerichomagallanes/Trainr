@@ -2,6 +2,7 @@ package com.jericx.trainr.presentation.common.components.layout
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -44,6 +45,9 @@ fun TrainrScaffold(
                 color = MaterialTheme.trainrColors.surfaceRaised,
                 modifier = Modifier
                     .navigationBarsPadding()
+                    // Edge to edge the window is never resized, so without this
+                    // the keyboard covers the button the screen is asking for.
+                    .imePadding()
                     .drawWithContent {
                         drawContent()
                         val stroke = 1.dp.toPx()

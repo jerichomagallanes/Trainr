@@ -346,7 +346,14 @@ class AdjustmentRepositoryImpl(
             }
         }
         if (missing.isNotEmpty()) userDao.insertExerciseSets(missing)
-        userDao.updateWorkoutExercise(added.copy(setCount = after.sets.size))
+        // An undo that kept it ticked it; restored sets are unperformed again.
+        val restored = userDao.getSetsForExercise(added.id)
+        userDao.updateWorkoutExercise(
+            added.copy(
+                setCount = after.sets.size,
+                isCompleted = restored.isNotEmpty() && restored.all { it.isCompleted }
+            )
+        )
         return added.id
     }
 
@@ -370,7 +377,8 @@ class AdjustmentRepositoryImpl(
             return 0
         }
         userDao.deleteUnperformedSets(added.id)
-        userDao.updateWorkoutExercise(added.copy(setCount = performed))
+        // Nothing unperformed is left, so the row the list counts has to agree.
+        userDao.updateWorkoutExercise(added.copy(setCount = performed, isCompleted = true))
         return performed
     }
 

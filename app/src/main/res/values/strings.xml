@@ -357,7 +357,6 @@
     <string name="context_use_note">Use my note</string>
     <string name="context_reading_note">Reading your note…</string>
     <string name="context_hint_chooser">Couldn\'t tell what you need from the note. Pick one below.</string>
-    <string name="context_hint_guide">Trainr can\'t coach form yet. Pick what to change below.</string>
     <string name="context_hint_failed">Couldn\'t read the note. Pick one below.</string>
     <string name="private_coaching_setup_title">Set up private coaching</string>
     <string name="private_coaching_setup_message">Downloads a 731 MB model once. Your notes are read on this device and never sent anywhere.</string>
@@ -393,7 +392,7 @@
     <string name="region_hamstrings">hamstring</string>
     <string name="region_hips">hip</string>
     <string name="region_calves">calf</string>
-    <string name="region_other">other</string>
+    <string name="region_other_label">conditioning</string>
     <string name="section_expanded">Expanded</string>
     <string name="section_collapsed">Collapsed</string>
     <string name="anything_to_change_title">Anything to change next time?</string>

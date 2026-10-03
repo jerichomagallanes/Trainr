@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.presentation.Screen
 import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
+import com.jericx.trainr.domain.catalog.MuscleRegion
 import com.jericx.trainr.domain.model.ExerciseMeasure
 import com.jericx.trainr.domain.model.ExerciseSet
 import com.jericx.trainr.domain.model.UserProfile
@@ -379,6 +380,22 @@ class RoutineDetailViewModelTest {
         viewModel.toggleVideo(3)
 
         assertThat(viewModel.uiState.value.expandedVideo).isEqualTo(3)
+    }
+
+    @Test
+    fun aGuidanceNoteOpensTheSheetOnTheExercisesAndTheReasonsOtherwise() = runTest {
+        val viewModel = loadedViewModel()
+
+        viewModel.openExercisePicker()
+
+        assertThat(viewModel.uiState.value.showAdjustSheet).isTrue()
+        assertThat(viewModel.uiState.value.isPickingExercise).isTrue()
+
+        viewModel.dismissAdjustSheet()
+        viewModel.openAdjustSheet()
+
+        assertThat(viewModel.uiState.value.showAdjustSheet).isTrue()
+        assertThat(viewModel.uiState.value.isPickingExercise).isFalse()
     }
 
     @Test
@@ -921,6 +938,44 @@ class RoutineDetailViewModelTest {
     }
 
     @Test
+    fun startingOverAFullyCompletedDayClearsItsOutcomeToo() = runTest {
+        val repository = repositoryWith(storedPlan)
+        val adjustments = emptyAdjustments()
+        val viewModel = viewModel(dayNumber = 3, repository = repository, adjustments = adjustments)
+        advanceUntilIdle()
+        viewModel.completeRoutine()
+        advanceUntilIdle()
+        assertThat(viewModel.uiState.value.outcome?.finishKind).isEqualTo(FinishKind.FULL)
+
+        viewModel.clearProgress()
+        advanceUntilIdle()
+
+        coVerify { adjustments.deleteOutcome(22L) }
+        coVerify {
+            repository.updateWorkoutDay(
+                match { it.id == 22L && it.status == WorkoutStatus.NOT_STARTED && it.completedAt == null },
+                7L
+            )
+        }
+        assertThat(viewModel.uiState.value.outcome).isNull()
+    }
+
+    @Test
+    fun correctingANumberOnAFullyCompletedDayLeavesItsOutcomeAlone() = runTest {
+        val adjustments = emptyAdjustments()
+        val viewModel = viewModel(dayNumber = 3, repository = repositoryWith(storedPlan), adjustments = adjustments)
+        advanceUntilIdle()
+        viewModel.completeRoutine()
+        advanceUntilIdle()
+
+        viewModel.updateSet(1, viewModel.exercise(1).sets.first().copy(actualReps = 9))
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { adjustments.deleteOutcome(any()) }
+        assertThat(viewModel.uiState.value.outcome?.finishKind).isEqualTo(FinishKind.FULL)
+    }
+
+    @Test
     fun startingOverWithdrawsASubstituteKeptOnlyForItsPerformedSet() = runTest {
         val adjustments = emptyAdjustments()
         coEvery { adjustments.getActiveAdjustment(22L) } returns null
@@ -1208,22 +1263,72 @@ class RoutineDetailViewModelTest {
             .isNotEqualTo(day.visibleExercises.map { it.durationMinutes })
     }
 
+    // The cards and the review print the day's own names, and one screen may
+    // not call the same exercise two things.
     @Test
-    fun theBannerNamesTheReplacedExercise() = runTest {
+    fun theBannerNamesTheReplacedExerciseAsTheDayStoresIt() = runTest {
         val adjustments = emptyAdjustments()
         coEvery { adjustments.getActiveAdjustment(22L) } returns applied()
         val viewModel = viewModel(
             dayNumber = 3,
-            repository = repositoryWith(adjustedPlan()),
+            repository = repositoryWith(planWithSubstitute()),
             adjustments = adjustments
         )
         advanceUntilIdle()
 
         val banner = checkNotNull(viewModel.uiState.value.adjustedBanner)
         assertThat(banner.messageRes).isEqualTo(R.string.adjusted_replaced_banner_format)
-        assertThat(banner.fromName).isEqualTo(SampleWorkoutData.catalog["goblet_squat"]?.name)
-        assertThat(banner.toName).isEqualTo(SampleWorkoutData.catalog["dumbbell_step_up"]?.name)
+        assertThat(banner.fromName).isEqualTo("Goblet Squats")
+        assertThat(banner.toName).isEqualTo("Dumbbell Step-Ups")
+        assertThat(banner.fromName).isNotEqualTo(SampleWorkoutData.catalog["goblet_squat"]?.name)
+        assertThat(banner.toName).isNotEqualTo(SampleWorkoutData.catalog["dumbbell_step_up"]?.name)
     }
+
+    @Test
+    fun theBannerListsRegionsInTheOrderTheReviewUses() = runTest {
+        val adjustments = emptyAdjustments()
+        coEvery { adjustments.getActiveAdjustment(22L) } returns applied(reduceProposal())
+        val viewModel = viewModel(
+            dayNumber = 3,
+            repository = repositoryWith(storedPlan),
+            adjustments = adjustments
+        )
+        advanceUntilIdle()
+
+        val banner = checkNotNull(viewModel.uiState.value.adjustedBanner)
+        assertThat(banner.messageRes).isEqualTo(R.string.adjusted_time_banner_format)
+        assertThat(banner.regions)
+            .containsExactly(MuscleRegion.SHOULDERS, MuscleRegion.QUADS)
+            .inOrder()
+    }
+
+    private fun planWithSubstitute() = adjustedPlan().let { plan ->
+        plan.copy(
+            workoutDays = plan.workoutDays.map { day ->
+                if (day.id != 22L) {
+                    day
+                } else {
+                    day.copy(
+                        exercises = day.exercises +
+                            storedExercise(35, "dumbbell_step_up", "Dumbbell Step-Ups")
+                    )
+                }
+            }
+        )
+    }
+
+    private fun reduceProposal() = replaceProposal().copy(
+        changes = listOf(
+            reduction("exercise:33", "goblet_squat"),
+            reduction("exercise:32", "barbell_overhead_press")
+        )
+    )
+
+    private fun reduction(instanceId: String, key: String) = ProposalChange(
+        kind = ChangeKind.REDUCE_UNPERFORMED,
+        before = ExerciseSnapshot(instanceId, key, listOf(SetSnapshot("set:1", 12, null, null, null))),
+        after = ExerciseSnapshot(instanceId, key, emptyList())
+    )
 
     @Test
     fun undoRefreshesTheDay() = runTest {

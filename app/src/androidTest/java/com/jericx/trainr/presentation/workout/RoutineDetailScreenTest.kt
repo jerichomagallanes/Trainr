@@ -427,7 +427,7 @@ class RoutineDetailScreenTest {
                     state = current,
                     onToggleExercise = { current = current.copy(routine = current.routine.completeAll()) },
                     onDayCompleted = { day, _ -> reported = day },
-                    onWeekCompleted = { reported = it }
+                    onWeekCompleted = { day, _ -> reported = day }
                 )
             }
         }

@@ -66,6 +66,7 @@ data class RoutineDetailUiState(
     val activeAdjustment: AppliedAdjustment? = null,
     val adjustedBanner: AdjustedBannerUi? = null,
     val showAdjustSheet: Boolean = false,
+    val isPickingExercise: Boolean = false,
     val scrollToPosition: Int? = null,
     val undoKeptSets: Int? = null,
     // The same estimate the plan card and the time presets use; null only
@@ -183,7 +184,7 @@ class RoutineDetailViewModel @Inject constructor(
                 completesTheWeek = completesTheWeek(plan.workoutDays, index + 1),
                 outcome = adjustmentRepository.getOutcome(day.id),
                 activeAdjustment = adjustment,
-                adjustedBanner = adjustment?.let { applied -> bannerFor(applied.proposal) },
+                adjustedBanner = adjustment?.let { applied -> bannerFor(applied.proposal, day) },
                 // The note belongs to one undo, not to whatever the day shows next.
                 undoKeptSets = null,
                 isLoaded = true
@@ -192,11 +193,17 @@ class RoutineDetailViewModel @Inject constructor(
     }
 
     fun openAdjustSheet() {
-        _uiState.update { it.copy(showAdjustSheet = true) }
+        _uiState.update { it.copy(showAdjustSheet = true, isPickingExercise = false) }
+    }
+
+    // A note asking how a movement is done has already answered the sheet's
+    // first question, so it opens on the exercises.
+    fun openExercisePicker() {
+        _uiState.update { it.copy(showAdjustSheet = true, isPickingExercise = true) }
     }
 
     fun dismissAdjustSheet() {
-        _uiState.update { it.copy(showAdjustSheet = false) }
+        _uiState.update { it.copy(showAdjustSheet = false, isPickingExercise = false) }
     }
 
     // "Show me how" is the existing tutorial on the card, not a new screen.
@@ -207,6 +214,7 @@ class RoutineDetailViewModel @Inject constructor(
         _uiState.update {
             it.copy(
                 showAdjustSheet = false,
+                isPickingExercise = false,
                 expandedHowTo = if (hasSteps) position else it.expandedHowTo,
                 expandedVideo = if (hasSteps) it.expandedVideo else position,
                 scrollToPosition = position
@@ -239,18 +247,21 @@ class RoutineDetailViewModel @Inject constructor(
         }
     }
 
-    private fun bannerFor(proposal: AdjustmentProposal): AdjustedBannerUi {
+    private fun bannerFor(proposal: AdjustmentProposal, day: WorkoutDay): AdjustedBannerUi {
         val replaced = proposal.changes.firstOrNull { it.kind == ChangeKind.REPLACE_UNPERFORMED }
         if (replaced != null) {
             return AdjustedBannerUi(
                 messageRes = R.string.adjusted_replaced_banner_format,
-                fromName = catalog[replaced.before.catalogKey]?.name.orEmpty(),
-                toName = replaced.after?.catalogKey?.let { catalog[it]?.name }.orEmpty()
+                fromName = day.nameOf(replaced.before.catalogKey),
+                toName = replaced.after?.catalogKey?.let { day.nameOf(it) }.orEmpty()
             )
         }
+        // The review orders its regions the same way, and one day cannot be
+        // described twice in two orders.
         val regions = proposal.changes
             .mapNotNull { catalog[it.before.catalogKey]?.primary?.region }
             .distinct()
+            .sorted()
         val omitted = proposal.changes.any { it.kind == ChangeKind.OMIT_UNPERFORMED }
         return if (omitted || regions.isEmpty()) {
             AdjustedBannerUi(messageRes = R.string.adjusted_reduced_banner)
@@ -261,6 +272,10 @@ class RoutineDetailViewModel @Inject constructor(
             )
         }
     }
+
+    private fun WorkoutDay.nameOf(catalogKey: String): String =
+        exercises.firstOrNull { it.exerciseKey == catalogKey }?.name
+            ?: catalog[catalogKey]?.name.orEmpty()
 
     fun toggleExercise(position: Int) {
         reopen()
@@ -426,7 +441,7 @@ class RoutineDetailViewModel @Inject constructor(
     // never overwritten, so they need no restoring.
     fun clearProgress() {
         cancelTick()
-        reopen()
+        reopen(anyOutcome = true)
         _uiState.update { it.copy(routine = it.routine.clearProgress(), timer = null) }
 
         val day = storedDay ?: return
@@ -531,10 +546,12 @@ class RoutineDetailViewModel @Inject constructor(
         _uiState.value.routine.exercises.firstOrNull { it.position == position }
             ?.sets?.firstOrNull { it.setNumber == setNumber }?.isCompleted
 
-    // A corrected number is not new work, so it leaves the day closed.
-    private fun reopen() {
+    // A corrected number is not new work, so it leaves the day closed; starting
+    // over is, and takes the full outcome with it.
+    private fun reopen(anyOutcome: Boolean = false) {
         val day = storedDay ?: return
-        if (_uiState.value.outcome?.finishKind != FinishKind.PARTIAL) return
+        val kind = _uiState.value.outcome?.finishKind ?: return
+        if (!anyOutcome && kind != FinishKind.PARTIAL) return
         storedDay = day.copy(completedAt = null)
         _uiState.update { it.copy(outcome = null) }
         viewModelScope.launch {

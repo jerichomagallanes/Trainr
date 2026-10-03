@@ -26,7 +26,8 @@ class AdjustTodaySheetTest {
     private fun setSheet(
         onChoose: (DirectReason) -> Unit = {},
         onShowHowTo: (Int) -> Unit = {},
-        onDismiss: () -> Unit = {}
+        onDismiss: () -> Unit = {},
+        startOnExercises: Boolean = false
     ) {
         composeTestRule.setContent {
             TrainrTheme {
@@ -35,7 +36,8 @@ class AdjustTodaySheetTest {
                     exercises = listOf("Bench Press", "Bent Over Row"),
                     onChoose = onChoose,
                     onShowHowTo = onShowHowTo,
-                    onDismiss = onDismiss
+                    onDismiss = onDismiss,
+                    startOnExercises = startOnExercises
                 )
             }
         }
@@ -82,6 +84,20 @@ class AdjustTodaySheetTest {
 
         assertThat(position).isEqualTo(2)
         assertThat(chosen).isNull()
+    }
+
+    // A note the model read as a form question has already picked the reason,
+    // so the sheet opens where that answer leaves it.
+    @Test
+    fun aGuidanceNoteOpensTheSheetOnTheExercises() {
+        var position: Int? = null
+        setSheet(onShowHowTo = { position = it }, startOnExercises = true)
+
+        composeTestRule.onNodeWithText(string(R.string.guide_pick_exercise)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.adjust_sheet_title)).assertDoesNotExist()
+        composeTestRule.onNodeWithText("Bench Press").performClick()
+
+        assertThat(position).isEqualTo(1)
     }
 
     @Test

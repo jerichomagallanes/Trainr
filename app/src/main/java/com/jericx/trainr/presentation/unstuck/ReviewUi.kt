@@ -78,7 +78,7 @@ val MuscleRegion.labelRes: Int
         MuscleRegion.HAMSTRINGS -> R.string.region_hamstrings
         MuscleRegion.HIPS -> R.string.region_hips
         MuscleRegion.CALVES -> R.string.region_calves
-        MuscleRegion.OTHER -> R.string.region_other
+        MuscleRegion.OTHER -> R.string.region_other_label
     }
 
 fun PolicyDecision.toReviewUi(
