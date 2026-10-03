@@ -138,10 +138,10 @@ object IntentValidator {
     }
 
     private fun actionableFacts(extraction: IntentExtraction): ActionableFacts {
-        val budget = extraction.timeBudget?.takeIf { it.scope != MentionScope.UNKNOWN }
+        val budget = extraction.timeBudget
         return ActionableFacts(
             minutes = budget?.minutes,
-            scope = budget?.scope,
+            scope = budget?.scope?.takeIf { it != MentionScope.UNKNOWN },
             equipmentMention = extraction.equipmentMention,
             memoryCandidate = extraction.memoryCandidate,
             painConcern = extraction.concern == Concern.PAIN_OR_UNCLEAR_DISCOMFORT

@@ -101,8 +101,10 @@ class EditPreferenceViewModel @Inject constructor(
             return
         }
         stored = existing
-        val presets = TimePresets.forPlanned(profile.workoutDuration)
+        val presets = (TimePresets.forPlanned(profile.workoutDuration) + existing.minutes)
             .filter(TimePresets::isSupported)
+            .distinct()
+            .sorted()
 
         _uiState.update {
             it.copy(
@@ -113,13 +115,7 @@ class EditPreferenceViewModel @Inject constructor(
                 ),
                 presets = presets,
                 selectedMinutes = existing.minutes,
-                // A stored limit that is not a preset has to show in the field
-                // rather than leave the screen looking unanswered.
-                customMinutesText = if (existing.minutes in presets) {
-                    ""
-                } else {
-                    existing.minutes.toString()
-                }
+                customMinutesText = if (existing.minutes in presets) "" else existing.minutes.toString()
             )
         }
     }

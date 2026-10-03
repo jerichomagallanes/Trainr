@@ -224,6 +224,48 @@ class AdjustmentApplyTest {
     }
 
     @Test
+    fun startingOverWithdrawsASubstituteKeptOnlyForItsPerformedSet() = runTest {
+        val day = seedDay()
+        val original = day.exercise("dumbbell_step_up")
+        val applied = adjustments
+            .apply(swap(day, original.id), day.id, AdjustmentReason.EQUIPMENT_UNAVAILABLE, NOW)
+            as ApplyResult.Applied
+        val substituteId = checkNotNull(applied.addedExerciseId)
+        log(checkNotNull(workouts.getWorkoutExercise(substituteId)).sets.first(), substituteId)
+        adjustments.undo(applied.adjustment.id, NOW + MINUTE)
+        val kept = checkNotNull(workouts.getWorkoutExercise(substituteId)).sets.single()
+        workouts.updateExerciseSet(
+            kept.copy(
+                actualReps = null,
+                actualWeightKg = null,
+                actualSeconds = null,
+                isCompleted = false,
+                actualOrigin = ActualOrigin.NONE
+            ),
+            substituteId
+        )
+
+        assertThat(adjustments.withdrawUndoneSubstitutes(day.id)).isEqualTo(1)
+
+        assertThat(workouts.getWorkoutExercise(substituteId)).isNull()
+        assertThat(reread(day.id).exercise("dumbbell_step_up").sets).isEqualTo(original.sets)
+        assertThat(reread(day.id).exercises.map { it.id }).isEqualTo(day.exercises.map { it.id })
+    }
+
+    @Test
+    fun startingOverLeavesAStandingSubstituteInPlace() = runTest {
+        val day = seedDay()
+        val original = day.exercise("dumbbell_step_up")
+        val applied = adjustments
+            .apply(swap(day, original.id), day.id, AdjustmentReason.EQUIPMENT_UNAVAILABLE, NOW)
+            as ApplyResult.Applied
+
+        assertThat(adjustments.withdrawUndoneSubstitutes(day.id)).isEqualTo(0)
+
+        assertThat(workouts.getWorkoutExercise(checkNotNull(applied.addedExerciseId))).isNotNull()
+    }
+
+    @Test
     fun undoOfAnUntouchedSubstituteRemovesOnlyTheAppsOwnRows() = runTest {
         val day = seedDay()
         val original = day.exercise("dumbbell_step_up")

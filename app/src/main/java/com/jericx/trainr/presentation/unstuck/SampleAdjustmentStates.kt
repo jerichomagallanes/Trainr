@@ -97,7 +97,8 @@ object SampleAdjustmentStates {
     val noChangeReview = ReviewUi.NoChange(
         priorityName = null,
         goalLabelRes = R.string.build_muscle_goal,
-        plannedMinutes = 28
+        plannedMinutes = 28,
+        hasPerformedWork = false
     )
 
     val infeasibleReview = ReviewUi.Infeasible(

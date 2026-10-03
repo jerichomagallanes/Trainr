@@ -81,6 +81,11 @@ class AdjustmentRepositoryImpl(
         return dao.getActiveAdjustmentForDay(dayId)?.let { mapper.mapToDomain(it) }
     }
 
+    override suspend fun getActiveAdjustments(dayIds: List<Long>): List<AppliedAdjustment> {
+        if (dayIds.isEmpty()) return emptyList()
+        return dao.getActiveAdjustmentsForDays(dayIds).map { mapper.mapToDomain(it) }
+    }
+
     override suspend fun getAdjustments(dayId: Long): List<AppliedAdjustment> {
         return dao.getAdjustmentsForDay(dayId).map { mapper.mapToDomain(it) }
     }
@@ -156,6 +161,14 @@ class AdjustmentRepositoryImpl(
         throw cancelled
     } catch (failure: Throwable) {
         UndoResult.Failed(failure)
+    }
+
+    // A substitute undo kept only for its performed set has nothing to stand
+    // on once that set is cleared, and goes the way undo would have sent it.
+    override suspend fun withdrawUndoneSubstitutes(dayId: Long): Int = database.withTransaction {
+        userDao.getExercisesForWorkoutDay(dayId)
+            .filter { added -> added.addedBy?.let { dao.getAdjustmentById(it)?.undoneAt } != null }
+            .count { withdraw(it) == 0 }
     }
 
     private suspend fun reapplied(entity: AppliedAdjustmentEntity, nowMillis: Long): ApplyResult {

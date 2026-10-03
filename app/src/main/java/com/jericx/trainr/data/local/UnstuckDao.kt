@@ -40,6 +40,9 @@ interface UnstuckDao {
     )
     suspend fun getActiveAdjustmentForDay(dayId: Long): AppliedAdjustmentEntity?
 
+    @Query("SELECT * FROM applied_adjustments WHERE workoutDayId IN (:dayIds) AND undoneAt IS NULL")
+    suspend fun getActiveAdjustmentsForDays(dayIds: List<Long>): List<AppliedAdjustmentEntity>
+
     @Query("SELECT * FROM applied_adjustments WHERE workoutDayId = :dayId ORDER BY appliedAt, id")
     suspend fun getAdjustmentsForDay(dayId: Long): List<AppliedAdjustmentEntity>
 

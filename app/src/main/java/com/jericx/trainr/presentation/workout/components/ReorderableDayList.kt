@@ -147,6 +147,7 @@ fun ReorderableDayList(
                     day = planDay.day,
                     isMissed = planDay.isMissed,
                     finishedEarly = planDay.finishKind == FinishKind.PARTIAL,
+                    isAdjusted = planDay.isAdjusted,
                     minutes = planDay.minutes,
                     exerciseCount = planDay.exerciseCount,
                     equipment = planDay.equipment,

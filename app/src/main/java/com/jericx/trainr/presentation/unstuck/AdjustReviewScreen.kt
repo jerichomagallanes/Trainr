@@ -309,7 +309,11 @@ private fun ColumnScope.NoChangeContent(review: ReviewUi.NoChange) {
     )
     ScopeRow(
         leading = pluralStringResource(
-            R.plurals.original_workout_planned_format,
+            if (review.hasPerformedWork) {
+                R.plurals.review_original_remaining_format
+            } else {
+                R.plurals.original_workout_planned_format
+            },
             review.plannedMinutes,
             review.plannedMinutes
         ),

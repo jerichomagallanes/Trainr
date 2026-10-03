@@ -111,6 +111,10 @@ fun NavGraphBuilder.adjustGraph(
                 viewModel.continuedEvents.collect { navController.leaveAdjustment() }
             }
 
+            LaunchedEffect(viewModel) {
+                viewModel.finishEarlyEvents.collect { navController.requestFinishEarly() }
+            }
+
             val review = state.review
             if (review == null) {
                 // The answer lives in memory only: restored after process death
@@ -129,7 +133,7 @@ fun NavGraphBuilder.adjustGraph(
                     },
                     onKeepOriginal = { navController.leaveAdjustment() },
                     onContinue = viewModel::continueWorkout,
-                    onFinishEarly = { navController.requestFinishEarly() },
+                    onFinishEarly = viewModel::finishEarly,
                     onBack = { navController.popBackStack() }
                 )
             }
@@ -216,12 +220,15 @@ private fun ContextStep(navController: NavHostController, graph: NavBackStackEnt
 
 @Composable
 private fun PainStep(navController: NavHostController, graph: NavBackStackEntry) {
-    // Read so the step shares the flow's view model rather than starting a
-    // second one; pain itself asks the policy nothing.
-    hiltViewModel<AdjustmentViewModel>(graph)
+    // The flow's own view model, which holds the note; pain asks the policy nothing.
+    val viewModel: AdjustmentViewModel = hiltViewModel(graph)
+
+    LaunchedEffect(viewModel) {
+        viewModel.finishEarlyEvents.collect { navController.requestFinishEarly() }
+    }
 
     AdjustPainScreen(
-        onSaveAndFinishEarly = { navController.requestFinishEarly() },
+        onSaveAndFinishEarly = viewModel::finishEarly,
         onReturn = { navController.leaveAdjustment() },
         onBack = { navController.leaveAdjustment() }
     )
