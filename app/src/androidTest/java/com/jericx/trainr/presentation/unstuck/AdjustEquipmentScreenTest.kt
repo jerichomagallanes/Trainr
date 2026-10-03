@@ -57,17 +57,20 @@ class AdjustEquipmentScreenTest {
             .assertIsEnabled()
     }
 
+    // The chooser is skipped, so the screen has to say which exercise is being swapped.
     @Test
-    fun comingFromAnExerciseCardSkipsTheChooser() {
+    fun comingFromAnExerciseCardSkipsTheChooserAndNamesTheExercise() {
+        val chosen = SampleAdjustmentStates.equipment.exerciseChoices.first()
         setScreen(
             state = SampleAdjustmentStates.equipment.copy(
-                selectedExerciseId = SampleAdjustmentStates.equipment.exerciseChoices.first().id,
+                selectedExerciseId = chosen.id,
                 enteredWithExercise = true
             )
         )
 
         composeTestRule.onNodeWithText(string(R.string.adjust_equipment_exercise))
             .assertDoesNotExist()
+        composeTestRule.onNodeWithText(chosen.name).assertIsDisplayed()
         composeTestRule.onNodeWithText(string(R.string.show_recommendation).uppercase())
             .assertIsEnabled()
     }

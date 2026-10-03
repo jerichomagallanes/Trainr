@@ -11,7 +11,6 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 @HiltViewModel
@@ -41,15 +40,10 @@ class FeedbackPromptViewModel @Inject constructor(
     private suspend fun load() {
         val day = dayNumber ?: return
         val user = userRepository.getCurrentUser() ?: return
-        val plans = userRepository.getWeeklyWorkoutPlans(user.id).first()
-        val plan = if (weekNumber == null) {
-            plans.maxByOrNull { it.weekNumber }
-        } else {
-            plans.firstOrNull { it.weekNumber == weekNumber }
-        } ?: return
+        val week = userRepository.getWeekOutline(user.id, weekNumber) ?: return
         // The saved screens count training days, so this is an ordinal, while
         // the stored dayNumber is the weekday: a three-day week stores 1, 3, 5.
-        val stored = plan.workoutDays.getOrNull(day - 1) ?: return
+        val stored = week.days.getOrNull(day - 1) ?: return
 
         val adjustment = adjustmentRepository.getActiveAdjustment(stored.id) ?: return
         if (adjustmentRepository.getFeedback(adjustment.id) != null) return

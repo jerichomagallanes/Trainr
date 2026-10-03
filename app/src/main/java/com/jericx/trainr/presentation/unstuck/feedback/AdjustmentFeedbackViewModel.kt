@@ -21,7 +21,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
@@ -99,11 +98,7 @@ class AdjustmentFeedbackViewModel @Inject constructor(
         val profile = userRepository.getCurrentUser()
         val goal = profile?.fitnessGoal
         val replaced = adjustment?.proposal?.replacement()
-        val session = if (adjustment != null && profile != null) {
-            sessionOf(adjustment.workoutDayId, profile.id)
-        } else {
-            null
-        }
+        val session = adjustment?.let { sessionOf(it.workoutDayId) }
         feedbackId = stored?.id ?: 0L
 
         _uiState.value = AdjustmentFeedbackUiState(
@@ -125,13 +120,11 @@ class AdjustmentFeedbackViewModel @Inject constructor(
 
     // A note belongs to the session the adjustment was made on, which need not
     // be in the newest week.
-    private suspend fun sessionOf(workoutDayId: Long, userId: Long): Pair<Int, Int>? =
-        userRepository.getWeeklyWorkoutPlans(userId).first()
-            .firstNotNullOfOrNull { plan ->
-                plan.workoutDays
-                    .firstOrNull { it.id == workoutDayId }
-                    ?.let { day -> day.dayNumber to plan.weekNumber }
-            }
+    private suspend fun sessionOf(workoutDayId: Long): Pair<Int, Int>? {
+        val week = userRepository.getWeekOutlineOf(workoutDayId) ?: return null
+        return week.days.firstOrNull { it.id == workoutDayId }
+            ?.let { day -> day.dayNumber to week.weekNumber }
+    }
 }
 
 private fun AdjustmentProposal.replacement() =

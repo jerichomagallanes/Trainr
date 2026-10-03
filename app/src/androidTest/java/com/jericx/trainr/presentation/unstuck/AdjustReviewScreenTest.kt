@@ -179,4 +179,16 @@ class AdjustReviewScreenTest {
 
         composeTestRule.onNodeWithText(string(R.string.review_rebuilt)).assertIsDisplayed()
     }
+
+    @Test
+    fun aResultLongerThanTheRequestSaysHowLongItIs() {
+        setScreen(SampleAdjustmentStates.shorterReview.copy(budgetMinutes = 17, shortestMinutes = 23))
+
+        composeTestRule
+            .onNodeWithText(plural(R.plurals.review_shortest_version_format, 23, 23))
+            .assertIsDisplayed()
+        composeTestRule
+            .onNodeWithText(plural(R.plurals.adjust_review_time_line_format, 17, 17))
+            .assertDoesNotExist()
+    }
 }

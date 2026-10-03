@@ -2,7 +2,10 @@ package com.jericx.trainr.data.repository
 
 import com.jericx.trainr.data.local.UserDao
 import com.jericx.trainr.data.local.UserMapper
+import com.jericx.trainr.data.local.WeeklyWorkoutPlanEntity
+import com.jericx.trainr.domain.model.DayOutline
 import com.jericx.trainr.domain.model.UserProfile
+import com.jericx.trainr.domain.model.WeekOutline
 import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
 import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.model.ExerciseSet
@@ -56,6 +59,25 @@ class UserRepositoryImpl(
     override suspend fun updateWeeklyWorkoutPlan(plan: WeeklyWorkoutPlan) {
         userDao.updateWeeklyWorkoutPlan(mapper.mapToEntity(plan))
     }
+
+    override suspend fun getWeekOutline(userId: Long, weekNumber: Int?): WeekOutline? {
+        val planEntity = if (weekNumber == null) {
+            userDao.getLatestWeeklyWorkoutPlan(userId)
+        } else {
+            userDao.getWeeklyWorkoutPlan(userId, weekNumber)
+        }
+        return planEntity?.let { outlineOf(it) }
+    }
+
+    override suspend fun getWeekOutlineOf(dayId: Long): WeekOutline? =
+        userDao.getWeeklyWorkoutPlanOf(dayId)?.let { outlineOf(it) }
+
+    private suspend fun outlineOf(planEntity: WeeklyWorkoutPlanEntity) = WeekOutline(
+        id = planEntity.id,
+        weekNumber = planEntity.weekNumber,
+        startDateMillis = planEntity.startDateMillis,
+        days = userDao.getWorkoutDaysForPlan(planEntity.id).map { DayOutline(it.id, it.dayNumber) }
+    )
 
     override suspend fun saveWorkoutDay(day: WorkoutDay, weeklyPlanId: Long): Long {
         val dayId = userDao.insertWorkoutDay(mapper.mapToEntity(day, weeklyPlanId))

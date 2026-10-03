@@ -30,6 +30,7 @@ import com.jericx.trainr.domain.unstuck.testCatalog
 import com.jericx.trainr.domain.unstuck.testDay
 import com.jericx.trainr.domain.unstuck.testUser
 import com.jericx.trainr.presentation.Screen
+import com.jericx.trainr.presentation.workout.model.remainingMinutes
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -39,7 +40,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -85,19 +85,16 @@ class AdjustmentViewModelTest {
     private fun repositoryWith(day: WorkoutDay, startDateMillis: Long = 0L): UserRepository =
         mockk<UserRepository>(relaxed = true).also {
             coEvery { it.getCurrentUser() } returns testUser()
-            every { it.getWeeklyWorkoutPlans(any()) } returns flowOf(
-                listOf(
-                    WeeklyWorkoutPlan(
-                        id = 1,
-                        userId = 0,
-                        weekNumber = 1,
-                        title = "Week 1",
-                        startDateMillis = startDateMillis,
-                        workoutDays = listOf(day)
-                    )
+            it.storing(
+                WeeklyWorkoutPlan(
+                    id = 1,
+                    userId = 0,
+                    weekNumber = 1,
+                    title = "Week 1",
+                    startDateMillis = startDateMillis,
+                    workoutDays = listOf(day)
                 )
             )
-            coEvery { it.getWorkoutDay(day.id) } returns day
         }
 
     // A relaxed mock answers every nullable read with a stand-in, which would
@@ -721,6 +718,32 @@ class AdjustmentViewModelTest {
         } finally {
             TimeZone.setDefault(original)
         }
+    }
+
+    // The header, the plan card and the presets read the same estimate, so
+    // the biggest preset is the number the person has just been shown.
+    @Test
+    fun thePresetsStartFromTheEstimateTheHeaderShows() = runTest {
+        val viewModel = viewModel()
+
+        with(viewModel.uiState.value) {
+            assertThat(plannedMinutes).isEqualTo(fullDay.remainingMinutes(testUser(), testCatalog))
+            assertThat(presets.last()).isEqualTo(plannedMinutes)
+        }
+    }
+
+    @Test
+    fun aRequestBelowTheFloorNamesTheFloorOnTheTimeScreen() = runTest {
+        val viewModel = viewModel()
+        assertThat(viewModel.uiState.value.shortestMinutes).isNull()
+
+        viewModel.typeMinutes("5")
+        viewModel.showRecommendation()
+
+        val decision = viewModel.uiState.value.decision as PolicyDecision.NoFeasibleChange
+        assertThat(viewModel.uiState.value.review).isInstanceOf(ReviewUi.Infeasible::class.java)
+        assertThat(viewModel.uiState.value.shortestMinutes).isEqualTo(decision.minimumMinutes)
+        assertThat(decision.minimumMinutes).isGreaterThan(5)
     }
 
     private fun applies(repository: AdjustmentRepository, viewModel: AdjustmentViewModel) {

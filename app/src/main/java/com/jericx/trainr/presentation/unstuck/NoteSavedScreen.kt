@@ -24,16 +24,15 @@ import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 import com.jericx.trainr.presentation.common.theme.trainrColors
 
-// Reads the day's note through the debrief's own view model: this route
-// carries the same dayNumber and weekNumber arguments, so it resolves the note
-// that was just written rather than passing free text through a route.
+// Reads the note back by the id of the day it was saved against rather than
+// passing free text through a route.
 @Composable
 fun NoteSavedRoute(
     modifier: Modifier = Modifier,
     onViewPreferences: () -> Unit = {},
     onDone: () -> Unit = {},
     onBack: () -> Unit = {},
-    viewModel: DebriefViewModel = hiltViewModel()
+    viewModel: NoteSavedViewModel = hiltViewModel()
 ) {
     val note by viewModel.note.collectAsStateWithLifecycle()
 

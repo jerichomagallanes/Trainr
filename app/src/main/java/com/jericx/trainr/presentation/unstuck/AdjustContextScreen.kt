@@ -8,6 +8,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
@@ -41,6 +43,8 @@ fun AdjustContextScreen(
     onBack: () -> Unit = {}
 ) {
     val colors = MaterialTheme.trainrColors
+    val keyboard = LocalSoftwareKeyboardController.current
+    val focus = LocalFocusManager.current
 
     TrainrScaffold(
         onBackClick = onBack,
@@ -51,7 +55,11 @@ fun AdjustContextScreen(
                         text = stringResource(
                             if (isInterpreting) R.string.context_reading_note else R.string.context_use_note
                         ),
-                        onClick = onUseNote,
+                        onClick = {
+                            focus.clearFocus()
+                            keyboard?.hide()
+                            onUseNote()
+                        },
                         enabled = note.isNotBlank() && !isInterpreting
                     )
                 }

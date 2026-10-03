@@ -19,7 +19,6 @@ import com.jericx.trainr.presentation.Screen
 import com.jericx.trainr.presentation.unstuck.TodayAdjustmentKind
 import com.jericx.trainr.presentation.workout.model.derivedEquipment
 import com.jericx.trainr.presentation.workout.model.derivedExerciseCount
-import com.jericx.trainr.presentation.workout.model.isAdjustedToday
 import com.jericx.trainr.presentation.workout.model.remainingMinutes
 import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
 import com.jericx.trainr.presentation.workout.util.WorkoutWeek
@@ -38,8 +37,8 @@ data class WeeklyPlanDay(
     val isToday: Boolean = false,
     val isPast: Boolean = false,
     val finishKind: FinishKind? = null,
-    // Derived from the sets that remain: an adjusted day's stored duration,
-    // exercise count and equipment still describe the plan as generated.
+    // Derived from the sets that remain, with the same estimate the session
+    // header shows: the stored columns describe the plan as generated.
     val minutes: Int = day.duration,
     val exerciseCount: Int = day.exerciseCount,
     val equipment: List<String> = day.equipment
@@ -228,14 +227,13 @@ class WeeklyPlanViewModel @Inject constructor(
                 plan = plan,
                 days = plan.workoutDays.map {
                     val date = WorkoutWeek.dateOfDay(start, it.dayNumber)
-                    val adjusted = it.isAdjustedToday
                     WeeklyPlanDay(
                         day = it,
                         dateMillis = date,
                         isToday = WorkoutWeek.startOfDay(date) == today,
                         isPast = WorkoutWeek.startOfDay(date) < today,
                         finishKind = outcomes[it.id]?.finishKind,
-                        minutes = if (adjusted && user != null && catalog != null) {
+                        minutes = if (user != null && catalog != null) {
                             it.remainingMinutes(user, catalog)
                         } else {
                             it.duration

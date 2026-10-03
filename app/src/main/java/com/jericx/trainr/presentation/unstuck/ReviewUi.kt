@@ -25,6 +25,7 @@ sealed interface ReviewUi {
         val priorityName: String?,
         @StringRes val goalLabelRes: Int,
         val budgetMinutes: Int?,
+        val shortestMinutes: Int?,
         val scope: TimeScope,
         val hasPerformedWork: Boolean,
         val keptNames: List<String>,
@@ -113,6 +114,7 @@ private fun proposed(
         priorityName = summary.keptPriorityKey?.let { catalog[it]?.name },
         goalLabelRes = goalLabelRes,
         budgetMinutes = summary.budgetMinutes,
+        shortestMinutes = summary.shortestMinutes,
         scope = if (hasPerformedWork) TimeScope.REMAINING else TimeScope.WHOLE_SESSION,
         hasPerformedWork = hasPerformedWork,
         keptNames = day.exercises
@@ -125,6 +127,9 @@ private fun proposed(
         rows = summary.rows.map { it.toUi(proposal) }
     )
 }
+
+val ProposalSummary.shortestMinutes: Int?
+    get() = estimateAfterMinutes?.takeIf { after -> budgetMinutes?.let { after > it } == true }
 
 private val ChangeRow.key: String
     get() = when (this) {

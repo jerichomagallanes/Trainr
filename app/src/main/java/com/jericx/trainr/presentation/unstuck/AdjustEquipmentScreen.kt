@@ -69,7 +69,16 @@ fun AdjustEquipmentScreen(
 
             // Entering from an exercise card already answered this, so the
             // chooser is only for the people who came in without one.
-            if (!state.enteredWithExercise) {
+            if (state.enteredWithExercise) {
+                state.exerciseChoices.firstOrNull { it.id == state.selectedExerciseId }?.let {
+                    Text(
+                        text = it.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = colors.onSurface,
+                        modifier = Modifier.padding(top = Spacing.small)
+                    )
+                }
+            } else {
                 Text(
                     text = stringResource(R.string.adjust_equipment_exercise),
                     style = MaterialTheme.typography.titleMedium,
