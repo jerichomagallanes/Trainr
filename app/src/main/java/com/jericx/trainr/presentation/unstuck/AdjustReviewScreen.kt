@@ -39,6 +39,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jericx.trainr.R
+import com.jericx.trainr.domain.model.Equipment
 import com.jericx.trainr.domain.unstuck.InfeasibleReason
 import com.jericx.trainr.domain.unstuck.ProposalKind
 import com.jericx.trainr.domain.unstuck.TimeScope
@@ -126,14 +127,16 @@ private fun ColumnScope.ProposedContent(review: ReviewUi.Proposed) {
     val priority = review.priorityName ?: stringResource(review.goalLabelRes)
 
     FeatureTitle(
-        text = if (review.kind == ProposalKind.SUBSTITUTE) {
-            stringResource(
+        text = when {
+            review.kind != ProposalKind.SUBSTITUTE -> stringResource(R.string.adjust_review_time_title)
+            review.substituteEquipment == Equipment.NONE ->
+                stringResource(R.string.adjust_review_bodyweight_title)
+
+            else -> stringResource(
                 R.string.adjust_review_equipment_title_format,
                 review.substituteEquipment?.getLocalizedName()
                     ?.lowercase(locale).orEmpty()
             )
-        } else {
-            stringResource(R.string.adjust_review_time_title)
         }
     )
 
@@ -189,23 +192,28 @@ private fun ColumnScope.ProposedContent(review: ReviewUi.Proposed) {
             .padding(Spacing.card)
     ) {
         Text(
-            text = if (review.priorityName != null) {
-                stringResource(R.string.adjust_review_keep_format, review.priorityName)
-            } else {
-                stringResource(R.string.adjust_review_alternative)
+            text = when {
+                review.priorityName != null ->
+                    stringResource(R.string.adjust_review_keep_format, review.priorityName)
+
+                review.kind == ProposalKind.SUBSTITUTE ->
+                    stringResource(R.string.adjust_review_alternative)
+
+                else -> stringResource(R.string.adjust_review_shortened_title)
             },
             style = MaterialTheme.typography.titleMedium,
             color = colors.onSurface
         )
         Text(
-            text = if (review.replacedFrom != null && review.replacedTo != null) {
-                stringResource(
+            text = when {
+                review.replacedFrom != null && review.replacedTo != null -> stringResource(
                     R.string.adjust_review_replace_body_format,
                     review.replacedFrom,
                     review.replacedTo
                 )
-            } else {
-                stringResource(R.string.adjust_review_time_body_format, joinAnd(review.keptNames))
+
+                review.keptNames.isEmpty() -> stringResource(R.string.review_all_shortened_message)
+                else -> stringResource(R.string.adjust_review_time_body_format, joinAnd(review.keptNames))
             },
             style = MaterialTheme.typography.bodyMedium,
             color = colors.onSurface,
@@ -237,7 +245,7 @@ private fun ColumnScope.ProposedContent(review: ReviewUi.Proposed) {
             review.rows.forEach { ChangeRowLine(it) }
             Text(
                 text = stringResource(
-                    if (review.kind == ProposalKind.SUBSTITUTE) {
+                    if (review.substituteLoadable) {
                         R.string.changes_rest_kept_choose_weight
                     } else {
                         R.string.changes_rest_unchanged
@@ -250,7 +258,7 @@ private fun ColumnScope.ProposedContent(review: ReviewUi.Proposed) {
         }
     }
 
-    if (review.kind == ProposalKind.SUBSTITUTE) {
+    if (review.substituteLoadable) {
         Disclosure(label = stringResource(R.string.how_to_choose_weight)) {
             Text(
                 text = stringResource(R.string.choose_weight_body_1),
@@ -268,10 +276,15 @@ private fun ColumnScope.ProposedContent(review: ReviewUi.Proposed) {
 
     Disclosure(label = stringResource(R.string.why_this_change)) {
         Text(
-            text = if (review.kind == ProposalKind.SUBSTITUTE) {
-                stringResource(R.string.why_equipment_format, review.replacedTo.orEmpty())
-            } else {
-                stringResource(R.string.why_time_format, priority)
+            text = when {
+                review.kind != ProposalKind.SUBSTITUTE -> stringResource(R.string.why_time_format, priority)
+                review.bodyweightFallback ->
+                    stringResource(R.string.why_bodyweight_fallback_format, review.replacedTo.orEmpty())
+
+                review.substituteLoadable ->
+                    stringResource(R.string.why_equipment_format, review.replacedTo.orEmpty())
+
+                else -> stringResource(R.string.why_equipment_unloaded_format, review.replacedTo.orEmpty())
             },
             style = MaterialTheme.typography.bodyMedium,
             color = colors.onSurface
@@ -519,6 +532,7 @@ private fun TradeoffUi.text(): String = when (code) {
 
     TradeoffCode.REDUCED_SESSION -> stringResource(R.string.tradeoff_reduced_session)
     TradeoffCode.DIFFERENT_RESISTANCE -> stringResource(R.string.tradeoff_different_resistance)
+    TradeoffCode.DIFFERENT_MOVEMENT -> stringResource(R.string.tradeoff_different_movement)
     TradeoffCode.LESS_BARBELL_PRACTICE ->
         stringResource(R.string.tradeoff_less_barbell_format, exerciseName.orEmpty())
 

@@ -6,22 +6,24 @@ import org.junit.Test
 class TimePresetsTest {
 
     @Test
-    fun presetsEndAtThePlannedLengthTenMinutesApart() {
-        assertThat(TimePresets.forPlanned(45)).containsExactly(25, 35, 45).inOrder()
-        assertThat(TimePresets.forPlanned(30)).containsExactly(10, 20, 30).inOrder()
-        assertThat(TimePresets.forPlanned(60)).containsExactly(40, 50, 60).inOrder()
+    fun presetsStopBelowThePlannedLengthTenMinutesApart() {
+        assertThat(TimePresets.forPlanned(45)).containsExactly(15, 25, 35).inOrder()
+        assertThat(TimePresets.forPlanned(39)).containsExactly(19, 29).inOrder()
+        assertThat(TimePresets.forPlanned(60)).containsExactly(30, 40, 50).inOrder()
     }
 
     @Test
     fun aShortPlanIsOfferedFewerChoicesRatherThanOneBelowTenMinutes() {
-        assertThat(TimePresets.forPlanned(25)).containsExactly(15, 25).inOrder()
-        assertThat(TimePresets.forPlanned(15)).containsExactly(15)
+        assertThat(TimePresets.forPlanned(30)).containsExactly(10, 20).inOrder()
+        assertThat(TimePresets.forPlanned(25)).containsExactly(15)
     }
 
+    // The planned length itself can only be answered with "already fits".
     @Test
-    fun aPlanShorterThanTheFloorStillOffersTheSessionAsPlanned() {
-        assertThat(TimePresets.forPlanned(9)).containsExactly(9)
-        assertThat(TimePresets.forPlanned(5)).containsExactly(5)
+    fun aPlanWithNothingBelowItOffersNoPreset() {
+        assertThat(TimePresets.forPlanned(19)).isEmpty()
+        assertThat(TimePresets.forPlanned(9)).isEmpty()
+        assertThat(TimePresets.forPlanned(5)).isEmpty()
     }
 
     @Test

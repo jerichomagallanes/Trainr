@@ -10,7 +10,9 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.R
+import com.jericx.trainr.domain.model.Equipment
 import com.jericx.trainr.domain.unstuck.InfeasibleReason
+import com.jericx.trainr.domain.unstuck.TradeoffCode
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 import com.jericx.trainr.testing.notEllipsized
 import org.junit.Rule
@@ -27,6 +29,17 @@ class AdjustReviewScreenTest {
 
     private fun plural(id: Int, count: Int, vararg args: Any) =
         composeTestRule.activity.resources.getQuantityString(id, count, *args)
+
+    private val unloadedSubstitute = SampleAdjustmentStates.substituteReview.copy(
+        substituteEquipment = Equipment.NONE,
+        substituteLoadable = false,
+        replacedFrom = "Bicycle Crunch",
+        replacedTo = "Crunch",
+        tradeoffs = listOf(TradeoffUi(TradeoffCode.DIFFERENT_MOVEMENT, emptyList(), "Crunch")),
+        rows = listOf(
+            ChangeRowUi.Replaced(fromName = "Bicycle Crunch", toName = "Crunch", sets = 3, reps = "12")
+        )
+    )
 
     private fun setScreen(
         review: ReviewUi,
@@ -130,6 +143,47 @@ class AdjustReviewScreenTest {
         composeTestRule.onNodeWithText(string(R.string.restore_remaining_plan)).assertIsDisplayed()
         composeTestRule.onNodeWithText(string(R.string.how_to_choose_weight)).performScrollTo()
             .assertIsDisplayed()
+    }
+
+    // A time review is written in time copy even when no lift is kept whole.
+    @Test
+    fun aShorterSessionThatTouchesEverythingSaysSoWithoutBorrowingEquipmentCopy() {
+        setScreen(SampleAdjustmentStates.shorterReview.copy(priorityName = null, keptNames = emptyList()))
+
+        composeTestRule.onNodeWithText(string(R.string.adjust_review_shortened_title)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.review_all_shortened_message)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.adjust_review_alternative)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.adjust_review_time_body_format, ""))
+            .assertDoesNotExist()
+    }
+
+    @Test
+    fun anUnloadedSubstituteCarriesNoWeightCopy() {
+        setScreen(unloadedSubstitute)
+
+        composeTestRule.onNodeWithText(string(R.string.adjust_review_bodyweight_title)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.how_to_choose_weight)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.tradeoff_different_movement)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.tradeoff_different_resistance)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.see_exact_changes)).performScrollTo().performClick()
+        composeTestRule.onNodeWithText(string(R.string.changes_rest_unchanged)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.changes_rest_kept_choose_weight)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.why_this_change)).performScrollTo().performClick()
+        composeTestRule.onNodeWithText(string(R.string.why_equipment_unloaded_format, "Crunch"))
+            .performScrollTo()
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun aBodyweightFallbackSaysTheTickedKitHadNoMatch() {
+        setScreen(unloadedSubstitute.copy(bodyweightFallback = true))
+
+        composeTestRule.onNodeWithText(string(R.string.adjust_review_bodyweight_title)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.why_this_change)).performScrollTo().performClick()
+        composeTestRule.onNodeWithText(string(R.string.why_bodyweight_fallback_format, "Crunch"))
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.why_equipment_format, "Crunch")).assertDoesNotExist()
     }
 
     @Test

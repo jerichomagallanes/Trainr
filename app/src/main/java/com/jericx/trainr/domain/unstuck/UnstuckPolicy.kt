@@ -55,13 +55,15 @@ class UnstuckPolicy(private val catalog: ExerciseCatalog) {
         val shape = SessionShape.forGoal(user.fitnessGoal)
         val kept = day.exercises.associate { it.id to it.unperformed().size }.toMutableMap()
         val fits = { estimate(day.shrunkTo(kept), user, constraint.scope) <= constraint.minutes }
+        // The last working set outside the warm-up is never shed: a shorter session is still one.
+        val working = { kept.filterKeys { tiers[it] != SlotTier.WARM_UP }.values.sum() }
         val order = droppable(day, tiers, shape)
 
         var moved = true
         while (moved && !fits()) {
             moved = false
             for (exercise in order) {
-                if (!exercise.canLoseASet(kept, tiers, shape)) continue
+                if (!exercise.canLoseASet(kept, tiers, shape) || working() <= 1) continue
                 kept[exercise.id] = kept.getValue(exercise.id) - 1
                 moved = true
                 if (fits()) break
@@ -69,14 +71,15 @@ class UnstuckPolicy(private val catalog: ExerciseCatalog) {
         }
         if (!fits()) {
             for (exercise in order) {
-                if (kept.getValue(exercise.id) == 0) continue
-                kept[exercise.id] = 0
+                val remaining = kept.getValue(exercise.id)
+                if (remaining == 0) continue
+                kept[exercise.id] = if (working() > remaining) 0 else 1
                 if (fits()) break
             }
         }
         if (!fits()) {
             day.exercises.firstOrNull { tiers[it.id] == SlotTier.PRIMARY_COMPOUND }?.let { primary ->
-                while (primary.canLoseASet(kept, tiers, shape)) {
+                while (primary.canLoseASet(kept, tiers, shape) && working() > 1) {
                     kept[primary.id] = kept.getValue(primary.id) - 1
                     if (fits()) break
                 }
@@ -123,6 +126,7 @@ class UnstuckPolicy(private val catalog: ExerciseCatalog) {
                 )
             ),
             rows = touched.map { it.row(kept.getValue(it.id)) },
+            bodyweightFallback = false,
             estimateBeforeMinutes = before,
             estimateAfterMinutes = after,
             budgetMinutes = constraint.minutes
@@ -172,6 +176,7 @@ class UnstuckPolicy(private val catalog: ExerciseCatalog) {
             )
         )
         val tradeoffs = tradeoffsFor(entry, candidate)
+        val fallback = candidate.equipment == Equipment.NONE && Equipment.NONE !in constraint.available
         val proposal = AdjustmentProposal(
             proposalId = proposalId(requestId, revision, constraint),
             requestId = requestId,
@@ -203,6 +208,7 @@ class UnstuckPolicy(private val catalog: ExerciseCatalog) {
                     sets = unperformed.size
                 )
             ),
+            bodyweightFallback = fallback,
             estimateBeforeMinutes = null,
             estimateAfterMinutes = null,
             budgetMinutes = null
@@ -224,8 +230,10 @@ class UnstuckPolicy(private val catalog: ExerciseCatalog) {
                 (it.primary == entry.primary ||
                     (it.pattern == entry.pattern && it.role == ExerciseRole.COMPOUND))
         }
-        val pool = eligible.filter { it.measure == target.measure }
-            .ifEmpty { eligible.filter { it.measure in interchangeable(target.measure) } }
+        // Bodyweight is the fallback, offered only when nothing in the ticked kit trains the same muscles.
+        val usable = eligible.filter { it.equipment in available }.ifEmpty { eligible }
+        val pool = usable.filter { it.measure == target.measure }
+            .ifEmpty { usable.filter { it.measure in interchangeable(target.measure) } }
         return pool.sortedWith(
             compareBy(
                 { closeness(it, entry) },
@@ -256,14 +264,14 @@ class UnstuckPolicy(private val catalog: ExerciseCatalog) {
         val named = buildList {
             if (entry.equipment == Equipment.BARBELL && candidate.equipment != Equipment.BARBELL) {
                 add(Tradeoff(TradeoffCode.LESS_BARBELL_PRACTICE, exerciseKeys = keys))
-            } else if (entry.equipment != candidate.equipment) {
+            } else if (entry.equipment != candidate.equipment && candidate.isLoadable) {
                 add(Tradeoff(TradeoffCode.DIFFERENT_RESISTANCE, exerciseKeys = keys))
             }
             if (candidate.isLoadable) {
                 add(Tradeoff(TradeoffCode.SEPARATE_LOAD_HISTORY, exerciseKeys = listOf(candidate.key)))
             }
         }
-        return named.ifEmpty { listOf(Tradeoff(TradeoffCode.DIFFERENT_RESISTANCE, exerciseKeys = keys)) }
+        return named.ifEmpty { listOf(Tradeoff(TradeoffCode.DIFFERENT_MOVEMENT, exerciseKeys = keys)) }
     }
 
     // A seed, never the weight that was on the bar: the two movements do not

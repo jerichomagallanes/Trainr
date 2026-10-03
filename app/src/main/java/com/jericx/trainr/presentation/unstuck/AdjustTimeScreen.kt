@@ -86,21 +86,23 @@ fun AdjustTimeScreen(
                 modifier = Modifier.padding(top = Spacing.small)
             )
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = Spacing.medium),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.small)
-            ) {
-                state.presets.forEach { preset ->
-                    TrainrToggleChip(
-                        text = stringResource(R.string.minutes_short_format, preset),
-                        selected = state.isPresetSelected && state.selectedMinutes == preset,
-                        onClick = { onSelectMinutes(preset) },
-                        modifier = Modifier.weight(1f),
-                        height = ComponentHeight.Medium,
-                        horizontalPadding = Spacing.small
-                    )
+            if (state.presets.isNotEmpty()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = Spacing.medium),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.small)
+                ) {
+                    state.presets.forEach { preset ->
+                        TrainrToggleChip(
+                            text = stringResource(R.string.minutes_short_format, preset),
+                            selected = state.isPresetSelected && state.selectedMinutes == preset,
+                            onClick = { onSelectMinutes(preset) },
+                            modifier = Modifier.weight(1f),
+                            height = ComponentHeight.Medium,
+                            horizontalPadding = Spacing.small
+                        )
+                    }
                 }
             }
 

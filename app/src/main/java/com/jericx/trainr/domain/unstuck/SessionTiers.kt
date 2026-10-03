@@ -50,5 +50,5 @@ object SessionTiers {
         return tiers
     }
 
-    private const val WARM_UP_KEY = "warm_up"
+    const val WARM_UP_KEY = "warm_up"
 }

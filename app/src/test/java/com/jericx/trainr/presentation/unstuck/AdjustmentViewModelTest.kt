@@ -801,15 +801,17 @@ class AdjustmentViewModelTest {
         }
     }
 
-    // The header, the plan card and the presets read the same estimate, so
-    // the biggest preset is the number the person has just been shown.
+    // The header, the plan card and the presets read the same estimate, and
+    // every preset is a cut below the number the person has just been shown.
     @Test
-    fun thePresetsStartFromTheEstimateTheHeaderShows() = runTest {
+    fun thePresetsStopBelowTheEstimateTheHeaderShows() = runTest {
         val viewModel = viewModel()
 
         with(viewModel.uiState.value) {
             assertThat(plannedMinutes).isEqualTo(fullDay.remainingMinutes(testUser(), testCatalog))
-            assertThat(presets.last()).isEqualTo(plannedMinutes)
+            assertThat(presets).isNotEmpty()
+            assertThat(presets.last()).isEqualTo(plannedMinutes - 10)
+            assertThat(presets).doesNotContain(plannedMinutes)
         }
     }
 
