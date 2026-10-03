@@ -75,5 +75,13 @@ enum class ExerciseMeasure {
 enum class WorkoutStatus {
     NOT_STARTED,
     IN_PROGRESS,
-    COMPLETED
+    COMPLETED;
+
+    companion object {
+        fun derived(performed: Int, planned: Int): WorkoutStatus = when (performed) {
+            0 -> NOT_STARTED
+            planned -> COMPLETED
+            else -> IN_PROGRESS
+        }
+    }
 }

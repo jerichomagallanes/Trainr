@@ -187,6 +187,43 @@ class UnstuckPersistenceTest {
     }
 
     @Test
+    fun deletingAnOutcomeRemovesOnlyThatDaysRow() = runTest {
+        val (_, first) = seedDay("goblet_squat")
+        val (_, second) = seedDay("plank")
+        listOf(first, second).forEach { day ->
+            adjustments.saveOutcome(
+                SessionOutcome(
+                    workoutDayId = day.id,
+                    finishKind = FinishKind.PARTIAL,
+                    finishedAt = 1L,
+                    performedSetCount = 0,
+                    plannedSetCount = 2
+                )
+            )
+        }
+
+        adjustments.deleteOutcome(first.id)
+
+        assertThat(adjustments.getOutcome(first.id)).isNull()
+        assertThat(adjustments.getOutcome(second.id)?.finishKind).isEqualTo(FinishKind.PARTIAL)
+        assertThat(adjustments.getOutcomes(listOf(first.id, second.id))).hasSize(1)
+
+        adjustments.deleteOutcome(first.id)
+        adjustments.deleteOutcome(999L)
+        adjustments.saveOutcome(
+            SessionOutcome(
+                workoutDayId = first.id,
+                finishKind = FinishKind.FULL,
+                finishedAt = 2L,
+                performedSetCount = 2,
+                plannedSetCount = 2
+            )
+        )
+        assertThat(adjustments.getOutcome(first.id)?.finishKind).isEqualTo(FinishKind.FULL)
+        assertThat(adjustments.getOutcomes(listOf(first.id, second.id))).hasSize(2)
+    }
+
+    @Test
     fun anAdjustmentRoundTripsWithItsProposalAndUndoState() = runTest {
         val (_, day) = seedDay("goblet_squat")
 

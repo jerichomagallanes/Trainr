@@ -22,6 +22,8 @@ data class RoutineUi(
 
     val performedExerciseCount: Int get() = exercises.count { !it.isOmitted && it.isPerformed }
 
+    val hasUnperformedWork: Boolean get() = exercises.any { !it.isOmitted && !it.isPerformed }
+
     fun toggleCompleted(position: Int): RoutineUi = copy(
         exercises = exercises.map {
             when {

@@ -12,6 +12,7 @@ import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.model.WorkoutExercise
 import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.R
+import com.jericx.trainr.domain.purchases.AdjustmentAllowance
 import com.jericx.trainr.domain.repository.AdjustmentRepository
 import com.jericx.trainr.domain.repository.UserRepository
 import com.jericx.trainr.domain.unstuck.ActualOrigin
@@ -72,11 +73,23 @@ class RoutineDetailViewModelTest {
     private fun emptyAdjustments(): AdjustmentRepository = mockk<AdjustmentRepository>(relaxed = true)
         .also { coEvery { it.getOutcome(any()) } returns null }
 
+    private class FakeAllowance(private var included: String? = null) : AdjustmentAllowance {
+        override fun includedCycleId() = included
+        override fun consume(cycleId: String) {
+            if (included == null) included = cycleId
+        }
+
+        override fun restore(cycleId: String) {
+            if (included == cycleId) included = null
+        }
+    }
+
     private fun viewModel(
         dayNumber: Int = SampleWorkoutData.DEFAULT_DAY_NUMBER,
         repository: UserRepository = emptyRepository(),
         weekNumber: Int = Screen.RoutineDetail.LATEST_WEEK,
-        adjustments: AdjustmentRepository = emptyAdjustments()
+        adjustments: AdjustmentRepository = emptyAdjustments(),
+        allowance: AdjustmentAllowance = FakeAllowance()
     ) = RoutineDetailViewModel(
         SavedStateHandle(
             mapOf(
@@ -86,6 +99,7 @@ class RoutineDetailViewModelTest {
         ),
         repository,
         adjustments,
+        allowance,
         SampleWorkoutData.catalog
     )
 
@@ -816,21 +830,167 @@ class RoutineDetailViewModelTest {
     }
 
     @Test
-    fun aFinishedEarlyDayStaysCompleteWhenASetIsEdited() = runTest {
+    fun aFinishedEarlyDayStaysCompleteWhenANumberIsCorrected() = runTest {
         val repository = repositoryWith(storedPlan)
-        val viewModel = viewModel(dayNumber = 3, repository = repository)
+        val adjustments = emptyAdjustments()
+        val viewModel = viewModel(dayNumber = 3, repository = repository, adjustments = adjustments)
         advanceUntilIdle()
 
         viewModel.finishEarly()
         advanceUntilIdle()
-        viewModel.updateSet(1, viewModel.exercise(1).sets.first().copy(actualReps = 9, isCompleted = true))
-        viewModel.toggleExercise(2)
+        viewModel.updateSet(1, viewModel.exercise(1).sets.first().copy(actualReps = 9))
         advanceUntilIdle()
 
         coVerify(exactly = 0) {
             repository.updateWorkoutDay(match { it.status != WorkoutStatus.COMPLETED }, any())
+            adjustments.deleteOutcome(any())
         }
         coVerify { repository.updateExerciseSet(match { it.id == 320L && it.actualReps == 9 }, 32L) }
+        assertThat(viewModel.uiState.value.outcome?.finishKind).isEqualTo(FinishKind.PARTIAL)
+    }
+
+    private fun TestScope.finishedEarlyViewModel(
+        repository: UserRepository = repositoryWith(storedPlan),
+        adjustments: AdjustmentRepository = emptyAdjustments()
+    ): RoutineDetailViewModel {
+        val viewModel = viewModel(dayNumber = 3, repository = repository, adjustments = adjustments)
+        advanceUntilIdle()
+        viewModel.finishEarly()
+        advanceUntilIdle()
+        assertThat(viewModel.uiState.value.outcome?.finishKind).isEqualTo(FinishKind.PARTIAL)
+        return viewModel
+    }
+
+    @Test
+    fun tickingASetOnAFinishedEarlyDayReopensIt() = runTest {
+        val repository = repositoryWith(storedPlan)
+        val adjustments = emptyAdjustments()
+        val viewModel = finishedEarlyViewModel(repository, adjustments)
+
+        viewModel.updateSet(1, viewModel.exercise(1).sets.first().copy(isCompleted = true))
+        advanceUntilIdle()
+
+        coVerify { adjustments.deleteOutcome(22L) }
+        coVerify {
+            repository.updateWorkoutDay(
+                match { it.id == 22L && it.status == WorkoutStatus.NOT_STARTED && it.completedAt == null },
+                7L
+            )
+        }
+        assertThat(viewModel.uiState.value.outcome).isNull()
+        assertThat(viewModel.uiState.value.hasRemainingWork).isTrue()
+    }
+
+    @Test
+    fun tickingAnExerciseOnAFinishedEarlyDayReopensIt() = runTest {
+        val repository = repositoryWith(storedPlan)
+        val adjustments = emptyAdjustments()
+        val viewModel = finishedEarlyViewModel(repository, adjustments)
+
+        viewModel.toggleExercise(2)
+        advanceUntilIdle()
+
+        coVerify { adjustments.deleteOutcome(22L) }
+        coVerify {
+            repository.updateWorkoutDay(match { it.id == 22L && it.status == WorkoutStatus.IN_PROGRESS }, 7L)
+        }
+        assertThat(viewModel.uiState.value.outcome).isNull()
+    }
+
+    @Test
+    fun startingOverAFinishedEarlyDayReopensIt() = runTest {
+        val repository = repositoryWith(storedPlan)
+        val adjustments = emptyAdjustments()
+        val viewModel = finishedEarlyViewModel(repository, adjustments)
+
+        viewModel.clearProgress()
+        advanceUntilIdle()
+
+        coVerify { adjustments.deleteOutcome(22L) }
+        coVerify {
+            repository.updateWorkoutDay(
+                match { it.id == 22L && it.status == WorkoutStatus.NOT_STARTED && it.completedAt == null },
+                7L
+            )
+        }
+        assertThat(viewModel.uiState.value.outcome).isNull()
+    }
+
+    @Test
+    fun addingOrDeletingASetOnAFinishedEarlyDayReopensIt() = runTest {
+        val adjustments = emptyAdjustments()
+        val viewModel = finishedEarlyViewModel(adjustments = adjustments)
+
+        viewModel.addSet(1)
+        advanceUntilIdle()
+        coVerify(exactly = 1) { adjustments.deleteOutcome(22L) }
+        assertThat(viewModel.uiState.value.outcome).isNull()
+
+        viewModel.finishEarly()
+        advanceUntilIdle()
+        viewModel.deleteSet(1, 1)
+        advanceUntilIdle()
+
+        coVerify(exactly = 2) { adjustments.deleteOutcome(22L) }
+        assertThat(viewModel.uiState.value.outcome).isNull()
+    }
+
+    @Test
+    fun aReopenedDayCanBeFinishedEarlyAgainOrInFull() = runTest {
+        val adjustments = emptyAdjustments()
+        val viewModel = finishedEarlyViewModel(adjustments = adjustments)
+
+        viewModel.toggleExercise(1)
+        advanceUntilIdle()
+        viewModel.finishEarly()
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.outcome?.finishKind).isEqualTo(FinishKind.PARTIAL)
+        assertThat(viewModel.uiState.value.outcome?.performedSetCount).isEqualTo(2)
+
+        viewModel.completeRoutine()
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.outcome?.finishKind).isEqualTo(FinishKind.FULL)
+        assertThat(viewModel.uiState.value.hasRemainingWork).isFalse()
+        coVerify(exactly = 3) { adjustments.saveOutcome(any()) }
+    }
+
+    @Test
+    fun completingAReopenedDayStampsItsOwnTime() = runTest {
+        val finishedEarlier = storedPlan.copy(
+            workoutDays = storedPlan.workoutDays.map {
+                if (it.id == 22L) it.copy(status = WorkoutStatus.COMPLETED, completedAt = 1L) else it
+            }
+        )
+        val repository = repositoryWith(finishedEarlier)
+        val adjustments = emptyAdjustments()
+        coEvery { adjustments.getOutcome(22L) } returns partialOutcome()
+        val viewModel = viewModel(dayNumber = 3, repository = repository, adjustments = adjustments)
+        advanceUntilIdle()
+
+        viewModel.completeRoutine()
+        advanceUntilIdle()
+
+        coVerify { adjustments.deleteOutcome(22L) }
+        coVerify {
+            repository.updateWorkoutDay(
+                match { it.id == 22L && it.status == WorkoutStatus.COMPLETED && it.completedAt != 1L },
+                7L
+            )
+        }
+        coVerify(exactly = 0) { repository.updateWorkoutDay(match { it.completedAt == 1L }, any()) }
+    }
+
+    @Test
+    fun adjustingIsOfferedByTheWorkLeftNotByTheOutcome() = runTest {
+        val viewModel = finishedEarlyViewModel()
+        assertThat(viewModel.uiState.value.hasRemainingWork).isTrue()
+
+        viewModel.completeRoutine()
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.hasRemainingWork).isFalse()
     }
 
     @Test
@@ -1006,6 +1166,69 @@ class RoutineDetailViewModelTest {
         advanceUntilIdle()
 
         assertThat(viewModel.uiState.value.undoKeptSets).isNull()
+    }
+
+    @Test
+    fun undoingGivesTheIncludedCycleBack() = runTest {
+        val adjustments = emptyAdjustments()
+        coEvery { adjustments.getActiveAdjustment(22L) } returns applied() andThen null
+        coEvery { adjustments.undo(5L, any()) } returns UndoResult.Restored(applied(), 0)
+        val allowance = FakeAllowance("proposal-1")
+        val viewModel = viewModel(
+            dayNumber = 3, repository = repositoryWith(adjustedPlan()), adjustments = adjustments, allowance = allowance
+        )
+        advanceUntilIdle()
+
+        viewModel.undoAdjustment()
+        advanceUntilIdle()
+
+        assertThat(allowance.includedCycleId()).isNull()
+    }
+
+    @Test
+    fun undoingReopensAFinishedEarlyDay() = runTest {
+        val adjustments = emptyAdjustments()
+        coEvery { adjustments.getActiveAdjustment(22L) } returns applied() andThen null
+        coEvery { adjustments.undo(5L, any()) } returns UndoResult.Restored(applied(), 0)
+        var saved: SessionOutcome? = null
+        coEvery { adjustments.saveOutcome(any()) } coAnswers { saved = firstArg(); 1L }
+        coEvery { adjustments.getOutcome(22L) } coAnswers { saved }
+        val repository = mockk<UserRepository>(relaxed = true).also {
+            coEvery { it.getCurrentUser() } returns UserProfile(id = 1)
+            every { it.getWeeklyWorkoutPlans(1) } returns
+                flowOf(listOf(adjustedPlan())) andThen flowOf(listOf(storedPlan))
+        }
+        val viewModel = viewModel(dayNumber = 3, repository = repository, adjustments = adjustments)
+        advanceUntilIdle()
+        viewModel.finishEarly()
+        advanceUntilIdle()
+        assertThat(viewModel.uiState.value.outcome?.finishKind).isEqualTo(FinishKind.PARTIAL)
+
+        viewModel.undoAdjustment()
+        advanceUntilIdle()
+
+        coVerify { adjustments.deleteOutcome(22L) }
+        assertThat(viewModel.uiState.value.outcome).isNull()
+        coVerify {
+            repository.updateWorkoutDay(match { it.id == 22L && it.status != WorkoutStatus.COMPLETED }, 7L)
+        }
+    }
+
+    @Test
+    fun anUndoThatDidNotLandKeepsTheCycleSpent() = runTest {
+        val adjustments = emptyAdjustments()
+        coEvery { adjustments.getActiveAdjustment(22L) } returns applied()
+        coEvery { adjustments.undo(5L, any()) } returns UndoResult.Failed(IllegalStateException("disk full"))
+        val allowance = FakeAllowance("proposal-1")
+        val viewModel = viewModel(
+            dayNumber = 3, repository = repositoryWith(adjustedPlan()), adjustments = adjustments, allowance = allowance
+        )
+        advanceUntilIdle()
+
+        viewModel.undoAdjustment()
+        advanceUntilIdle()
+
+        assertThat(allowance.includedCycleId()).isEqualTo("proposal-1")
     }
 
     // Undo brings the omitted rows back, and two sets numbered the same would

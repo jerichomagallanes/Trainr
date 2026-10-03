@@ -193,7 +193,6 @@ fun RoutineDetailScreen(
 
     val routine = state.routine
     val finishedEarly = state.outcome?.finishKind == FinishKind.PARTIAL
-    val hasOutcome = state.outcome != null
     val requesters = remember { mutableMapOf<Int, BringIntoViewRequester>() }
 
     LaunchedEffect(state.scrollToPosition) {
@@ -333,7 +332,7 @@ fun RoutineDetailScreen(
             state.adjustedBanner?.let { banner ->
                 AdjustedBanner(
                     banner = banner,
-                    showUndo = !hasOutcome,
+                    showUndo = state.outcome?.finishKind != FinishKind.FULL,
                     onUndo = onUndoAdjustment,
                     modifier = Modifier.padding(top = Spacing.section)
                 )
@@ -348,7 +347,7 @@ fun RoutineDetailScreen(
                 )
             }
 
-            if (!hasOutcome) {
+            if (state.hasRemainingWork) {
                 TrainrOptionRow(
                     title = stringResource(R.string.adjust_today),
                     description = stringResource(R.string.adjust_today_hint),
@@ -404,7 +403,7 @@ fun RoutineDetailScreen(
                                     video()
                                 }
 
-                                if (!hasOutcome && exercise.sets.any { !it.isCompleted }) {
+                                if (state.hasRemainingWork && exercise.sets.any { !it.isCompleted }) {
                                     TrainrQuietButton(
                                         text = stringResource(R.string.need_an_alternative),
                                         onClick = { onNeedAlternative(exercise.exerciseId) }
@@ -416,30 +415,23 @@ fun RoutineDetailScreen(
                 }
             }
 
-            if (!finishedEarly && !routine.isComplete) {
+            if (!routine.isComplete) {
                 TrainrSlideToConfirm(
                     text = stringResource(R.string.slide_to_complete_routine),
                     onConfirm = onCompleteRoutine,
                     modifier = Modifier.padding(top = Spacing.section + Spacing.tight)
                 )
-                TrainrQuietButton(
-                    text = stringResource(R.string.finish_early),
-                    onClick = onAskToFinishEarly,
-                    modifier = Modifier.padding(top = Spacing.tight)
-                )
-            } else if (!finishedEarly && routine.hasProgress) {
-                TextButton(
-                    onClick = { showStartOver = true },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = Spacing.section + Spacing.tight)
-                ) {
-                    Text(
-                        text = stringResource(R.string.start_workout_over),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.trainrColors.onSurface
+                if (!finishedEarly) {
+                    TrainrQuietButton(
+                        text = stringResource(R.string.finish_early),
+                        onClick = onAskToFinishEarly,
+                        modifier = Modifier.padding(top = Spacing.tight)
                     )
+                } else if (routine.hasProgress) {
+                    StartWorkoutOverButton(onClick = { showStartOver = true })
                 }
+            } else if (routine.hasProgress) {
+                StartWorkoutOverButton(onClick = { showStartOver = true })
             }
         }
     }
@@ -597,6 +589,22 @@ private fun AdjustedBanner(
                     .clickable(role = Role.Button, onClick = onUndo)
             )
         }
+    }
+}
+
+@Composable
+private fun StartWorkoutOverButton(onClick: () -> Unit) {
+    TextButton(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = Spacing.section + Spacing.tight)
+    ) {
+        Text(
+            text = stringResource(R.string.start_workout_over),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.trainrColors.onSurface
+        )
     }
 }
 

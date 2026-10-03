@@ -441,7 +441,7 @@ class RoutineDetailScreenTest {
     }
 
     @Test
-    fun aWorkoutFinishedEarlyShowsTheBannerAndNothingToFinish() {
+    fun aWorkoutFinishedEarlyCanBeFinishedOrStartedOverButNotFinishedEarlyAgain() {
         composeTestRule.setContent {
             TrainrTheme {
                 RoutineDetailScreen(state = finishedEarly)
@@ -456,9 +456,13 @@ class RoutineDetailScreenTest {
                 state.routine.plannedExerciseCount
             )
         ).assertIsDisplayed()
-        composeTestRule.onNodeWithText(string(R.string.slide_to_complete_routine)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.slide_to_complete_routine))
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.start_workout_over))
+            .performScrollTo()
+            .assertIsDisplayed()
         composeTestRule.onNodeWithText(string(R.string.finish_early)).assertDoesNotExist()
-        composeTestRule.onNodeWithText(string(R.string.start_workout_over)).assertDoesNotExist()
     }
 
     @Test
@@ -473,16 +477,17 @@ class RoutineDetailScreenTest {
     }
 
     @Test
-    fun aFinishedSessionIsNotOfferedAnAdjustment() {
+    fun aSessionFinishedInFullIsNotOfferedAnAdjustment() {
         composeTestRule.setContent {
             TrainrTheme {
                 RoutineDetailScreen(
                     state = state.copy(
+                        routine = state.routine.completeAll(),
                         outcome = SessionOutcome(
                             workoutDayId = 1,
-                            finishKind = FinishKind.PARTIAL,
+                            finishKind = FinishKind.FULL,
                             finishedAt = 1L,
-                            performedSetCount = 1,
+                            performedSetCount = 4,
                             plannedSetCount = 4
                         )
                     )
@@ -495,6 +500,27 @@ class RoutineDetailScreenTest {
             composeTestRule.onAllNodesWithText(string(R.string.need_an_alternative))
                 .fetchSemanticsNodes()
         ).isEmpty()
+    }
+
+    @Test
+    fun aSessionFinishedEarlyIsStillOfferedAnAdjustment() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                RoutineDetailScreen(
+                    state = finishedEarly.copy(
+                        adjustedBanner = AdjustedBannerUi(messageRes = R.string.adjusted_reduced_banner)
+                    )
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.adjust_today)).performScrollTo()
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.undo_adjustment)).performScrollTo()
+            .assertIsDisplayed()
+        composeTestRule.onAllNodesWithText(string(R.string.need_an_alternative)).onFirst()
+            .performScrollTo()
+            .assertIsDisplayed()
     }
 
     @Test

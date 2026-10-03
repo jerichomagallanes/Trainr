@@ -10,6 +10,10 @@ class AdjustmentGateTest {
         override fun consume(cycleId: String) {
             if (included == null) included = cycleId
         }
+
+        override fun restore(cycleId: String) {
+            if (included == cycleId) included = null
+        }
     }
 
     private fun gate(
@@ -91,6 +95,31 @@ class AdjustmentGateTest {
         gate(isPro = true, allowance = allowance).spend("proposal-1")
 
         assertThat(allowance.includedCycleId()).isNull()
+    }
+
+    @Test
+    fun undoingTheIncludedCycleGivesItBack() {
+        val allowance = FakeAllowance()
+        val subject = gate(allowance = allowance)
+        subject.spend("proposal-1")
+        assertThat(subject.decide("proposal-2")).isEqualTo(AdjustmentGate.Decision.ASK)
+
+        allowance.restore("proposal-1")
+
+        assertThat(allowance.includedCycleId()).isNull()
+        assertThat(subject.decide("proposal-2")).isEqualTo(AdjustmentGate.Decision.ALLOWED)
+    }
+
+    @Test
+    fun undoingAnotherCycleLeavesTheIncludedOneSpent() {
+        val allowance = FakeAllowance()
+        val subject = gate(allowance = allowance)
+        subject.spend("proposal-1")
+
+        allowance.restore("proposal-2")
+
+        assertThat(allowance.includedCycleId()).isEqualTo("proposal-1")
+        assertThat(subject.decide("proposal-2")).isEqualTo(AdjustmentGate.Decision.ASK)
     }
 
     @Test

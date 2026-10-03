@@ -7,4 +7,5 @@ package com.jericx.trainr.domain.purchases
 interface AdjustmentAllowance {
     fun includedCycleId(): String?
     fun consume(cycleId: String)
+    fun restore(cycleId: String)
 }

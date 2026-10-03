@@ -103,6 +103,7 @@ class PaywallGateTest {
         allowance = object : AdjustmentAllowance {
             override fun includedCycleId(): String? = null
             override fun consume(cycleId: String) = Unit
+            override fun restore(cycleId: String) = Unit
         }
     )
 

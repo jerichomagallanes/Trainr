@@ -16,6 +16,7 @@ interface AdjustmentRepository {
     suspend fun saveOutcome(outcome: SessionOutcome): Long
     suspend fun getOutcome(dayId: Long): SessionOutcome?
     suspend fun getOutcomes(dayIds: List<Long>): List<SessionOutcome>
+    suspend fun deleteOutcome(dayId: Long)
 
     suspend fun recordAdjustment(applied: AppliedAdjustment): Long
     suspend fun getAdjustment(proposalId: String): AppliedAdjustment?

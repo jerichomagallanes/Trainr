@@ -15,6 +15,7 @@ import com.jericx.trainr.domain.model.ExerciseMeasure
 import com.jericx.trainr.domain.model.ExerciseSet
 import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.model.WorkoutExercise
+import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.domain.repository.AdjustmentRepository
 import com.jericx.trainr.domain.unstuck.ActualOrigin
 import com.jericx.trainr.domain.unstuck.AdjustmentFeedback
@@ -25,6 +26,7 @@ import com.jericx.trainr.domain.unstuck.ApplyRejection
 import com.jericx.trainr.domain.unstuck.ApplyResult
 import com.jericx.trainr.domain.unstuck.ChangeKind
 import com.jericx.trainr.domain.unstuck.ExerciseSnapshot
+import com.jericx.trainr.domain.unstuck.FinishKind
 import com.jericx.trainr.domain.unstuck.PlanRevision
 import com.jericx.trainr.domain.unstuck.PreferenceKind
 import com.jericx.trainr.domain.unstuck.ProposalChange
@@ -57,6 +59,10 @@ class AdjustmentRepositoryImpl(
     override suspend fun getOutcomes(dayIds: List<Long>): List<SessionOutcome> {
         if (dayIds.isEmpty()) return emptyList()
         return dao.getOutcomesForDays(dayIds).map { mapper.mapToDomain(it) }
+    }
+
+    override suspend fun deleteOutcome(dayId: Long) {
+        dao.deleteOutcomeForDay(dayId)
     }
 
     override suspend fun recordAdjustment(applied: AppliedAdjustment): Long {
@@ -104,7 +110,7 @@ class AdjustmentRepositoryImpl(
             throw ApplyException(ApplyRejection.WRONG_SCOPE)
         }
         if (proposal.changes.isEmpty()) throw ApplyException(ApplyRejection.EMPTY_CHANGES)
-        if (existing != null) return@applying reapplied(existing)
+        if (existing != null) return@applying reapplied(existing, nowMillis)
 
         val day = loadDay(dayId) ?: throw ApplyException(ApplyRejection.UNKNOWN_DAY)
         val revision = PlanRevision.of(day)
@@ -118,7 +124,9 @@ class AdjustmentRepositoryImpl(
             appliedAt = nowMillis
         )
         val id = dao.insertAdjustment(mapper.mapToEntity(record))
-        ApplyResult.Applied(record.copy(id = id), patch(proposal, day, id, strict = true))
+        val added = patch(proposal, day, id, strict = true)
+        reopen(dayId, nowMillis)
+        ApplyResult.Applied(record.copy(id = id), added)
     }
 
     override suspend fun reapply(adjustmentId: Long, nowMillis: Long): ApplyResult = applying {
@@ -127,7 +135,7 @@ class AdjustmentRepositoryImpl(
         if (entity.undoneAt == null) {
             return@applying ApplyResult.AlreadyApplied(mapper.mapToDomain(entity))
         }
-        reapplied(entity)
+        reapplied(entity, nowMillis)
     }
 
     override suspend fun undo(adjustmentId: Long, nowMillis: Long): UndoResult = try {
@@ -150,12 +158,28 @@ class AdjustmentRepositoryImpl(
         UndoResult.Failed(failure)
     }
 
-    private suspend fun reapplied(entity: AppliedAdjustmentEntity): ApplyResult {
+    private suspend fun reapplied(entity: AppliedAdjustmentEntity, nowMillis: Long): ApplyResult {
         val stored = mapper.mapToDomain(entity)
         val day = loadDay(entity.workoutDayId) ?: throw ApplyException(ApplyRejection.UNKNOWN_DAY)
         val addedExerciseId = patch(stored.proposal, day, entity.id, strict = false)
+        reopen(day.id, nowMillis)
         dao.markReapplied(entity.id)
         return ApplyResult.Applied(stored.copy(undoneAt = null), addedExerciseId)
+    }
+
+    private suspend fun reopen(dayId: Long, nowMillis: Long) {
+        val outcome = dao.getOutcomeForDay(dayId) ?: return
+        if (outcome.finishKind != FinishKind.PARTIAL.name) return
+        dao.deleteOutcomeForDay(dayId)
+        val entity = userDao.getWorkoutDayById(dayId) ?: return
+        val visible = loadDay(dayId)?.exercises?.filterNot { it.isOmittedToday } ?: return
+        val status = WorkoutStatus.derived(visible.count { it.isCompleted }, visible.size)
+        userDao.updateWorkoutDay(
+            entity.copy(
+                status = status.name,
+                completedAt = nowMillis.takeIf { status == WorkoutStatus.COMPLETED }
+            )
+        )
     }
 
     private suspend fun applying(block: suspend () -> ApplyResult): ApplyResult = try {
