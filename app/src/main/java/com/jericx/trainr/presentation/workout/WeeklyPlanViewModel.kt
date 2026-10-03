@@ -37,6 +37,7 @@ data class WeeklyPlanDay(
     val isToday: Boolean = false,
     val isPast: Boolean = false,
     val finishKind: FinishKind? = null,
+    val isAdjusted: Boolean = false,
     // Derived from the sets that remain, with the same estimate the session
     // header shows: the stored columns describe the plan as generated.
     val minutes: Int = day.duration,
@@ -92,6 +93,7 @@ class WeeklyPlanViewModel @Inject constructor(
     val uiState: StateFlow<WeeklyPlanUiState> = _uiState.asStateFlow()
 
     private var outcomes: Map<Long, SessionOutcome> = emptyMap()
+    private var adjustedDayIds: Set<Long> = emptySet()
     private var user: UserProfile? = null
 
     init {
@@ -114,8 +116,11 @@ class WeeklyPlanViewModel @Inject constructor(
             _uiState.value = if (stored == null) {
                 WeeklyPlanUiState(hasLoaded = true, hasPlan = false)
             } else {
-                outcomes = adjustmentRepository.getOutcomes(stored.workoutDays.map { it.id })
-                    .associateBy { it.workoutDayId }
+                val dayIds = stored.workoutDays.map { it.id }
+                outcomes = adjustmentRepository.getOutcomes(dayIds).associateBy { it.workoutDayId }
+                adjustedDayIds = adjustmentRepository.getActiveAdjustments(dayIds)
+                    .map { it.workoutDayId }
+                    .toSet()
                 stateFor(
                     plan = stored,
                     isCurrentWeek = stored.weekNumber == newest?.weekNumber,
@@ -123,6 +128,7 @@ class WeeklyPlanViewModel @Inject constructor(
                     // week is always finished and says nothing about the plan.
                     canAddWeek = newest?.isReadyForTheNextWeek() ?: false,
                     outcomes = outcomes,
+                    adjustedDayIds = adjustedDayIds,
                     user = user,
                     catalog = catalog
                 ).withMemory(user)
@@ -177,6 +183,7 @@ class WeeklyPlanViewModel @Inject constructor(
             canAddWeek = state.canAddWeek,
             isCurrentWeek = state.isCurrentWeek,
             outcomes = outcomes,
+            adjustedDayIds = adjustedDayIds,
             user = user,
             catalog = catalog
         ).copy(hasMemory = state.hasMemory)
@@ -215,6 +222,7 @@ class WeeklyPlanViewModel @Inject constructor(
             canAddWeek: Boolean? = null,
             nowMillis: Long = System.currentTimeMillis(),
             outcomes: Map<Long, SessionOutcome> = emptyMap(),
+            adjustedDayIds: Set<Long> = emptySet(),
             user: UserProfile? = null,
             catalog: ExerciseCatalog? = null
         ): WeeklyPlanUiState {
@@ -233,6 +241,7 @@ class WeeklyPlanViewModel @Inject constructor(
                         isToday = WorkoutWeek.startOfDay(date) == today,
                         isPast = WorkoutWeek.startOfDay(date) < today,
                         finishKind = outcomes[it.id]?.finishKind,
+                        isAdjusted = it.id in adjustedDayIds,
                         minutes = if (user != null && catalog != null) {
                             it.remainingMinutes(user, catalog)
                         } else {

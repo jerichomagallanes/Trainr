@@ -483,6 +483,47 @@ class WeeklyPlanViewModelTest {
     )
 
     @Test
+    fun aDayWithAnAdjustmentStandingIsMarkedAdjusted() {
+        val adjusted = SampleWorkoutData.weekOne.workoutDays.last().id
+        val state = WeeklyPlanViewModel.stateFor(
+            plan = SampleWorkoutData.weekOne,
+            adjustedDayIds = setOf(adjusted)
+        )
+
+        assertThat(state.days.filter { it.isAdjusted }.map { it.day.id }).containsExactly(adjusted)
+    }
+
+    @Test
+    fun theStandingAdjustmentsAreReadForEveryDayOfTheWeek() = runTest {
+        planLoaded()
+        coEvery { adjustmentRepository.getActiveAdjustments(listOf(1L)) } returns
+            listOf(appliedAdjustment(1))
+
+        val viewModel = viewModel()
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.days.single().isAdjusted).isTrue()
+    }
+
+    @Test
+    fun aDraggedWeekKeepsItsAdjustedMarkers() = runTest {
+        val plan = storedPlan.copy(workoutDays = sessions())
+        val adjusted = plan.workoutDays[1].id
+        coEvery { userRepository.getCurrentUser() } returns UserProfile(id = 1)
+        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(plan))
+        coEvery { adjustmentRepository.getActiveAdjustments(plan.workoutDays.map { it.id }) } returns
+            listOf(appliedAdjustment(adjusted))
+        val viewModel = viewModel()
+        advanceUntilIdle()
+
+        viewModel.moveDay(from = 0, to = 1)
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.days.filter { it.isAdjusted }.map { it.day.id })
+            .containsExactly(adjusted)
+    }
+
+    @Test
     fun anAdjustmentStillStandingOnTodayShowsTheReadyCard() = runTest {
         planLoaded()
         coEvery { adjustmentRepository.getActiveAdjustment(1) } returns

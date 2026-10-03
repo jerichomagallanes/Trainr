@@ -7,6 +7,7 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.down
 import androidx.compose.ui.test.moveBy
 import androidx.compose.ui.test.up
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -693,6 +694,24 @@ class WeeklyPlanScreenTest {
         composeTestRule.onNodeWithText(string(R.string.view_todays_workout)).performClick()
 
         assertThat(opened).isEqualTo(todaysDay)
+    }
+
+    @Test
+    fun anAdjustedDayCarriesTheMarkerWhetherOrNotItIsToday() {
+        val later = state.days.last { !it.isToday && it.day.status != WorkoutStatus.COMPLETED }
+        composeTestRule.setContent {
+            TrainrTheme {
+                WeeklyPlanScreen(
+                    state = state.copy(
+                        days = state.days.map { if (it == later) it.copy(isAdjusted = true) else it }
+                    )
+                )
+            }
+        }
+
+        composeTestRule.onAllNodesWithText(string(R.string.adjusted)).assertCountEquals(1)
+        composeTestRule.onAllNodesWithText(string(R.string.not_started)).assertCountEquals(0)
+        composeTestRule.onNodeWithText(string(R.string.ready_for_today)).assertDoesNotExist()
     }
 
     @Test

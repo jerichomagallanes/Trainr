@@ -38,7 +38,8 @@ sealed interface ReviewUi {
     data class NoChange(
         val priorityName: String?,
         @StringRes val goalLabelRes: Int,
-        val plannedMinutes: Int
+        val plannedMinutes: Int,
+        val hasPerformedWork: Boolean
     ) : ReviewUi
 
     data class Infeasible(val reason: InfeasibleReason, val minimumMinutes: Int?) : ReviewUi
@@ -90,7 +91,8 @@ fun PolicyDecision.toReviewUi(
     is PolicyDecision.NoChange -> ReviewUi.NoChange(
         priorityName = null,
         goalLabelRes = goalLabelRes,
-        plannedMinutes = estimateMinutes ?: plannedMinutes
+        plannedMinutes = estimateMinutes ?: plannedMinutes,
+        hasPerformedWork = hasPerformedWork
     )
 
     is PolicyDecision.NoFeasibleChange -> ReviewUi.Infeasible(reason, minimumMinutes)

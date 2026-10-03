@@ -921,6 +921,65 @@ class RoutineDetailViewModelTest {
     }
 
     @Test
+    fun startingOverWithdrawsASubstituteKeptOnlyForItsPerformedSet() = runTest {
+        val adjustments = emptyAdjustments()
+        coEvery { adjustments.getActiveAdjustment(22L) } returns null
+        coEvery { adjustments.withdrawUndoneSubstitutes(22L) } returns 1
+        val repository = mockk<UserRepository>(relaxed = true).also {
+            coEvery { it.getCurrentUser() } returns UserProfile(id = 1)
+            every { it.getWeeklyWorkoutPlans(1) } returns
+                flowOf(listOf(planWithKeptSubstitute())) andThen flowOf(listOf(storedPlan))
+        }
+        val viewModel = viewModel(dayNumber = 3, repository = repository, adjustments = adjustments)
+        advanceUntilIdle()
+        assertThat(viewModel.uiState.value.routine.exercises).hasSize(3)
+
+        viewModel.clearProgress()
+        advanceUntilIdle()
+
+        coVerify { adjustments.withdrawUndoneSubstitutes(22L) }
+        assertThat(viewModel.uiState.value.routine.exercises.map { it.name })
+            .containsExactly("Bent-Over Rows", "Goblet Squats")
+    }
+
+    @Test
+    fun startingOverLeavesTheDayAloneWhenNothingIsWithdrawn() = runTest {
+        val adjustments = emptyAdjustments()
+        val repository = repositoryWith(storedPlan)
+        val viewModel = viewModel(dayNumber = 3, repository = repository, adjustments = adjustments)
+        advanceUntilIdle()
+
+        viewModel.clearProgress()
+        advanceUntilIdle()
+
+        coVerify { adjustments.withdrawUndoneSubstitutes(22L) }
+        coVerify(exactly = 1) { repository.getWeeklyWorkoutPlans(1) }
+    }
+
+    private fun planWithKeptSubstitute() = storedPlan.copy(
+        workoutDays = storedPlan.workoutDays.map { day ->
+            if (day.id != 22L) {
+                day
+            } else {
+                day.copy(
+                    exercises = day.exercises + storedExercise(34, "dumbbell_step_up", "Step-Ups").copy(
+                        addedBy = 5L,
+                        sets = listOf(
+                            ExerciseSet(
+                                id = 340,
+                                setNumber = 1,
+                                targetReps = 12,
+                                actualReps = 12,
+                                isCompleted = true
+                            )
+                        )
+                    )
+                )
+            }
+        }
+    )
+
+    @Test
     fun addingOrDeletingASetOnAFinishedEarlyDayReopensIt() = runTest {
         val adjustments = emptyAdjustments()
         val viewModel = finishedEarlyViewModel(adjustments = adjustments)

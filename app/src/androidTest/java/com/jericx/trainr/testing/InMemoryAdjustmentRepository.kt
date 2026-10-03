@@ -58,6 +58,9 @@ class InMemoryAdjustmentRepository : AdjustmentRepository {
     override suspend fun getActiveAdjustment(dayId: Long): AppliedAdjustment? =
         adjustments.values.firstOrNull { it.workoutDayId == dayId && it.isActive }
 
+    override suspend fun getActiveAdjustments(dayIds: List<Long>): List<AppliedAdjustment> =
+        adjustments.values.filter { it.workoutDayId in dayIds && it.isActive }
+
     override suspend fun getAdjustments(dayId: Long): List<AppliedAdjustment> =
         adjustments.values.filter { it.workoutDayId == dayId }
 
@@ -96,6 +99,8 @@ class InMemoryAdjustmentRepository : AdjustmentRepository {
         markUndone(adjustmentId, nowMillis)
         return UndoResult.Restored(adjustments.getValue(adjustmentId), 0)
     }
+
+    override suspend fun withdrawUndoneSubstitutes(dayId: Long): Int = 0
 
     override suspend fun reapply(adjustmentId: Long, nowMillis: Long): ApplyResult {
         val existing = adjustments[adjustmentId]
