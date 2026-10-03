@@ -163,6 +163,53 @@ class UnstuckPolicyTimeTest {
         assertThat(decision.minimumMinutes).isGreaterThan(5)
     }
 
+    // Nothing fits five minutes, and the answer is the floor, not a day with
+    // every remaining exercise omitted.
+    @Test
+    fun fiveMinutesOnADayWithNoCompoundNamesTheFloorInsteadOfEmptyingIt() {
+        val day = testDay(
+            planned("warm_up", sets = 1, id = 1),
+            planned("dumbbell_bicep_curl", sets = 3, id = 2, reps = 10),
+            planned("bicycle_crunch", sets = 3, id = 3, reps = 12)
+        )
+        val floor = estimate(
+            testDay(
+                planned("warm_up", sets = 1, id = 1),
+                planned("bicycle_crunch", sets = 1, id = 3, reps = 12)
+            ),
+            FitnessGoal.MUSCLE_GAIN
+        )
+
+        val decision = decide(day, 5)
+
+        assertThat(floor).isGreaterThan(5)
+        assertThat(decision).isEqualTo(
+            PolicyDecision.NoFeasibleChange(InfeasibleReason.TOO_SHORT_FOR_REQUIRED_WORK, floor)
+        )
+    }
+
+    @Test
+    fun fiveMinutesWithTheWarmUpDoneKeepsTheLastBlockRatherThanOmittingEverything() {
+        val day = testDay(
+            planned("warm_up", sets = 1, id = 1, performed = 1),
+            planned("rowing_machine", sets = 1, id = 2, seconds = 420),
+            planned("jump_rope", sets = 1, id = 3, seconds = 600)
+        )
+        val floor = SessionEstimate.minutes(
+            testDay(planned("rowing_machine", sets = 1, id = 2, seconds = 420)),
+            testUser(),
+            TimeScope.REMAINING,
+            testCatalog
+        )
+
+        val decision = decide(day, 5, scope = TimeScope.REMAINING)
+
+        assertThat(floor).isGreaterThan(5)
+        assertThat(decision).isEqualTo(
+            PolicyDecision.NoFeasibleChange(InfeasibleReason.TOO_SHORT_FOR_REQUIRED_WORK, floor)
+        )
+    }
+
     @Test
     fun fourMinutesIsOutsideTheSupportedRange() {
         val decision = decide(fullDay(), 4)

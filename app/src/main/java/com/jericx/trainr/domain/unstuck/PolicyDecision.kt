@@ -20,8 +20,8 @@ enum class InfeasibleReason {
 enum class ProposalKind { SHORTER_SESSION, SUBSTITUTE }
 
 enum class TradeoffCode {
-    LESS_WORK_FOR_REGIONS, REDUCED_SESSION, DIFFERENT_RESISTANCE, LESS_BARBELL_PRACTICE,
-    SEPARATE_LOAD_HISTORY;
+    LESS_WORK_FOR_REGIONS, REDUCED_SESSION, DIFFERENT_RESISTANCE, DIFFERENT_MOVEMENT,
+    LESS_BARBELL_PRACTICE, SEPARATE_LOAD_HISTORY;
 
     val wire: String get() = name.lowercase()
 }
@@ -57,6 +57,7 @@ data class ProposalSummary(
     val keptPriorityKey: String?,
     val tradeoffs: List<Tradeoff>,
     val rows: List<ChangeRow>,
+    val bodyweightFallback: Boolean,
     val estimateBeforeMinutes: Int?,
     val estimateAfterMinutes: Int?,
     val budgetMinutes: Int?

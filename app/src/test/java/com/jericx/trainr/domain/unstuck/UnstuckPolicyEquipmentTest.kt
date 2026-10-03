@@ -111,6 +111,63 @@ class UnstuckPolicyEquipmentTest {
     }
 
     @Test
+    fun aSubstituteUsesTheKitThatWasTicked() {
+        val day = testDay(
+            planned("warm_up", sets = 1, id = 1),
+            planned("barbell_overhead_press", sets = 3, id = 2)
+        )
+
+        val decision = decide(day, 2L, setOf(Equipment.RESISTANCE_BAND)) as PolicyDecision.Proposed
+        val chosen = checkNotNull(testCatalog[decision.proposal.changes.single().after!!.catalogKey])
+
+        assertThat(chosen.equipment).isEqualTo(Equipment.RESISTANCE_BAND)
+        assertThat(decision.summary.bodyweightFallback).isFalse()
+        assertThat(decision.summary.tradeoffs.map { it.code })
+            .containsExactly(TradeoffCode.LESS_BARBELL_PRACTICE)
+    }
+
+    @Test
+    fun bodyweightIsTheFallbackWhenNothingTickedMatchesAndIsNamedAsOne() {
+        val catalog = InMemoryExerciseCatalog(
+            listOf(
+                quadMovement("goblet_squat", Equipment.DUMBBELL, ExerciseMeasure.WEIGHT_AND_REPS),
+                quadMovement("sissy_squat", Equipment.NONE, ExerciseMeasure.REPS)
+            )
+        )
+        val day = testDay(planned("goblet_squat", sets = 3, id = 2, weightKg = 20f))
+        val decideWith = { available: Set<Equipment> ->
+            UnstuckPolicy(catalog).decide(
+                AdjustmentSnapshot(day, testUser()),
+                AdjustmentConstraint.EquipmentUnavailable(2L, available),
+                "request-1"
+            ) as PolicyDecision.Proposed
+        }
+
+        val fallback = decideWith(setOf(Equipment.KETTLEBELL))
+        val ticked = decideWith(setOf(Equipment.NONE))
+
+        assertThat(fallback.proposal.changes.single().after!!.catalogKey).isEqualTo("sissy_squat")
+        assertThat(fallback.summary.bodyweightFallback).isTrue()
+        assertThat(ticked.proposal.changes.single().after!!.catalogKey).isEqualTo("sissy_squat")
+        assertThat(ticked.summary.bodyweightFallback).isFalse()
+    }
+
+    @Test
+    fun twoUnloadedMovementsCarryNoLoadCopy() {
+        val day = testDay(
+            planned("warm_up", sets = 1, id = 1),
+            planned("bicycle_crunch", sets = 3, id = 2, reps = 12)
+        )
+
+        val decision = decide(day, 2L, setOf(Equipment.NONE)) as PolicyDecision.Proposed
+
+        assertThat(decision.proposal.changes.single().after!!.catalogKey).isEqualTo("crunch")
+        assertThat(decision.proposal.tradeoffCode).isEqualTo("different_movement")
+        assertThat(decision.summary.tradeoffs.map { it.code })
+            .containsExactly(TradeoffCode.DIFFERENT_MOVEMENT)
+    }
+
+    @Test
     fun noCandidateIsReportedNotInvented() {
         val day = testDay(
             planned("warm_up", sets = 1, id = 1),

@@ -12,6 +12,7 @@ class ReviewUiTest {
         keptPriorityKey = null,
         tradeoffs = emptyList(),
         rows = emptyList(),
+        bodyweightFallback = false,
         estimateBeforeMinutes = 40,
         estimateAfterMinutes = after,
         budgetMinutes = budget

@@ -1,13 +1,13 @@
 package com.jericx.trainr.domain.unstuck
 
 // Derived from the session the client answered for, not the prototype's
-// 25/35/45, which were drawn for a 45 minute day.
+// 25/35/45, which were drawn for a 45 minute day. The estimate itself is not
+// offered: it can only be answered with "already fits".
 object TimePresets {
 
     fun forPlanned(plannedMinutes: Int): List<Int> =
-        (OPTIONS - 1 downTo 0).map { plannedMinutes - it * STEP_MINUTES }
+        (OPTIONS downTo 1).map { plannedMinutes - it * STEP_MINUTES }
             .filter { it >= FLOOR_MINUTES }
-            .ifEmpty { listOf(plannedMinutes) }
 
     // The schema's 1..1440 is a parser bound. This is the reviewed range, and
     // a request outside it is refused rather than clamped into a different one.
