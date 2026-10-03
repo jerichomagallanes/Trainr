@@ -17,6 +17,7 @@ import com.jericx.trainr.domain.unstuck.AdjustmentConstraint
 import com.jericx.trainr.domain.unstuck.AdjustmentReason
 import com.jericx.trainr.domain.unstuck.AdjustmentSnapshot
 import com.jericx.trainr.domain.unstuck.ApplyResult
+import com.jericx.trainr.domain.unstuck.InfeasibleReason
 import com.jericx.trainr.domain.unstuck.PolicyDecision
 import com.jericx.trainr.domain.unstuck.PreferenceKind
 import com.jericx.trainr.domain.unstuck.SessionEstimate
@@ -47,7 +48,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -106,6 +106,15 @@ data class AdjustmentUiState(
     // limit for the whole weekday.
     val canRemember: Boolean
         get() = weekdayName != null && scope == TimeScope.WHOLE_SESSION
+
+    val shortestMinutes: Int?
+        get() = when (val found = decision) {
+            is PolicyDecision.Proposed -> found.summary.shortestMinutes
+            is PolicyDecision.NoFeasibleChange ->
+                found.minimumMinutes?.takeIf { found.reason == InfeasibleReason.TOO_SHORT_FOR_REQUIRED_WORK }
+
+            else -> null
+        }
 
     val canShowRecommendation: Boolean
         get() = when (reason) {
@@ -443,21 +452,15 @@ class AdjustmentViewModel @Inject constructor(
     private suspend fun load() {
         val profile = userRepository.getCurrentUser()
         user = profile
-        val plan = profile?.let {
-            val plans = userRepository.getWeeklyWorkoutPlans(it.id).first()
-            if (requestedWeekNumber == null) {
-                plans.maxByOrNull { stored -> stored.weekNumber }
-            } else {
-                plans.firstOrNull { stored -> stored.weekNumber == requestedWeekNumber }
-            }
-        }
-        val day = plan?.workoutDays?.firstOrNull { it.dayNumber == requestedDayNumber }
-        if (profile == null || day == null) {
+        val week = profile?.let { userRepository.getWeekOutline(it.id, requestedWeekNumber) }
+        val day = week?.days?.firstOrNull { it.dayNumber == requestedDayNumber }
+            ?.let { userRepository.getWorkoutDay(it.id) }
+        if (profile == null || week == null || day == null) {
             _uiState.update { it.copy(isLoaded = true) }
             return
         }
 
-        val dayDate = plan.startDateMillis?.let { WorkoutWeek.dateOfDay(it, day.dayNumber) }
+        val dayDate = week.startDateMillis?.let { WorkoutWeek.dateOfDay(it, day.dayNumber) }
         dayWeekday = dayDate?.let { WorkoutWeek.isoWeekdayOf(it) }
 
         _uiState.update {

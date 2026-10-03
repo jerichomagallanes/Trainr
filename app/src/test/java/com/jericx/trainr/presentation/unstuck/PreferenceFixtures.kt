@@ -1,5 +1,7 @@
 package com.jericx.trainr.presentation.unstuck
 
+import com.jericx.trainr.domain.model.DayOutline
+import com.jericx.trainr.domain.model.WeekOutline
 import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
 import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.repository.UserRepository
@@ -10,9 +12,7 @@ import com.jericx.trainr.domain.unstuck.testDay
 import com.jericx.trainr.domain.unstuck.testUser
 import com.jericx.trainr.presentation.workout.util.WorkoutWeek
 import io.mockk.coEvery
-import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.flow.flowOf
 
 internal val preferenceDay: WorkoutDay =
     testDay(planned("barbell_bench_press", sets = 3, id = 2))
@@ -31,8 +31,36 @@ internal fun usersWith(
     plannedMinutes: Int = 45
 ): UserRepository = mockk<UserRepository>(relaxed = true).also {
     coEvery { it.getCurrentUser() } returns testUser(minutes = plannedMinutes)
-    every { it.getWeeklyWorkoutPlans(any()) } returns flowOf(listOf(plan))
-    coEvery { it.getWorkoutDay(plan.workoutDays.first().id) } returns plan.workoutDays.first()
+    it.storing(plan)
+}
+
+internal fun WeeklyWorkoutPlan.outline() = WeekOutline(
+    id = id,
+    weekNumber = weekNumber,
+    startDateMillis = startDateMillis,
+    days = workoutDays.map { DayOutline(it.id, it.dayNumber) }
+)
+
+// Answers the targeted lookups the way the database does: by week number or
+// the newest week, by the day a record points at, and one day at a time.
+internal fun UserRepository.storing(vararg plans: WeeklyWorkoutPlan) {
+    coEvery { getWeekOutline(any(), any()) } answers {
+        val week = secondArg<Int?>()
+        val plan = if (week == null) {
+            plans.maxByOrNull { it.weekNumber }
+        } else {
+            plans.firstOrNull { it.weekNumber == week }
+        }
+        plan?.outline()
+    }
+    coEvery { getWeekOutlineOf(any()) } answers {
+        val dayId = firstArg<Long>()
+        plans.firstOrNull { plan -> plan.workoutDays.any { it.id == dayId } }?.outline()
+    }
+    coEvery { getWorkoutDay(any()) } answers {
+        val dayId = firstArg<Long>()
+        plans.flatMap { it.workoutDays }.firstOrNull { it.id == dayId }
+    }
 }
 
 internal fun timeLimit(

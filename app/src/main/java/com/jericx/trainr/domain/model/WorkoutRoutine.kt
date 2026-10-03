@@ -15,6 +15,15 @@ data class WeeklyWorkoutPlan(
     val updatedAt: Long = System.currentTimeMillis()
 )
 
+data class WeekOutline(
+    val id: Long,
+    val weekNumber: Int,
+    val startDateMillis: Long?,
+    val days: List<DayOutline>
+)
+
+data class DayOutline(val id: Long, val dayNumber: Int)
+
 data class WorkoutDay(
     val id: Long = 0,
     val dayNumber: Int,

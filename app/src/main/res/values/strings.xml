@@ -280,6 +280,10 @@
         <item quantity="one">Your remaining time: %1$d minute</item>
         <item quantity="other">Your remaining time: %1$d minutes</item>
     </plurals>
+    <plurals name="review_shortest_version_format">
+        <item quantity="one">Shortest version: about %1$d minute</item>
+        <item quantity="other">Shortest version: about %1$d minutes</item>
+    </plurals>
     <string name="today_only">Today only</string>
     <string name="undo_available">· Undo available</string>
     <string name="restore_remaining_plan">· Restore remaining plan</string>

@@ -1,9 +1,14 @@
 package com.jericx.trainr.domain.unstuck
 
 import com.google.common.truth.Truth.assertThat
+import com.jericx.trainr.domain.catalog.CatalogExercise
+import com.jericx.trainr.domain.catalog.InMemoryExerciseCatalog
 import com.jericx.trainr.domain.catalog.InjuryGuard
 import com.jericx.trainr.domain.catalog.MovementPattern
+import com.jericx.trainr.domain.catalog.MuscleGroup
+import com.jericx.trainr.domain.catalog.isLoadable
 import com.jericx.trainr.domain.model.Equipment
+import com.jericx.trainr.domain.model.ExerciseMeasure
 import com.jericx.trainr.domain.model.Injury
 import com.jericx.trainr.domain.model.WorkoutDay
 import org.junit.Test
@@ -209,4 +214,49 @@ class UnstuckPolicyEquipmentTest {
         assertThat(withPriorityOnTheTarget.summary.keptPriorityKey).isNull()
         assertThat(withPriorityElsewhere.summary.keptPriorityKey).isEqualTo("bicycle_crunch")
     }
+
+    // A movement tagged as needing nothing can still take a load, and a load
+    // is something to find: bodyweight only means unweighted as well.
+    @Test
+    fun aBodyweightOnlyRequestNeverProposesWeightedWork() {
+        val catalog = InMemoryExerciseCatalog(
+            listOf(
+                quadMovement("goblet_squat", Equipment.DUMBBELL, ExerciseMeasure.WEIGHT_AND_REPS),
+                quadMovement("weighted_sissy_squat", Equipment.NONE, ExerciseMeasure.WEIGHT_AND_REPS),
+                quadMovement("sissy_squat", Equipment.NONE, ExerciseMeasure.REPS)
+            )
+        )
+        val day = testDay(planned("goblet_squat", sets = 3, id = 2, weightKg = 20f))
+
+        val decision = UnstuckPolicy(catalog).decide(
+            AdjustmentSnapshot(day, testUser()),
+            AdjustmentConstraint.EquipmentUnavailable(2L, setOf(Equipment.NONE)),
+            "request-1"
+        ) as PolicyDecision.Proposed
+        val after = decision.proposal.changes.single().after!!
+
+        assertThat(after.catalogKey).isEqualTo("sissy_squat")
+        assertThat(after.sets.mapNotNull { it.targetWeightKg }).isEmpty()
+    }
+
+    @Test
+    fun theCatalogTagsNothingWeightedAsBodyweight() {
+        val weightedBodyweight = testCatalog.all
+            .filter { it.equipment == Equipment.NONE && it.isLoadable }
+            .map { it.key }
+
+        assertThat(weightedBodyweight).isEmpty()
+    }
+
+    private fun quadMovement(key: String, equipment: Equipment, measure: ExerciseMeasure) =
+        CatalogExercise(
+            key = key,
+            name = key,
+            primary = MuscleGroup.QUADRICEPS,
+            secondary = emptyList(),
+            equipment = equipment,
+            measure = measure,
+            pattern = MovementPattern.SQUAT,
+            staple = false
+        )
 }

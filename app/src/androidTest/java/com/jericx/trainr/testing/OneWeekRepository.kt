@@ -1,7 +1,9 @@
 package com.jericx.trainr.testing
 
+import com.jericx.trainr.domain.model.DayOutline
 import com.jericx.trainr.domain.model.ExerciseSet
 import com.jericx.trainr.domain.model.UserProfile
+import com.jericx.trainr.domain.model.WeekOutline
 import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
 import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.model.WorkoutExercise
@@ -20,6 +22,19 @@ class OneWeekRepository(private val plan: WeeklyWorkoutPlan) : UserRepository {
     override suspend fun getWeeklyWorkoutPlan(userId: Long, weekNumber: Int) =
         plan.takeIf { it.weekNumber == weekNumber }
 
+    override suspend fun getWeekOutline(userId: Long, weekNumber: Int?): WeekOutline? =
+        outline.takeIf { weekNumber == null || weekNumber == plan.weekNumber }
+
+    override suspend fun getWeekOutlineOf(dayId: Long): WeekOutline? =
+        outline.takeIf { week -> week.days.any { it.id == dayId } }
+
+    private val outline = WeekOutline(
+        id = plan.id,
+        weekNumber = plan.weekNumber,
+        startDateMillis = plan.startDateMillis,
+        days = plan.workoutDays.map { DayOutline(it.id, it.dayNumber) }
+    )
+
     override suspend fun saveUser(user: UserProfile): Long = 1
     override suspend fun updateUser(user: UserProfile) = Unit
     override suspend fun hasUsers(): Boolean = true
@@ -31,7 +46,8 @@ class OneWeekRepository(private val plan: WeeklyWorkoutPlan) : UserRepository {
     override suspend fun saveWorkoutDay(day: WorkoutDay, weeklyPlanId: Long): Long = 1
     override suspend fun saveWorkoutDays(days: List<WorkoutDay>, weeklyPlanId: Long) = Unit
     override suspend fun getWorkoutDaysForPlan(weeklyPlanId: Long): List<WorkoutDay> = emptyList()
-    override suspend fun getWorkoutDay(dayId: Long): WorkoutDay? = null
+    override suspend fun getWorkoutDay(dayId: Long): WorkoutDay? =
+        plan.workoutDays.firstOrNull { it.id == dayId }
     override suspend fun updateWorkoutDay(day: WorkoutDay, weeklyPlanId: Long) = Unit
 
     override suspend fun saveWorkoutExercise(exercise: WorkoutExercise, workoutDayId: Long): Long = 1

@@ -150,16 +150,21 @@ private fun ColumnScope.ProposedContent(review: ReviewUi.Proposed) {
     )
 
     review.budgetMinutes?.let { minutes ->
+        val shortest = review.shortestMinutes
         Text(
-            text = pluralStringResource(
-                if (review.scope == TimeScope.REMAINING) {
-                    R.plurals.adjust_review_remaining_line_format
-                } else {
-                    R.plurals.adjust_review_time_line_format
-                },
-                minutes,
-                minutes
-            ),
+            text = when {
+                shortest != null -> pluralStringResource(
+                    R.plurals.review_shortest_version_format, shortest, shortest
+                )
+
+                review.scope == TimeScope.REMAINING -> pluralStringResource(
+                    R.plurals.adjust_review_remaining_line_format, minutes, minutes
+                )
+
+                else -> pluralStringResource(
+                    R.plurals.adjust_review_time_line_format, minutes, minutes
+                )
+            },
             style = MaterialTheme.typography.bodyMedium,
             color = colors.onSurface,
             modifier = Modifier.padding(top = Spacing.small)

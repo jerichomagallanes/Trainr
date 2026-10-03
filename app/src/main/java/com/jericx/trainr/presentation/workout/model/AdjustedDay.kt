@@ -25,16 +25,26 @@ val WorkoutDay.isAdjustedToday: Boolean
 fun WorkoutDay.derivedExerciseCount(): Int =
     if (isAdjustedToday) visibleExercises.size else exerciseCount
 
-fun WorkoutDay.derivedEquipment(catalog: ExerciseCatalog): List<String> =
-    if (!isAdjustedToday) {
-        equipment
-    } else {
-        visibleExercises
-            .mapNotNull { catalog[it.exerciseKey]?.equipment }
-            .filterNot { it == Equipment.NONE }
-            .distinct()
-            .map { it.asDisplayText() }
-    }
+// Starts from the stored line, which names kit the catalog does not know: a
+// substitute adds its own, an omitted exercise's goes once nothing visible needs it.
+fun WorkoutDay.derivedEquipment(catalog: ExerciseCatalog): List<String> {
+    if (!isAdjustedToday) return equipment
+    val visible = visibleExercises
+    val needed = visible.kit(catalog).toSet()
+    val dropped = exercises.filter { it.isOmittedToday }.kit(catalog).filterNot { it in needed }
+    val kept = equipment.filterNot { name -> dropped.any { name.describes(it) } }
+    val added = visible.filter { it.addedBy != null }.kit(catalog)
+        .distinct()
+        .filterNot { kit -> kept.any { it.describes(kit) } }
+        .map { it.asDisplayText() }
+    return (kept + added).ifEmpty { equipment }
+}
+
+private fun List<WorkoutExercise>.kit(catalog: ExerciseCatalog): List<Equipment> =
+    mapNotNull { catalog[it.exerciseKey]?.equipment }.filterNot { it == Equipment.NONE }
+
+private fun String.describes(equipment: Equipment): Boolean =
+    startsWith(equipment.asDisplayText(), ignoreCase = true)
 
 fun WorkoutDay.remainingMinutes(user: UserProfile, catalog: ExerciseCatalog): Int =
     SessionEstimate.minutes(this, user, TimeScope.WHOLE_SESSION, catalog)

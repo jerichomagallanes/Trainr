@@ -11,12 +11,11 @@ import com.jericx.trainr.domain.unstuck.planned
 import com.jericx.trainr.domain.unstuck.testDay
 import com.jericx.trainr.domain.unstuck.testUser
 import com.jericx.trainr.presentation.Screen
+import com.jericx.trainr.presentation.unstuck.storing
 import io.mockk.coEvery
-import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -48,24 +47,22 @@ class FeedbackPromptViewModelTest {
 
     private val users: UserRepository = mockk<UserRepository>(relaxed = true).also {
         coEvery { it.getCurrentUser() } returns testUser()
-        every { it.getWeeklyWorkoutPlans(any()) } returns flowOf(
-            listOf(
-                WeeklyWorkoutPlan(
-                    id = 1,
-                    userId = 0,
-                    weekNumber = 1,
-                    title = "Week 1",
-                    startDateMillis = 0L,
-                    workoutDays = listOf(day)
-                ),
-                WeeklyWorkoutPlan(
-                    id = 2,
-                    userId = 0,
-                    weekNumber = 2,
-                    title = "Week 2",
-                    startDateMillis = 0L,
-                    workoutDays = listOf(sameDayNextWeek)
-                )
+        it.storing(
+            WeeklyWorkoutPlan(
+                id = 1,
+                userId = 0,
+                weekNumber = 1,
+                title = "Week 1",
+                startDateMillis = 0L,
+                workoutDays = listOf(day)
+            ),
+            WeeklyWorkoutPlan(
+                id = 2,
+                userId = 0,
+                weekNumber = 2,
+                title = "Week 2",
+                startDateMillis = 0L,
+                workoutDays = listOf(sameDayNextWeek)
             )
         )
     }
@@ -150,16 +147,14 @@ class FeedbackPromptViewModelTest {
 
         val threeDayWeek: UserRepository = mockk<UserRepository>(relaxed = true).also {
             coEvery { it.getCurrentUser() } returns testUser()
-            every { it.getWeeklyWorkoutPlans(any()) } returns flowOf(
-                listOf(
-                    WeeklyWorkoutPlan(
-                        id = 1,
-                        userId = 0,
-                        weekNumber = 1,
-                        title = "Week 1",
-                        startDateMillis = 0L,
-                        workoutDays = listOf(monday, wednesday, friday)
-                    )
+            it.storing(
+                WeeklyWorkoutPlan(
+                    id = 1,
+                    userId = 0,
+                    weekNumber = 1,
+                    title = "Week 1",
+                    startDateMillis = 0L,
+                    workoutDays = listOf(monday, wednesday, friday)
                 )
             )
         }

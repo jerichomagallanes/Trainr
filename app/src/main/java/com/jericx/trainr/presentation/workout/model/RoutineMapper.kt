@@ -4,16 +4,21 @@ import com.jericx.trainr.domain.catalog.ExerciseCatalog
 import com.jericx.trainr.domain.catalog.InjuryGuard
 import com.jericx.trainr.domain.model.ExerciseSet
 import com.jericx.trainr.domain.model.Injury
+import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.model.asDisplayText
+import com.jericx.trainr.domain.unstuck.SessionEstimate
+import com.jericx.trainr.domain.unstuck.TimeScope
 
 // What a movement is and how it is done come from the catalog; a stored week
 // only says which movement and how much. Omitted sets and the exercises left
 // with none of them are today's adjustment and are not part of the routine.
+// The minutes are read off the sets still planned, so a cut shows on the card.
 fun WorkoutDay.toRoutineUi(
     previousByKey: Map<String, List<ExerciseSet>> = emptyMap(),
     catalog: ExerciseCatalog? = null,
-    injuries: List<Injury> = emptyList()
+    injuries: List<Injury> = emptyList(),
+    user: UserProfile? = null
 ): RoutineUi = RoutineUi(
     title = title,
     exercises = visibleExercises.mapIndexed { index, exercise ->
@@ -23,7 +28,12 @@ fun WorkoutDay.toRoutineUi(
             exerciseId = exercise.id,
             name = exercise.name,
             description = movement?.summary.orEmpty(),
-            minutes = exercise.durationMinutes,
+            minutes = if (user != null && catalog != null) {
+                SessionEstimate.exerciseMinutes(exercise, user, TimeScope.WHOLE_SESSION, catalog)
+                    ?: exercise.durationMinutes
+            } else {
+                exercise.durationMinutes
+            },
             measure = exercise.measure,
             sets = exercise.sets.filter { it.omittedBy == null },
             omittedSetNumbers = exercise.sets.filter { it.omittedBy != null }

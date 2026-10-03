@@ -219,7 +219,7 @@ class UnstuckPolicy(private val catalog: ExerciseCatalog) {
     ): CatalogExercise? {
         val taken = day.exercises.filterNot { it.id == target.id }.map { it.exerciseKey }.toSet()
         val eligible = catalog.all.filter {
-            it.key != entry.key && it.key !in taken && it.isAvailableWith(available) &&
+            it.key != entry.key && it.key !in taken && it.isUsableWith(available) &&
                 !InjuryGuard.excludes(it, user.injuries) &&
                 (it.primary == entry.primary ||
                     (it.pattern == entry.pattern && it.role == ExerciseRole.COMPOUND))
@@ -366,6 +366,10 @@ private fun AdjustmentConstraint.canonicalKey(): String = when (this) {
     is AdjustmentConstraint.EquipmentUnavailable ->
         "equipment_unavailable:$exerciseId:${available.map { it.name }.sorted().joinToString(",")}"
 }
+
+// A bodyweight movement that takes a load still needs something to hold.
+private fun CatalogExercise.isUsableWith(available: Set<Equipment>): Boolean =
+    if (equipment == Equipment.NONE) !isLoadable else equipment in available
 
 private val ExerciseSet.isUnperformed: Boolean get() = omittedBy == null && !isCompleted
 

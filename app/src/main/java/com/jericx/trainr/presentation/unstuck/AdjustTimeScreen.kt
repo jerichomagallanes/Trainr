@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
@@ -118,6 +119,16 @@ fun AdjustTimeScreen(
             )
             if (state.minutesError) {
                 TrainrFieldError(message = stringResource(R.string.adjust_time_range_error))
+            }
+            state.shortestMinutes?.let { shortest ->
+                Text(
+                    text = pluralStringResource(
+                        R.plurals.review_shortest_version_format, shortest, shortest
+                    ),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.onSurfaceMuted,
+                    modifier = Modifier.padding(top = Spacing.small)
+                )
             }
 
             Text(

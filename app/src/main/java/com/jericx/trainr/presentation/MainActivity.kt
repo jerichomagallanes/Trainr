@@ -743,20 +743,12 @@ fun AppContent(
                         Screen.Debrief.ARG_DAY_NUMBER,
                         Screen.Debrief.ARG_WEEK_NUMBER
                     )
-                ) { entry ->
-                    val dayNumber = entry.arguments
-                        ?.getInt(Screen.Debrief.ARG_DAY_NUMBER) ?: 1
-                    val weekNumber = entry.arguments
-                        ?.getInt(Screen.Debrief.ARG_WEEK_NUMBER)
-                        ?: Screen.RoutineDetail.LATEST_WEEK
-
+                ) {
                     DebriefRoute(
                         // The note is written, so returning here would offer to
                         // write it again.
-                        onSaved = {
-                            navController.navigate(
-                                Screen.NoteSaved.createRoute(dayNumber, weekNumber)
-                            ) {
+                        onSaved = { dayId ->
+                            navController.navigate(Screen.NoteSaved.createRoute(dayId)) {
                                 popUpTo(Screen.Debrief.route) { inclusive = true }
                             }
                         },
@@ -767,9 +759,8 @@ fun AppContent(
 
                 composable(
                     route = Screen.NoteSaved.route,
-                    arguments = dayAndWeekArguments(
-                        Screen.NoteSaved.ARG_DAY_NUMBER,
-                        Screen.NoteSaved.ARG_WEEK_NUMBER
+                    arguments = listOf(
+                        navArgument(Screen.NoteSaved.ARG_DAY_ID) { type = NavType.LongType }
                     )
                 ) {
                     NoteSavedRoute(
