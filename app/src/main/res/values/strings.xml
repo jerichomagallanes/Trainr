@@ -234,6 +234,7 @@
     <string name="mark_set_incomplete">Mark set as not complete</string>
     <string name="exercise_in_progress">Exercise in progress…</string>
     <string name="timer_paused">Timer paused</string>
+    <string name="timer_finished">Time is up. Tick the set when you are done.</string>
     <string name="edit">Edit</string>
     <string name="close">Close</string>
     <string name="save">Save</string>

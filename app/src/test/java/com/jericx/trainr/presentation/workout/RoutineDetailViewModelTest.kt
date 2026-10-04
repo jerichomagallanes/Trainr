@@ -322,17 +322,143 @@ class RoutineDetailViewModelTest {
         assertThat(viewModel.isCompleted(2)).isFalse()
     }
 
+    // Running out is not somebody doing the work, and the numbers it used to
+    // write became next week's anchor.
     @Test
-    fun theCountdownReachingZeroCompletesTheExercise() = runTest {
+    fun theCountdownReachingZeroLogsNothingOnAnExerciseCountedInReps() = runTest {
         val viewModel = loadedViewModel()
 
         viewModel.startTimer(viewModel.exercise(4))
         advanceTimeBy(viewModel.seconds(4) * 1_000L)
         runCurrent()
 
-        assertThat(viewModel.uiState.value.timer).isNull()
-        assertThat(viewModel.isCompleted(4)).isTrue()
+        assertThat(viewModel.isCompleted(4)).isFalse()
+        val sets = viewModel.exercise(4).sets
+        assertThat(sets.none { it.isCompleted }).isTrue()
+        assertThat(sets.mapNotNull { it.actualReps }).isEmpty()
+        assertThat(sets.mapNotNull { it.actualWeightKg }).isEmpty()
+        assertThat(sets.mapNotNull { it.actualSeconds }).isEmpty()
     }
+
+    @Test
+    fun theCountdownReachingZeroEndsAtZeroRatherThanDisappearing() = runTest {
+        val viewModel = loadedViewModel()
+
+        viewModel.startTimer(viewModel.exercise(4))
+        advanceTimeBy(viewModel.seconds(4) * 1_000L)
+        runCurrent()
+
+        val timer = viewModel.uiState.value.timer
+        assertThat(timer?.isFinished).isTrue()
+        assertThat(timer?.isRunning).isFalse()
+        assertThat(timer?.remainingSeconds).isEqualTo(0)
+    }
+
+    // A screen that was away for the end has nothing to catch up on: a haptic
+    // and a tone minutes late belong to no countdown the person can see.
+    @Test
+    fun theEndOfACountdownNobodyWasWatchingIsNotKeptForLater() = runTest {
+        val viewModel = loadedViewModel()
+
+        viewModel.startTimer(viewModel.exercise(4))
+        advanceTimeBy(viewModel.seconds(4) * 1_000L)
+        advanceUntilIdle()
+
+        val alerts = mutableListOf<Unit>()
+        val collecting = launch { viewModel.timerFinished.toList(alerts) }
+        advanceUntilIdle()
+
+        assertThat(alerts).isEmpty()
+        collecting.cancel()
+    }
+
+    @Test
+    fun theEndOfTheCountdownIsAnnouncedOnce() = runTest {
+        val viewModel = loadedViewModel()
+        val alerts = mutableListOf<Unit>()
+        val collecting = launch { viewModel.timerFinished.toList(alerts) }
+
+        viewModel.startTimer(viewModel.exercise(4))
+        advanceTimeBy(viewModel.seconds(4) * 1_000L)
+        advanceUntilIdle()
+
+        assertThat(alerts).hasSize(1)
+        collecting.cancel()
+    }
+
+    // A span of time is what the countdown measured, so it may fill that set
+    // and nothing else. The tick is still the person's.
+    // The minutes on the card are the whole block rounded up; counting those
+    // down would log a hold nobody held.
+    @Test
+    fun aTimedSetIsCountedDownForTheHoldItAsksFor() = runTest {
+        val viewModel = loadedViewModel(dayNumber = 1, repository = repositoryWith(timedPlan))
+
+        viewModel.startTimer(viewModel.exercise(1))
+
+        assertThat(viewModel.uiState.value.timer?.totalSeconds).isEqualTo(HOLD_SECONDS)
+        assertThat(viewModel.seconds(1)).isGreaterThan(HOLD_SECONDS)
+    }
+
+    @Test
+    fun theCountdownReachingZeroLogsTheTimeItMeasuredOnATimedSet() = runTest {
+        val repository = repositoryWith(timedPlan)
+        val viewModel = loadedViewModel(dayNumber = 1, repository = repository)
+
+        viewModel.startTimer(viewModel.exercise(1))
+        advanceTimeBy(viewModel.seconds(1) * 1_000L)
+        advanceUntilIdle()
+
+        val set = viewModel.exercise(1).sets.single()
+        assertThat(set.actualSeconds).isEqualTo(HOLD_SECONDS)
+        assertThat(set.actualOrigin).isEqualTo(ActualOrigin.MEASURED)
+        assertThat(set.isCompleted).isFalse()
+        assertThat(viewModel.isCompleted(1)).isFalse()
+        coVerify { repository.updateExerciseSet(match { it.actualSeconds != null }, 50) }
+    }
+
+    @Test
+    fun aTimedExerciseOfSeveralSetsIsLeftAloneWhenTheCountdownEnds() = runTest {
+        val viewModel = loadedViewModel()
+
+        viewModel.startTimer(viewModel.exercise(2))
+        advanceTimeBy(viewModel.seconds(2) * 1_000L)
+        advanceUntilIdle()
+
+        assertThat(viewModel.exercise(2).sets.mapNotNull { it.actualSeconds }).isEmpty()
+        assertThat(viewModel.isCompleted(2)).isFalse()
+    }
+
+    private val timedPlan = WeeklyWorkoutPlan(
+        id = 9,
+        userId = 1,
+        weekNumber = 1,
+        title = "Timed week",
+        startDateMillis = weekStartingDaysAgo(0),
+        workoutDays = listOf(
+            WorkoutDay(
+                id = 41,
+                dayNumber = 1,
+                title = "Stored Core",
+                status = WorkoutStatus.NOT_STARTED,
+                duration = 5,
+                exerciseCount = 1,
+                equipment = emptyList(),
+                exercises = listOf(
+                    WorkoutExercise(
+                        id = 50,
+                        exerciseKey = "plank",
+                        name = "Plank",
+                        measure = ExerciseMeasure.DURATION,
+                        sets = listOf(
+                            ExerciseSet(id = 500, setNumber = 1, targetSeconds = HOLD_SECONDS)
+                        ),
+                        durationMinutes = 5
+                    )
+                )
+            )
+        )
+    )
 
     @Test
     fun theCountdownKeepsRunningRightUpToTheLastSecond() = runTest {
@@ -1567,5 +1693,10 @@ class RoutineDetailViewModelTest {
             adjustments.deleteOutcome(any())
             adjustments.undo(any(), any())
         }
+    }
+
+    private companion object {
+        // Not a whole minute: the block the card shows rounds up to one.
+        const val HOLD_SECONDS = 45
     }
 }
