@@ -56,6 +56,7 @@ data class WeeklyPlanUiState(
     val days: List<WeeklyPlanDay> = emptyList(),
     val weekStartMillis: Long = SampleWorkoutData.weekStartMillis,
     val weekEndMillis: Long = SampleWorkoutData.weekEndMillis,
+    val weekHasEnded: Boolean = false,
     // Keeps an empty plan and a plan not read yet from being mistaken for one another.
     val hasLoaded: Boolean = false,
     val hasPlan: Boolean = false,
@@ -69,10 +70,16 @@ data class WeeklyPlanUiState(
     val hasMemory: Boolean = false
 ) {
     // Never a completed day, so nothing finished can be offered as the next
-    // session; null once the week is done, which leads to the next week.
+    // session; null once the week is done, which leads to the next week. A day
+    // that has passed is offered only while the week is still running: once its
+    // dates have run out that day is a record and cannot be trained.
     val nextWorkout: WeeklyPlanDay?
-        get() = days.firstOrNull { !it.isPast && it.day.status != WorkoutStatus.COMPLETED }
-            ?: days.firstOrNull { it.day.status != WorkoutStatus.COMPLETED }
+        get() {
+            val upcoming = days
+                .firstOrNull { !it.isPast && it.day.status != WorkoutStatus.COMPLETED }
+            if (upcoming != null || weekHasEnded) return upcoming
+            return days.firstOrNull { it.day.status != WorkoutStatus.COMPLETED }
+        }
 
     val nextWorkoutIsToday: Boolean get() = nextWorkout?.isToday == true
 }
@@ -254,6 +261,7 @@ class WeeklyPlanViewModel @Inject constructor(
                 },
                 weekStartMillis = start,
                 weekEndMillis = WorkoutWeek.dateOfDay(start, LAST_ISO_DAY),
+                weekHasEnded = WorkoutWeek.hasEnded(start, nowMillis),
                 hasLoaded = true,
                 hasPlan = true,
                 isCurrentWeek = isCurrentWeek,

@@ -210,7 +210,7 @@ fun RoutineDetailScreen(
     }
 
     LaunchedEffect(routine.isComplete, state.isLoaded) {
-        if (!state.isLoaded) return@LaunchedEffect
+        if (!state.isLoaded || state.isReadOnly) return@LaunchedEffect
 
         val isComplete = routine.isComplete
         val previous = wasComplete
@@ -340,7 +340,7 @@ fun RoutineDetailScreen(
             state.adjustedBanner?.let { banner ->
                 AdjustedBanner(
                     banner = banner,
-                    showUndo = state.outcome?.finishKind != FinishKind.FULL,
+                    showUndo = !state.isReadOnly && state.outcome?.finishKind != FinishKind.FULL,
                     onUndo = onUndoAdjustment,
                     modifier = Modifier.padding(top = Spacing.section)
                 )
@@ -379,9 +379,10 @@ fun RoutineDetailScreen(
                             onAddSet = { onAddSet(exercise.position) },
                             onDeleteSet = { onDeleteSet(exercise.position, it.setNumber) },
                             units = state.unitSystem,
+                            isReadOnly = state.isReadOnly,
                             modifier = Modifier.bringIntoViewRequester(requester)
                         ) {
-                            if (!exercise.isCompleted) {
+                            if (!exercise.isCompleted && !state.isReadOnly) {
                                 ExerciseTimer(
                                     timer = state.timer?.takeIf { it.position == exercise.position },
                                     onStart = { onStartTimer(exercise) },
@@ -390,7 +391,11 @@ fun RoutineDetailScreen(
                                     onReset = onResetTimer,
                                     onStop = onStopTimer
                                 )
+                            }
 
+                            // A record reads: how a movement is done is still
+                            // worth showing once the set was ticked.
+                            if (!exercise.isCompleted || state.isReadOnly) {
                                 val video: @Composable () -> Unit = {
                                     YouTubeVideo.from(exercise.videoUrl)?.let {
                                         VideoTutorial(
@@ -423,23 +428,25 @@ fun RoutineDetailScreen(
                 }
             }
 
-            if (!routine.isComplete) {
-                TrainrSlideToConfirm(
-                    text = stringResource(R.string.slide_to_complete_routine),
-                    onConfirm = onCompleteRoutine,
-                    modifier = Modifier.padding(top = Spacing.section + Spacing.tight)
-                )
-                if (!finishedEarly) {
-                    TrainrQuietButton(
-                        text = stringResource(R.string.finish_early),
-                        onClick = onAskToFinishEarly,
-                        modifier = Modifier.padding(top = Spacing.tight)
+            if (!state.isReadOnly) {
+                if (!routine.isComplete) {
+                    TrainrSlideToConfirm(
+                        text = stringResource(R.string.slide_to_complete_routine),
+                        onConfirm = onCompleteRoutine,
+                        modifier = Modifier.padding(top = Spacing.section + Spacing.tight)
                     )
+                    if (!finishedEarly) {
+                        TrainrQuietButton(
+                            text = stringResource(R.string.finish_early),
+                            onClick = onAskToFinishEarly,
+                            modifier = Modifier.padding(top = Spacing.tight)
+                        )
+                    } else if (routine.hasProgress) {
+                        StartWorkoutOverButton(onClick = { showStartOver = true })
+                    }
                 } else if (routine.hasProgress) {
                     StartWorkoutOverButton(onClick = { showStartOver = true })
                 }
-            } else if (routine.hasProgress) {
-                StartWorkoutOverButton(onClick = { showStartOver = true })
             }
         }
     }

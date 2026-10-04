@@ -17,6 +17,11 @@ object WorkoutWeek {
             timeInMillis
         }
 
+    // A week is over once its last day has passed, which is the rule the plan
+    // list reads a single day by.
+    fun hasEnded(startDateMillis: Long, nowMillis: Long = System.currentTimeMillis()): Boolean =
+        startOfDay(dateOfDay(startDateMillis, LAST_ISO_DAY)) < startOfDay(nowMillis)
+
     fun dateOfDay(startDateMillis: Long, dayNumber: Int): Long =
         Calendar.getInstance().run {
             timeInMillis = startDateMillis
@@ -31,4 +36,6 @@ object WorkoutWeek {
             timeInMillis = dateMillis
             (get(Calendar.DAY_OF_WEEK) + 5) % 7 + 1
         }
+
+    private const val LAST_ISO_DAY = 7
 }

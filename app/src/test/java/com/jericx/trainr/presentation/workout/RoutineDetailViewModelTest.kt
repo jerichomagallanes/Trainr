@@ -33,6 +33,7 @@ import com.jericx.trainr.presentation.workout.model.ExerciseUi
 import com.jericx.trainr.presentation.workout.model.derivedExerciseCount
 import com.jericx.trainr.presentation.workout.model.remainingMinutes
 import com.jericx.trainr.presentation.workout.model.visibleExercises
+import com.jericx.trainr.presentation.workout.util.WorkoutWeek
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.coVerify
@@ -50,6 +51,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import java.util.Calendar
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -105,10 +107,20 @@ class RoutineDetailViewModelTest {
         SampleWorkoutData.catalog
     )
 
+    // A week that is over turns its days into records, so a fixture meant to be
+    // written to has to be dated against the day the test runs.
+    private fun weekStartingDaysAgo(days: Int): Long =
+        Calendar.getInstance().apply {
+            timeInMillis = WorkoutWeek.startOfDay()
+            add(Calendar.DAY_OF_YEAR, -days)
+        }.timeInMillis
+
     // The routine screen holds nothing until the stored week has been read, so tests must let that happen first
     private fun TestScope.loadedViewModel(
         dayNumber: Int = SampleWorkoutData.DEFAULT_DAY_NUMBER,
-        repository: UserRepository = repositoryWith(SampleWorkoutData.weekOne),
+        repository: UserRepository = repositoryWith(
+            SampleWorkoutData.weekOne.copy(startDateMillis = weekStartingDaysAgo(0))
+        ),
         weekNumber: Int = Screen.RoutineDetail.LATEST_WEEK
     ) = viewModel(dayNumber, repository, weekNumber).also { advanceUntilIdle() }
 
@@ -432,7 +444,7 @@ class RoutineDetailViewModelTest {
         userId = 1,
         weekNumber = 1,
         title = "Stored week",
-        startDateMillis = 1_000_000_000_000L,
+        startDateMillis = weekStartingDaysAgo(0),
         workoutDays = listOf(
             WorkoutDay(
                 id = 21,
@@ -1435,5 +1447,107 @@ class RoutineDetailViewModelTest {
 
         assertThat(viewModel.exercise(1).sets.map { it.setNumber }).containsExactly(1, 3).inOrder()
         coVerify { repository.addExerciseSet(match { it.setNumber == 3 }, 33L) }
+    }
+
+    @Test
+    fun aDayFromAWeekThatIsOverIsARecord() = runTest {
+        val viewModel = viewModel(
+            dayNumber = 3,
+            repository = repositoryWith(storedPlan.copy(startDateMillis = weekStartingDaysAgo(7)))
+        )
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.isReadOnly).isTrue()
+    }
+
+    // The week's last day is today's, so a day earlier in it is still a session
+    // someone can correct an hour later
+    @Test
+    fun aDayInTheWeekBeingTrainedStaysWritable() = runTest {
+        val viewModel = viewModel(
+            dayNumber = 3,
+            repository = repositoryWith(storedPlan.copy(startDateMillis = weekStartingDaysAgo(6)))
+        )
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.isReadOnly).isFalse()
+    }
+
+    // The plan list dates a plan stored before the column existed to the sample
+    // week, which is long over; the day screen has to read it the same way.
+    @Test
+    fun aDayFromAPlanWithNoStartDateIsARecord() = runTest {
+        val viewModel = viewModel(
+            dayNumber = 3,
+            repository = repositoryWith(storedPlan.copy(startDateMillis = null))
+        )
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.isReadOnly).isTrue()
+    }
+
+    @Test
+    fun aFinishedDayInTheWeekBeingTrainedStaysWritable() = runTest {
+        val finished = storedPlan.copy(
+            workoutDays = storedPlan.workoutDays.map {
+                it.copy(status = WorkoutStatus.COMPLETED, completedAt = 1L)
+            }
+        )
+        val viewModel = viewModel(dayNumber = 3, repository = repositoryWith(finished))
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.isReadOnly).isFalse()
+    }
+
+    @Test
+    fun aRecordOffersNeitherAnAdjustmentNorTheWorkItNeverFinished() = runTest {
+        val viewModel = viewModel(
+            dayNumber = 3,
+            repository = repositoryWith(storedPlan.copy(startDateMillis = weekStartingDaysAgo(7)))
+        )
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.routine.hasUnperformedWork).isTrue()
+        assertThat(viewModel.uiState.value.hasRemainingWork).isFalse()
+    }
+
+    @Test
+    fun noMutatorTouchesADayFromAWeekThatIsOver() = runTest {
+        val adjustments = emptyAdjustments()
+        coEvery { adjustments.getActiveAdjustment(22L) } returns applied()
+        val repository = repositoryWith(
+            adjustedPlan().copy(startDateMillis = weekStartingDaysAgo(7))
+        )
+        val viewModel = viewModel(dayNumber = 3, repository = repository, adjustments = adjustments)
+        advanceUntilIdle()
+
+        val before = viewModel.uiState.value
+        val set = viewModel.exercise(1).sets.first()
+
+        viewModel.toggleExercise(1)
+        viewModel.updateSet(1, set.copy(actualReps = 9, isCompleted = true))
+        viewModel.addSet(1)
+        viewModel.deleteSet(1, set.setNumber)
+        viewModel.completeRoutine()
+        viewModel.askToFinishEarly()
+        viewModel.finishEarly()
+        viewModel.clearProgress()
+        viewModel.startTimer(viewModel.exercise(1))
+        viewModel.openAdjustSheet()
+        viewModel.openExercisePicker()
+        viewModel.undoAdjustment()
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value).isEqualTo(before)
+        coVerify(exactly = 0) {
+            repository.updateWorkoutDay(any(), any())
+            repository.updateWorkoutExercise(any(), any())
+            repository.updateExerciseSet(any(), any())
+            repository.addExerciseSet(any(), any())
+            repository.deleteExerciseSet(any())
+            adjustments.saveOutcome(any())
+            adjustments.deleteOutcome(any())
+            adjustments.undo(any(), any())
+        }
     }
 }
