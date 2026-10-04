@@ -13,6 +13,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -51,6 +52,7 @@ import com.jericx.trainr.presentation.common.components.layout.TrainrScaffold
 import com.jericx.trainr.presentation.common.components.layout.TrainrScreenContent
 import com.jericx.trainr.presentation.common.components.typography.TrainrScreenTitle
 import com.jericx.trainr.presentation.common.components.typography.TrainrSubtitle
+import com.jericx.trainr.presentation.onboarding.BodyMetricsEntry
 import com.jericx.trainr.presentation.onboarding.util.BodyMetricsConverter
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -59,6 +61,8 @@ fun BodyMetricsScreen(
     initial: UserProfile? = null,
     age: Int? = null,
     isEditing: Boolean = false,
+    inProgress: BodyMetricsEntry? = null,
+    onEntryChanged: (BodyMetricsEntry) -> Unit = {},
     onNextClick: (height: Float, weight: Float, units: UnitSystem) -> Unit,
     onBackClick: () -> Unit
 ) {
@@ -67,29 +71,39 @@ fun BodyMetricsScreen(
     val startsImperial = initial?.bodyUnitSystem == UnitSystem.IMPERIAL
     var height by remember {
         mutableStateOf(
-            initial?.height?.takeIf { it > 0f }
-                ?.toInt()
-                ?.toString()
-                ?.let { cm ->
-                    if (startsImperial) BodyMetricsConverter.convertHeightToImperial(cm) else cm
-                }
-                .orEmpty()
+            inProgress?.height
+                ?: initial?.height?.takeIf { it > 0f }
+                    ?.toInt()
+                    ?.toString()
+                    ?.let { cm ->
+                        if (startsImperial) {
+                            BodyMetricsConverter.convertHeightToImperial(cm)
+                        } else {
+                            cm
+                        }
+                    }
+                    .orEmpty()
         )
     }
     var weight by remember {
         mutableStateOf(
-            initial?.weight?.takeIf { it > 0f }
-                ?.let { kg ->
-                    if (startsImperial) {
-                        BodyMetricsConverter.convertWeightToImperial(kg.toString())
-                    } else {
-                        BodyMetricsConverter.formatWeight(kg)
+            inProgress?.weight
+                ?: initial?.weight?.takeIf { it > 0f }
+                    ?.let { kg ->
+                        if (startsImperial) {
+                            BodyMetricsConverter.convertWeightToImperial(kg.toString())
+                        } else {
+                            BodyMetricsConverter.formatWeight(kg)
+                        }
                     }
-                }
-                .orEmpty()
+                    .orEmpty()
         )
     }
-    var useMetric by remember { mutableStateOf(!startsImperial) }
+    var useMetric by remember { mutableStateOf(inProgress?.useMetric ?: !startsImperial) }
+
+    LaunchedEffect(height, weight, useMetric) {
+        onEntryChanged(BodyMetricsEntry(height, weight, useMetric))
+    }
 
     // Switching units must not edit the measurement: what a conversion was
     // given is kept so the way back reads what was typed.

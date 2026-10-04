@@ -444,7 +444,7 @@ private fun AdjustedTodayCard(kind: TodayAdjustmentKind, onViewWorkout: () -> Un
                 color = colors.onSurface,
                 modifier = Modifier.weight(1f)
             )
-            StatusChip(labelRes = R.string.adjusted, tone = StatusTone.ACTIVE, singleLine = true)
+            StatusChip(labelRes = R.string.adjusted, tone = StatusTone.ACTIVE)
         }
         Text(
             text = stringResource(

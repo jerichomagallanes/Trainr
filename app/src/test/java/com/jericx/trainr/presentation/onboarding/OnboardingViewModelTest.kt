@@ -414,5 +414,27 @@ class OnboardingViewModelTest {
             .containsExactly(OnboardingStep.BASIC_INFO, OnboardingStep.GOALS)
     }
 
+    @Test
+    fun `a preferred name is stored without the space that was typed after it`() {
+        viewModel.updateBasicInfo("Jericho ", 30, Gender.MALE, ExperienceLevel.BEGINNER)
 
+        assertThat(viewModel.onboardingState.value.userProfile.firstName).isEqualTo("Jericho")
+    }
+
+    @Test
+    fun `measurements that were typed but not submitted are given back`() {
+        viewModel.rememberBodyMetrics(BodyMetricsEntry("5", "154", useMetric = false))
+
+        assertThat(viewModel.bodyMetricsInProgress())
+            .isEqualTo(BodyMetricsEntry("5", "154", useMetric = false))
+    }
+
+    @Test
+    fun `submitting the measurements step clears what it was holding`() {
+        viewModel.rememberBodyMetrics(BodyMetricsEntry("175", "70", useMetric = true))
+
+        viewModel.updateBodyMetrics(175f, 70f, UnitSystem.METRIC)
+
+        assertThat(viewModel.bodyMetricsInProgress()).isNull()
+    }
 }

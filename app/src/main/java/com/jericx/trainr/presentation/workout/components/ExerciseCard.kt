@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -29,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import com.jericx.trainr.R
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
+import com.jericx.trainr.presentation.common.theme.scaledWithText
 import com.jericx.trainr.presentation.common.theme.trainrColors
 import com.jericx.trainr.domain.model.ExerciseSet
 import com.jericx.trainr.domain.model.UnitSystem
@@ -72,10 +74,12 @@ fun ExerciseCard(
                 .padding(start = Spacing.tight, end = Spacing.tight, top = Spacing.card),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            val badge = POSITION_BADGE.scaledWithText()
             Box(
                 modifier = Modifier
-                    .size(20.dp)
-                    .background(accentFill, CircleShape),
+                    .defaultMinSize(minWidth = badge, minHeight = badge)
+                    .background(accentFill, CircleShape)
+                    .padding(horizontal = Spacing.extraSmall),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -109,7 +113,7 @@ fun ExerciseCard(
                 ),
                 tint = if (exercise.isCompleted) colors.statusDoneInk else colors.outlineControl,
                 modifier = Modifier
-                    .size(30.dp)
+                    .size(EXERCISE_CHECK.scaledWithText())
                     .then(
                         if (isReadOnly) Modifier else Modifier.clickable(onClick = onToggleCompleted)
                     )
@@ -225,6 +229,9 @@ fun ExerciseCard(
 }
 
 private const val MUSCLE_SEPARATOR = "  \u00b7  "
+
+private val POSITION_BADGE = 20.dp
+private val EXERCISE_CHECK = 30.dp
 
 @Preview(showBackground = true, heightDp = 700)
 @Composable

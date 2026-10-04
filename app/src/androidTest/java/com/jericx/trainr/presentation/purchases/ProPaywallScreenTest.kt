@@ -1,13 +1,17 @@
 package com.jericx.trainr.presentation.purchases
 
 import androidx.activity.ComponentActivity
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.unit.Density
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.R
@@ -293,5 +297,40 @@ class ProPaywallScreenTest {
 
         composeTestRule.onNodeWithText(string(R.string.pro_nothing_to_restore)).assertDoesNotExist()
         composeTestRule.onNodeWithText(string(R.string.pro_restored)).assertDoesNotExist()
+    }
+
+    // Three cards abreast leave no room for a price at the largest text size,
+    // and a price that is cut is a price the screen has not stated.
+    @Test
+    fun atTheLargestTextThePlansStackSoEveryPriceHasItsOwnLine() {
+        composeTestRule.setContent {
+            val base = LocalDensity.current
+            CompositionLocalProvider(
+                LocalDensity provides Density(base.density, fontScale = 2f)
+            ) {
+                TrainrTheme {
+                    ProPaywallScreen(
+                        reason = PaywallReason.NEXT_WEEK,
+                        plans = listOf(monthly, yearly, lifetime),
+                        selectedId = "yearly",
+                        isWorking = false,
+                        noticeRes = null,
+                        onSelect = {},
+                        onBuy = {},
+                        onRestore = {},
+                        onNoticeShown = {},
+                        onClose = {},
+                        onOpenLink = {}
+                    )
+                }
+            }
+        }
+
+        val rows = listOf(monthly, yearly, lifetime).map {
+            composeTestRule.onNodeWithText(it.price).getUnclippedBoundsInRoot()
+        }
+
+        assertThat(rows[1].top.value).isAtLeast(rows[0].bottom.value)
+        assertThat(rows[2].top.value).isAtLeast(rows[1].bottom.value)
     }
 }

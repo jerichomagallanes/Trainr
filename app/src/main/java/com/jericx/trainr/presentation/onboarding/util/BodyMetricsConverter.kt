@@ -107,12 +107,17 @@ object BodyMetricsConverter {
     // inverse; the text handed over is kept and given back instead.
     data class UnitSwap(val shown: String = "", val typed: String? = null)
 
-    fun swapUnits(current: String, last: UnitSwap, convert: (String) -> String): UnitSwap =
-        if (last.typed != null && last.shown == current) {
-            UnitSwap(last.typed)
-        } else {
-            UnitSwap(convert(current), current)
-        }
+    fun swapUnits(current: String, last: UnitSwap, convert: (String) -> String): UnitSwap {
+        if (last.typed != null && last.shown == current) return UnitSwap(last.typed)
+
+        // A part-typed measurement converts to nothing. Emptying the field would
+        // throw away what was being written, so it is left exactly as it is and
+        // the range message under it says it is not a measurement yet.
+        val converted = convert(current)
+        if (converted.isEmpty() && current.isNotEmpty()) return UnitSwap(current, current)
+
+        return UnitSwap(converted, current)
+    }
 
     private const val TENTHS = 10f
 }

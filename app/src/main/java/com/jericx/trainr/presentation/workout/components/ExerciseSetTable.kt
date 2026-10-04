@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -46,6 +46,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.jericx.trainr.R
 import com.jericx.trainr.domain.model.ExerciseMeasure
@@ -56,6 +57,7 @@ import com.jericx.trainr.presentation.common.components.core.TrainrFieldError
 import com.jericx.trainr.presentation.common.components.core.TrainrSwipeToDelete
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
+import com.jericx.trainr.presentation.common.theme.scaledWithText
 import com.jericx.trainr.presentation.common.theme.trainrColors
 
 private val RowHeight = 34.dp
@@ -76,6 +78,8 @@ fun ExerciseSetTable(
 ) {
     val showPrevious = previousSets.isNotEmpty()
     val colors = MaterialTheme.trainrColors
+    val checkSize = CheckSize.scaledWithText()
+    val setColumnWidth = SetColumnWidth.scaledWithText()
 
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -85,7 +89,7 @@ fun ExerciseSetTable(
         // tied to them either, so deleting the last set leaves a way back.
         if (sets.isNotEmpty()) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                ColumnLabel(stringResource(R.string.set_column), Modifier.width(SetColumnWidth))
+                ColumnLabel(stringResource(R.string.set_column), Modifier.width(setColumnWidth))
 
                 if (showPrevious) {
                     ColumnLabel(stringResource(R.string.previous_column), Modifier.weight(1f))
@@ -107,7 +111,7 @@ fun ExerciseSetTable(
                     modifier = Modifier.weight(1f)
                 )
 
-                Box(modifier = Modifier.size(CheckSize))
+                Box(modifier = Modifier.size(checkSize))
             }
         }
 
@@ -117,6 +121,8 @@ fun ExerciseSetTable(
                     SetRow(
                         measure = measure,
                         set = set,
+                        checkSize = checkSize,
+                        setColumnWidth = setColumnWidth,
                         previousText = if (showPrevious) {
                             previousCellText(
                                 measure,
@@ -157,6 +163,8 @@ fun ExerciseSetTable(
 private fun SetRow(
     measure: ExerciseMeasure,
     set: ExerciseSet,
+    checkSize: Dp,
+    setColumnWidth: Dp,
     previousText: String?,
     onSetChanged: (ExerciseSet) -> Unit,
     units: UnitSystem,
@@ -175,7 +183,7 @@ private fun SetRow(
                 style = MaterialTheme.typography.labelLarge,
                 color = colors.onSurface,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.width(SetColumnWidth)
+                modifier = Modifier.width(setColumnWidth)
             )
 
             if (previousText != null) {
@@ -265,7 +273,7 @@ private fun SetRow(
                 ),
                 tint = if (set.isCompleted) colors.statusDoneInk else colors.outlineControl,
                 modifier = Modifier
-                    .size(CheckSize)
+                    .size(checkSize)
                     .then(
                         if (isReadOnly) {
                             Modifier
@@ -305,7 +313,7 @@ private fun LoggedCell(
     Box(
         modifier = modifier
             .padding(horizontal = Spacing.extraSmall)
-            .height(RowHeight),
+            .heightIn(min = RowHeight),
         contentAlignment = Alignment.Center
     ) {
         Text(
@@ -460,7 +468,7 @@ private fun NumberField(
         onKeyboardAction = { focusManager.clearFocus() },
         modifier = Modifier
             .fillMaxWidth()
-            .height(RowHeight)
+            .heightIn(min = RowHeight)
             .clip(MaterialTheme.shapes.small)
             .border(1.dp, colors.outlineControl, MaterialTheme.shapes.small),
         decorator = TextFieldDecorator { field ->

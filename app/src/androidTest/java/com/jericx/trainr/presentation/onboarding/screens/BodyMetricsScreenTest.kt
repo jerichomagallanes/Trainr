@@ -21,6 +21,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import com.jericx.trainr.domain.model.UnitSystem
 import com.jericx.trainr.domain.model.UserProfile
+import com.jericx.trainr.presentation.onboarding.BodyMetricsEntry
 
 @RunWith(AndroidJUnit4::class)
 class BodyMetricsScreenTest {
@@ -391,8 +392,12 @@ class BodyMetricsScreenTest {
         composeTestRule.onNodeWithText(string(R.string.weight_placeholder_kg))
             .performTextInput("72")
 
-        composeTestRule.onNodeWithText(string(R.string.normal_weight)).assertIsDisplayed()
-        composeTestRule.onNodeWithText(string(R.string.bmi_screening_note)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.normal_weight))
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.bmi_screening_note))
+            .performScrollTo()
+            .assertIsDisplayed()
         composeTestRule.onNodeWithText(string(R.string.bmi_about_sources))
             .performScrollTo()
             .performClick()
@@ -441,5 +446,38 @@ class BodyMetricsScreenTest {
         composeTestRule.onNodeWithText(string(R.string.underweight)).assertDoesNotExist()
         composeTestRule.onNodeWithText(string(R.string.bmi_label), substring = true)
             .assertDoesNotExist()
+    }
+
+    @Test
+    fun measurementsTypedBeforeGoingBackAreShownAgain() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                BodyMetricsScreen(
+                    inProgress = BodyMetricsEntry(height = "5'10\"", weight = "165", useMetric = false),
+                    onNextClick = { _, _, _ -> },
+                    onBackClick = {}
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText("5'10\"").assertIsDisplayed()
+        composeTestRule.onNodeWithText("165").assertIsDisplayed()
+    }
+
+    @Test
+    fun aPartTypedImperialHeightSurvivesTheUnitTabs() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                BodyMetricsScreen(onNextClick = { _, _, _ -> }, onBackClick = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.imperial)).performClick()
+        composeTestRule.onNodeWithText(string(R.string.height_placeholder_imperial))
+            .performTextInput("5")
+
+        composeTestRule.onNodeWithText(string(R.string.metric)).performClick()
+
+        composeTestRule.onNodeWithText("5").assertIsDisplayed()
     }
 }

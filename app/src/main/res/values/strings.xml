@@ -51,7 +51,7 @@
     <string name="weight_placeholder_lbs">155</string>
     <string name="bmi_label">BMI:</string>
     <string name="underweight">Underweight</string>
-    <string name="normal_weight">Normal weight</string>
+    <string name="normal_weight">Healthy weight</string>
     <string name="overweight">Overweight</string>
     <string name="obese">Obese</string>
     
