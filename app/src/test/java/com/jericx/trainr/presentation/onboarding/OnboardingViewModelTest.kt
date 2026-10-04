@@ -118,6 +118,17 @@ class OnboardingViewModelTest {
         assertThat(profile.age).isEqualTo(25)
     }
 
+    // A catalog this thin cannot fill an hour and a half, and the screen that
+    // asks for the length is told what the sessions will really come to rather
+    // than quietly handing over a third of one.
+    @Test
+    fun aSessionLengthTheSplitCannotFillIsReportedAtWhatItWillComeTo() = runTest {
+        val minutes = viewModel.longestSessionMinutes(listOf(Equipment.NONE), daysPerWeek = 3, duration = 90)
+
+        assertThat(minutes).isLessThan(90)
+        assertThat(minutes).isGreaterThan(0)
+    }
+
     @Test
     fun `updateFitnessGoal sets the goal`() {
         viewModel.updateFitnessGoal(FitnessGoal.MUSCLE_GAIN)
