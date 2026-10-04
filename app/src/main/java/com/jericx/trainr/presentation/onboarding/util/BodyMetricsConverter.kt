@@ -83,19 +83,36 @@ object BodyMetricsConverter {
         return if (cm > 0) cm.roundToInt().toString() else ""
     }
 
-    // Trims the float noise a pounds round trip leaves in a typed field.
-    fun formatKilograms(kg: Float): String =
-        if (kg % 1f == 0f) kg.toInt().toString() else ((kg * 10).roundToInt() / 10f).toString()
+    // The tenth the field accepts, kept in both directions: rounding pounds to
+    // a whole number on the way out loses the tenth of a kilogram on the way back.
+    fun formatWeight(value: Float): String {
+        val rounded = (value * TENTHS).roundToInt() / TENTHS
+        return if (rounded % 1f == 0f) rounded.toInt().toString() else rounded.toString()
+    }
 
     fun convertWeightToImperial(weightKg: String): String {
         val kg = weightKg.toFloatOrNull() ?: return ""
         val lbs = kg * Constants.Workout.KG_TO_LBS
-        return if (lbs > 0) lbs.roundToInt().toString() else ""
+        return if (lbs > 0) formatWeight(lbs) else ""
     }
 
     fun convertWeightToMetric(weightLbs: String): String {
         val lbs = weightLbs.toFloatOrNull() ?: return ""
         val kg = lbs / Constants.Workout.KG_TO_LBS
-        return if (kg > 0) kg.roundToInt().toString() else ""
+        return if (kg > 0) formatWeight(kg) else ""
     }
+
+    // What a field shows and the text it was converted from. A whole inch is
+    // coarser than a centimetre, so no pair of conversions can be each other's
+    // inverse; the text handed over is kept and given back instead.
+    data class UnitSwap(val shown: String = "", val typed: String? = null)
+
+    fun swapUnits(current: String, last: UnitSwap, convert: (String) -> String): UnitSwap =
+        if (last.typed != null && last.shown == current) {
+            UnitSwap(last.typed)
+        } else {
+            UnitSwap(convert(current), current)
+        }
+
+    private const val TENTHS = 10f
 }

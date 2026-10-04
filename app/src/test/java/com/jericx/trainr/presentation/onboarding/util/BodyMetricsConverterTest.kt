@@ -151,21 +151,21 @@ class BodyMetricsConverterTest {
     }
 
     @Test
-    fun `convertWeightToImperial rounds kg to lbs`() {
+    fun `convertWeightToImperial keeps the tenth the field accepts`() {
         val input = "70"
 
         val result = BodyMetricsConverter.convertWeightToImperial(input)
 
-        assertThat(result).isEqualTo("154")
+        assertThat(result).isEqualTo("154.3")
     }
 
     @Test
-    fun `convertWeightToImperial rounds up when fractional part exceeds half`() {
-        val input = "80"
+    fun `convertWeightToImperial drops a tenth that is not there`() {
+        val input = "650"
 
         val result = BodyMetricsConverter.convertWeightToImperial(input)
 
-        assertThat(result).isEqualTo("176")
+        assertThat(result).isEqualTo("1433")
     }
 
     @Test
@@ -178,12 +178,12 @@ class BodyMetricsConverterTest {
     }
 
     @Test
-    fun `convertWeightToMetric rounds lbs to kg`() {
+    fun `convertWeightToMetric keeps the tenth the field accepts`() {
         val input = "154"
 
         val result = BodyMetricsConverter.convertWeightToMetric(input)
 
-        assertThat(result).isEqualTo("70")
+        assertThat(result).isEqualTo("69.9")
     }
 
     @Test
@@ -196,26 +196,70 @@ class BodyMetricsConverterTest {
     }
 
     @Test
-    fun `weight metric-imperial-metric round trip preserves value within 1 kg`() {
-        val original = "70"
+    fun `a weight round trip gives back the kilograms that were typed`() {
+        listOf("70", "95.5", "80.1", "20", "650").forEach { original ->
+            val imperial = BodyMetricsConverter.convertWeightToImperial(original)
+            val backToMetric = BodyMetricsConverter.convertWeightToMetric(imperial)
 
-        val imperial = BodyMetricsConverter.convertWeightToImperial(original)
-        val backToMetric = BodyMetricsConverter.convertWeightToMetric(imperial)
-
-        val diff = kotlin.math.abs(backToMetric.toInt() - original.toInt())
-        assertThat(diff).isAtMost(1)
+            assertThat(backToMetric.toFloat()).isEqualTo(original.toFloat())
+        }
     }
 
     @Test
-    fun `height metric-imperial-metric round trip preserves value within 2 cm`() {
-        val original = "170"
+    fun `a swapped field gives back the centimetres that were typed`() {
+        val original = "177"
 
-        val imperial = BodyMetricsConverter.convertHeightToImperial(original)
-        val backToMetric = BodyMetricsConverter.convertHeightToMetric(imperial)
+        val toImperial = BodyMetricsConverter.swapUnits(
+            original,
+            BodyMetricsConverter.UnitSwap(),
+            BodyMetricsConverter::convertHeightToImperial
+        )
+        val back = BodyMetricsConverter.swapUnits(
+            toImperial.shown,
+            toImperial,
+            BodyMetricsConverter::convertHeightToMetric
+        )
 
-        // imperial is integer inches, so max round-trip drift is ~1.27 cm
-        val diff = kotlin.math.abs(backToMetric.toInt() - original.toInt())
-        assertThat(diff).isAtMost(2)
+        assertThat(toImperial.shown).isEqualTo("5'10\"")
+        assertThat(back.shown).isEqualTo(original)
+    }
+
+    @Test
+    fun `an edited field is converted rather than given back`() {
+        val toImperial = BodyMetricsConverter.swapUnits(
+            "177",
+            BodyMetricsConverter.UnitSwap(),
+            BodyMetricsConverter::convertHeightToImperial
+        )
+
+        val back = BodyMetricsConverter.swapUnits(
+            "5'11\"",
+            toImperial,
+            BodyMetricsConverter::convertHeightToMetric
+        )
+
+        assertThat(back.shown).isEqualTo("180")
+    }
+
+    @Test
+    fun `switching units repeatedly never drifts`() {
+        var text = "177"
+        var swap = BodyMetricsConverter.UnitSwap()
+        var metric = true
+
+        repeat(6) {
+            swap = BodyMetricsConverter.swapUnits(text, swap) {
+                if (metric) {
+                    BodyMetricsConverter.convertHeightToImperial(it)
+                } else {
+                    BodyMetricsConverter.convertHeightToMetric(it)
+                }
+            }
+            text = swap.shown
+            metric = !metric
+        }
+
+        assertThat(text).isEqualTo("177")
     }
 
     @Test

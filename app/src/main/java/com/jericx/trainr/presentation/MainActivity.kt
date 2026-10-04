@@ -182,10 +182,12 @@ class MainActivity : ComponentActivity() {
         ads.gatherConsent(this)
 
         val versionName = BuildConfig.VERSION_NAME
+        val buildNumber = BuildConfig.VERSION_CODE
 
         setContent {
             AppContent(
                 versionName = versionName,
+                buildNumber = buildNumber,
                 themePreferences = themePreferences,
                 proGate = proGate,
                 adjustmentGate = adjustmentGate,
@@ -210,6 +212,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AppContent(
     versionName: String,
+    buildNumber: Int = 0,
     themePreferences: ThemePreferences,
     proGate: ProGate,
     adjustmentGate: AdjustmentGate,
@@ -527,8 +530,11 @@ fun AppContent(
                                 nextWeekViewModel.repeatWeek(weekNumber)
                             }
                         },
+                        askBeforeRewritingWeek = { allowed ->
+                            askThen(PaywallReason.REWRITE, allowed)
+                        },
                         onRegenerateWeekClick = {
-                            askThen(PaywallReason.REWRITE) { navController.navigate(Screen.RegeneratingWeek.route) }
+                            navController.navigate(Screen.RegeneratingWeek.route)
                         }
                     )
                 }
@@ -878,6 +884,9 @@ fun AppContent(
                         onLeavePlanConfirmed = {
                             navController.navigate(Screen.Review.createRoute(fromPlan = true))
                         },
+                        askBeforeNewPlan = { allowed ->
+                            askThen(PaywallReason.FRESH_PLAN, allowed)
+                        },
                         onUpdateProfileClick = {
                             navController.navigate(
                                 Screen.Review.createRoute(fromPlan = true, profileOnly = true)
@@ -890,8 +899,11 @@ fun AppContent(
                         onRepeatWeekClick = {
                             askThen(PaywallReason.NEXT_WEEK) { nextWeekViewModel.repeatWeek() }
                         },
+                        askBeforeRewritingWeek = { allowed ->
+                            askThen(PaywallReason.REWRITE, allowed)
+                        },
                         onRegenerateWeekClick = {
-                            askThen(PaywallReason.REWRITE) { navController.navigate(Screen.RegeneratingWeek.route) }
+                            navController.navigate(Screen.RegeneratingWeek.route)
                         },
                         onCreatePlanClick = {
                             navController.navigate(Screen.Review.createRoute(fromPlan = true))
@@ -910,6 +922,7 @@ fun AppContent(
                             navController.navigate(Screen.Preferences.route)
                         },
                         versionName = versionName,
+                        buildNumber = buildNumber,
                         appearance = appearance,
                         onAppearanceChange = themePreferences::setAppearance
                     )

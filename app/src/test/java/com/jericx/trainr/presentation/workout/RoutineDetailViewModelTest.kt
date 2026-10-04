@@ -135,13 +135,18 @@ class RoutineDetailViewModelTest {
         assertThat(loadedViewModel().uiState.value.dayNumber).isEqualTo(2)
     }
 
-    private fun day(number: Int, status: WorkoutStatus) = WorkoutDay(
+    private fun day(
+        number: Int,
+        status: WorkoutStatus,
+        performed: Boolean = status == WorkoutStatus.COMPLETED
+    ) = WorkoutDay(
         dayNumber = number,
         title = "Day $number",
         status = status,
         duration = 30,
         exerciseCount = 4,
-        equipment = emptyList()
+        equipment = emptyList(),
+        exercises = listOf(WorkoutExercise(name = "Movement", isCompleted = performed))
     )
 
     @Test
@@ -153,6 +158,19 @@ class RoutineDetailViewModelTest {
         )
 
         assertThat(RoutineDetailViewModel.completesTheWeek(days, dayNumber = 2)).isTrue()
+    }
+
+    // A day closed early with nothing logged is not a day of training, so it
+    // cannot be what the week is celebrated for.
+    @Test
+    fun aDayClosedWithNothingPerformedLeavesTheWeekOpen() {
+        val days = listOf(
+            day(1, WorkoutStatus.COMPLETED, performed = false),
+            day(3, WorkoutStatus.IN_PROGRESS),
+            day(5, WorkoutStatus.COMPLETED)
+        )
+
+        assertThat(RoutineDetailViewModel.completesTheWeek(days, dayNumber = 2)).isFalse()
     }
 
     @Test

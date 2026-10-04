@@ -23,8 +23,8 @@ data class ExerciseUi(
     val primaryMuscle: String = "",
     val secondaryMuscles: List<String> = emptyList(),
     val steps: List<String> = emptyList(),
-    // The injury the client declared that this movement asks care with.
-    val caution: Injury? = null,
+    // Every injury the client declared that this movement asks care with.
+    val cautions: List<Injury> = emptyList(),
     val isCompleted: Boolean = false
 ) {
     // A weight never lifted before is the app's guess from the profile, and

@@ -44,7 +44,7 @@ fun WorkoutDay.toRoutineUi(
             primaryMuscle = movement?.primary?.asDisplayText().orEmpty(),
             secondaryMuscles = movement?.secondary?.map { it.asDisplayText() }.orEmpty(),
             steps = movement?.steps.orEmpty(),
-            caution = movement?.let { InjuryGuard.cautionFor(it, injuries) },
+            cautions = movement?.let { InjuryGuard.cautionsFor(it, injuries) }.orEmpty(),
             isCompleted = exercise.isCompleted
         )
     }

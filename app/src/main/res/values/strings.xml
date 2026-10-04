@@ -184,7 +184,7 @@
     <string name="plan_options">Workout plan options</string>
     <string name="app_about_message">Your workout plans are built on your phone from the fitness profile you set.</string>
     <string name="health_disclaimer">Plans are built by the app and are not medical advice. Check with a doctor before you start, and stop if something hurts.</string>
-    <string name="app_version_format">Version %1$s</string>
+    <string name="app_version_format">Version %1$s (%2$d)</string>
     <string name="about_the_app">About Trainr</string>
     <string name="profile_and_app">Profile and app</string>
     <string name="appearance">Appearance</string>
@@ -567,8 +567,9 @@
     <string name="hip_problems_injury">Hip Problems</string>
     <string name="neck_pain_injury">Neck Pain</string>
     <string name="none_injury">None</string>
-    <!-- One line on an exercise card when the movement touches an injury the
-         client declared. Care, not a diagnosis. -->
+    <!-- One line on an exercise card for each injury the client declared that
+         the movement touches. Care, not a diagnosis. -->
+    <string name="caution_title">What to watch</string>
     <string name="caution_lower_back">Brace and keep your back flat. Stop if it pinches.</string>
     <string name="caution_knee">Keep your knee in line with your toes. Stop if it hurts.</string>
     <string name="caution_shoulder">Stay in a range your shoulder is comfortable in.</string>

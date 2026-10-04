@@ -35,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
@@ -48,7 +49,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jericx.trainr.R
 import com.jericx.trainr.data.preferences.AppearanceMode
 import com.jericx.trainr.domain.model.WorkoutDay
-import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.presentation.common.components.layout.TrainrTopBar
 import androidx.activity.compose.LocalActivity
 import com.jericx.trainr.data.ads.Ads
@@ -61,6 +61,8 @@ import com.jericx.trainr.presentation.common.theme.ComponentHeight
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 import com.jericx.trainr.presentation.common.theme.trainrColors
+import com.jericx.trainr.presentation.purchases.ProLinks
+import com.jericx.trainr.presentation.purchases.openLink
 import com.jericx.trainr.presentation.unstuck.TodayAdjustmentKind
 import com.jericx.trainr.presentation.workout.components.ReorderableDayList
 import com.jericx.trainr.presentation.workout.components.StatusChip
@@ -74,6 +76,8 @@ fun WeeklyPlanRoute(
     onTrackProgressClick: () -> Unit = {},
     onStartTodayClick: (WorkoutDay) -> Unit = {},
     onLeavePlanConfirmed: () -> Unit = {},
+    askBeforeNewPlan: (allowed: () -> Unit) -> Unit = { it() },
+    askBeforeRewritingWeek: (allowed: () -> Unit) -> Unit = { it() },
     onUpdateProfileClick: () -> Unit = {},
     onOpenProClick: () -> Unit = {},
     onStartNextWeekClick: () -> Unit = {},
@@ -84,6 +88,7 @@ fun WeeklyPlanRoute(
     onTrainingPreferencesClick: () -> Unit = {},
     onBackClick: (() -> Unit)? = null,
     versionName: String = "",
+    buildNumber: Int = 0,
     appearance: AppearanceMode = AppearanceMode.SYSTEM,
     onAppearanceChange: (AppearanceMode) -> Unit = {},
     viewModel: WeeklyPlanViewModel = hiltViewModel(),
@@ -93,6 +98,7 @@ fun WeeklyPlanRoute(
     val showAds by adSlot.showAds.collectAsStateWithLifecycle()
     val privacyOptionsRequired by adSlot.privacyOptionsRequired.collectAsStateWithLifecycle()
     val activity = LocalActivity.current
+    val context = LocalContext.current
 
     // Returning from a routine re-reads the plan, so a day completed there shows here.
     LaunchedEffect(Unit) { viewModel.refresh() }
@@ -103,6 +109,8 @@ fun WeeklyPlanRoute(
         onTrackProgressClick = onTrackProgressClick,
         onStartTodayClick = onStartTodayClick,
         onLeavePlanConfirmed = onLeavePlanConfirmed,
+        askBeforeNewPlan = askBeforeNewPlan,
+        askBeforeRewritingWeek = askBeforeRewritingWeek,
         onUpdateProfileClick = onUpdateProfileClick,
         onOpenProClick = onOpenProClick,
         onStartNextWeekClick = onStartNextWeekClick,
@@ -112,6 +120,8 @@ fun WeeklyPlanRoute(
         onAdjustToday = onAdjustToday,
         onTrainingPreferencesClick = onTrainingPreferencesClick,
         versionName = versionName,
+        buildNumber = buildNumber,
+        onOpenLink = { context.openLink(it) },
         appearance = appearance,
         onAppearanceChange = onAppearanceChange,
         onMoveDay = viewModel::moveDay,
@@ -133,6 +143,10 @@ fun WeeklyPlanScreen(
     onTrackProgressClick: () -> Unit = {},
     onStartTodayClick: (WorkoutDay) -> Unit = {},
     onLeavePlanConfirmed: () -> Unit = {},
+    // Asked at the tap: a confirmation that threatens to erase everything must
+    // never be raised for something that cannot go ahead.
+    askBeforeNewPlan: (allowed: () -> Unit) -> Unit = { it() },
+    askBeforeRewritingWeek: (allowed: () -> Unit) -> Unit = { it() },
     onUpdateProfileClick: () -> Unit = {},
     onOpenProClick: () -> Unit = {},
     onStartNextWeekClick: () -> Unit = {},
@@ -142,6 +156,8 @@ fun WeeklyPlanScreen(
     onAdjustToday: (WorkoutDay, Int) -> Unit = { _, _ -> },
     onTrainingPreferencesClick: () -> Unit = {},
     versionName: String = "",
+    buildNumber: Int = 0,
+    onOpenLink: (String) -> Unit = {},
     appearance: AppearanceMode = AppearanceMode.SYSTEM,
     onAppearanceChange: (AppearanceMode) -> Unit = {},
     onMoveDay: (Int, Int) -> Unit = { _, _ -> },
@@ -161,7 +177,7 @@ fun WeeklyPlanScreen(
 
     if (showRegenerateDialog) {
         RegenerateWeekDialog(
-            loggedWorkouts = state.days.count { it.day.status == WorkoutStatus.COMPLETED },
+            loggedWorkouts = state.days.count { it.day.countsAsCompleted },
             totalWorkouts = state.days.size,
             onConfirm = {
                 showRegenerateDialog = false
@@ -190,6 +206,8 @@ fun WeeklyPlanScreen(
                 if (onBackClick == null) {
                     ProfileMenu(
                         versionName = versionName,
+                        buildNumber = buildNumber,
+                        onOpenLink = onOpenLink,
                         onUpdateProfileClick = onUpdateProfileClick,
                         onOpenProClick = onOpenProClick,
                         onTrainingPreferencesClick = onTrainingPreferencesClick,
@@ -273,13 +291,12 @@ fun WeeklyPlanScreen(
                                     text = { Text(stringResource(R.string.regenerate_week)) },
                                     onClick = {
                                         showMenu = false
-                                        if (state.days.any {
-                                                it.day.status == WorkoutStatus.COMPLETED
+                                        askBeforeRewritingWeek {
+                                            if (state.days.any { it.day.countsAsCompleted }) {
+                                                showRegenerateDialog = true
+                                            } else {
+                                                onRegenerateWeekClick()
                                             }
-                                        ) {
-                                            showRegenerateDialog = true
-                                        } else {
-                                            onRegenerateWeekClick()
                                         }
                                     }
                                 )
@@ -289,7 +306,7 @@ fun WeeklyPlanScreen(
                                     text = { Text(stringResource(R.string.regenerate_plan)) },
                                     onClick = {
                                         showMenu = false
-                                        showLeaveDialog = true
+                                        askBeforeNewPlan { showLeaveDialog = true }
                                     }
                                 )
                             }
@@ -482,6 +499,8 @@ private fun WeekdayPreferenceCard(
 @Composable
 private fun ProfileMenu(
     versionName: String,
+    buildNumber: Int,
+    onOpenLink: (String) -> Unit,
     onUpdateProfileClick: () -> Unit,
     onOpenProClick: () -> Unit,
     onTrainingPreferencesClick: () -> Unit,
@@ -494,7 +513,12 @@ private fun ProfileMenu(
     var showAppearance by remember { mutableStateOf(false) }
 
     if (showAbout) {
-        AboutDialog(versionName = versionName, onDismiss = { showAbout = false })
+        AboutDialog(
+            versionName = versionName,
+            buildNumber = buildNumber,
+            onOpenLink = onOpenLink,
+            onDismiss = { showAbout = false }
+        )
     }
 
     if (showAppearance) {
@@ -653,16 +677,36 @@ private fun AppearanceOption(
 }
 
 @Composable
-private fun AboutDialog(versionName: String, onDismiss: () -> Unit) {
+private fun AboutDialog(
+    versionName: String,
+    buildNumber: Int,
+    onOpenLink: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(text = stringResource(R.string.about_the_app)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
-                Text(text = stringResource(R.string.app_version_format, versionName))
+                Text(text = stringResource(R.string.app_version_format, versionName, buildNumber))
                 Text(text = stringResource(R.string.app_about_message))
                 // Must stay reachable: onboarding shows it only once.
                 Text(text = stringResource(R.string.health_disclaimer))
+                // The only way in for anyone who never opens the paywall.
+                Row(horizontalArrangement = Arrangement.spacedBy(Spacing.medium)) {
+                    Text(
+                        text = stringResource(R.string.pro_terms),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.trainrColors.brandStrong,
+                        modifier = Modifier.clickable { onOpenLink(ProLinks.TERMS) }
+                    )
+                    Text(
+                        text = stringResource(R.string.pro_privacy),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.trainrColors.brandStrong,
+                        modifier = Modifier.clickable { onOpenLink(ProLinks.PRIVACY) }
+                    )
+                }
             }
         },
         confirmButton = {

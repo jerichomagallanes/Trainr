@@ -176,12 +176,14 @@ class RoutineMapperTest {
 
     @Test
     fun aMovementAnInjuryAsksCareWithSaysWhichOnlyForThatClient() {
-        val squat = catalog.all.first { InjuryGuard.cautionFor(it, listOf(Injury.KNEE)) != null }
+        val squat = catalog.all.first {
+            InjuryGuard.cautionsFor(it, listOf(Injury.KNEE)).isNotEmpty()
+        }
         val day = day(exercise(squat.name, exerciseKey = squat.key))
 
-        assertThat(day.toRoutineUi(catalog = catalog, injuries = listOf(Injury.KNEE)).exercises.single().caution)
-            .isEqualTo(Injury.KNEE)
-        assertThat(day.toRoutineUi(catalog = catalog).exercises.single().caution).isNull()
+        assertThat(day.toRoutineUi(catalog = catalog, injuries = listOf(Injury.KNEE)).exercises.single().cautions)
+            .containsExactly(Injury.KNEE)
+        assertThat(day.toRoutineUi(catalog = catalog).exercises.single().cautions).isEmpty()
     }
 
     // Never lifted before means the weight is the app's guess; once there is

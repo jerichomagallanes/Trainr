@@ -82,13 +82,18 @@ fun BodyMetricsScreen(
                     if (startsImperial) {
                         BodyMetricsConverter.convertWeightToImperial(kg.toString())
                     } else {
-                        BodyMetricsConverter.formatKilograms(kg)
+                        BodyMetricsConverter.formatWeight(kg)
                     }
                 }
                 .orEmpty()
         )
     }
     var useMetric by remember { mutableStateOf(!startsImperial) }
+
+    // Switching units must not edit the measurement: what a conversion was
+    // given is kept so the way back reads what was typed.
+    var heightSwap by remember { mutableStateOf(BodyMetricsConverter.UnitSwap()) }
+    var weightSwap by remember { mutableStateOf(BodyMetricsConverter.UnitSwap()) }
 
     // The age answered one step earlier. A profile that has none yet stores 0.
     val knownAge = age ?: initial?.age?.takeIf { it > 0 }
@@ -138,13 +143,22 @@ fun BodyMetricsScreen(
 
         focusManager.clearFocus()
 
-        if (toMetric) {
-            height = BodyMetricsConverter.convertHeightToMetric(height)
-            weight = BodyMetricsConverter.convertWeightToMetric(weight)
-        } else {
-            height = BodyMetricsConverter.convertHeightToImperial(height)
-            weight = BodyMetricsConverter.convertWeightToImperial(weight)
+        heightSwap = BodyMetricsConverter.swapUnits(height, heightSwap) {
+            if (toMetric) {
+                BodyMetricsConverter.convertHeightToMetric(it)
+            } else {
+                BodyMetricsConverter.convertHeightToImperial(it)
+            }
         }
+        weightSwap = BodyMetricsConverter.swapUnits(weight, weightSwap) {
+            if (toMetric) {
+                BodyMetricsConverter.convertWeightToMetric(it)
+            } else {
+                BodyMetricsConverter.convertWeightToImperial(it)
+            }
+        }
+        height = heightSwap.shown
+        weight = weightSwap.shown
 
         useMetric = toMetric
     }
