@@ -2,7 +2,7 @@ package com.jericx.trainr.presentation.workout.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,6 +24,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -115,7 +116,15 @@ fun ExerciseCard(
                 modifier = Modifier
                     .size(EXERCISE_CHECK.scaledWithText())
                     .then(
-                        if (isReadOnly) Modifier else Modifier.clickable(onClick = onToggleCompleted)
+                        if (isReadOnly) {
+                            Modifier
+                        } else {
+                            Modifier.toggleable(
+                                value = exercise.isCompleted,
+                                role = Role.Checkbox,
+                                onValueChange = { onToggleCompleted() }
+                            )
+                        }
                     )
             )
         }

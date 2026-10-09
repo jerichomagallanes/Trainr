@@ -89,9 +89,13 @@ class ProPaywallScreenTest {
         composeTestRule.onNodeWithText(string(R.string.pro_feature_rewrite_body))
             .assertIsDisplayed()
         composeTestRule.onNodeWithText(string(R.string.pro_free_limit)).assertIsDisplayed()
-        // Its own row in the table is the only other place it appears.
-        composeTestRule.onAllNodesWithText(string(R.string.pro_feature_rewrite_title))
-            .assertCountEquals(2)
+        // Its own row in the table is the only other place it appears, and a
+        // comparison row is read as one sentence, so that one lives in the
+        // unmerged tree alone.
+        composeTestRule.onAllNodesWithText(
+            string(R.string.pro_feature_rewrite_title),
+            useUnmergedTree = true
+        ).assertCountEquals(2)
     }
 
     // Reaching the paywall from Unstuck must not open on the free week, which is
@@ -116,7 +120,8 @@ class ProPaywallScreenTest {
         composeTestRule.onNodeWithText(string(R.string.pro_feature_adjust_title))
             .performScrollTo()
             .assertIsDisplayed()
-        composeTestRule.onNodeWithText(string(R.string.pro_compare_adjust)).assertExists()
+        composeTestRule.onNodeWithText(string(R.string.pro_compare_adjust), useUnmergedTree = true)
+            .assertExists()
     }
 
     // Opened from the profile menu, nothing was reached for, so nothing leads.
@@ -127,7 +132,8 @@ class ProPaywallScreenTest {
         composeTestRule.onNodeWithText(string(R.string.pro_feature_ads_title))
             .performScrollTo()
             .assertIsDisplayed()
-        composeTestRule.onNodeWithText(string(R.string.pro_compare_ads)).assertExists()
+        composeTestRule.onNodeWithText(string(R.string.pro_compare_ads), useUnmergedTree = true)
+            .assertExists()
     }
 
     @Test
@@ -212,15 +218,17 @@ class ProPaywallScreenTest {
     fun theComparisonNamesWhatTheFreeTierGets() {
         setScreen()
 
-        composeTestRule.onNodeWithText(string(R.string.pro_compare_generated))
+        composeTestRule
+            .onNodeWithText(string(R.string.pro_compare_generated), useUnmergedTree = true)
             .performScrollTo()
             .assertIsDisplayed()
         // Two rows read "1": the free week, and the adjustment included with it.
-        composeTestRule.onAllNodesWithText(string(R.string.pro_compare_one))
+        composeTestRule.onAllNodesWithText(string(R.string.pro_compare_one), useUnmergedTree = true)
             .assertCountEquals(2)
         // "Every week" and not "Unlimited": what Pro gets is a new week once the
         // current one is finished, which is a promise the plan screen keeps.
-        composeTestRule.onNodeWithText(string(R.string.pro_compare_every_week))
+        composeTestRule
+            .onNodeWithText(string(R.string.pro_compare_every_week), useUnmergedTree = true)
             .assertIsDisplayed()
     }
 

@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -61,12 +62,14 @@ fun ExerciseTimer(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(Spacing.tight)
         ) {
+            val remaining = stringResource(R.string.timer_remaining, timer.display)
             Text(
                 text = timer.display,
                 style = MaterialTheme.typography.headlineSmall.copy(
                     fontWeight = FontWeight.SemiBold
                 ),
-                color = colors.brandStrong
+                color = colors.brandStrong,
+                modifier = Modifier.semantics { contentDescription = remaining }
             )
             Text(
                 text = stringResource(

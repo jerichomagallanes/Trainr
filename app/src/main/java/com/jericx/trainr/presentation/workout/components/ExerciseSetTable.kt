@@ -2,6 +2,7 @@ package com.jericx.trainr.presentation.workout.components
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,6 +41,9 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.hideFromAccessibility
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -177,12 +181,15 @@ private fun SetRow(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            val setLabel = stringResource(R.string.set_number_label, set.setNumber.toString())
             Text(
                 text = set.setNumber.toString(),
                 style = MaterialTheme.typography.labelLarge,
                 color = colors.onSurface,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.width(setColumnWidth)
+                modifier = Modifier
+                    .width(setColumnWidth)
+                    .semantics { contentDescription = setLabel }
             )
 
             if (previousText != null) {
@@ -199,6 +206,14 @@ private fun SetRow(
                 NumberCell(
                     value = set.actualWeightKg?.let { formatWeight(it, units) },
                     placeholder = set.targetWeightKg?.let { formatWeight(it, units) },
+                    column = stringResource(
+                        R.string.set_weight_cell,
+                        set.setNumber.toString(),
+                        stringResource(
+                            if (units == UnitSystem.IMPERIAL) R.string.weight_unit_pounds
+                            else R.string.weight_unit_kilograms
+                        )
+                    ),
                     keyboard = KeyboardType.Decimal,
                     rangeMessage = stringResource(
                         R.string.value_range_hint,
@@ -228,6 +243,7 @@ private fun SetRow(
                 ExerciseMeasure.DURATION -> DurationCell(
                     seconds = set.actualSeconds,
                     placeholderSeconds = set.targetSeconds,
+                    column = stringResource(R.string.set_time_cell, set.setNumber.toString()),
                     rangeMessage = stringResource(
                         R.string.value_range_hint,
                         stringResource(R.string.time_column),
@@ -243,6 +259,7 @@ private fun SetRow(
                 else -> NumberCell(
                     value = set.actualReps?.toString(),
                     placeholder = set.targetReps?.toString(),
+                    column = stringResource(R.string.set_reps_cell, set.setNumber.toString()),
                     keyboard = KeyboardType.Number,
                     rangeMessage = stringResource(
                         R.string.value_range_hint,
@@ -277,9 +294,11 @@ private fun SetRow(
                         if (isReadOnly) {
                             Modifier
                         } else {
-                            Modifier.clickable {
-                                onSetChanged(set.copy(isCompleted = !set.isCompleted))
-                            }
+                            Modifier.toggleable(
+                                value = set.isCompleted,
+                                role = Role.Checkbox,
+                                onValueChange = { onSetChanged(set.copy(isCompleted = it)) }
+                            )
                         }
                     )
             )
@@ -329,6 +348,7 @@ private fun LoggedCell(
 private fun NumberCell(
     value: String?,
     placeholder: String?,
+    column: String,
     keyboard: KeyboardType,
     rangeMessage: String,
     check: (String) -> NumberEntry,
@@ -368,7 +388,13 @@ private fun NumberCell(
             state = state,
             transformation = refusing(check, rangeMessage, onOutOfRange),
             keyboard = keyboard,
-            placeholder = placeholder
+            placeholder = placeholder,
+            label = setCellLabel(
+                column = column,
+                value = value,
+                target = placeholder,
+                targetFormat = stringResource(R.string.set_cell_target)
+            )
         )
     }
 }
@@ -396,6 +422,7 @@ private fun DeletableRow(
 private fun DurationCell(
     seconds: Int?,
     placeholderSeconds: Int?,
+    column: String,
     rangeMessage: String,
     onSecondsChange: (Int?) -> Unit,
     onOutOfRange: (String?) -> Unit,
@@ -437,6 +464,12 @@ private fun DurationCell(
             transformation = refusing(::durationEntry, rangeMessage, onOutOfRange),
             keyboard = KeyboardType.Number,
             placeholder = placeholderSeconds?.let(::formatSeconds),
+            label = setCellLabel(
+                column = column,
+                value = seconds?.let(::formatSeconds),
+                target = placeholderSeconds?.let(::formatSeconds),
+                targetFormat = stringResource(R.string.set_cell_target)
+            ),
             output = ClockFace
         )
     }
@@ -448,6 +481,7 @@ private fun NumberField(
     transformation: InputTransformation,
     keyboard: KeyboardType,
     placeholder: String?,
+    label: String,
     output: OutputTransformation? = null
 ) {
     val colors = MaterialTheme.trainrColors
@@ -469,7 +503,8 @@ private fun NumberField(
             .fillMaxWidth()
             .heightIn(min = RowHeight)
             .clip(MaterialTheme.shapes.small)
-            .border(1.dp, colors.outlineControl, MaterialTheme.shapes.small),
+            .border(1.dp, colors.outlineControl, MaterialTheme.shapes.small)
+            .semantics { contentDescription = label },
         decorator = TextFieldDecorator { field ->
             Box(
                 modifier = Modifier.fillMaxWidth(),
@@ -480,7 +515,8 @@ private fun NumberField(
                         text = placeholder.orEmpty(),
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.onSurfaceMuted,
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.semantics { hideFromAccessibility() }
                     )
                 }
                 field()
@@ -512,6 +548,19 @@ private fun refusing(
             if (held.text != proposed) revertAllChanges()
         }
     }
+}
+
+// The target is a prescription, not something the user entered, so an empty
+// cell carries it in its label rather than letting the placeholder read as a value.
+internal fun setCellLabel(
+    column: String,
+    value: String?,
+    target: String?,
+    targetFormat: String
+): String = if (value == null && target != null) {
+    String.format(targetFormat, column, target)
+} else {
+    column
 }
 
 internal data class Held(val text: String, val saysRange: Boolean)
