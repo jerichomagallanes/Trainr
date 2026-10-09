@@ -14,6 +14,7 @@ import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.domain.purchases.AdjustmentAllowance
 import com.jericx.trainr.domain.repository.AdjustmentRepository
 import com.jericx.trainr.domain.repository.UserRepository
+import com.jericx.trainr.domain.time.ElapsedClock
 import com.jericx.trainr.domain.unstuck.AdjustmentProposal
 import com.jericx.trainr.domain.unstuck.AppliedAdjustment
 import com.jericx.trainr.domain.unstuck.ChangeKind
@@ -97,7 +98,8 @@ class RoutineDetailViewModel @Inject constructor(
     private val userRepository: UserRepository,
     private val adjustmentRepository: AdjustmentRepository,
     private val allowance: AdjustmentAllowance,
-    private val catalog: ExerciseCatalog
+    private val catalog: ExerciseCatalog,
+    private val clock: ElapsedClock
 ) : ViewModel() {
 
     private val requestedDayNumber: Int =
@@ -185,10 +187,13 @@ class RoutineDetailViewModel @Inject constructor(
         // week, the same way the plan list dates them.
         val weekStart = plan.startDateMillis ?: SampleWorkoutData.weekStartMillis
 
+        val routine = day.toRoutineUi(previousByKey, catalog, user?.injuries.orEmpty(), user)
+        val timer = survivingTimer(routine)
         _uiState.update {
             it.copy(
                 unitSystem = units,
-                routine = day.toRoutineUi(previousByKey, catalog, user?.injuries.orEmpty(), user),
+                routine = routine,
+                timer = timer,
                 equipment = day.derivedEquipment(catalog),
                 totalMinutes = user?.let { profile -> day.remainingMinutes(profile, catalog) },
                 dateMillis = WorkoutWeek.dateOfDay(weekStart, day.dayNumber),
@@ -299,15 +304,11 @@ class RoutineDetailViewModel @Inject constructor(
     fun toggleExercise(position: Int) {
         if (isReadOnly) return
         reopen()
-        val state = _uiState.value
-        val routine = state.routine.toggleCompleted(position)
+        val routine = _uiState.value.routine.toggleCompleted(position)
         val nowCompleted = routine.exercises.any { it.position == position && it.isCompleted }
-        val clearsTimer = nowCompleted && state.timer?.position == position
 
-        if (clearsTimer) cancelTick()
-        _uiState.update {
-            it.copy(routine = routine, timer = if (clearsTimer) null else it.timer)
-        }
+        _uiState.update { it.copy(routine = routine) }
+        if (nowCompleted) clearTimerOf(position)
         persistExerciseCompleted(position, nowCompleted)
     }
 
@@ -491,11 +492,11 @@ class RoutineDetailViewModel @Inject constructor(
             ?: (exercise.minutes * SECONDS_PER_MINUTE)
         _uiState.update {
             it.copy(
-                timer = ExerciseTimerUi(
+                timer = ExerciseTimerUi.running(
                     position = exercise.position,
-                    remainingSeconds = countdown,
-                    isRunning = true,
-                    totalSeconds = countdown
+                    exerciseId = exercise.exerciseId,
+                    totalSeconds = countdown,
+                    nowMillis = clock.elapsedMillis()
                 )
             )
         }
@@ -504,14 +505,15 @@ class RoutineDetailViewModel @Inject constructor(
 
     fun pauseTimer() {
         cancelTick()
-        _uiState.update { state -> state.copy(timer = state.timer?.copy(isRunning = false)) }
+        _uiState.update { state -> state.copy(timer = state.timer?.paused(clock.elapsedMillis())) }
     }
 
     fun resumeTimer() {
-        if (_uiState.value.timer?.isFinished != false) return
+        val timer = _uiState.value.timer ?: return
+        if (timer.isFinished) return
 
         cancelTick()
-        _uiState.update { state -> state.copy(timer = state.timer?.copy(isRunning = true)) }
+        _uiState.update { state -> state.copy(timer = timer.resumed(clock.elapsedMillis())) }
         tickJob = viewModelScope.launch { tick() }
     }
 
@@ -522,17 +524,7 @@ class RoutineDetailViewModel @Inject constructor(
 
     fun resetTimer() {
         cancelTick()
-        _uiState.update { state ->
-            state.copy(
-                timer = state.timer?.let {
-                    it.copy(
-                        remainingSeconds = it.totalSeconds,
-                        isRunning = false,
-                        isFinished = false
-                    )
-                }
-            )
-        }
+        _uiState.update { state -> state.copy(timer = state.timer?.reset()) }
     }
 
     fun toggleVideo(position: Int) {
@@ -554,19 +546,35 @@ class RoutineDetailViewModel @Inject constructor(
         tickJob = null
     }
 
+    // Hiding a control must not leave what it controls running.
+    private fun clearTimerOf(position: Int) {
+        if (_uiState.value.timer?.position != position) return
+        cancelTick()
+        _uiState.update { it.copy(timer = null) }
+    }
+
+    // The timer outlives a reload, but only on its own exercise: an adjustment
+    // can leave a different movement where it was started, and a hold must
+    // never be logged against a set nobody did.
+    private fun survivingTimer(routine: RoutineUi): ExerciseTimerUi? {
+        val timer = _uiState.value.timer ?: return null
+        val standing = routine.exercises.firstOrNull { it.position == timer.position }
+        if (standing?.exerciseId == timer.exerciseId) return timer
+        cancelTick()
+        return null
+    }
+
     private suspend fun tick() {
         while (true) {
-            delay(TICK_MILLIS)
-
             val timer = _uiState.value.timer ?: return
-            val remaining = timer.remainingSeconds - 1
+            val advanced = timer.advanced(clock.elapsedMillis())
 
-            if (remaining > 0) {
-                _uiState.update { it.copy(timer = timer.copy(remainingSeconds = remaining)) }
-            } else {
+            if (advanced.remainingSeconds <= 0) {
                 finish(timer)
                 return
             }
+            _uiState.update { it.copy(timer = advanced) }
+            delay(TICK_MILLIS)
         }
     }
 
@@ -577,7 +585,7 @@ class RoutineDetailViewModel @Inject constructor(
         _uiState.update {
             it.copy(
                 routine = it.routine.logMeasuredSeconds(timer.position, timer.totalSeconds),
-                timer = timer.copy(remainingSeconds = 0, isRunning = false, isFinished = true)
+                timer = timer.finished()
             )
         }
         persistFilledSets(listOf(timer.position))
@@ -607,7 +615,9 @@ class RoutineDetailViewModel @Inject constructor(
 
     private fun reconcileCompletion(position: Int, was: Boolean?) {
         val now = completionOf(position) ?: return
-        if (now != was) persistExerciseCompleted(position, now)
+        if (now == was) return
+        if (now) clearTimerOf(position)
+        persistExerciseCompleted(position, now)
     }
 
     // A card's position counts the exercises still in today's session; the

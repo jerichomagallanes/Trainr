@@ -3,6 +3,7 @@ package com.jericx.trainr.di
 import android.app.ActivityManager
 import android.content.Context
 import android.os.StatFs
+import android.os.SystemClock
 import androidx.room.Room
 import com.jericx.trainr.common.Constants
 import com.jericx.trainr.data.local.TrainrDatabase
@@ -33,6 +34,7 @@ import com.jericx.trainr.domain.purchases.FreeGenerationAllowance
 import com.jericx.trainr.domain.purchases.ProGate
 import com.jericx.trainr.domain.repository.UserRepository
 import com.jericx.trainr.domain.repository.AdjustmentRepository
+import com.jericx.trainr.domain.time.ElapsedClock
 import com.jericx.trainr.domain.unstuck.intent.IntentInterpreter
 import com.jericx.trainr.domain.unstuck.intent.LocalModelInstaller
 import com.jericx.trainr.llama.LlamaEngine
@@ -65,6 +67,10 @@ object AppModule {
     @Provides
     @Singleton
     fun provideBreadcrumbs(): Breadcrumbs = CrashlyticsBreadcrumbs()
+
+    @Provides
+    @Singleton
+    fun provideElapsedClock(): ElapsedClock = ElapsedClock(SystemClock::elapsedRealtime)
 
     @Provides
     @Singleton
