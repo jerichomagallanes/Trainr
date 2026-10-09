@@ -261,6 +261,32 @@ class ExerciseSetTableTest {
         repsRangeMessage().assertDoesNotExist()
     }
 
+    // The whole number arriving at once was never the real path: a finger types
+    // one digit, and the fourth one on 999 must not reach the cell or the record.
+    @Test
+    fun aCountTypedOneDigitAtATimePastTheMaximumIsRefused() {
+        var logged: ExerciseSet? = null
+        loggingTable(ExerciseMeasure.REPS, onLogged = { logged = it })
+
+        repeat(4) { onlyField().performTextInput("9") }
+
+        assertThat(onlyField().shownText()).isEqualTo("999")
+        assertThat(logged?.actualReps).isEqualTo(999)
+        repsRangeMessage().assertIsDisplayed()
+    }
+
+    @Test
+    fun aWeightTypedOneDigitAtATimePastTheMaximumIsRefused() {
+        var logged: ExerciseSet? = null
+        loggingTable(ExerciseMeasure.WEIGHT_AND_REPS, onLogged = { logged = it })
+
+        listOf("1", "0", "0", "0", "0").forEach { weightField().performTextInput(it) }
+
+        assertThat(weightField().shownText()).isEqualTo("1000")
+        assertThat(logged?.actualWeightKg).isEqualTo(1000f)
+        weightRangeMessage().assertIsDisplayed()
+    }
+
     private fun weightRangeMessage() = composeTestRule.onNodeWithText(
         string(
             R.string.value_range_hint,
