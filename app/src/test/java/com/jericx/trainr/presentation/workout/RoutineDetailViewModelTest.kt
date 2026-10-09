@@ -17,6 +17,7 @@ import com.jericx.trainr.domain.purchases.AdjustmentAllowance
 import com.jericx.trainr.domain.repository.AdjustmentRepository
 import com.jericx.trainr.domain.repository.UserRepository
 import com.jericx.trainr.domain.time.ElapsedClock
+import com.jericx.trainr.domain.time.WallClock
 import com.jericx.trainr.domain.unstuck.ActualOrigin
 import com.jericx.trainr.domain.unstuck.AdjustmentProposal
 import com.jericx.trainr.domain.unstuck.AdjustmentReason
@@ -54,6 +55,7 @@ import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import java.util.Calendar
+import java.util.concurrent.TimeUnit
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -98,13 +100,20 @@ class RoutineDetailViewModelTest {
         override fun elapsedMillis(): Long = scheduler.currentTime + skewMillis
     }
 
+    // The date the screen is being read on, which a test moves the way midnight
+    // does under a screen nobody has touched.
+    private class TestWallClock(var now: Long = System.currentTimeMillis()) : WallClock {
+        override fun nowMillis(): Long = now
+    }
+
     private fun TestScope.viewModel(
         dayNumber: Int = SampleWorkoutData.DEFAULT_DAY_NUMBER,
         repository: UserRepository = emptyRepository(),
         weekNumber: Int = Screen.RoutineDetail.LATEST_WEEK,
         adjustments: AdjustmentRepository = emptyAdjustments(),
         allowance: AdjustmentAllowance = FakeAllowance(),
-        clock: ElapsedClock = TestClock(testScheduler)
+        clock: ElapsedClock = TestClock(testScheduler),
+        wallClock: WallClock = TestWallClock()
     ) = RoutineDetailViewModel(
         SavedStateHandle(
             mapOf(
@@ -116,7 +125,8 @@ class RoutineDetailViewModelTest {
         adjustments,
         allowance,
         SampleWorkoutData.catalog,
-        clock
+        clock,
+        wallClock
     )
 
     // A week that is over turns its days into records, so a fixture meant to be
@@ -1730,14 +1740,40 @@ class RoutineDetailViewModelTest {
         assertThat(viewModel.uiState.value.isReadOnly).isFalse()
     }
 
-    // The plan list dates a plan stored before the column existed to the sample
-    // week, which is long over; the day screen has to read it the same way.
+    // A plan with no stored start date runs from the day it was created, which
+    // is how the progress screen has always dated it.
     @Test
-    fun aDayFromAPlanWithNoStartDateIsARecord() = runTest {
+    fun aDayFromAPlanWithNoStartDateIsDatedFromTheDayThePlanWasMade() = runTest {
+        val created = weekStartingDaysAgo(1)
         val viewModel = viewModel(
             dayNumber = 3,
-            repository = repositoryWith(storedPlan.copy(startDateMillis = null))
+            repository = repositoryWith(
+                storedPlan.copy(startDateMillis = null, createdAt = created)
+            )
         )
+        advanceUntilIdle()
+
+        with(viewModel.uiState.value) {
+            assertThat(dateMillis).isEqualTo(WorkoutWeek.dateOfDay(created, 3))
+            assertThat(isReadOnly).isFalse()
+        }
+    }
+
+    // Nothing re-reads the date while the screen stays composed, so the week it
+    // was opened in has to be settled again every time the day is read.
+    @Test
+    fun aDayLeftOpenPastTheEndOfItsWeekIsARecordWhenItIsReadAgain() = runTest {
+        val wallClock = TestWallClock()
+        val viewModel = viewModel(
+            dayNumber = 3,
+            repository = repositoryWith(storedPlan.copy(startDateMillis = weekStartingDaysAgo(6))),
+            wallClock = wallClock
+        )
+        advanceUntilIdle()
+        assertThat(viewModel.uiState.value.isReadOnly).isFalse()
+
+        wallClock.now += TimeUnit.DAYS.toMillis(1)
+        viewModel.refresh()
         advanceUntilIdle()
 
         assertThat(viewModel.uiState.value.isReadOnly).isTrue()

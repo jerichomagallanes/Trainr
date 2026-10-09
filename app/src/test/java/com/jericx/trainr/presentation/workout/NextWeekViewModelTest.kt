@@ -232,6 +232,28 @@ class NextWeekViewModelTest {
         coVerify { userRepository.saveWeeklyWorkoutPlan(replacement) }
     }
 
+    // Every other screen dates an undated plan from the day it was made, so a
+    // replacement starting today would move the same week forward
+    @Test
+    fun regeneratingAnUndatedWeekKeepsItWhereEveryScreenDrawsIt() = runTest {
+        val current = finishedWeek.copy(
+            startDateMillis = null,
+            createdAt = weekOneStart,
+            workoutDays = finishedWeek.workoutDays.map {
+                it.copy(status = WorkoutStatus.NOT_STARTED, completedAt = null)
+            }
+        )
+        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(current))
+        val request = slot<PlanRequest>()
+        coEvery { planGenerator.generate(capture(request)) } returns
+            PlanGenerationResult.Generated(current)
+
+        viewModel().regenerateThisWeek()
+        advanceUntilIdle()
+
+        assertThat(request.captured.startDateMillis).isEqualTo(weekOneStart)
+    }
+
     // Ask the model first and drop the old week only once there is one to put in its place
     @Test
     fun aFailedRegenerationLeavesTheWeekWhereItWas() = runTest {

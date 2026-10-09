@@ -52,6 +52,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jericx.trainr.R
 import com.jericx.trainr.domain.unstuck.FinishKind
 import com.jericx.trainr.domain.unstuck.intent.DirectReason
+import com.jericx.trainr.presentation.common.DayChangeEffect
 import com.jericx.trainr.presentation.common.components.core.TrainrButton
 import com.jericx.trainr.presentation.common.components.core.TrainrFieldError
 import com.jericx.trainr.presentation.common.components.core.dismissesKeyboardOnTap
@@ -97,9 +98,10 @@ fun RoutineDetailRoute(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
-    // Returning from an adjustment brings back a different day, so the stored
-    // one is read again every time this route comes back into composition.
-    LaunchedEffect(Unit) { viewModel.refresh() }
+    // Returning from an adjustment brings back a different day, and a day left
+    // open can outlive its own week, so the stored day and its date are read
+    // again whenever this route is resumed or the date changes under it.
+    DayChangeEffect { viewModel.refresh() }
 
     LaunchedEffect(viewModel) {
         viewModel.savedEvents.collect { onSessionSaved(it) }

@@ -35,6 +35,7 @@ import com.jericx.trainr.domain.purchases.ProGate
 import com.jericx.trainr.domain.repository.UserRepository
 import com.jericx.trainr.domain.repository.AdjustmentRepository
 import com.jericx.trainr.domain.time.ElapsedClock
+import com.jericx.trainr.domain.time.WallClock
 import com.jericx.trainr.domain.unstuck.intent.IntentInterpreter
 import com.jericx.trainr.domain.unstuck.intent.LocalModelInstaller
 import com.jericx.trainr.llama.LlamaEngine
@@ -71,6 +72,10 @@ object AppModule {
     @Provides
     @Singleton
     fun provideElapsedClock(): ElapsedClock = ElapsedClock(SystemClock::elapsedRealtime)
+
+    @Provides
+    @Singleton
+    fun provideWallClock(): WallClock = WallClock(System::currentTimeMillis)
 
     @Provides
     @Singleton

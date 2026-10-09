@@ -3,6 +3,7 @@ package com.jericx.trainr.presentation.workout
 import androidx.lifecycle.SavedStateHandle
 import com.jericx.trainr.presentation.Screen
 import com.google.common.truth.Truth.assertThat
+import com.jericx.trainr.domain.model.ExerciseSet
 import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
 import com.jericx.trainr.domain.model.WorkoutDay
@@ -19,6 +20,7 @@ import com.jericx.trainr.presentation.unstuck.TodayAdjustmentKind
 import com.jericx.trainr.presentation.unstuck.feedback.appliedAdjustment
 import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
 import com.jericx.trainr.presentation.workout.util.WorkoutWeek
+import com.jericx.trainr.presentation.workout.util.isReadyForTheNextWeek
 import com.jericx.trainr.presentation.workout.util.mondayOf
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -318,6 +320,9 @@ class WeeklyPlanViewModelTest {
         }
     }
 
+    private fun loggedSet(number: Int, done: Boolean) =
+        ExerciseSet(setNumber = number, isCompleted = done)
+
     private fun weekOfSessions(start: Long, vararg statuses: WorkoutStatus) = storedPlan.copy(
         startDateMillis = start,
         workoutDays = statuses.mapIndexed { index, status ->
@@ -355,6 +360,61 @@ class WeeklyPlanViewModelTest {
         )
 
         assertThat(state.days[0].isMissed).isFalse()
+    }
+
+    // The day opens as a record that plainly shows the sets that were logged,
+    // so the card may not chip it the way it chips a day nobody touched.
+    @Test
+    fun aDayThatHasPassedWithWorkLoggedOnItIsPartlyDoneRatherThanMissed() {
+        val start = mondayOf(1_755_000_000_000L)
+        val week = weekOfSessions(start, WorkoutStatus.IN_PROGRESS)
+        val trained = week.copy(
+            workoutDays = week.workoutDays.map { day ->
+                day.copy(
+                    exercises = day.exercises.map {
+                        it.copy(sets = listOf(loggedSet(1, done = true), loggedSet(2, done = false)))
+                    }
+                )
+            }
+        )
+
+        val state = WeeklyPlanViewModel.stateFor(
+            plan = trained,
+            nowMillis = start + TimeUnit.DAYS.toMillis(3)
+        )
+
+        assertThat(state.days[0].isMissed).isFalse()
+        assertThat(state.days[0].isPartlyDone).isTrue()
+    }
+
+    @Test
+    fun aDayThatHasPassedWithNothingLoggedOnItIsStillMissed() {
+        val start = mondayOf(1_755_000_000_000L)
+        val state = WeeklyPlanViewModel.stateFor(
+            plan = weekOfSessions(start, WorkoutStatus.IN_PROGRESS),
+            nowMillis = start + TimeUnit.DAYS.toMillis(3)
+        )
+
+        assertThat(state.days[0].isMissed).isTrue()
+        assertThat(state.days[0].isPartlyDone).isFalse()
+    }
+
+    // The plan screen, the progress screen and the readiness rule each dated a
+    // plan with no start date their own way, which put the same week in two
+    // different years.
+    @Test
+    fun everyScreenDatesAPlanWithNoStartDateFromTheDayItWasMade() {
+        val created = mondayOf(1_755_000_000_000L) + TimeUnit.HOURS.toMillis(9)
+        val plan = storedPlan.copy(startDateMillis = null, createdAt = created)
+        val dayAfterTheWeek = WorkoutWeek.dateOfDay(WorkoutWeek.startOfDay(created), 8)
+
+        val state = WeeklyPlanViewModel.stateFor(plan = plan, nowMillis = created)
+        val progress = WeeklyProgressViewModel.weekProgressOf(plan, nowMillis = created)
+
+        assertThat(state.weekStartMillis).isEqualTo(WorkoutWeek.startOfDay(created))
+        assertThat(progress.startDateMillis).isEqualTo(state.weekStartMillis)
+        assertThat(plan.isReadyForTheNextWeek(nowMillis = created)).isFalse()
+        assertThat(plan.isReadyForTheNextWeek(nowMillis = dayAfterTheWeek)).isTrue()
     }
 
     // Frozen means a day whose date has gone: it can be neither dragged nor dropped onto
