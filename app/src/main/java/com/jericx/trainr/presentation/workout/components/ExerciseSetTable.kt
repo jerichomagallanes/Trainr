@@ -502,25 +502,33 @@ private fun refusing(
 
     return remember {
         InputTransformation.byValue { current, proposed ->
-            when (accepts(proposed.toString())) {
-                NumberEntry.ACCEPTED -> {
-                    report(null)
-                    proposed
-                }
-
-                NumberEntry.OUT_OF_RANGE -> {
-                    report(message)
-                    if (movesTowardRange(current.toString(), proposed.toString(), accepts)) {
-                        proposed
-                    } else {
-                        current
-                    }
-                }
-
-                NumberEntry.MALFORMED -> current
-            }
+            val held = holding(current.toString(), proposed.toString(), accepts)
+            report(message.takeIf { held.saysRange })
+            held.text
         }
     }
+}
+
+internal data class Held(val text: String, val saysRange: Boolean)
+
+// A keystroke turned away for its size has to say so or it is swallowed in
+// silence, and a cell left holding too big a number keeps saying so until the
+// number is back in range. Any keystroke that is taken has been answered.
+internal fun holding(
+    current: String,
+    proposed: String,
+    check: (String) -> NumberEntry
+): Held {
+    val entry = check(proposed)
+    val text = when (entry) {
+        NumberEntry.ACCEPTED -> proposed
+        NumberEntry.OUT_OF_RANGE ->
+            if (movesTowardRange(current, proposed, check)) proposed else current
+
+        NumberEntry.MALFORMED -> current
+    }
+    val saysRange = entry == NumberEntry.OUT_OF_RANGE || check(text) == NumberEntry.OUT_OF_RANGE
+    return Held(text, saysRange)
 }
 
 // A number stored above the maximum has to be correctable: every step down from
@@ -596,14 +604,17 @@ internal fun weightEntry(text: String, units: UnitSystem): NumberEntry {
     return if (typed > maxWeightFor(units)) NumberEntry.OUT_OF_RANGE else NumberEntry.ACCEPTED
 }
 
-// The digits are the face: a leading zero or a seconds figure past 59 would be
-// shown as a time the cell does not hold.
+// A buffer is only a finished face once it is full, and until then it is still
+// taking digits: "63" is the 63 seconds the cell holds, and 16:40 is typed
+// through a "164" that reads as 1:64 for one keystroke.
 internal fun durationEntry(digits: String): NumberEntry = when {
     digits.isEmpty() -> NumberEntry.ACCEPTED
     !digits.all { it.isDigit() } -> NumberEntry.MALFORMED
     digits.length > MAX_DURATION_DIGITS -> NumberEntry.OUT_OF_RANGE
     digits.startsWith("0") -> NumberEntry.MALFORMED
-    digits.length > 1 && digits.takeLast(2).toInt() > MAX_FACE_SECONDS -> NumberEntry.MALFORMED
+    digits.length == MAX_DURATION_DIGITS &&
+        digits.takeLast(2).toInt() > MAX_FACE_SECONDS -> NumberEntry.MALFORMED
+
     (secondsFromDigits(digits) ?: 0) > MAX_SECONDS -> NumberEntry.OUT_OF_RANGE
     else -> NumberEntry.ACCEPTED
 }

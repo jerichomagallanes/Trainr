@@ -238,14 +238,72 @@ class ExerciseSetTableTest {
 
         assertThat(weightField().shownText()).isEmpty()
         assertThat(logged).isNull()
-        composeTestRule.onNodeWithText(
-            string(
-                R.string.value_range_hint,
-                string(R.string.weight_label),
-                "0",
-                "1000 " + string(R.string.weight_column)
-            )
-        ).assertIsDisplayed()
+        weightRangeMessage().assertIsDisplayed()
+
+        weightField().performTextInput("20")
+
+        weightRangeMessage().assertDoesNotExist()
+    }
+
+    // The keystroke is dropped, so the message is the only sign the person gets
+    // that anything was refused.
+    @Test
+    fun aCountOverTheMaximumSaysWhatTheRangeIsUntilADigitIsAccepted() {
+        loggingTable(ExerciseMeasure.REPS)
+
+        onlyField().performTextInput("9999")
+
+        repsRangeMessage().assertIsDisplayed()
+
+        onlyField().performTextInput("12")
+
+        assertThat(onlyField().shownText()).isEqualTo("12")
+        repsRangeMessage().assertDoesNotExist()
+    }
+
+    private fun weightRangeMessage() = composeTestRule.onNodeWithText(
+        string(
+            R.string.value_range_hint,
+            string(R.string.weight_label),
+            "0",
+            "1000 " + string(R.string.weight_column)
+        )
+    )
+
+    private fun repsRangeMessage() = composeTestRule.onNodeWithText(
+        string(R.string.value_range_hint, string(R.string.reps_column), "0", "999")
+    )
+
+    // 6-3-0 used to stall at 0:06, with the last two keystrokes swallowed.
+    @Test
+    fun everyDigitOfASixMinuteTimeReachesTheCell() {
+        var logged: ExerciseSet? = null
+        loggingTable(
+            ExerciseMeasure.DURATION,
+            initial = listOf(ExerciseSet(setNumber = 1)),
+            onLogged = { logged = it }
+        )
+
+        onlyField().performTextInput("6")
+        onlyField().performTextInput("3")
+        onlyField().performTextInput("0")
+
+        assertThat(logged?.actualSeconds).isEqualTo(390)
+    }
+
+    // 1-6-4-0 used to stall at 0:16, the same stall one digit further along.
+    @Test
+    fun everyDigitOfASixteenMinuteTimeReachesTheCell() {
+        var logged: ExerciseSet? = null
+        loggingTable(
+            ExerciseMeasure.DURATION,
+            initial = listOf(ExerciseSet(setNumber = 1)),
+            onLogged = { logged = it }
+        )
+
+        listOf("1", "6", "4", "0").forEach { onlyField().performTextInput(it) }
+
+        assertThat(logged?.actualSeconds).isEqualTo(1000)
     }
 
     @Test
