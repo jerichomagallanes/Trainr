@@ -3,13 +3,10 @@ package com.jericx.trainr.presentation.common.components.layout
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -69,13 +66,10 @@ fun TrainrScaffold(
                         },
                     shadowElevation = 8.dp
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .heightIn(max = ceiling)
-                            .padding(Spacing.large)
-                            .verticalScroll(rememberScrollState())
-                    ) {
-                        bottomButton()
+                    TrainrCappedScroll(ceiling = ceiling) {
+                        Box(modifier = Modifier.padding(Spacing.large)) {
+                            bottomButton()
+                        }
                     }
                 }
             }

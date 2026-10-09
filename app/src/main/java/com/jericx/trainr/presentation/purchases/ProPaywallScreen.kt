@@ -12,14 +12,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -44,6 +41,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.jericx.trainr.R
 import com.jericx.trainr.presentation.common.components.core.TrainrButton
+import com.jericx.trainr.presentation.common.components.layout.TrainrCappedScroll
 import com.jericx.trainr.presentation.common.components.layout.TrainrScreenContent
 import com.jericx.trainr.presentation.common.components.layout.TrainrTopBar
 import com.jericx.trainr.presentation.common.components.typography.TrainrScreenTitle
@@ -71,8 +69,8 @@ fun ProPaywallScreen(
 ) {
     val colors = MaterialTheme.trainrColors
     val selected = plans.firstOrNull { it.id == selectedId }
-    val barCeiling = with(LocalDensity.current) {
-        LocalWindowInfo.current.containerSize.height.toDp() * BAR_SHARE
+    val window = with(LocalDensity.current) {
+        LocalWindowInfo.current.containerSize.height.toDp()
     }
 
     // Paints its own ground: as a destination of its own there is nothing behind
@@ -190,8 +188,6 @@ fun ProPaywallScreen(
                 }
             }
         }
-        // Pinned, and every word in it grows with the text setting, so it is
-        // held to a share of the screen and scrolls inside that.
         PurchaseBar(
             plans = plans,
             selected = selected,
@@ -199,7 +195,8 @@ fun ProPaywallScreen(
             onSelect = onSelect,
             onBuy = onBuy,
             onClose = onClose,
-            ceiling = barCeiling
+            barCeiling = window * BAR_SHARE,
+            offerCeiling = window * OFFER_SHARE
         )
         ProNoticeDialog(noticeRes = noticeRes, onDismiss = onNoticeShown)
     }
@@ -417,10 +414,14 @@ private val REASON_ICON = 30.dp
 private val CHEVRON = 24.dp
 private val PLAN_MIN_WIDTH = 84.dp
 
-// At most a third of the screen for the bar, and at most half of that for the
-// cards, so the button and the price under it are in the bar without scrolling.
-private const val BAR_SHARE = 0.34f
-private const val OFFER_SHARE = 0.5f
+// The list of plans is the one part of the pinned bar that grows without bound,
+// so it is the part held to a share of the screen — a sixth of it. Everything
+// below the list is laid out after it and is never scrolled out of the bar. The
+// bar keeps a ceiling of its own so it can never take the page from the screen
+// it belongs to; a third, which a previous slice gave every bar, cut the
+// subscribe button in half at the largest text setting.
+private const val BAR_SHARE = 0.5f
+private const val OFFER_SHARE = 1f / 6f
 
 @Composable
 private fun Feature(@DrawableRes iconRes: Int, heading: String, detail: String) {
@@ -453,63 +454,64 @@ private fun PurchaseBar(
     onSelect: (String) -> Unit,
     onBuy: () -> Unit,
     onClose: () -> Unit,
-    ceiling: Dp
+    barCeiling: Dp,
+    offerCeiling: Dp
 ) {
     val colors = MaterialTheme.trainrColors
 
-    Column(
+    TrainrCappedScroll(
+        ceiling = barCeiling,
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(max = ceiling)
             .background(colors.surfacePanel)
-            .padding(Spacing.large)
-            .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(Spacing.small)
     ) {
-        // The offer gives way first, so the button and the price under it are
-        // still in the bar whatever the text setting does to the cards.
-        Box(
-            modifier = Modifier
-                .heightIn(max = ceiling * OFFER_SHARE)
-                .verticalScroll(rememberScrollState())
-        ) {
-            if (plans.isEmpty()) {
-                Text(
-                    text = stringResource(R.string.pro_unavailable),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = colors.onSurfaceMuted
-                )
-            } else {
-                PlanChooser(plans = plans, selected = selected, onSelect = onSelect)
-            }
-        }
-        TrainrButton(
-            text = callToAction(selected),
-            onClick = onBuy,
-            enabled = selected != null && !isWorking,
-            modifier = Modifier.fillMaxWidth()
-        )
-        // Nothing for a lifetime purchase, which never renews, and naming the
-        // trial where one exists: an introductory offer has to say what it
-        // costs once it ends.
-        renewalNote(selected)?.let { note ->
-            Text(
-                text = note,
-                style = MaterialTheme.typography.bodySmall,
-                color = colors.onSurfaceMuted,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-        Text(
-            text = stringResource(R.string.pro_not_now),
-            style = MaterialTheme.typography.labelMedium,
-            color = colors.onSurfaceMuted,
-            textAlign = TextAlign.Center,
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(onClick = onClose)
-        )
+                .padding(Spacing.large),
+            verticalArrangement = Arrangement.spacedBy(Spacing.small)
+        ) {
+            // The offer gives way first, so the button, the price under it and the
+            // way out are in the bar whatever the text setting does to the cards.
+            TrainrCappedScroll(ceiling = offerCeiling) {
+                if (plans.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.pro_unavailable),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colors.onSurfaceMuted
+                    )
+                } else {
+                    PlanChooser(plans = plans, selected = selected, onSelect = onSelect)
+                }
+            }
+            TrainrButton(
+                text = callToAction(selected),
+                onClick = onBuy,
+                enabled = selected != null && !isWorking,
+                modifier = Modifier.fillMaxWidth()
+            )
+            // Nothing for a lifetime purchase, which never renews, and naming the
+            // trial where one exists: an introductory offer has to say what it
+            // costs once it ends.
+            renewalNote(selected)?.let { note ->
+                Text(
+                    text = note,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.onSurfaceMuted,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+            Text(
+                text = stringResource(R.string.pro_not_now),
+                style = MaterialTheme.typography.labelMedium,
+                color = colors.onSurfaceMuted,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onClose)
+            )
+        }
     }
 }
 

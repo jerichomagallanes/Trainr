@@ -347,4 +347,75 @@ class BodyMetricsConverterTest {
 
         assertThat(result).isNull()
     }
+
+    @Test
+    fun `the index does not move when only the units are switched`() {
+        val heightSwap = BodyMetricsConverter.swapUnits(
+            "175",
+            BodyMetricsConverter.UnitSwap(),
+            BodyMetricsConverter::convertHeightToImperial
+        )
+        val weightSwap = BodyMetricsConverter.swapUnits(
+            "72",
+            BodyMetricsConverter.UnitSwap(),
+            BodyMetricsConverter::convertWeightToImperial
+        )
+
+        val (cm, kg) = BodyMetricsConverter.keptMetrics(
+            height = heightSwap.shown,
+            weight = weightSwap.shown,
+            useMetric = false,
+            heightSwap = heightSwap,
+            weightSwap = weightSwap
+        )
+
+        assertThat(heightSwap.shown).isEqualTo("5'9\"")
+        assertThat(cm).isEqualTo(175f)
+        assertThat(kg).isWithin(0.01f).of(72f)
+        assertThat(BodyMetricsConverter.bodyMassIndex(cm, kg))
+            .isEqualTo(BodyMetricsConverter.calculateBMI("175", "72", useMetric = true))
+    }
+
+    // The imperial filter allows "175", which is not feet and inches, so the
+    // switch keeps it as it is rather than emptying the field. What it keeps is
+    // in the units it is now shown in, not the ones it was typed in.
+    @Test
+    fun `a measurement kept across the switch is read in the units it is shown in`() {
+        val heightSwap = BodyMetricsConverter.swapUnits(
+            "175",
+            BodyMetricsConverter.UnitSwap(),
+            BodyMetricsConverter::convertHeightToMetric
+        )
+
+        val (cm, _) = BodyMetricsConverter.keptMetrics(
+            height = heightSwap.shown,
+            weight = "72",
+            useMetric = true,
+            heightSwap = heightSwap,
+            weightSwap = BodyMetricsConverter.UnitSwap()
+        )
+
+        assertThat(heightSwap.shown).isEqualTo("175")
+        assertThat(cm).isEqualTo(175f)
+    }
+
+    @Test
+    fun `a measurement edited after the switch is read as it is shown`() {
+        val heightSwap = BodyMetricsConverter.swapUnits(
+            "175",
+            BodyMetricsConverter.UnitSwap(),
+            BodyMetricsConverter::convertHeightToImperial
+        )
+
+        val (cm, kg) = BodyMetricsConverter.keptMetrics(
+            height = "6'0\"",
+            weight = "160",
+            useMetric = false,
+            heightSwap = heightSwap,
+            weightSwap = BodyMetricsConverter.UnitSwap()
+        )
+
+        assertThat(cm).isWithin(0.01f).of(182.88f)
+        assertThat(kg).isWithin(0.01f).of(160f / 2.20462f)
+    }
 }

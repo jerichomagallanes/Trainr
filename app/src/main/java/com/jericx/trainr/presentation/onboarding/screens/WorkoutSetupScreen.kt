@@ -51,6 +51,8 @@ import com.jericx.trainr.presentation.common.theme.trainrColors
 fun WorkoutSetupScreen(
     initial: UserProfile? = null,
     isEditing: Boolean = false,
+    // How the client reads their own body, answered two steps earlier.
+    bodyUnits: UnitSystem = UnitSystem.Default,
     stockedEquipment: Set<Equipment> = EquipmentChoices.toSet(),
     // The longest session these answers can really build, which is the answer
     // itself unless the split cannot fill it.
@@ -76,6 +78,15 @@ fun WorkoutSetupScreen(
     // A bodyweight setup has no plates to read, so lifting units stay unasked
     // and null rather than taking a value.
     val hasLoadedEquipment = selectedEquipment.any { it in LoadedEquipment }
+
+    // Answered with the units the client already reads their own body in, which
+    // is what the profile falls back to anyway: revealed by a chip above it, the
+    // question would otherwise block NEXT from off the top of the window.
+    LaunchedEffect(hasLoadedEquipment) {
+        if (hasLoadedEquipment && selectedLiftingUnits == null) {
+            selectedLiftingUnits = bodyUnits
+        }
+    }
 
     TrainrScaffold(
         onBackClick = onBackClick,

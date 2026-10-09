@@ -5,8 +5,12 @@ import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.R
 import com.jericx.trainr.testing.notEllipsized
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
@@ -15,6 +19,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import com.jericx.trainr.domain.model.Equipment
 import com.jericx.trainr.domain.model.EquipmentChoices
+import com.jericx.trainr.domain.model.UnitSystem
 import com.jericx.trainr.domain.model.UserProfile
 
 @RunWith(AndroidJUnit4::class)
@@ -129,6 +134,60 @@ class WorkoutSetupScreenTest {
             composeTestRule.activity.resources
                 .getQuantityString(R.plurals.sessions_fall_short_message, SHORT_SESSION, SHORT_SESSION)
         ).assertDoesNotExist()
+    }
+
+    // The question appears above the fold once a weighted chip is picked, so an
+    // unanswered one would leave NEXT disabled with nothing on screen to say so.
+    @Test
+    fun pickingWeightedKitAnswersTheUnitQuestionWithTheUnitsAlreadyChosen() {
+        var captured: UnitSystem? = null
+        composeTestRule.setContent {
+            TrainrTheme {
+                WorkoutSetupScreen(
+                    initial = answered,
+                    bodyUnits = UnitSystem.IMPERIAL,
+                    onNextClick = { _, liftingUnits, _, _ -> captured = liftingUnits },
+                    onBackClick = {}
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.equipment_barbell))
+            .performScrollTo()
+            .performClick()
+
+        composeTestRule.onNodeWithText(string(R.string.weights_marked_in)).assertExists()
+        composeTestRule.onNodeWithText(string(R.string.next)).assertIsEnabled()
+
+        composeTestRule.onNodeWithText(string(R.string.next)).performClick()
+
+        assertThat(captured).isEqualTo(UnitSystem.IMPERIAL)
+    }
+
+    // Changing the answer is still the client's to make.
+    @Test
+    fun theUnitQuestionCanStillBeAnsweredDifferently() {
+        var captured: UnitSystem? = null
+        composeTestRule.setContent {
+            TrainrTheme {
+                WorkoutSetupScreen(
+                    initial = answered,
+                    bodyUnits = UnitSystem.IMPERIAL,
+                    onNextClick = { _, liftingUnits, _, _ -> captured = liftingUnits },
+                    onBackClick = {}
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.equipment_barbell))
+            .performScrollTo()
+            .performClick()
+        composeTestRule.onNodeWithText(string(R.string.weight_column))
+            .performScrollTo()
+            .performClick()
+        composeTestRule.onNodeWithText(string(R.string.next)).performClick()
+
+        assertThat(captured).isEqualTo(UnitSystem.METRIC)
     }
 
     private val answered = UserProfile(
