@@ -40,6 +40,14 @@ class OneWeekRepository(private val plan: WeeklyWorkoutPlan) : UserRepository {
     override suspend fun hasUsers(): Boolean = true
 
     override suspend fun saveWeeklyWorkoutPlan(plan: WeeklyWorkoutPlan): Long = 1
+    override suspend fun saveUserWithFirstWeek(
+        user: UserProfile,
+        firstWeek: WeeklyWorkoutPlan
+    ): Long = 1
+    override suspend fun replaceWeeklyWorkoutPlan(
+        planId: Long,
+        replacement: WeeklyWorkoutPlan
+    ): Long = 1
     override suspend fun updateWeeklyWorkoutPlan(plan: WeeklyWorkoutPlan) = Unit
     override suspend fun deleteWeeklyWorkoutPlan(planId: Long) = Unit
 

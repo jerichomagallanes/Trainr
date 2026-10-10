@@ -14,6 +14,7 @@ import com.jericx.trainr.domain.generation.PlanGenerationResult
 import com.jericx.trainr.domain.generation.PlanGenerator
 import com.jericx.trainr.domain.generation.PlanRequest
 import com.jericx.trainr.domain.generation.PlanSkeletonBuilder
+import com.jericx.trainr.domain.purchases.ProGate
 import com.jericx.trainr.domain.repository.UserRepository
 import com.jericx.trainr.presentation.onboarding.util.BodyMetricsConverter
 import com.jericx.trainr.presentation.workout.util.WorkoutWeek
@@ -30,6 +31,7 @@ import javax.inject.Inject
 class OnboardingViewModel @Inject constructor(
     private val userRepository: UserRepository,
     private val planGenerator: PlanGenerator,
+    private val proGate: ProGate,
     catalog: ExerciseCatalog
 ) : ViewModel() {
 
@@ -203,8 +205,11 @@ class OnboardingViewModel @Inject constructor(
                     return@launch
                 }
 
-                val userId = userRepository.saveUser(profile)
-                userRepository.saveWeeklyWorkoutPlan(result.plan.copy(userId = userId))
+                userRepository.saveUserWithFirstWeek(profile, result.plan)
+                // Charged where the week lands, not on the screen that asked
+                // for it: this view model outlives that screen, and backing out
+                // of it leaves a week of training behind either way.
+                proGate.spend()
                 _onboardingState.value = _onboardingState.value.copy(isCompleted = true)
                 onSuccess()
             } catch (e: Exception) {

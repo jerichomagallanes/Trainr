@@ -53,7 +53,7 @@ class UnstuckPersistenceTest {
         db = Room.inMemoryDatabaseBuilder(context, TrainrDatabase::class.java)
             .allowMainThreadQueries()
             .build()
-        workouts = UserRepositoryImpl(db.userDao, UserMapper())
+        workouts = UserRepositoryImpl(db, db.userDao, UserMapper())
         adjustments = AdjustmentRepositoryImpl(
             db, db.userDao, db.unstuckDao, UnstuckMapper(), UserMapper(), SampleWorkoutData.catalog
         )
