@@ -118,8 +118,7 @@ class ExerciseSetTableTest {
         assertThat(durationEntry("99999")).isEqualTo(NumberEntry.OUT_OF_RANGE)
     }
 
-    // The cell shows the digits it holds with a colon spliced in, so a face the
-    // stored time would not be written as is refused.
+    // A finished face is written the way it is stored.
     @Test
     fun aTimeIsShownTheWayItIsStored() {
         listOf("5", "45", "100", "130", "1045", "9959").forEach {
@@ -129,11 +128,26 @@ class ExerciseSetTableTest {
     }
 
     @Test
-    fun aSecondsFigureOfSixtyOrMoreIsRefused() {
-        assertThat(durationEntry("60")).isEqualTo(NumberEntry.MALFORMED)
-        assertThat(durationEntry("99")).isEqualTo(NumberEntry.MALFORMED)
-        assertThat(durationEntry("160")).isEqualTo(NumberEntry.MALFORMED)
+    fun aSecondsFigureOfSixtyOrMoreIsRefusedOnceTheFaceIsFull() {
+        assertThat(durationEntry("1060")).isEqualTo(NumberEntry.MALFORMED)
         assertThat(durationEntry("1094")).isEqualTo(NumberEntry.MALFORMED)
+        assertThat(durationEntry("9960")).isEqualTo(NumberEntry.MALFORMED)
+        assertThat(durationEntry("9999")).isEqualTo(NumberEntry.MALFORMED)
+    }
+
+    // 6-3-0 used to stall at 0:06 and 1-6-4-0 at 0:16: a buffer still short of
+    // a full face was judged as though it were one. Backspacing walks the same
+    // buffers back down, so this pins the delete key on every time too.
+    @Test
+    fun everyStorableTimeCanBeTypedAndBackspacedDigitByDigit() {
+        val refused = (1..MAX_SECONDS)
+            .flatMap { total -> durationDigits(total).let { d -> d.indices.map { d.take(it + 1) } } }
+            .filter { durationEntry(it) != NumberEntry.ACCEPTED }
+
+        assertThat(refused).isEmpty()
+        assertThat(secondsFromDigits("63")).isEqualTo(63)
+        assertThat(secondsFromDigits("630")).isEqualTo(390)
+        assertThat(secondsFromDigits("1640")).isEqualTo(1000)
     }
 
     @Test
@@ -152,6 +166,50 @@ class ExerciseSetTableTest {
         assertThat(movesTowardRange("12", "123", ::repsEntry)).isFalse()
         assertThat(movesTowardRange("1000.17", "1000.1") { weightEntry(it, UnitSystem.METRIC) })
             .isTrue()
+    }
+
+    // The fourth digit is dropped and the cell keeps 999: without the message
+    // the keystroke is swallowed with nothing to show it ever happened.
+    @Test
+    fun aDigitRefusedForBeingTooBigSaysWhatTheRangeIs() {
+        val held = holding("999", "9999", ::repsEntry)
+
+        assertThat(held.text).isEqualTo("999")
+        assertThat(held.saysRange).isTrue()
+    }
+
+    @Test
+    fun theNextAcceptedDigitClearsTheMessage() {
+        val refused = holding("99", "9999", ::repsEntry)
+        val accepted = holding(refused.text, "999", ::repsEntry)
+
+        assertThat(refused.saysRange).isTrue()
+        assertThat(accepted.text).isEqualTo("999")
+        assertThat(accepted.saysRange).isFalse()
+    }
+
+    @Test
+    fun aMalformedKeystrokeLeavesNoMessageEither() {
+        val held = holding("22.5", "22.5.") { weightEntry(it, UnitSystem.METRIC) }
+
+        assertThat(held.text).isEqualTo("22.5")
+        assertThat(held.saysRange).isFalse()
+    }
+
+    @Test
+    fun aNumberStillOverTheMaximumKeepsTheMessage() {
+        val held = holding("1500", "15000") { weightEntry(it, UnitSystem.METRIC) }
+
+        assertThat(held.text).isEqualTo("1500")
+        assertThat(held.saysRange).isTrue()
+    }
+
+    @Test
+    fun typingAStoredNumberBackIntoRangeClearsTheMessage() {
+        val held = holding("1500", "150") { weightEntry(it, UnitSystem.METRIC) }
+
+        assertThat(held.text).isEqualTo("150")
+        assertThat(held.saysRange).isFalse()
     }
 
     // Clearing the field is the person clearing it, and is always allowed.
