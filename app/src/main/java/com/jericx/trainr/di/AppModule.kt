@@ -137,10 +137,11 @@ object AppModule {
     @Provides
     @Singleton
     fun provideUserRepository(
+        database: TrainrDatabase,
         userDao: UserDao,
         mapper: UserMapper
     ): UserRepository {
-        return UserRepositoryImpl(userDao, mapper)
+        return UserRepositoryImpl(database, userDao, mapper)
     }
 
     @Provides

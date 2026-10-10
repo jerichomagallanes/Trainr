@@ -73,7 +73,7 @@ class AdjustmentApplyTest {
             .allowMainThreadQueries()
             .build()
         catalog = AssetExerciseCatalog(context)
-        workouts = UserRepositoryImpl(db.userDao, UserMapper())
+        workouts = UserRepositoryImpl(db, db.userDao, UserMapper())
         adjustments = AdjustmentRepositoryImpl(
             db, db.userDao, db.unstuckDao, UnstuckMapper(), UserMapper(), catalog
         )

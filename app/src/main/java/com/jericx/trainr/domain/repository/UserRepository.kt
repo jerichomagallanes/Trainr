@@ -15,6 +15,14 @@ interface UserRepository {
     suspend fun hasUsers(): Boolean
 
     suspend fun saveWeeklyWorkoutPlan(plan: WeeklyWorkoutPlan): Long
+
+    // One operation, because saving the user cascades away every week they
+    // have trained: written apart, a failure between the two leaves no plan.
+    suspend fun saveUserWithFirstWeek(user: UserProfile, firstWeek: WeeklyWorkoutPlan): Long
+
+    // One operation, because a week half replaced is worse than either week:
+    // the old one is gone and the new one has days without sets.
+    suspend fun replaceWeeklyWorkoutPlan(planId: Long, replacement: WeeklyWorkoutPlan): Long
     fun getWeeklyWorkoutPlans(userId: Long): Flow<List<WeeklyWorkoutPlan>>
     suspend fun getWeeklyWorkoutPlan(userId: Long, weekNumber: Int): WeeklyWorkoutPlan?
     suspend fun updateWeeklyWorkoutPlan(plan: WeeklyWorkoutPlan)

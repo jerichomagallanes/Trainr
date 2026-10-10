@@ -1,5 +1,7 @@
 package com.jericx.trainr.data.repository
 
+import androidx.room.withTransaction
+import com.jericx.trainr.data.local.TrainrDatabase
 import com.jericx.trainr.data.local.UserDao
 import com.jericx.trainr.data.local.UserMapper
 import com.jericx.trainr.data.local.WeeklyWorkoutPlanEntity
@@ -15,6 +17,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 class UserRepositoryImpl(
+    private val database: TrainrDatabase,
     private val userDao: UserDao,
     private val mapper: UserMapper
 ) : UserRepository {
@@ -35,10 +38,30 @@ class UserRepositoryImpl(
         return userDao.hasUsers()
     }
 
-    override suspend fun saveWeeklyWorkoutPlan(plan: WeeklyWorkoutPlan): Long {
-        val planId = userDao.insertWeeklyWorkoutPlan(mapper.mapToEntity(plan))
-        saveWorkoutDays(plan.workoutDays, planId)
-        return planId
+    // A week is one thing: a plan row without its days, or a day without its
+    // sets, is not a shorter week but a broken one.
+    override suspend fun saveWeeklyWorkoutPlan(plan: WeeklyWorkoutPlan): Long =
+        database.withTransaction {
+            val planId = userDao.insertWeeklyWorkoutPlan(mapper.mapToEntity(plan))
+            saveWorkoutDays(plan.workoutDays, planId)
+            planId
+        }
+
+    override suspend fun saveUserWithFirstWeek(
+        user: UserProfile,
+        firstWeek: WeeklyWorkoutPlan
+    ): Long = database.withTransaction {
+        val userId = saveUser(user)
+        saveWeeklyWorkoutPlan(firstWeek.copy(userId = userId))
+        userId
+    }
+
+    override suspend fun replaceWeeklyWorkoutPlan(
+        planId: Long,
+        replacement: WeeklyWorkoutPlan
+    ): Long = database.withTransaction {
+        userDao.deleteWeeklyWorkoutPlan(planId)
+        saveWeeklyWorkoutPlan(replacement)
     }
 
     override fun getWeeklyWorkoutPlans(userId: Long): Flow<List<WeeklyWorkoutPlan>> {

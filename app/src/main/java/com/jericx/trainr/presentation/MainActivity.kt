@@ -225,10 +225,9 @@ fun AppContent(
     val context = LocalContext.current
     val navController = rememberNavController()
 
-    // Spent here and nowhere earlier, so a failed generation costs nothing and
-    // the free week is still there to be used.
+    // The week is charged for where it is written, not here: this runs only if
+    // the screen that asked for it is still up to invoke it.
     val weekBuilt: () -> Unit = {
-        proGate.spend()
         navController.navigate(Screen.Home.route) {
             popUpTo(0) { inclusive = true }
         }
