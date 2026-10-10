@@ -18,7 +18,6 @@ import androidx.compose.foundation.text.input.InputTransformation
 import androidx.compose.foundation.text.input.OutputTransformation
 import androidx.compose.foundation.text.input.TextFieldDecorator
 import androidx.compose.foundation.text.input.TextFieldState
-import androidx.compose.foundation.text.input.byValue
 import androidx.compose.foundation.text.input.insert
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
@@ -500,11 +499,17 @@ private fun refusing(
     val message by rememberUpdatedState(rangeMessage)
     val report by rememberUpdatedState(onOutOfRange)
 
+    // byValue writes its answer back by diffing it into the buffer, and that diff
+    // collapses to nothing when a repeated digit is appended ("9999" against
+    // "999"), so the refused keystroke stays in the cell. The rules only ever
+    // answer with the text already there or the one proposed, so reverting the
+    // change outright is both exact and all that is needed.
     return remember {
-        InputTransformation.byValue { current, proposed ->
-            val held = holding(current.toString(), proposed.toString(), accepts)
+        InputTransformation {
+            val proposed = asCharSequence().toString()
+            val held = holding(originalText.toString(), proposed, accepts)
             report(message.takeIf { held.saysRange })
-            held.text
+            if (held.text != proposed) revertAllChanges()
         }
     }
 }

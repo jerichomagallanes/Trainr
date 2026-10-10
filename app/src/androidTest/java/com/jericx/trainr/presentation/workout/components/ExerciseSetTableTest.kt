@@ -261,6 +261,72 @@ class ExerciseSetTableTest {
         repsRangeMessage().assertDoesNotExist()
     }
 
+    // The whole number arriving at once was never the real path: a finger types
+    // one digit, and the fourth one on 999 must not reach the cell or the record.
+    @Test
+    fun aCountTypedOneDigitAtATimePastTheMaximumIsRefused() {
+        var logged: ExerciseSet? = null
+        loggingTable(ExerciseMeasure.REPS, onLogged = { logged = it })
+
+        repeat(4) { onlyField().performTextInput("9") }
+
+        assertThat(onlyField().shownText()).isEqualTo("999")
+        assertThat(logged?.actualReps).isEqualTo(999)
+        repsRangeMessage().assertIsDisplayed()
+    }
+
+    @Test
+    fun aWeightTypedOneDigitAtATimePastTheMaximumIsRefused() {
+        var logged: ExerciseSet? = null
+        loggingTable(ExerciseMeasure.WEIGHT_AND_REPS, onLogged = { logged = it })
+
+        listOf("1", "0", "0", "0", "0").forEach { weightField().performTextInput(it) }
+
+        assertThat(weightField().shownText()).isEqualTo("1000")
+        assertThat(logged?.actualWeightKg).isEqualTo(1000f)
+        weightRangeMessage().assertIsDisplayed()
+    }
+
+    // The time cell is refused through the same transformation, so a fifth digit
+    // on 16:40 must not reach the face or the record either.
+    @Test
+    fun aTimeTypedOneDigitAtATimePastTheLongestTimeIsRefused() {
+        var logged: ExerciseSet? = null
+        loggingTable(
+            ExerciseMeasure.DURATION,
+            initial = listOf(ExerciseSet(setNumber = 1)),
+            onLogged = { logged = it }
+        )
+
+        listOf("1", "6", "4", "0", "0").forEach { onlyField().performTextInput(it) }
+
+        assertThat(onlyField().shownText()).isEqualTo("16:40")
+        assertThat(logged?.actualSeconds).isEqualTo(1000)
+        timeRangeMessage().assertIsDisplayed()
+    }
+
+    // A buffer short of four digits is still taking them, so 9:99 is the 639
+    // seconds the cell holds; it is the fourth 9 that makes a face of 99:99 and
+    // has to be turned away.
+    @Test
+    fun aTimeTypedOneDigitAtATimePastTheClockFaceIsRefused() {
+        var logged: ExerciseSet? = null
+        loggingTable(
+            ExerciseMeasure.DURATION,
+            initial = listOf(ExerciseSet(setNumber = 1)),
+            onLogged = { logged = it }
+        )
+
+        repeat(4) { onlyField().performTextInput("9") }
+
+        assertThat(onlyField().shownText()).isEqualTo("9:99")
+        assertThat(logged?.actualSeconds).isEqualTo(639)
+    }
+
+    private fun timeRangeMessage() = composeTestRule.onNodeWithText(
+        string(R.string.value_range_hint, string(R.string.time_column), "0:01", "99:59")
+    )
+
     private fun weightRangeMessage() = composeTestRule.onNodeWithText(
         string(
             R.string.value_range_hint,
