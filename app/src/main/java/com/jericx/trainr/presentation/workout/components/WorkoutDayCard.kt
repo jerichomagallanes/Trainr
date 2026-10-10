@@ -50,6 +50,7 @@ fun WorkoutDayCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     isMissed: Boolean = false,
+    isPartlyDone: Boolean = false,
     finishedEarly: Boolean = false,
     isAdjusted: Boolean = false,
     minutes: Int = day.duration,
@@ -91,9 +92,11 @@ fun WorkoutDayCard(
                     color = if (started) colors.onSurfaceEmphasis else colors.onSurface
                 )
             }
-            // Missed deliberately reads in the same grey as "not started".
+            // Missed deliberately reads in the same grey as "not started"; a day
+            // that was trained but never closed keeps the colour of work done.
             when {
                 isMissed -> StatusChip(labelRes = R.string.missed, tone = StatusTone.IDLE)
+                isPartlyDone -> StatusChip(labelRes = R.string.partly_done, tone = StatusTone.ACTIVE)
                 finishedEarly -> StatusChip(labelRes = R.string.finished_early, tone = StatusTone.DONE)
                 isAdjusted && day.status != WorkoutStatus.COMPLETED ->
                     StatusChip(labelRes = R.string.adjusted, tone = StatusTone.ACTIVE)

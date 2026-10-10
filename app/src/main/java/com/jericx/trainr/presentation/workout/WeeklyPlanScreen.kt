@@ -28,7 +28,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -49,6 +48,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jericx.trainr.R
 import com.jericx.trainr.data.preferences.AppearanceMode
 import com.jericx.trainr.domain.model.WorkoutDay
+import com.jericx.trainr.presentation.common.DayChangeEffect
 import com.jericx.trainr.presentation.common.components.layout.TrainrTopBar
 import androidx.activity.compose.LocalActivity
 import com.jericx.trainr.data.ads.Ads
@@ -100,8 +100,9 @@ fun WeeklyPlanRoute(
     val activity = LocalActivity.current
     val context = LocalContext.current
 
-    // Returning from a routine re-reads the plan, so a day completed there shows here.
-    LaunchedEffect(Unit) { viewModel.refresh() }
+    // Returning from a routine re-reads the plan, so a day completed there shows
+    // here; so does a date change, which is what ends the week.
+    DayChangeEffect { viewModel.refresh() }
 
     WeeklyPlanScreen(
         state = state,

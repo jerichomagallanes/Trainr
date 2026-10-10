@@ -11,7 +11,7 @@ fun WeeklyWorkoutPlan.isReadyForTheNextWeek(
     nowMillis: Long = System.currentTimeMillis()
 ): Boolean {
     val allDone = workoutDays.isNotEmpty() && workoutDays.all { it.countsAsCompleted }
-    val start = startDateMillis ?: return allDone
+    val start = startDateMillis ?: WorkoutWeek.startOfDay(createdAt)
     val weekIsOver = nowMillis >= WorkoutWeek.dateOfDay(start, DAYS_PER_WEEK + 1)
 
     return allDone || weekIsOver

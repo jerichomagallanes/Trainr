@@ -89,7 +89,8 @@ class NextWeekViewModel @Inject constructor(
                     PlanRequest(
                         user = user,
                         weekNumber = current.weekNumber,
-                        startDateMillis = current.startDateMillis ?: WorkoutWeek.startOfDay(),
+                        startDateMillis = current.startDateMillis
+                            ?: WorkoutWeek.startOfDay(current.createdAt),
                         // The weeks before this one, so a replacement still
                         // progresses from what was actually lifted.
                         history = plans.filter { it.weekNumber < current.weekNumber }

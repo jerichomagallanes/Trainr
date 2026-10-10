@@ -15,6 +15,7 @@ import com.jericx.trainr.domain.purchases.AdjustmentAllowance
 import com.jericx.trainr.domain.repository.AdjustmentRepository
 import com.jericx.trainr.domain.repository.UserRepository
 import com.jericx.trainr.domain.time.ElapsedClock
+import com.jericx.trainr.domain.time.WallClock
 import com.jericx.trainr.domain.unstuck.AdjustmentProposal
 import com.jericx.trainr.domain.unstuck.AppliedAdjustment
 import com.jericx.trainr.domain.unstuck.ChangeKind
@@ -99,7 +100,8 @@ class RoutineDetailViewModel @Inject constructor(
     private val adjustmentRepository: AdjustmentRepository,
     private val allowance: AdjustmentAllowance,
     private val catalog: ExerciseCatalog,
-    private val clock: ElapsedClock
+    private val clock: ElapsedClock,
+    private val wallClock: WallClock
 ) : ViewModel() {
 
     private val requestedDayNumber: Int =
@@ -144,7 +146,9 @@ class RoutineDetailViewModel @Inject constructor(
     }
 
     // Re-reads the stored day without losing what the screen is doing: the
-    // timer, the open tutorial and the scroll request all survive.
+    // timer, the open tutorial and the scroll request all survive. The date is
+    // read again with it, so a screen left open past the end of its week stops
+    // being writable rather than keeping the answer it loaded with.
     fun refresh() {
         viewModelScope.launch { read() }
     }
@@ -183,9 +187,7 @@ class RoutineDetailViewModel @Inject constructor(
             }
             .filterValues { sets -> sets.isNotEmpty() }
         val adjustment = adjustmentRepository.getActiveAdjustment(day.id)
-        // Plans stored before startDateMillis existed fall back to the sample
-        // week, the same way the plan list dates them.
-        val weekStart = plan.startDateMillis ?: SampleWorkoutData.weekStartMillis
+        val weekStart = plan.startDateMillis ?: WorkoutWeek.startOfDay(plan.createdAt)
 
         val routine = day.toRoutineUi(previousByKey, catalog, user?.injuries.orEmpty(), user)
         val timer = survivingTimer(routine)
@@ -205,7 +207,7 @@ class RoutineDetailViewModel @Inject constructor(
                 adjustedBanner = adjustment?.let { applied -> bannerFor(applied.proposal, day) },
                 // The note belongs to one undo, not to whatever the day shows next.
                 undoKeptSets = null,
-                isReadOnly = WorkoutWeek.hasEnded(weekStart),
+                isReadOnly = WorkoutWeek.hasEnded(weekStart, wallClock.nowMillis()),
                 isLoaded = true
             )
         }

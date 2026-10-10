@@ -146,6 +146,7 @@ fun ReorderableDayList(
                     weekday = WorkoutDateFormatter.formatWeekday(days[position].dateMillis, locale),
                     day = planDay.day,
                     isMissed = planDay.isMissed,
+                    isPartlyDone = planDay.isPartlyDone,
                     finishedEarly = planDay.finishKind == FinishKind.PARTIAL,
                     isAdjusted = planDay.isAdjusted,
                     minutes = planDay.minutes,

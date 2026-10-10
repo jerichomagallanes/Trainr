@@ -102,4 +102,16 @@ class PlanReadinessTest {
     fun aWeekWithNoDaysIsNotFinishedByBeingEmpty() {
         assertThat(week().isReadyForTheNextWeek()).isFalse()
     }
+
+    // A plan with no stored start date is dated from the day it was made, the
+    // same week the plan screen and the progress screen give it.
+    @Test
+    fun aWeekWithNoStartDateRunsFromTheDayItWasMade() {
+        val undated = week(WorkoutStatus.NOT_STARTED, WorkoutStatus.NOT_STARTED)
+            .copy(startDateMillis = null, createdAt = start)
+
+        assertThat(undated.isReadyForTheNextWeek()).isFalse()
+        assertThat(undated.isReadyForTheNextWeek(nowMillis = WorkoutWeek.dateOfDay(start, 8)))
+            .isTrue()
+    }
 }

@@ -45,8 +45,14 @@ data class WeeklyPlanDay(
     val equipment: List<String> = day.equipment
 ) {
     // Derived, not stored: a session moved to a later day stops being missed
-    // on its own, with no flag to correct.
-    val isMissed: Boolean get() = isPast && day.status != WorkoutStatus.COMPLETED
+    // on its own, with no flag to correct. A day holding work that was logged
+    // was not missed, whether or not it was ever closed.
+    val isMissed: Boolean get() = isUnfinishedAndPast && !day.hasPerformedWork
+
+    val isPartlyDone: Boolean get() = isUnfinishedAndPast && day.hasPerformedWork
+
+    private val isUnfinishedAndPast: Boolean
+        get() = isPast && day.status != WorkoutStatus.COMPLETED
 
     val isFrozen: Boolean get() = isPast || day.status == WorkoutStatus.COMPLETED
 }
@@ -219,7 +225,6 @@ class WeeklyPlanViewModel @Inject constructor(
             return moved.mapIndexed { index, day -> day.copy(dayNumber = slots[index]) }
         }
 
-        // Plans stored before startDateMillis existed fall back to the sample week.
         fun stateFor(
             plan: WeeklyWorkoutPlan,
             isCurrentWeek: Boolean = true,
@@ -232,7 +237,7 @@ class WeeklyPlanViewModel @Inject constructor(
             user: UserProfile? = null,
             catalog: ExerciseCatalog? = null
         ): WeeklyPlanUiState {
-            val start = plan.startDateMillis ?: SampleWorkoutData.weekStartMillis
+            val start = plan.startDateMillis ?: WorkoutWeek.startOfDay(plan.createdAt)
             val readyForTheNext = plan.isReadyForTheNextWeek(nowMillis)
 
             val today = WorkoutWeek.startOfDay(nowMillis)

@@ -8,7 +8,7 @@ data class WeeklyWorkoutPlan(
     val weekNumber: Int,
     val title: String,
     // Local midnight of the Monday the week begins; a day's date is this plus
-    // dayNumber - 1 days. Null on plans stored before the column existed.
+    // dayNumber - 1 days.
     val startDateMillis: Long? = null,
     val workoutDays: List<WorkoutDay>,
     val createdAt: Long = System.currentTimeMillis(),
@@ -35,15 +35,17 @@ data class WorkoutDay(
     val exercises: List<WorkoutExercise> = emptyList(),
     val completedAt: Long? = null
 ) {
+    // A ticked set is work performed, whether or not its exercise was finished.
+    val hasPerformedWork: Boolean
+        get() = exercises.any { exercise ->
+            !exercise.isOmittedToday &&
+                (exercise.isCompleted || exercise.sets.any { it.isCompleted })
+        }
+
     // Finishing early closes the day whatever was logged, so the status alone
-    // would count a session nobody performed as a day of training; a ticked set
-    // is work performed, whether or not its exercise was finished.
+    // would count a session nobody performed as a day of training.
     val countsAsCompleted: Boolean
-        get() = status == WorkoutStatus.COMPLETED &&
-            exercises.any { exercise ->
-                !exercise.isOmittedToday &&
-                    (exercise.isCompleted || exercise.sets.any { it.isCompleted })
-            }
+        get() = status == WorkoutStatus.COMPLETED && hasPerformedWork
 }
 
 data class WorkoutExercise(
