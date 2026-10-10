@@ -578,7 +578,11 @@ class WeeklyPlanScreenTest {
         assertThat(
             composeTestRule.onAllNodesWithText(string(R.string.missed)).fetchSemanticsNodes()
         ).hasSize(weekGoneBy.days.size)
-        composeTestRule.onNodeWithText(string(R.string.start_next_workout)).assertIsDisplayed()
+        // A missed session cannot be trained once its week is over, so the only
+        // way on is the next week.
+        composeTestRule.onNodeWithText(string(R.string.start_next_workout)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.generate_next_week).uppercase())
+            .assertIsDisplayed()
     }
 
     @Test

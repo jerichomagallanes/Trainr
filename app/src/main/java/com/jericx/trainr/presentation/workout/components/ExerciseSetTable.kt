@@ -58,7 +58,8 @@ fun ExerciseSetTable(
     modifier: Modifier = Modifier,
     onDeleteSet: (ExerciseSet) -> Unit = {},
     previousSets: List<ExerciseSet> = emptyList(),
-    units: UnitSystem = UnitSystem.Default
+    units: UnitSystem = UnitSystem.Default,
+    isReadOnly: Boolean = false
 ) {
     val showPrevious = previousSets.isNotEmpty()
     val colors = MaterialTheme.trainrColors
@@ -67,8 +68,8 @@ fun ExerciseSetTable(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(Spacing.small)
     ) {
-        // Headings hide when there are no rows, but the Add set button below is
-        // never conditional: deleting the last set has to leave a way back.
+        // Headings hide when there are no rows; the Add set button below is not
+        // tied to them either, so deleting the last set leaves a way back.
         if (sets.isNotEmpty()) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 ColumnLabel(stringResource(R.string.set_column), Modifier.width(SetColumnWidth))
@@ -113,26 +114,29 @@ fun ExerciseSetTable(
                             null
                         },
                         onSetChanged = onSetChanged,
-                        units = units
+                        units = units,
+                        isReadOnly = isReadOnly
                     )
                 }
 
-                DeletableRow(onDelete = { onDeleteSet(set) }) { row() }
+                DeletableRow(onDelete = { onDeleteSet(set) }, enabled = !isReadOnly) { row() }
             }
         }
 
-        Text(
-            text = stringResource(R.string.add_set),
-            style = MaterialTheme.typography.labelLarge,
-            color = colors.onSurface,
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(MaterialTheme.shapes.medium)
-                .border(1.dp, colors.outlineControl, MaterialTheme.shapes.medium)
-                .clickable(role = Role.Button, onClick = onAddSet)
-                .padding(vertical = Spacing.small)
-        )
+        if (!isReadOnly) {
+            Text(
+                text = stringResource(R.string.add_set),
+                style = MaterialTheme.typography.labelLarge,
+                color = colors.onSurface,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(MaterialTheme.shapes.medium)
+                    .border(1.dp, colors.outlineControl, MaterialTheme.shapes.medium)
+                    .clickable(role = Role.Button, onClick = onAddSet)
+                    .padding(vertical = Spacing.small)
+            )
+        }
     }
 }
 
@@ -142,7 +146,8 @@ private fun SetRow(
     set: ExerciseSet,
     previousText: String?,
     onSetChanged: (ExerciseSet) -> Unit,
-    units: UnitSystem
+    units: UnitSystem,
+    isReadOnly: Boolean
 ) {
     val colors = MaterialTheme.trainrColors
     Row(
@@ -180,6 +185,7 @@ private fun SetRow(
                         )
                     )
                 },
+                isReadOnly = isReadOnly,
                 modifier = Modifier.weight(1f)
             )
         }
@@ -189,6 +195,7 @@ private fun SetRow(
                 seconds = set.actualSeconds,
                 placeholderSeconds = set.targetSeconds,
                 onSecondsChange = { onSetChanged(set.copy(actualSeconds = it)) },
+                isReadOnly = isReadOnly,
                 modifier = Modifier.weight(1f)
             )
 
@@ -197,6 +204,7 @@ private fun SetRow(
                 placeholder = set.targetReps?.toString(),
                 decimal = false,
                 onValueChange = { onSetChanged(set.copy(actualReps = it?.toIntOrNull())) },
+                isReadOnly = isReadOnly,
                 modifier = Modifier.weight(1f)
             )
         }
@@ -206,12 +214,23 @@ private fun SetRow(
                 if (set.isCompleted) R.drawable.ic_check_box else R.drawable.ic_check_box_blank
             ),
             contentDescription = stringResource(
-                if (set.isCompleted) R.string.mark_set_incomplete else R.string.mark_set_complete
+                when {
+                    isReadOnly && set.isCompleted -> R.string.completed
+                    isReadOnly -> R.string.not_completed
+                    set.isCompleted -> R.string.mark_set_incomplete
+                    else -> R.string.mark_set_complete
+                }
             ),
             tint = if (set.isCompleted) colors.statusDoneInk else colors.outlineControl,
             modifier = Modifier
                 .size(CheckSize)
-                .clickable { onSetChanged(set.copy(isCompleted = !set.isCompleted)) }
+                .then(
+                    if (isReadOnly) {
+                        Modifier
+                    } else {
+                        Modifier.clickable { onSetChanged(set.copy(isCompleted = !set.isCompleted)) }
+                    }
+                )
         )
     }
 }
@@ -227,6 +246,30 @@ private fun ColumnLabel(text: String, modifier: Modifier = Modifier) {
     )
 }
 
+// A record shows what was logged and keeps the prescription muted behind it,
+// the same way the field it replaces reads.
+@Composable
+private fun LoggedCell(
+    value: String?,
+    placeholder: String?,
+    modifier: Modifier = Modifier
+) {
+    val colors = MaterialTheme.trainrColors
+    Box(
+        modifier = modifier
+            .padding(horizontal = Spacing.extraSmall)
+            .height(RowHeight),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = value ?: placeholder.orEmpty(),
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (value == null) colors.onSurfaceMuted else colors.onSurface,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
 // The target is the placeholder, not the value: an untouched row claims nothing.
 @Composable
 private fun NumberCell(
@@ -234,8 +277,14 @@ private fun NumberCell(
     placeholder: String?,
     decimal: Boolean,
     onValueChange: (String?) -> Unit,
+    isReadOnly: Boolean,
     modifier: Modifier = Modifier
 ) {
+    if (isReadOnly) {
+        LoggedCell(value = value, placeholder = placeholder, modifier = modifier)
+        return
+    }
+
     val colors = MaterialTheme.trainrColors
     Box(
         modifier = modifier.padding(horizontal = Spacing.extraSmall),
@@ -283,11 +332,13 @@ private fun NumberCell(
 @Composable
 private fun DeletableRow(
     onDelete: () -> Unit,
+    enabled: Boolean,
     content: @Composable () -> Unit
 ) {
     TrainrSwipeToDelete(
         onDelete = onDelete,
-        contentDescription = stringResource(R.string.delete_set)
+        contentDescription = stringResource(R.string.delete_set),
+        enabled = enabled
     ) {
         content()
     }
@@ -300,8 +351,18 @@ private fun DurationCell(
     seconds: Int?,
     placeholderSeconds: Int?,
     onSecondsChange: (Int?) -> Unit,
+    isReadOnly: Boolean,
     modifier: Modifier = Modifier
 ) {
+    if (isReadOnly) {
+        LoggedCell(
+            value = seconds?.let(::formatSeconds),
+            placeholder = placeholderSeconds?.let(::formatSeconds),
+            modifier = modifier
+        )
+        return
+    }
+
     var digits by remember(seconds) {
         mutableStateOf(seconds?.let(::durationDigits) ?: "")
     }

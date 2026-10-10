@@ -69,12 +69,15 @@ data class RoutineDetailUiState(
     val isPickingExercise: Boolean = false,
     val scrollToPosition: Int? = null,
     val undoKeptSets: Int? = null,
+    // A day in a week that is over is a record: nothing on it may be written.
+    val isReadOnly: Boolean = false,
     // The same estimate the plan card and the time presets use; null only
     // without a profile to estimate for, when the header sums the cards.
     val totalMinutes: Int? = null
 ) {
     val hasRemainingWork: Boolean
-        get() = outcome?.finishKind != FinishKind.FULL && routine.hasUnperformedWork
+        get() = !isReadOnly && outcome?.finishKind != FinishKind.FULL &&
+            routine.hasUnperformedWork
 }
 
 data class SessionSavedEvent(
@@ -169,6 +172,9 @@ class RoutineDetailViewModel @Inject constructor(
             }
             .filterValues { sets -> sets.isNotEmpty() }
         val adjustment = adjustmentRepository.getActiveAdjustment(day.id)
+        // Plans stored before startDateMillis existed fall back to the sample
+        // week, the same way the plan list dates them.
+        val weekStart = plan.startDateMillis ?: SampleWorkoutData.weekStartMillis
 
         _uiState.update {
             it.copy(
@@ -176,9 +182,7 @@ class RoutineDetailViewModel @Inject constructor(
                 routine = day.toRoutineUi(previousByKey, catalog, user?.injuries.orEmpty(), user),
                 equipment = day.derivedEquipment(catalog),
                 totalMinutes = user?.let { profile -> day.remainingMinutes(profile, catalog) },
-                dateMillis = plan.startDateMillis
-                    ?.let { start -> WorkoutWeek.dateOfDay(start, day.dayNumber) }
-                    ?: SampleWorkoutData.dateOf(day.dayNumber),
+                dateMillis = WorkoutWeek.dateOfDay(weekStart, day.dayNumber),
                 dayNumber = index + 1,
                 weekNumber = plan.weekNumber,
                 completesTheWeek = completesTheWeek(plan.workoutDays, index + 1),
@@ -187,18 +191,23 @@ class RoutineDetailViewModel @Inject constructor(
                 adjustedBanner = adjustment?.let { applied -> bannerFor(applied.proposal, day) },
                 // The note belongs to one undo, not to whatever the day shows next.
                 undoKeptSets = null,
+                isReadOnly = WorkoutWeek.hasEnded(weekStart),
                 isLoaded = true
             )
         }
     }
 
+    private val isReadOnly: Boolean get() = _uiState.value.isReadOnly
+
     fun openAdjustSheet() {
+        if (isReadOnly) return
         _uiState.update { it.copy(showAdjustSheet = true, isPickingExercise = false) }
     }
 
     // A note asking how a movement is done has already answered the sheet's
     // first question, so it opens on the exercises.
     fun openExercisePicker() {
+        if (isReadOnly) return
         _uiState.update { it.copy(showAdjustSheet = true, isPickingExercise = true) }
     }
 
@@ -235,6 +244,7 @@ class RoutineDetailViewModel @Inject constructor(
     }
 
     fun undoAdjustment() {
+        if (isReadOnly) return
         val adjustment = _uiState.value.activeAdjustment ?: return
 
         viewModelScope.launch {
@@ -278,6 +288,7 @@ class RoutineDetailViewModel @Inject constructor(
             ?: catalog[catalogKey]?.name.orEmpty()
 
     fun toggleExercise(position: Int) {
+        if (isReadOnly) return
         reopen()
         val state = _uiState.value
         val routine = state.routine.toggleCompleted(position)
@@ -292,6 +303,7 @@ class RoutineDetailViewModel @Inject constructor(
     }
 
     fun updateSet(position: Int, set: ExerciseSet) {
+        if (isReadOnly) return
         val was = completionOf(position)
         if (set.isCompleted != tickOf(position, set.setNumber)) reopen()
         _uiState.update { it.copy(routine = it.routine.updateSet(position, set)) }
@@ -306,6 +318,7 @@ class RoutineDetailViewModel @Inject constructor(
     }
 
     fun addSet(position: Int) {
+        if (isReadOnly) return
         reopen()
         val was = completionOf(position)
         _uiState.update { it.copy(routine = it.routine.addSet(position)) }
@@ -328,6 +341,7 @@ class RoutineDetailViewModel @Inject constructor(
     // Deletion is keyed by set number, not instance: the row that reports the
     // swipe may hold a set from before a reload replaced every instance.
     fun deleteSet(position: Int, setNumber: Int) {
+        if (isReadOnly) return
         val sets = _uiState.value.routine.exercises
             .firstOrNull { it.position == position }?.sets ?: return
         val set = sets.firstOrNull { it.setNumber == setNumber } ?: return
@@ -349,6 +363,7 @@ class RoutineDetailViewModel @Inject constructor(
     }
 
     fun completeRoutine() {
+        if (isReadOnly) return
         cancelTick()
         reopen()
         _uiState.update { it.copy(routine = it.routine.completeAll(), timer = null) }
@@ -378,6 +393,7 @@ class RoutineDetailViewModel @Inject constructor(
     }
 
     fun askToFinishEarly() {
+        if (isReadOnly) return
         _uiState.update { it.copy(isConfirmingFinishEarly = true, saveFailed = false) }
     }
 
@@ -388,7 +404,7 @@ class RoutineDetailViewModel @Inject constructor(
     // Saves what was logged and nothing more: no set is filled and no exercise
     // is ticked, so the record reads back as the work actually done.
     fun finishEarly() {
-        if (finishJob?.isActive == true) return
+        if (isReadOnly || finishJob?.isActive == true) return
         cancelTick()
         _uiState.update { it.copy(timer = null) }
 
@@ -440,6 +456,7 @@ class RoutineDetailViewModel @Inject constructor(
     // Clears the ticks and the logged numbers; the prescribed targets were
     // never overwritten, so they need no restoring.
     fun clearProgress() {
+        if (isReadOnly) return
         cancelTick()
         reopen(anyOutcome = true)
         _uiState.update { it.copy(routine = it.routine.clearProgress(), timer = null) }
@@ -457,6 +474,7 @@ class RoutineDetailViewModel @Inject constructor(
 
     // One timer at a time: starting an exercise replaces whatever was running.
     fun startTimer(exercise: ExerciseUi) {
+        if (isReadOnly) return
         cancelTick()
         _uiState.update {
             it.copy(

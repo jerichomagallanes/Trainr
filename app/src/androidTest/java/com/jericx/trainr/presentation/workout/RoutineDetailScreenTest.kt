@@ -566,4 +566,95 @@ class RoutineDetailScreenTest {
 
         assertThat(opened).isTrue()
     }
+
+    // The week this day belongs to is over, so the screen is the record of it.
+    private val record = state.copy(
+        isReadOnly = true,
+        adjustedBanner = AdjustedBannerUi(messageRes = R.string.adjusted_reduced_banner)
+    )
+
+    private fun setRecord() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                RoutineDetailScreen(state = record)
+            }
+        }
+    }
+
+    private fun assertNoneWithContentDescription(id: Int) {
+        assertThat(
+            composeTestRule.onAllNodesWithContentDescription(string(id)).fetchSemanticsNodes()
+        ).isEmpty()
+    }
+
+    @Test
+    fun aRecordOffersNothingThatWrites() {
+        setRecord()
+
+        listOf(
+            R.string.slide_to_complete_routine,
+            R.string.finish_early,
+            R.string.start_workout_over,
+            R.string.adjust_today,
+            R.string.add_set,
+            R.string.undo_adjustment,
+            R.string.start_timer,
+            R.string.need_an_alternative
+        ).forEach {
+            composeTestRule.onNodeWithText(string(it)).assertDoesNotExist()
+        }
+
+        listOf(
+            R.string.mark_exercise_complete,
+            R.string.mark_exercise_incomplete,
+            R.string.mark_set_complete,
+            R.string.mark_set_incomplete,
+            R.string.delete_set
+        ).forEach(::assertNoneWithContentDescription)
+    }
+
+    @Test
+    fun aRecordShowsTheNumbersAsTheyWereLogged() {
+        setRecord()
+
+        composeTestRule.onNodeWithText("CARDIO & CORE").assertIsDisplayed()
+        composeTestRule.onNodeWithText("5:00").assertExists()
+        composeTestRule.onNodeWithText(string(R.string.adjusted_for_today))
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeTestRule.onAllNodesWithText(string(R.string.show_how_to_perform))
+            .onFirst()
+            .performScrollTo()
+            .assertIsDisplayed()
+    }
+
+    // Every exercise ticked is the usual shape of a record, and how a movement
+    // is done is one of the few things left to read on one.
+    @Test
+    fun aRecordOfADayFullyDoneStillShowsHowTheWorkWasPerformed() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                RoutineDetailScreen(state = record.copy(routine = record.routine.completeAll()))
+            }
+        }
+
+        composeTestRule.onAllNodesWithText(string(R.string.show_how_to_perform))
+            .onFirst()
+            .performScrollTo()
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun aRecordStillSaysWhichWorkWasDone() {
+        setRecord()
+
+        assertThat(
+            composeTestRule.onAllNodesWithContentDescription(string(R.string.completed))
+                .fetchSemanticsNodes()
+        ).isNotEmpty()
+        assertThat(
+            composeTestRule.onAllNodesWithContentDescription(string(R.string.not_completed))
+                .fetchSemanticsNodes()
+        ).isNotEmpty()
+    }
 }

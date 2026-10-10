@@ -50,6 +50,7 @@ fun ExerciseCard(
     onAddSet: () -> Unit = {},
     onDeleteSet: (ExerciseSet) -> Unit = {},
     units: UnitSystem = UnitSystem.Default,
+    isReadOnly: Boolean = false,
     content: @Composable ColumnScope.() -> Unit = {}
 ) {
     val colors = MaterialTheme.trainrColors
@@ -99,13 +100,19 @@ fun ExerciseCard(
                     else R.drawable.ic_check_box_blank
                 ),
                 contentDescription = stringResource(
-                    if (exercise.isCompleted) R.string.mark_exercise_incomplete
-                    else R.string.mark_exercise_complete
+                    when {
+                        isReadOnly && exercise.isCompleted -> R.string.completed
+                        isReadOnly -> R.string.not_completed
+                        exercise.isCompleted -> R.string.mark_exercise_incomplete
+                        else -> R.string.mark_exercise_complete
+                    }
                 ),
                 tint = if (exercise.isCompleted) colors.statusDoneInk else colors.outlineControl,
                 modifier = Modifier
                     .size(30.dp)
-                    .clickable(onClick = onToggleCompleted)
+                    .then(
+                        if (isReadOnly) Modifier else Modifier.clickable(onClick = onToggleCompleted)
+                    )
             )
         }
 
@@ -186,7 +193,7 @@ fun ExerciseCard(
 
             Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
                 // Drawn even when empty: gating it on sets takes away the only
-                // Add set button.
+                // Add set button a live day has.
                 ExerciseSetTable(
                     measure = exercise.measure,
                     sets = exercise.sets,
@@ -194,7 +201,8 @@ fun ExerciseCard(
                     onAddSet = onAddSet,
                     onDeleteSet = onDeleteSet,
                     previousSets = exercise.previousSets,
-                    units = units
+                    units = units,
+                    isReadOnly = isReadOnly
                 )
 
                 if (exercise.isEstimated) {

@@ -45,7 +45,8 @@ class ExerciseSetTableTest {
         ),
         onSetChanged: (ExerciseSet) -> Unit = {},
         onAddSet: () -> Unit = {},
-        onDeleteSet: (ExerciseSet) -> Unit = {}
+        onDeleteSet: (ExerciseSet) -> Unit = {},
+        isReadOnly: Boolean = false
     ) {
         composeTestRule.setContent {
             TrainrTheme {
@@ -54,10 +55,49 @@ class ExerciseSetTableTest {
                     sets = sets,
                     onSetChanged = onSetChanged,
                     onAddSet = onAddSet,
-                    onDeleteSet = onDeleteSet
+                    onDeleteSet = onDeleteSet,
+                    isReadOnly = isReadOnly
                 )
             }
         }
+    }
+
+    @Test
+    fun aRecordedSetShowsItsNumbersWithNoWayToChangeThem() {
+        setTable(
+            ExerciseMeasure.WEIGHT_AND_REPS,
+            sets = listOf(
+                ExerciseSet(
+                    setNumber = 1,
+                    targetReps = 12,
+                    targetWeightKg = 20f,
+                    actualReps = 9,
+                    actualWeightKg = 17.5f,
+                    isCompleted = true
+                )
+            ),
+            isReadOnly = true
+        )
+
+        composeTestRule.onNodeWithText("9").assertIsDisplayed()
+        composeTestRule.onNodeWithText("17.5").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription(string(R.string.completed)).assertIsDisplayed()
+
+        composeTestRule.onNodeWithText(string(R.string.add_set)).assertDoesNotExist()
+        composeTestRule.onNodeWithContentDescription(string(R.string.delete_set)).assertDoesNotExist()
+        composeTestRule.onNodeWithContentDescription(string(R.string.mark_set_incomplete))
+            .assertDoesNotExist()
+        assertThat(composeTestRule.onAllNodes(hasSetTextAction()).fetchSemanticsNodes()).isEmpty()
+    }
+
+    // The prescription is all a set nobody logged has left to show.
+    @Test
+    fun aRecordedSetNeverLoggedFallsBackToWhatItAskedFor() {
+        setTable(ExerciseMeasure.REPS, isReadOnly = true)
+
+        composeTestRule.onNodeWithText("12").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription(string(R.string.not_completed))
+            .assertIsDisplayed()
     }
 
     @Test

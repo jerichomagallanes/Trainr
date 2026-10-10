@@ -181,7 +181,10 @@ class WeeklyPlanViewModelTest {
 
     @Test
     fun todaysWorkoutIsTheFirstDayStillOutstanding() {
-        val state = WeeklyPlanViewModel.stateFor(SampleWorkoutData.weekOne)
+        val state = WeeklyPlanViewModel.stateFor(
+            SampleWorkoutData.weekOne,
+            nowMillis = SampleWorkoutData.dateOf(3)
+        )
 
         assertThat(state.nextWorkout?.day?.title).isEqualTo("Cardio & Core")
     }
@@ -400,6 +403,20 @@ class WeeklyPlanViewModelTest {
 
         assertThat(state.nextWorkout?.day?.title).isEqualTo("Session 0")
         assertThat(state.nextWorkoutIsToday).isFalse()
+    }
+
+    // The day screen reads a week that is over as a record, so home cannot send
+    // anyone to it as the next session.
+    @Test
+    fun aWeekWhoseDatesRanOutOffersNoMissedDayToStart() {
+        val start = mondayOf(1_755_000_000_000L)
+        val state = WeeklyPlanViewModel.stateFor(
+            plan = weekOfSessions(start, WorkoutStatus.NOT_STARTED),
+            nowMillis = start + TimeUnit.DAYS.toMillis(7)
+        )
+
+        assertThat(state.nextWorkout).isNull()
+        assertThat(state.canStartNextWeek).isTrue()
     }
 
     @Test
