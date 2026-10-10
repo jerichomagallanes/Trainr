@@ -67,48 +67,44 @@ fun BodyMetricsScreen(
     onBackClick: () -> Unit
 ) {
     // The profile stores centimetres and kilograms whichever units were typed,
-    // so seeded values have to be converted for a client who reads pounds.
+    // so seeded values have to be converted for a client who reads pounds. That
+    // conversion is a unit switch like any other, so it is seeded as one.
     val startsImperial = initial?.bodyUnitSystem == UnitSystem.IMPERIAL
-    var height by remember {
-        mutableStateOf(
-            inProgress?.height
-                ?: initial?.height?.takeIf { it > 0f }
-                    ?.toInt()
-                    ?.toString()
-                    ?.let { cm ->
-                        if (startsImperial) {
-                            BodyMetricsConverter.convertHeightToImperial(cm)
-                        } else {
-                            cm
-                        }
-                    }
-                    .orEmpty()
-        )
+    val seededHeight = remember(initial) {
+        val cm = initial?.height?.takeIf { it > 0f }?.toInt()?.toString().orEmpty()
+        if (startsImperial && cm.isNotEmpty()) {
+            BodyMetricsConverter.UnitSwap(BodyMetricsConverter.convertHeightToImperial(cm), cm)
+        } else {
+            BodyMetricsConverter.UnitSwap(cm)
+        }
     }
-    var weight by remember {
-        mutableStateOf(
-            inProgress?.weight
-                ?: initial?.weight?.takeIf { it > 0f }
-                    ?.let { kg ->
-                        if (startsImperial) {
-                            BodyMetricsConverter.convertWeightToImperial(kg.toString())
-                        } else {
-                            BodyMetricsConverter.formatWeight(kg)
-                        }
-                    }
-                    .orEmpty()
-        )
+    val seededWeight = remember(initial) {
+        val kg = initial?.weight?.takeIf { it > 0f }
+        val asTyped = kg?.let { BodyMetricsConverter.formatWeight(it) }.orEmpty()
+        if (startsImperial && kg != null) {
+            BodyMetricsConverter.UnitSwap(
+                BodyMetricsConverter.convertWeightToImperial(kg.toString()),
+                asTyped
+            )
+        } else {
+            BodyMetricsConverter.UnitSwap(asTyped)
+        }
     }
+
+    var height by remember { mutableStateOf(inProgress?.height ?: seededHeight.shown) }
+    var weight by remember { mutableStateOf(inProgress?.weight ?: seededWeight.shown) }
     var useMetric by remember { mutableStateOf(inProgress?.useMetric ?: !startsImperial) }
 
-    LaunchedEffect(height, weight, useMetric) {
-        onEntryChanged(BodyMetricsEntry(height, weight, useMetric))
-    }
-
     // Switching units must not edit the measurement: what a conversion was
-    // given is kept so the way back reads what was typed.
-    var heightSwap by remember { mutableStateOf(BodyMetricsConverter.UnitSwap()) }
-    var weightSwap by remember { mutableStateOf(BodyMetricsConverter.UnitSwap()) }
+    // given is kept so the way back reads what was typed. It travels with the
+    // text it belongs to, or a step left and came back to reads the index off
+    // the fields again.
+    var heightSwap by remember { mutableStateOf(inProgress?.heightSwap ?: seededHeight) }
+    var weightSwap by remember { mutableStateOf(inProgress?.weightSwap ?: seededWeight) }
+
+    LaunchedEffect(height, weight, useMetric, heightSwap, weightSwap) {
+        onEntryChanged(BodyMetricsEntry(height, weight, useMetric, heightSwap, weightSwap))
+    }
 
     // The age answered one step earlier. A profile that has none yet stores 0.
     val knownAge = age ?: initial?.age?.takeIf { it > 0 }
@@ -118,7 +114,7 @@ fun BodyMetricsScreen(
     // Validated on what the text parses to, not on whether anything was typed:
     // the imperial filter allows "595", which parses to a height of zero.
     val (parsedHeightCm, parsedWeightKg) =
-        BodyMetricsConverter.parseMetrics(height, weight, useMetric)
+        BodyMetricsConverter.keptMetrics(height, weight, useMetric, heightSwap, weightSwap)
     val heightIsUsable = parsedHeightCm in
         Constants.Workout.MIN_HEIGHT_CM..Constants.Workout.MAX_HEIGHT_CM
     val weightIsUsable = parsedWeightKg in
@@ -185,10 +181,9 @@ fun BodyMetricsScreen(
             TrainrButton(
                 text = stringResource(if (isEditing) R.string.save else R.string.next),
                 onClick = {
-                    val (h, w) = BodyMetricsConverter.parseMetrics(height, weight, useMetric)
                     onNextClick(
-                        h,
-                        w,
+                        parsedHeightCm,
+                        parsedWeightKg,
                         if (useMetric) UnitSystem.METRIC else UnitSystem.IMPERIAL
                     )
                 },
@@ -306,7 +301,7 @@ fun BodyMetricsScreen(
                 // Only for accepted measurements: a refused 300 cm and 2 kg
                 // otherwise gets a BMI of 0.2 labelled "Underweight". And only
                 // for adults: the categories are the CDC's adult ones.
-                val bmi = BodyMetricsConverter.calculateBMI(height, weight, useMetric)
+                val bmi = BodyMetricsConverter.bodyMassIndex(parsedHeightCm, parsedWeightKg)
                     ?.takeIf { isFormValid && BodyMetricsConverter.showsAdultBMI(knownAge) }
                 if (bmi != null) {
                     BMICard(bmi = bmi)

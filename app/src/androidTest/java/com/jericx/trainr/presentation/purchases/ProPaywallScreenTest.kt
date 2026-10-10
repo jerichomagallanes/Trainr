@@ -1,7 +1,13 @@
 package com.jericx.trainr.presentation.purchases
 
 import androidx.activity.ComponentActivity
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.platform.WindowInfo
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
@@ -9,9 +15,13 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.R
@@ -307,32 +317,83 @@ class ProPaywallScreenTest {
         composeTestRule.onNodeWithText(string(R.string.pro_restored)).assertDoesNotExist()
     }
 
+    // The defect is a window of this size: the emulator's own is a third taller
+    // again, and the bar fits inside it whatever the ceiling does.
+    private val reviewWindow = DpSize(375.dp, 667.dp)
+
+    private fun setPaywallInAReviewWindow(scale: Float) {
+        composeTestRule.setContent {
+            val base = LocalDensity.current
+            val container = with(base) {
+                IntSize(reviewWindow.width.roundToPx(), reviewWindow.height.roundToPx())
+            }
+            CompositionLocalProvider(
+                LocalDensity provides Density(base.density, fontScale = scale),
+                LocalWindowInfo provides FixedWindow(container)
+            ) {
+                TrainrTheme {
+                    Box(modifier = Modifier.size(reviewWindow).testTag(WINDOW)) {
+                        ProPaywallScreen(
+                            reason = PaywallReason.NEXT_WEEK,
+                            plans = listOf(monthly, yearly, lifetime),
+                            selectedId = "yearly",
+                            isWorking = false,
+                            noticeRes = null,
+                            onSelect = {},
+                            onBuy = {},
+                            onRestore = {},
+                            onNoticeShown = {},
+                            onClose = {},
+                            onOpenLink = {}
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    private fun callToActionBounds() = composeTestRule.onNodeWithText(
+        button(R.string.pro_subscribe_to, string(R.string.pro_yearly))
+    ).getUnclippedBoundsInRoot()
+
+    // The bar is pinned and its one unbounded part is the list of plans, so the
+    // list is what gives way first. At the size the review saw, the way out of
+    // the paywall is on screen, cut off or scrolled away by nothing.
+    @Test
+    fun theWayOutOfThePaywallIsOnScreen() {
+        setPaywallInAReviewWindow(scale = 1f)
+
+        val window = composeTestRule.onNodeWithTag(WINDOW).getUnclippedBoundsInRoot()
+        val wayOut = composeTestRule.onNodeWithText(string(R.string.pro_not_now))
+            .getUnclippedBoundsInRoot()
+
+        assertThat(callToActionBounds().bottom.value).isAtMost(window.bottom.value)
+        assertThat(wayOut.bottom.value).isAtMost(window.bottom.value)
+    }
+
+    // Nothing shows this page and the whole of this bar at the largest text
+    // size, so the bar keeps its ceiling, the page above it stays a page, and
+    // the way out is reached by a scroll the bar draws rather than hides.
+    @Test
+    fun atTheLargestTextThePaywallKeepsItsPageAndItsWayOut() {
+        setPaywallInAReviewWindow(scale = 2f)
+
+        val window = composeTestRule.onNodeWithTag(WINDOW).getUnclippedBoundsInRoot()
+        assertThat(callToActionBounds().top.value)
+            .isAtLeast((window.top.value + window.bottom.value) / 2f)
+
+        composeTestRule.onNodeWithText(string(R.string.pro_not_now)).performScrollTo()
+        val wayOut = composeTestRule.onNodeWithText(string(R.string.pro_not_now))
+            .getUnclippedBoundsInRoot()
+
+        assertThat(wayOut.bottom.value).isAtMost(window.bottom.value)
+    }
+
     // Three cards abreast leave no room for a price at the largest text size,
     // and a price that is cut is a price the screen has not stated.
     @Test
     fun atTheLargestTextThePlansStackSoEveryPriceHasItsOwnLine() {
-        composeTestRule.setContent {
-            val base = LocalDensity.current
-            CompositionLocalProvider(
-                LocalDensity provides Density(base.density, fontScale = 2f)
-            ) {
-                TrainrTheme {
-                    ProPaywallScreen(
-                        reason = PaywallReason.NEXT_WEEK,
-                        plans = listOf(monthly, yearly, lifetime),
-                        selectedId = "yearly",
-                        isWorking = false,
-                        noticeRes = null,
-                        onSelect = {},
-                        onBuy = {},
-                        onRestore = {},
-                        onNoticeShown = {},
-                        onClose = {},
-                        onOpenLink = {}
-                    )
-                }
-            }
-        }
+        setPaywallInAReviewWindow(scale = 2f)
 
         val rows = listOf(monthly, yearly, lifetime).map {
             composeTestRule.onNodeWithText(it.price).getUnclippedBoundsInRoot()
@@ -341,4 +402,10 @@ class ProPaywallScreenTest {
         assertThat(rows[1].top.value).isAtLeast(rows[0].bottom.value)
         assertThat(rows[2].top.value).isAtLeast(rows[1].bottom.value)
     }
+}
+
+private const val WINDOW = "reviewWindow"
+
+private class FixedWindow(override val containerSize: IntSize) : WindowInfo {
+    override val isWindowFocused = true
 }

@@ -15,6 +15,7 @@ import com.jericx.trainr.domain.generation.PlanGenerator
 import com.jericx.trainr.domain.generation.PlanRequest
 import com.jericx.trainr.domain.generation.PlanSkeletonBuilder
 import com.jericx.trainr.domain.repository.UserRepository
+import com.jericx.trainr.presentation.onboarding.util.BodyMetricsConverter
 import com.jericx.trainr.presentation.workout.util.WorkoutWeek
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -232,11 +233,14 @@ enum class OnboardingStep {
 }
 
 // What the measurements step currently has typed in it, in the units it is
-// showing. Text rather than numbers: a part-typed "5" is not a height yet.
+// showing. Text rather than numbers: a part-typed "5" is not a height yet. The
+// swaps carry the measurements behind that text, which the index is read from.
 data class BodyMetricsEntry(
     val height: String,
     val weight: String,
-    val useMetric: Boolean
+    val useMetric: Boolean,
+    val heightSwap: BodyMetricsConverter.UnitSwap = BodyMetricsConverter.UnitSwap(),
+    val weightSwap: BodyMetricsConverter.UnitSwap = BodyMetricsConverter.UnitSwap()
 )
 
 data class OnboardingState(

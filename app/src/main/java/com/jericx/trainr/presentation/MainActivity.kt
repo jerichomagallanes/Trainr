@@ -386,6 +386,7 @@ fun AppContent(
                     WorkoutSetupScreen(
                         initial = onboardingState.filledFor(OnboardingStep.SETUP, editing),
                         isEditing = editing,
+                        bodyUnits = onboardingState.userProfile.bodyUnitSystem,
                         stockedEquipment = onboardingViewModel.stockedEquipment,
                         longestSessionMinutes = onboardingViewModel::longestSessionMinutes,
                         onNextClick = { equipment, liftingUnits, days, duration ->
