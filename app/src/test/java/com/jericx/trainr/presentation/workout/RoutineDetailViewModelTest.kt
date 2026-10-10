@@ -16,6 +16,7 @@ import com.jericx.trainr.R
 import com.jericx.trainr.domain.purchases.AdjustmentAllowance
 import com.jericx.trainr.domain.repository.AdjustmentRepository
 import com.jericx.trainr.domain.repository.UserRepository
+import com.jericx.trainr.domain.time.ElapsedClock
 import com.jericx.trainr.domain.unstuck.ActualOrigin
 import com.jericx.trainr.domain.unstuck.AdjustmentProposal
 import com.jericx.trainr.domain.unstuck.AdjustmentReason
@@ -44,6 +45,7 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -88,12 +90,21 @@ class RoutineDetailViewModelTest {
         }
     }
 
-    private fun viewModel(
+    // The countdown reads a clock rather than counting ticks, so the fake tracks
+    // the scheduler and keeps virtual and real time in step; the skew stands in
+    // for a device that slept through part of a hold.
+    private class TestClock(private val scheduler: TestCoroutineScheduler) : ElapsedClock {
+        var skewMillis = 0L
+        override fun elapsedMillis(): Long = scheduler.currentTime + skewMillis
+    }
+
+    private fun TestScope.viewModel(
         dayNumber: Int = SampleWorkoutData.DEFAULT_DAY_NUMBER,
         repository: UserRepository = emptyRepository(),
         weekNumber: Int = Screen.RoutineDetail.LATEST_WEEK,
         adjustments: AdjustmentRepository = emptyAdjustments(),
-        allowance: AdjustmentAllowance = FakeAllowance()
+        allowance: AdjustmentAllowance = FakeAllowance(),
+        clock: ElapsedClock = TestClock(testScheduler)
     ) = RoutineDetailViewModel(
         SavedStateHandle(
             mapOf(
@@ -104,7 +115,8 @@ class RoutineDetailViewModelTest {
         repository,
         adjustments,
         allowance,
-        SampleWorkoutData.catalog
+        SampleWorkoutData.catalog,
+        clock
     )
 
     // A week that is over turns its days into records, so a fixture meant to be
@@ -121,8 +133,10 @@ class RoutineDetailViewModelTest {
         repository: UserRepository = repositoryWith(
             SampleWorkoutData.weekOne.copy(startDateMillis = weekStartingDaysAgo(0))
         ),
-        weekNumber: Int = Screen.RoutineDetail.LATEST_WEEK
-    ) = viewModel(dayNumber, repository, weekNumber).also { advanceUntilIdle() }
+        weekNumber: Int = Screen.RoutineDetail.LATEST_WEEK,
+        clock: ElapsedClock = TestClock(testScheduler)
+    ) = viewModel(dayNumber, repository, weekNumber, clock = clock)
+        .also { advanceUntilIdle() }
 
     private fun RoutineDetailViewModel.exercise(position: Int): ExerciseUi =
         uiState.value.routine.exercises.first { it.position == position }
@@ -500,6 +514,105 @@ class RoutineDetailViewModelTest {
 
         assertThat(viewModel.uiState.value.timer).isNull()
         assertThat(viewModel.isCompleted(2)).isTrue()
+    }
+
+    // Time off the screen is still time: a countdown is a span of wall clock,
+    // not a count of the ticks the process managed to run.
+    @Test
+    fun aCountdownTheDeviceSleptThroughComesBackToWhatIsReallyLeft() = runTest {
+        val clock = TestClock(testScheduler)
+        val viewModel = loadedViewModel(clock = clock)
+
+        viewModel.startTimer(viewModel.exercise(2))
+        advanceTimeBy(3_000)
+        runCurrent()
+        clock.skewMillis += 25_000
+        advanceTimeBy(1_000)
+        runCurrent()
+
+        assertThat(viewModel.uiState.value.timer?.remainingSeconds)
+            .isEqualTo(viewModel.seconds(2) - 29)
+        assertThat(viewModel.uiState.value.timer?.isRunning).isTrue()
+    }
+
+    @Test
+    fun aCountdownThatRanOutWhileTheScreenWasAwayReadsAsFinishedRatherThanFrozen() = runTest {
+        val clock = TestClock(testScheduler)
+        val viewModel = loadedViewModel(
+            dayNumber = 1,
+            repository = repositoryWith(timedPlan),
+            clock = clock
+        )
+
+        viewModel.startTimer(viewModel.exercise(1))
+        advanceTimeBy(3_000)
+        runCurrent()
+        clock.skewMillis += HOLD_SECONDS * 1_000L
+        advanceTimeBy(1_000)
+        runCurrent()
+
+        val timer = viewModel.uiState.value.timer
+        assertThat(timer?.isFinished).isTrue()
+        assertThat(timer?.isRunning).isFalse()
+        assertThat(timer?.remainingSeconds).isEqualTo(0)
+    }
+
+    // A countdown belongs to the exercise it was started on, not to the place
+    // that exercise held: an adjustment can leave another movement there.
+    @Test
+    fun anExerciseReplacedUnderTheCountdownTakesItWithIt() = runTest {
+        val substituted = timedPlan.copy(
+            workoutDays = timedPlan.workoutDays.map { day ->
+                day.copy(
+                    exercises = day.exercises.map {
+                        it.copy(id = 51, exerciseKey = "side_plank", name = "Side Plank")
+                    }
+                )
+            }
+        )
+        val repository = mockk<UserRepository>(relaxed = true).also {
+            coEvery { it.getCurrentUser() } returns UserProfile(id = 1)
+            every { it.getWeeklyWorkoutPlans(1) } returns
+                flowOf(listOf(timedPlan)) andThen flowOf(listOf(substituted))
+        }
+        val viewModel = loadedViewModel(dayNumber = 1, repository = repository)
+
+        viewModel.startTimer(viewModel.exercise(1))
+        viewModel.refresh()
+        advanceTimeBy(HOLD_SECONDS * 1_000L)
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.timer).isNull()
+        val set = viewModel.exercise(1).sets.single()
+        assertThat(set.actualSeconds).isNull()
+        assertThat(set.actualOrigin).isNotEqualTo(ActualOrigin.MEASURED)
+        coVerify(exactly = 0) {
+            repository.updateExerciseSet(match { it.actualSeconds != null }, any())
+        }
+    }
+
+    // Ticking the set is the natural end of a hold, and it must take the
+    // countdown with it: nothing may go on running once its controls are gone.
+    @Test
+    fun tickingTheSetStopsTheCountdownAndLeavesNothingBehind() = runTest {
+        val viewModel = loadedViewModel(dayNumber = 1, repository = repositoryWith(timedPlan))
+        val alerts = mutableListOf<Unit>()
+        val collecting = launch { viewModel.timerFinished.toList(alerts) }
+
+        viewModel.startTimer(viewModel.exercise(1))
+        advanceTimeBy(3_000)
+        runCurrent()
+        viewModel.updateSet(1, viewModel.exercise(1).sets.single().copy(isCompleted = true))
+        advanceTimeBy(HOLD_SECONDS * 1_000L)
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.timer).isNull()
+        assertThat(viewModel.isCompleted(1)).isTrue()
+        val set = viewModel.exercise(1).sets.single()
+        assertThat(set.actualSeconds).isNull()
+        assertThat(set.actualOrigin).isNotEqualTo(ActualOrigin.MEASURED)
+        assertThat(alerts).isEmpty()
+        collecting.cancel()
     }
 
     @Test
