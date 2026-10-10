@@ -242,6 +242,34 @@ class BodyMetricsConverterTest {
     }
 
     @Test
+    fun `a part-typed imperial height survives the unit tabs`() {
+        val toMetric = BodyMetricsConverter.swapUnits(
+            "5",
+            BodyMetricsConverter.UnitSwap(),
+            BodyMetricsConverter::convertHeightToMetric
+        )
+        val back = BodyMetricsConverter.swapUnits(
+            toMetric.shown,
+            toMetric,
+            BodyMetricsConverter::convertHeightToImperial
+        )
+
+        assertThat(toMetric.shown).isEqualTo("5")
+        assertThat(back.shown).isEqualTo("5")
+    }
+
+    @Test
+    fun `an empty field stays empty across the unit tabs`() {
+        val swapped = BodyMetricsConverter.swapUnits(
+            "",
+            BodyMetricsConverter.UnitSwap(),
+            BodyMetricsConverter::convertHeightToMetric
+        )
+
+        assertThat(swapped.shown).isEmpty()
+    }
+
+    @Test
     fun `switching units repeatedly never drifts`() {
         var text = "177"
         var swap = BodyMetricsConverter.UnitSwap()

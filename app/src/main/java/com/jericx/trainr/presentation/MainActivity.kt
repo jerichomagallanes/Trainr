@@ -341,6 +341,11 @@ fun AppContent(
                         initial = onboardingState.filledFor(OnboardingStep.BODY_METRICS, editing),
                         age = onboardingState.userProfile.age.takeIf { it > 0 },
                         isEditing = editing,
+                        inProgress = onboardingViewModel.bodyMetricsInProgress()
+                            .takeIf { !editing },
+                        onEntryChanged = { metrics ->
+                            if (!editing) onboardingViewModel.rememberBodyMetrics(metrics)
+                        },
                         onNextClick = { height, weight, units ->
                             onboardingViewModel.updateBodyMetrics(height, weight, units)
                             if (editing) {

@@ -7,15 +7,19 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -29,9 +33,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.jericx.trainr.R
 import com.jericx.trainr.presentation.common.components.core.TrainrButton
@@ -40,6 +47,7 @@ import com.jericx.trainr.presentation.common.components.layout.TrainrTopBar
 import com.jericx.trainr.presentation.common.components.typography.TrainrScreenTitle
 import com.jericx.trainr.presentation.common.components.typography.TrainrSectionTitle
 import com.jericx.trainr.presentation.common.theme.Spacing
+import com.jericx.trainr.presentation.common.theme.scaledWithText
 import com.jericx.trainr.presentation.common.theme.trainrColors
 
 // Ours rather than the prebuilt one, so it uses the app's own tokens and is
@@ -61,6 +69,9 @@ fun ProPaywallScreen(
 ) {
     val colors = MaterialTheme.trainrColors
     val selected = plans.firstOrNull { it.id == selectedId }
+    val barCeiling = with(LocalDensity.current) {
+        LocalWindowInfo.current.containerSize.height.toDp() * BAR_SHARE
+    }
 
     // Paints its own ground: as a destination of its own there is nothing behind
     // it but the window, and the window does not follow the app's theme.
@@ -177,13 +188,16 @@ fun ProPaywallScreen(
                 }
             }
         }
+        // Pinned, and every word in it grows with the text setting, so it is
+        // held to a share of the screen and scrolls inside that.
         PurchaseBar(
             plans = plans,
             selected = selected,
             isWorking = isWorking,
             onSelect = onSelect,
             onBuy = onBuy,
-            onClose = onClose
+            onClose = onClose,
+            ceiling = barCeiling
         )
         ProNoticeDialog(noticeRes = noticeRes, onDismiss = onNoticeShown)
     }
@@ -367,6 +381,12 @@ private fun Questions() {
 private val MARK_WIDTH = 72.dp
 private val REASON_ICON = 30.dp
 private val CHEVRON = 24.dp
+private val PLAN_MIN_WIDTH = 84.dp
+
+// At most a third of the screen for the bar, and at most half of that for the
+// cards, so the button and the price under it are in the bar without scrolling.
+private const val BAR_SHARE = 0.34f
+private const val OFFER_SHARE = 0.5f
 
 @Composable
 private fun Feature(@DrawableRes iconRes: Int, heading: String, detail: String) {
@@ -398,33 +418,35 @@ private fun PurchaseBar(
     isWorking: Boolean,
     onSelect: (String) -> Unit,
     onBuy: () -> Unit,
-    onClose: () -> Unit
+    onClose: () -> Unit,
+    ceiling: Dp
 ) {
     val colors = MaterialTheme.trainrColors
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .heightIn(max = ceiling)
             .background(colors.surfacePanel)
-            .padding(Spacing.large),
+            .padding(Spacing.large)
+            .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(Spacing.small)
     ) {
-        if (plans.isEmpty()) {
-            Text(
-                text = stringResource(R.string.pro_unavailable),
-                style = MaterialTheme.typography.bodyMedium,
-                color = colors.onSurfaceMuted
-            )
-        } else {
-            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
-                plans.forEach { plan ->
-                    PlanCard(
-                        plan = plan,
-                        isSelected = plan.id == selected?.id,
-                        onClick = { onSelect(plan.id) },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
+        // The offer gives way first, so the button and the price under it are
+        // still in the bar whatever the text setting does to the cards.
+        Box(
+            modifier = Modifier
+                .heightIn(max = ceiling * OFFER_SHARE)
+                .verticalScroll(rememberScrollState())
+        ) {
+            if (plans.isEmpty()) {
+                Text(
+                    text = stringResource(R.string.pro_unavailable),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.onSurfaceMuted
+                )
+            } else {
+                PlanChooser(plans = plans, selected = selected, onSelect = onSelect)
             }
         }
         TrainrButton(
@@ -471,15 +493,57 @@ private fun renewalNote(selected: PaywallPlan?): String? = when {
     else -> stringResource(R.string.pro_cancel_anytime)
 }
 
+// Side by side while every card still has room for its own words; once the text
+// setting takes that away they stack full width, where a price has the whole
+// line and nothing has to be broken or cut.
+@Composable
+private fun PlanChooser(
+    plans: List<PaywallPlan>,
+    selected: PaywallPlan?,
+    onSelect: (String) -> Unit
+) {
+    BoxWithConstraints {
+        val abreast = PLAN_MIN_WIDTH.scaledWithText() * plans.size +
+            Spacing.small * (plans.size - 1) <= maxWidth
+
+        if (abreast) {
+            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
+                plans.forEach { plan ->
+                    PlanCard(
+                        plan = plan,
+                        isSelected = plan.id == selected?.id,
+                        onClick = { onSelect(plan.id) },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+        } else {
+            Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
+                plans.forEach { plan ->
+                    PlanCard(
+                        plan = plan,
+                        isSelected = plan.id == selected?.id,
+                        onClick = { onSelect(plan.id) },
+                        stacked = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+        }
+    }
+}
+
 @Composable
 private fun PlanCard(
     plan: PaywallPlan,
     isSelected: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    stacked: Boolean = false
 ) {
     val colors = MaterialTheme.trainrColors
     val ink = if (isSelected) colors.onSurfaceSelected else colors.onSurface
+    val subdued = if (isSelected) colors.onSurfaceSelected else colors.onSurfaceMuted
 
     Column(
         modifier = modifier
@@ -501,24 +565,48 @@ private fun PlanCard(
                     .padding(vertical = 3.dp)
             )
         }
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = Spacing.small, horizontal = 4.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(2.dp)
-        ) {
-            Text(
-                text = stringResource(plan.termRes),
-                style = MaterialTheme.typography.labelMedium,
-                color = ink
-            )
-            Text(text = plan.price, style = MaterialTheme.typography.titleSmall, color = ink)
-            Text(
-                text = stringResource(plan.billingRes),
-                style = MaterialTheme.typography.bodySmall,
-                color = if (isSelected) colors.onSurfaceSelected else colors.onSurfaceMuted
-            )
+        if (stacked) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = Spacing.small, horizontal = Spacing.card),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(plan.termRes),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = ink
+                    )
+                    Text(
+                        text = stringResource(plan.billingRes),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = subdued
+                    )
+                }
+                Text(text = plan.price, style = MaterialTheme.typography.titleSmall, color = ink)
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = Spacing.small, horizontal = 4.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Text(
+                    text = stringResource(plan.termRes),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = ink
+                )
+                Text(text = plan.price, style = MaterialTheme.typography.titleSmall, color = ink)
+                Text(
+                    text = stringResource(plan.billingRes),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = subdued
+                )
+            }
         }
     }
 }

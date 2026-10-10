@@ -49,7 +49,8 @@ class OnboardingViewModel @Inject constructor(
         _onboardingState.value = _onboardingState.value.copy(
             answeredSteps = answeredWith(OnboardingStep.BASIC_INFO),
             userProfile = _onboardingState.value.userProfile.copy(
-                firstName = firstName,
+                // Stored trimmed, because every greeting in the app reads it back.
+                firstName = firstName.trim(),
                 age = age,
                 gender = gender,
                 experienceLevel = experience
@@ -57,7 +58,19 @@ class OnboardingViewModel @Inject constructor(
         )
     }
 
+    // Held outside the state flow so a keystroke does not recompose the graph:
+    // a step popped off the back stack loses its own state, and what was typed
+    // has to outlive it for the rest of the flow.
+    private var metricsInProgress: BodyMetricsEntry? = null
+
+    fun rememberBodyMetrics(entry: BodyMetricsEntry) {
+        metricsInProgress = entry
+    }
+
+    fun bodyMetricsInProgress(): BodyMetricsEntry? = metricsInProgress
+
     fun updateBodyMetrics(height: Float, weight: Float, units: UnitSystem) {
+        metricsInProgress = null
         _onboardingState.value = _onboardingState.value.copy(
             answeredSteps = answeredWith(OnboardingStep.BODY_METRICS),
             userProfile = _onboardingState.value.userProfile.copy(
@@ -195,6 +208,14 @@ enum class OnboardingStep {
     SETUP,
     LIMITATIONS
 }
+
+// What the measurements step currently has typed in it, in the units it is
+// showing. Text rather than numbers: a part-typed "5" is not a height yet.
+data class BodyMetricsEntry(
+    val height: String,
+    val weight: String,
+    val useMetric: Boolean
+)
 
 data class OnboardingState(
     val userProfile: UserProfile = UserProfile(),

@@ -68,16 +68,6 @@ fun ReviewScreen(
         },
         bottomButton = {
             Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
-                // The health disclaimer sits with the button, not at the end
-                // of the scroll, so it is read before a plan is written.
-                if (!isProfileUpdate) {
-                    Text(
-                        text = stringResource(R.string.health_disclaimer),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.trainrColors.onSurfaceMuted
-                    )
-                }
-
                 TrainrButton(
                     text = stringResource(
                         if (isProfileUpdate) R.string.save_profile
@@ -85,6 +75,18 @@ fun ReviewScreen(
                     ),
                     onClick = onConfirmClick
                 )
+
+                // The health disclaimer sits with the button, not at the end of
+                // the scroll, so it is read before a plan is written. Under it
+                // rather than over it: the bar is capped, and at the largest
+                // text setting whatever comes second is the part that scrolls.
+                if (!isProfileUpdate) {
+                    Text(
+                        text = stringResource(R.string.health_disclaimer),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.trainrColors.onSurfaceMuted
+                    )
+                }
             }
         }
     ) { paddingValues ->

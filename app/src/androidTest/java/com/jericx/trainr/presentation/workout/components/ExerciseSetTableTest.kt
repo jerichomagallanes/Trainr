@@ -1,6 +1,7 @@
 package com.jericx.trainr.presentation.workout.components
 
 import androidx.activity.ComponentActivity
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
@@ -17,6 +18,8 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.down
 import androidx.compose.ui.test.moveTo
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.swipe
 import androidx.compose.ui.test.onNodeWithText
@@ -26,6 +29,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.unit.Density
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.R
@@ -438,5 +442,31 @@ class ExerciseSetTableTest {
         composeTestRule.onNodeWithText(string(R.string.add_set)).performClick()
 
         assertThat(added).isTrue()
+    }
+
+    // A fixed 24dp box clipped the tick at the largest accessibility size.
+    @Test
+    fun theSetTickGrowsWithTheTextSetting() {
+        composeTestRule.setContent {
+            val base = LocalDensity.current
+            CompositionLocalProvider(
+                LocalDensity provides Density(base.density, fontScale = 2f)
+            ) {
+                TrainrTheme {
+                    ExerciseSetTable(
+                        measure = ExerciseMeasure.REPS,
+                        sets = listOf(ExerciseSet(setNumber = 1, targetReps = 12)),
+                        onSetChanged = {},
+                        onAddSet = {}
+                    )
+                }
+            }
+        }
+
+        val tick = composeTestRule.onNodeWithContentDescription(
+            string(R.string.mark_set_complete)
+        ).getUnclippedBoundsInRoot()
+
+        assertThat((tick.right - tick.left).value).isAtLeast(40f)
     }
 }
