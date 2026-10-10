@@ -37,6 +37,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -219,7 +221,20 @@ private fun Comparison() {
             ColumnHead(stringResource(R.string.pro_compare_free), isPro = false)
             ColumnHead(stringResource(R.string.pro_compare_pro), isPro = true)
         }
+        val freeHead = stringResource(R.string.pro_compare_free)
+        val proHead = stringResource(R.string.pro_compare_pro)
+        val rowFormat = stringResource(R.string.pro_compare_row)
         COMPARISON.forEach { row ->
+            // A tick on its own belongs to no column, so the whole line is read
+            // as one sentence rather than three unrelated elements.
+            val spoken = comparisonRowLabel(
+                feature = stringResource(row.label),
+                freeHead = freeHead,
+                free = markWord(row.free),
+                proHead = proHead,
+                pro = markWord(row.pro),
+                format = rowFormat
+            )
             Column {
                 Box(
                     modifier = Modifier
@@ -230,7 +245,8 @@ private fun Comparison() {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = Spacing.small),
+                        .padding(vertical = Spacing.small)
+                        .clearAndSetSemantics { contentDescription = spoken },
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
@@ -295,6 +311,24 @@ private fun ColumnHead(text: String, isPro: Boolean) {
         modifier = Modifier.width(MARK_WIDTH)
     )
 }
+
+@Composable
+private fun markWord(mark: Mark): String = stringResource(
+    when (mark) {
+        Mark.Yes -> R.string.pro_compare_yes
+        Mark.No -> R.string.pro_compare_no
+        is Mark.Count -> mark.res
+    }
+)
+
+internal fun comparisonRowLabel(
+    feature: String,
+    freeHead: String,
+    free: String,
+    proHead: String,
+    pro: String,
+    format: String
+): String = String.format(format, feature, freeHead, free, proHead, pro)
 
 @Composable
 private fun MarkCell(mark: Mark) {

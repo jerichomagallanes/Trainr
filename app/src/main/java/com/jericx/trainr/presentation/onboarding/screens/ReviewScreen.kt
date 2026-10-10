@@ -24,6 +24,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.jericx.trainr.R
@@ -272,13 +275,16 @@ private fun ProfileSection(
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.trainrColors.onSurface
             )
+            val editLabel = stringResource(R.string.edit_section, title)
             Text(
                 text = stringResource(R.string.edit),
                 style = MaterialTheme.typography.labelLarge.copy(
                     fontWeight = FontWeight.SemiBold
                 ),
                 color = MaterialTheme.trainrColors.brandStrong,
-                modifier = Modifier.clickable(onClick = onEdit)
+                modifier = Modifier
+                    .clickable(role = Role.Button, onClick = onEdit)
+                    .semantics { contentDescription = editLabel }
             )
         }
 

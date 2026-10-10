@@ -233,4 +233,29 @@ class ExerciseSetTableTest {
         assertThat(previousCellText(ExerciseMeasure.REPS, set())).isEqualTo("—")
         assertThat(previousCellText(ExerciseMeasure.DURATION, set())).isEqualTo("—")
     }
+
+    @Test
+    fun aFilledCellIsNamedByItsColumnAndSet() {
+        assertThat(
+            setCellLabel("Set 1 weight in kilograms", "17.5", "20", TARGET_FORMAT)
+        ).isEqualTo("Set 1 weight in kilograms")
+        assertThat(setCellLabel("Set 2 reps", "6", "12", TARGET_FORMAT)).isEqualTo("Set 2 reps")
+    }
+
+    // The placeholder is the prescription; reading it as the value claims a set
+    // that was never logged.
+    @Test
+    fun anEmptyCellOffersItsTargetWithoutClaimingIt() {
+        assertThat(setCellLabel("Set 1 reps", null, "12", TARGET_FORMAT))
+            .isEqualTo("Set 1 reps, target 12")
+        assertThat(setCellLabel("Set 3 time", null, "1:30", TARGET_FORMAT))
+            .isEqualTo("Set 3 time, target 1:30")
+    }
+
+    @Test
+    fun aCellWithNeitherValueNorTargetIsJustItsColumn() {
+        assertThat(setCellLabel("Set 1 reps", null, null, TARGET_FORMAT)).isEqualTo("Set 1 reps")
+    }
 }
+
+private const val TARGET_FORMAT = "%1\$s, target %2\$s"
