@@ -17,10 +17,25 @@ object WorkoutWeek {
             timeInMillis
         }
 
+    // A week is over once its last day has passed, which is the rule the plan
+    // list reads a single day by.
+    fun hasEnded(startDateMillis: Long, nowMillis: Long = System.currentTimeMillis()): Boolean =
+        startOfDay(dateOfDay(startDateMillis, LAST_ISO_DAY)) < startOfDay(nowMillis)
+
     fun dateOfDay(startDateMillis: Long, dayNumber: Int): Long =
         Calendar.getInstance().run {
             timeInMillis = startDateMillis
             add(Calendar.DAY_OF_YEAR, dayNumber - 1)
             timeInMillis
         }
+
+    // ISO numbering, Monday 1 to Sunday 7, read in the device's own zone: the
+    // same instant is a different weekday in UTC either side of midnight.
+    fun isoWeekdayOf(dateMillis: Long): Int =
+        Calendar.getInstance().run {
+            timeInMillis = dateMillis
+            (get(Calendar.DAY_OF_WEEK) + 5) % 7 + 1
+        }
+
+    private const val LAST_ISO_DAY = 7
 }

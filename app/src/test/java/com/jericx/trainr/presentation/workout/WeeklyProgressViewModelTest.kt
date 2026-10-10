@@ -1,9 +1,11 @@
 package com.jericx.trainr.presentation.workout
 
 import com.google.common.truth.Truth.assertThat
+import com.jericx.trainr.domain.model.ExerciseSet
 import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
 import com.jericx.trainr.domain.model.WorkoutDay
+import com.jericx.trainr.domain.model.WorkoutExercise
 import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.domain.repository.UserRepository
 import com.jericx.trainr.presentation.workout.model.WeekStatus
@@ -45,13 +47,18 @@ class WeeklyProgressViewModelTest {
 
     private val weekStart = mondayOf(1_755_000_000_000L)
 
-    private fun day(number: Int, status: WorkoutStatus) = WorkoutDay(
+    private fun day(
+        number: Int,
+        status: WorkoutStatus,
+        performed: Boolean = status == WorkoutStatus.COMPLETED
+    ) = WorkoutDay(
         dayNumber = number,
         title = "Day $number",
         status = status,
         duration = 45,
         exerciseCount = 5,
-        equipment = emptyList()
+        equipment = emptyList(),
+        exercises = listOf(WorkoutExercise(name = "Movement", isCompleted = performed))
     )
 
     private fun plan(
@@ -70,6 +77,60 @@ class WeeklyProgressViewModelTest {
     private fun duringTheWeek() = weekStart + TimeUnit.DAYS.toMillis(3)
     private fun afterTheWeek() = weekStart + TimeUnit.DAYS.toMillis(8)
     private fun beforeTheWeek() = weekStart - TimeUnit.DAYS.toMillis(2)
+
+    // Finishing early closes the day whatever was logged, and a day nobody
+    // trained is not a day of training.
+    @Test
+    fun aDayClosedWithNothingPerformedIsNotACompletedDay() {
+        val plan = plan(statuses = arrayOf(WorkoutStatus.COMPLETED, WorkoutStatus.COMPLETED))
+        val closedEarly = plan.copy(
+            workoutDays = listOf(
+                day(1, WorkoutStatus.COMPLETED, performed = false),
+                plan.workoutDays[1]
+            )
+        )
+
+        val progress = WeeklyProgressViewModel.weekProgressOf(
+            closedEarly,
+            nowMillis = duringTheWeek()
+        )
+
+        assertThat(progress.completedDays).isEqualTo(1)
+        assertThat(progress.completionPercentage).isEqualTo(50)
+        assertThat(progress.status).isEqualTo(WeekStatus.IN_PROGRESS)
+    }
+
+    // Sets ticked without finishing their exercise are still training, and the
+    // week's percentage has to say so.
+    @Test
+    fun aDayClosedEarlyWithSetsLoggedIsACompletedDay() {
+        val plan = plan(statuses = arrayOf(WorkoutStatus.COMPLETED, WorkoutStatus.NOT_STARTED))
+        val partlyTrained = plan.copy(
+            workoutDays = listOf(
+                day(1, WorkoutStatus.COMPLETED, performed = false).let { day ->
+                    day.copy(
+                        exercises = day.exercises.map {
+                            it.copy(
+                                sets = listOf(
+                                    ExerciseSet(setNumber = 1, isCompleted = true),
+                                    ExerciseSet(setNumber = 2, isCompleted = false)
+                                )
+                            )
+                        }
+                    )
+                },
+                plan.workoutDays[1]
+            )
+        )
+
+        val progress = WeeklyProgressViewModel.weekProgressOf(
+            partlyTrained,
+            nowMillis = duringTheWeek()
+        )
+
+        assertThat(progress.completedDays).isEqualTo(1)
+        assertThat(progress.hasTraining).isTrue()
+    }
 
     @Test
     fun aFullyDoneWeekIsCompletedWheneverItIsLookedAt() {

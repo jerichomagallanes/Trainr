@@ -2,47 +2,65 @@ package com.jericx.trainr.presentation.workout.components
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.InputTransformation
+import androidx.compose.foundation.text.input.OutputTransformation
+import androidx.compose.foundation.text.input.TextFieldDecorator
+import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.insert
+import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.key
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.hideFromAccessibility
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.jericx.trainr.R
 import com.jericx.trainr.domain.model.ExerciseMeasure
 import com.jericx.trainr.domain.model.ExerciseSet
 import com.jericx.trainr.domain.model.UnitSystem
 import com.jericx.trainr.domain.model.WeightUnit
+import com.jericx.trainr.presentation.common.components.core.TrainrFieldError
 import com.jericx.trainr.presentation.common.components.core.TrainrSwipeToDelete
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
+import com.jericx.trainr.presentation.common.theme.scaledWithText
 import com.jericx.trainr.presentation.common.theme.trainrColors
 
 private val RowHeight = 34.dp
@@ -58,20 +76,23 @@ fun ExerciseSetTable(
     modifier: Modifier = Modifier,
     onDeleteSet: (ExerciseSet) -> Unit = {},
     previousSets: List<ExerciseSet> = emptyList(),
-    units: UnitSystem = UnitSystem.Default
+    units: UnitSystem = UnitSystem.Default,
+    isReadOnly: Boolean = false
 ) {
     val showPrevious = previousSets.isNotEmpty()
     val colors = MaterialTheme.trainrColors
+    val checkSize = CheckSize.scaledWithText()
+    val setColumnWidth = SetColumnWidth.scaledWithText()
 
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(Spacing.small)
     ) {
-        // Headings hide when there are no rows, but the Add set button below is
-        // never conditional: deleting the last set has to leave a way back.
+        // Headings hide when there are no rows; the Add set button below is not
+        // tied to them either, so deleting the last set leaves a way back.
         if (sets.isNotEmpty()) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                ColumnLabel(stringResource(R.string.set_column), Modifier.width(SetColumnWidth))
+                ColumnLabel(stringResource(R.string.set_column), Modifier.width(setColumnWidth))
 
                 if (showPrevious) {
                     ColumnLabel(stringResource(R.string.previous_column), Modifier.weight(1f))
@@ -93,7 +114,7 @@ fun ExerciseSetTable(
                     modifier = Modifier.weight(1f)
                 )
 
-                Box(modifier = Modifier.size(CheckSize))
+                Box(modifier = Modifier.size(checkSize))
             }
         }
 
@@ -103,6 +124,8 @@ fun ExerciseSetTable(
                     SetRow(
                         measure = measure,
                         set = set,
+                        checkSize = checkSize,
+                        setColumnWidth = setColumnWidth,
                         previousText = if (showPrevious) {
                             previousCellText(
                                 measure,
@@ -113,26 +136,29 @@ fun ExerciseSetTable(
                             null
                         },
                         onSetChanged = onSetChanged,
-                        units = units
+                        units = units,
+                        isReadOnly = isReadOnly
                     )
                 }
 
-                DeletableRow(onDelete = { onDeleteSet(set) }) { row() }
+                DeletableRow(onDelete = { onDeleteSet(set) }, enabled = !isReadOnly) { row() }
             }
         }
 
-        Text(
-            text = stringResource(R.string.add_set),
-            style = MaterialTheme.typography.labelLarge,
-            color = colors.onSurface,
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(MaterialTheme.shapes.medium)
-                .border(1.dp, colors.outlineControl, MaterialTheme.shapes.medium)
-                .clickable(role = Role.Button, onClick = onAddSet)
-                .padding(vertical = Spacing.small)
-        )
+        if (!isReadOnly) {
+            Text(
+                text = stringResource(R.string.add_set),
+                style = MaterialTheme.typography.labelLarge,
+                color = colors.onSurface,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(MaterialTheme.shapes.medium)
+                    .border(1.dp, colors.outlineControl, MaterialTheme.shapes.medium)
+                    .clickable(role = Role.Button, onClick = onAddSet)
+                    .padding(vertical = Spacing.small)
+            )
+        }
     }
 }
 
@@ -140,79 +166,145 @@ fun ExerciseSetTable(
 private fun SetRow(
     measure: ExerciseMeasure,
     set: ExerciseSet,
+    checkSize: Dp,
+    setColumnWidth: Dp,
     previousText: String?,
     onSetChanged: (ExerciseSet) -> Unit,
-    units: UnitSystem
+    units: UnitSystem,
+    isReadOnly: Boolean
 ) {
     val colors = MaterialTheme.trainrColors
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = set.setNumber.toString(),
-            style = MaterialTheme.typography.labelLarge,
-            color = colors.onSurface,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.width(SetColumnWidth)
-        )
+    var outOfRange by remember { mutableStateOf<String?>(null) }
 
-        if (previousText != null) {
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val setLabel = stringResource(R.string.set_number_label, set.setNumber.toString())
             Text(
-                text = previousText,
-                style = MaterialTheme.typography.bodySmall,
-                color = colors.onSurfaceMuted,
+                text = set.setNumber.toString(),
+                style = MaterialTheme.typography.labelLarge,
+                color = colors.onSurface,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .width(setColumnWidth)
+                    .semantics { contentDescription = setLabel }
             )
-        }
 
-        if (measure == ExerciseMeasure.WEIGHT_AND_REPS) {
-            NumberCell(
-                value = set.actualWeightKg?.let { formatWeight(it, units) },
-                placeholder = set.targetWeightKg?.let { formatWeight(it, units) },
-                decimal = true,
-                onValueChange = { entered ->
-                    onSetChanged(
-                        set.copy(
-                            actualWeightKg = entered?.toFloatOrNull()
-                                ?.let { WeightUnit.toKilograms(it, units) }
+            if (previousText != null) {
+                Text(
+                    text = previousText,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.onSurfaceMuted,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            if (measure == ExerciseMeasure.WEIGHT_AND_REPS) {
+                NumberCell(
+                    value = set.actualWeightKg?.let { formatWeight(it, units) },
+                    placeholder = set.targetWeightKg?.let { formatWeight(it, units) },
+                    column = stringResource(
+                        R.string.set_weight_cell,
+                        set.setNumber.toString(),
+                        stringResource(
+                            if (units == UnitSystem.IMPERIAL) R.string.weight_unit_pounds
+                            else R.string.weight_unit_kilograms
                         )
+                    ),
+                    keyboard = KeyboardType.Decimal,
+                    rangeMessage = stringResource(
+                        R.string.value_range_hint,
+                        stringResource(R.string.weight_label),
+                        LOWEST_WEIGHT.toString(),
+                        "${maxWeightFor(units)} " + stringResource(
+                            if (units == UnitSystem.IMPERIAL) R.string.weight_column_lbs
+                            else R.string.weight_column
+                        )
+                    ),
+                    check = { weightEntry(it, units) },
+                    onValueChange = { entered ->
+                        onSetChanged(
+                            set.copy(
+                                actualWeightKg = entered?.toFloatOrNull()
+                                    ?.let { WeightUnit.toKilograms(it, units) }
+                            )
+                        )
+                    },
+                    onOutOfRange = { outOfRange = it },
+                    isReadOnly = isReadOnly,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            when (measure) {
+                ExerciseMeasure.DURATION -> DurationCell(
+                    seconds = set.actualSeconds,
+                    placeholderSeconds = set.targetSeconds,
+                    column = stringResource(R.string.set_time_cell, set.setNumber.toString()),
+                    rangeMessage = stringResource(
+                        R.string.value_range_hint,
+                        stringResource(R.string.time_column),
+                        formatSeconds(LOWEST_SECONDS),
+                        formatSeconds(MAX_SECONDS)
+                    ),
+                    onSecondsChange = { onSetChanged(set.copy(actualSeconds = it)) },
+                    onOutOfRange = { outOfRange = it },
+                    isReadOnly = isReadOnly,
+                    modifier = Modifier.weight(1f)
+                )
+
+                else -> NumberCell(
+                    value = set.actualReps?.toString(),
+                    placeholder = set.targetReps?.toString(),
+                    column = stringResource(R.string.set_reps_cell, set.setNumber.toString()),
+                    keyboard = KeyboardType.Number,
+                    rangeMessage = stringResource(
+                        R.string.value_range_hint,
+                        stringResource(R.string.reps_column),
+                        LOWEST_REPS.toString(),
+                        MAX_REPS.toString()
+                    ),
+                    check = ::repsEntry,
+                    onValueChange = { onSetChanged(set.copy(actualReps = it?.toIntOrNull())) },
+                    onOutOfRange = { outOfRange = it },
+                    isReadOnly = isReadOnly,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            Icon(
+                painter = painterResource(
+                    if (set.isCompleted) R.drawable.ic_check_box else R.drawable.ic_check_box_blank
+                ),
+                contentDescription = stringResource(
+                    when {
+                        isReadOnly && set.isCompleted -> R.string.completed
+                        isReadOnly -> R.string.not_completed
+                        set.isCompleted -> R.string.mark_set_incomplete
+                        else -> R.string.mark_set_complete
+                    }
+                ),
+                tint = if (set.isCompleted) colors.statusDoneInk else colors.outlineControl,
+                modifier = Modifier
+                    .size(checkSize)
+                    .then(
+                        if (isReadOnly) {
+                            Modifier
+                        } else {
+                            Modifier.toggleable(
+                                value = set.isCompleted,
+                                role = Role.Checkbox,
+                                onValueChange = { onSetChanged(set.copy(isCompleted = it)) }
+                            )
+                        }
                     )
-                },
-                modifier = Modifier.weight(1f)
             )
         }
 
-        when (measure) {
-            ExerciseMeasure.DURATION -> DurationCell(
-                seconds = set.actualSeconds,
-                placeholderSeconds = set.targetSeconds,
-                onSecondsChange = { onSetChanged(set.copy(actualSeconds = it)) },
-                modifier = Modifier.weight(1f)
-            )
-
-            else -> NumberCell(
-                value = set.actualReps?.toString(),
-                placeholder = set.targetReps?.toString(),
-                decimal = false,
-                onValueChange = { onSetChanged(set.copy(actualReps = it?.toIntOrNull())) },
-                modifier = Modifier.weight(1f)
-            )
-        }
-
-        Icon(
-            painter = painterResource(
-                if (set.isCompleted) R.drawable.ic_check_box else R.drawable.ic_check_box_blank
-            ),
-            contentDescription = stringResource(
-                if (set.isCompleted) R.string.mark_set_incomplete else R.string.mark_set_complete
-            ),
-            tint = if (set.isCompleted) colors.statusDoneInk else colors.outlineControl,
-            modifier = Modifier
-                .size(CheckSize)
-                .clickable { onSetChanged(set.copy(isCompleted = !set.isCompleted)) }
-        )
+        TrainrFieldError(message = outOfRange)
     }
 }
 
@@ -227,53 +319,82 @@ private fun ColumnLabel(text: String, modifier: Modifier = Modifier) {
     )
 }
 
+// A record shows what was logged and keeps the prescription muted behind it,
+// the same way the field it replaces reads.
+@Composable
+private fun LoggedCell(
+    value: String?,
+    placeholder: String?,
+    modifier: Modifier = Modifier
+) {
+    val colors = MaterialTheme.trainrColors
+    Box(
+        modifier = modifier
+            .padding(horizontal = Spacing.extraSmall)
+            .heightIn(min = RowHeight),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = value ?: placeholder.orEmpty(),
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (value == null) colors.onSurfaceMuted else colors.onSurface,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
 // The target is the placeholder, not the value: an untouched row claims nothing.
 @Composable
 private fun NumberCell(
     value: String?,
     placeholder: String?,
-    decimal: Boolean,
+    column: String,
+    keyboard: KeyboardType,
+    rangeMessage: String,
+    check: (String) -> NumberEntry,
     onValueChange: (String?) -> Unit,
+    onOutOfRange: (String?) -> Unit,
+    isReadOnly: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val colors = MaterialTheme.trainrColors
+    if (isReadOnly) {
+        LoggedCell(value = value, placeholder = placeholder, modifier = modifier)
+        return
+    }
+
+    val state = rememberTextFieldState(value.orEmpty())
+    val stored by rememberUpdatedState(value)
+    val report by rememberUpdatedState(onValueChange)
+
+    // The same number written another way is not a correction: "22." and "22.50"
+    // both hold 22.5, and rewriting the field would eat the keystroke after them.
+    LaunchedEffect(value) {
+        if (value?.toFloatOrNull() != state.text.toString().toFloatOrNull()) {
+            state.setTextAndPlaceCursorAtEnd(value.orEmpty())
+        }
+    }
+
+    LaunchedEffect(state) {
+        snapshotFlow { state.text.toString() }.collect { typed ->
+            if (typed != stored.orEmpty()) report(typed.ifBlank { null })
+        }
+    }
+
     Box(
         modifier = modifier.padding(horizontal = Spacing.extraSmall),
         contentAlignment = Alignment.Center
     ) {
-        BasicTextField(
-            value = value.orEmpty(),
-            onValueChange = { onValueChange(it.take(6).ifBlank { null }) },
-            singleLine = true,
-            textStyle = MaterialTheme.typography.bodyMedium.copy(
-                color = colors.onSurface,
-                textAlign = TextAlign.Center
-            ),
-            cursorBrush = SolidColor(colors.onSurface),
-            keyboardOptions = KeyboardOptions(
-                keyboardType = if (decimal) KeyboardType.Decimal else KeyboardType.Number
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(RowHeight)
-                .clip(MaterialTheme.shapes.small)
-                .border(1.dp, colors.outlineControl, MaterialTheme.shapes.small),
-            decorationBox = { field ->
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (value.isNullOrEmpty()) {
-                        Text(
-                            text = placeholder.orEmpty(),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = colors.onSurfaceMuted,
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                    field()
-                }
-            }
+        NumberField(
+            state = state,
+            transformation = refusing(check, rangeMessage, onOutOfRange),
+            keyboard = keyboard,
+            placeholder = placeholder,
+            label = setCellLabel(
+                column = column,
+                value = value,
+                target = placeholder,
+                targetFormat = stringResource(R.string.set_cell_target)
+            )
         )
     }
 }
@@ -283,11 +404,13 @@ private fun NumberCell(
 @Composable
 private fun DeletableRow(
     onDelete: () -> Unit,
+    enabled: Boolean,
     content: @Composable () -> Unit
 ) {
     TrainrSwipeToDelete(
         onDelete = onDelete,
-        contentDescription = stringResource(R.string.delete_set)
+        contentDescription = stringResource(R.string.delete_set),
+        enabled = enabled
     ) {
         content()
     }
@@ -299,54 +422,184 @@ private fun DeletableRow(
 private fun DurationCell(
     seconds: Int?,
     placeholderSeconds: Int?,
+    column: String,
+    rangeMessage: String,
     onSecondsChange: (Int?) -> Unit,
+    onOutOfRange: (String?) -> Unit,
+    isReadOnly: Boolean,
     modifier: Modifier = Modifier
 ) {
-    var digits by remember(seconds) {
-        mutableStateOf(seconds?.let(::durationDigits) ?: "")
+    if (isReadOnly) {
+        LoggedCell(
+            value = seconds?.let(::formatSeconds),
+            placeholder = placeholderSeconds?.let(::formatSeconds),
+            modifier = modifier
+        )
+        return
     }
-    val shown = secondsFromDigits(digits)?.let(::formatSeconds).orEmpty()
-    val colors = MaterialTheme.trainrColors
+
+    val state = rememberTextFieldState(seconds?.let(::durationDigits).orEmpty())
+    val stored by rememberUpdatedState(seconds)
+    val report by rememberUpdatedState(onSecondsChange)
+
+    LaunchedEffect(seconds) {
+        if (secondsFromDigits(state.text.toString()) != seconds) {
+            state.setTextAndPlaceCursorAtEnd(seconds?.let(::durationDigits).orEmpty())
+        }
+    }
+
+    LaunchedEffect(state) {
+        snapshotFlow { state.text.toString() }.collect { digits ->
+            val typed = secondsFromDigits(digits)
+            if (typed != stored) report(typed)
+        }
+    }
 
     Box(
         modifier = modifier.padding(horizontal = Spacing.extraSmall),
         contentAlignment = Alignment.Center
     ) {
-        BasicTextField(
-            value = TextFieldValue(shown, selection = TextRange(shown.length)),
-            onValueChange = { new ->
-                digits = new.text.filter { it.isDigit() }.takeLast(4).trimStart('0')
-                onSecondsChange(secondsFromDigits(digits))
-            },
-            singleLine = true,
-            textStyle = MaterialTheme.typography.bodyMedium.copy(
-                color = colors.onSurface,
-                textAlign = TextAlign.Center
+        NumberField(
+            state = state,
+            transformation = refusing(::durationEntry, rangeMessage, onOutOfRange),
+            keyboard = KeyboardType.Number,
+            placeholder = placeholderSeconds?.let(::formatSeconds),
+            label = setCellLabel(
+                column = column,
+                value = seconds?.let(::formatSeconds),
+                target = placeholderSeconds?.let(::formatSeconds),
+                targetFormat = stringResource(R.string.set_cell_target)
             ),
-            cursorBrush = SolidColor(colors.onSurface),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(RowHeight)
-                .clip(MaterialTheme.shapes.small)
-                .border(1.dp, colors.outlineControl, MaterialTheme.shapes.small),
-            decorationBox = { field ->
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (shown.isEmpty()) {
-                        Text(
-                            text = placeholderSeconds?.let(::formatSeconds).orEmpty(),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = colors.onSurfaceMuted,
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                    field()
-                }
-            }
+            output = ClockFace
         )
+    }
+}
+
+@Composable
+private fun NumberField(
+    state: TextFieldState,
+    transformation: InputTransformation,
+    keyboard: KeyboardType,
+    placeholder: String?,
+    label: String,
+    output: OutputTransformation? = null
+) {
+    val colors = MaterialTheme.trainrColors
+    val focusManager = LocalFocusManager.current
+
+    BasicTextField(
+        state = state,
+        inputTransformation = transformation,
+        outputTransformation = output,
+        lineLimits = TextFieldLineLimits.SingleLine,
+        textStyle = MaterialTheme.typography.bodyMedium.copy(
+            color = colors.onSurface,
+            textAlign = TextAlign.Center
+        ),
+        cursorBrush = SolidColor(colors.onSurface),
+        keyboardOptions = KeyboardOptions(keyboardType = keyboard, imeAction = ImeAction.Done),
+        onKeyboardAction = { focusManager.clearFocus() },
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = RowHeight)
+            .clip(MaterialTheme.shapes.small)
+            .border(1.dp, colors.outlineControl, MaterialTheme.shapes.small)
+            .semantics { contentDescription = label },
+        decorator = TextFieldDecorator { field ->
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                if (state.text.isEmpty()) {
+                    Text(
+                        text = placeholder.orEmpty(),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colors.onSurfaceMuted,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.semantics { hideFromAccessibility() }
+                    )
+                }
+                field()
+            }
+        }
+    )
+}
+
+@Composable
+private fun refusing(
+    check: (String) -> NumberEntry,
+    rangeMessage: String,
+    onOutOfRange: (String?) -> Unit
+): InputTransformation {
+    val accepts by rememberUpdatedState(check)
+    val message by rememberUpdatedState(rangeMessage)
+    val report by rememberUpdatedState(onOutOfRange)
+
+    // byValue writes its answer back by diffing it into the buffer, and that diff
+    // collapses to nothing when a repeated digit is appended ("9999" against
+    // "999"), so the refused keystroke stays in the cell. The rules only ever
+    // answer with the text already there or the one proposed, so reverting the
+    // change outright is both exact and all that is needed.
+    return remember {
+        InputTransformation {
+            val proposed = asCharSequence().toString()
+            val held = holding(originalText.toString(), proposed, accepts)
+            report(message.takeIf { held.saysRange })
+            if (held.text != proposed) revertAllChanges()
+        }
+    }
+}
+
+// The target is a prescription, not something the user entered, so an empty
+// cell carries it in its label rather than letting the placeholder read as a value.
+internal fun setCellLabel(
+    column: String,
+    value: String?,
+    target: String?,
+    targetFormat: String
+): String = if (value == null && target != null) {
+    String.format(targetFormat, column, target)
+} else {
+    column
+}
+
+internal data class Held(val text: String, val saysRange: Boolean)
+
+// A keystroke turned away for its size has to say so or it is swallowed in
+// silence, and a cell left holding too big a number keeps saying so until the
+// number is back in range. Any keystroke that is taken has been answered.
+internal fun holding(
+    current: String,
+    proposed: String,
+    check: (String) -> NumberEntry
+): Held {
+    val entry = check(proposed)
+    val text = when (entry) {
+        NumberEntry.ACCEPTED -> proposed
+        NumberEntry.OUT_OF_RANGE ->
+            if (movesTowardRange(current, proposed, check)) proposed else current
+
+        NumberEntry.MALFORMED -> current
+    }
+    val saysRange = entry == NumberEntry.OUT_OF_RANGE || check(text) == NumberEntry.OUT_OF_RANGE
+    return Held(text, saysRange)
+}
+
+// A number stored above the maximum has to be correctable: every step down from
+// it is out of range too, so a smaller one is let through.
+internal fun movesTowardRange(
+    current: String,
+    proposed: String,
+    check: (String) -> NumberEntry
+): Boolean = check(current) == NumberEntry.OUT_OF_RANGE &&
+    (proposed.toFloatOrNull() ?: 0f) < (current.toFloatOrNull() ?: 0f)
+
+private val ClockFace = OutputTransformation {
+    when (length) {
+        0 -> Unit
+        1 -> insert(0, "0:0")
+        2 -> insert(0, "0:")
+        else -> insert(length - 2, ":")
     }
 }
 
@@ -369,6 +622,55 @@ internal fun secondsFromDigits(digits: String): Int? {
     val seconds = cleaned.takeLast(2).toInt()
     val minutes = cleaned.dropLast(2).ifEmpty { "0" }.toInt()
     return minutes * SECONDS_PER_MINUTE + seconds
+}
+
+internal enum class NumberEntry { ACCEPTED, MALFORMED, OUT_OF_RANGE }
+
+internal const val MAX_REPS = 999
+internal const val MAX_WEIGHT_KG = 1000
+internal const val MAX_WEIGHT_LB = 2205
+internal const val MAX_SECONDS = 5999
+
+private const val LOWEST_REPS = 0
+private const val LOWEST_WEIGHT = 0
+private const val LOWEST_SECONDS = 1
+private const val MAX_DURATION_DIGITS = 4
+private const val MAX_FACE_SECONDS = 59
+
+private val REPS_SHAPE = Regex("""\d{1,6}""")
+private val WEIGHT_SHAPE = Regex("""\d{0,6}(\.\d{0,2})?""")
+
+internal fun maxWeightFor(units: UnitSystem): Int =
+    if (units == UnitSystem.IMPERIAL) MAX_WEIGHT_LB else MAX_WEIGHT_KG
+
+internal fun repsEntry(text: String): NumberEntry = when {
+    text.isEmpty() -> NumberEntry.ACCEPTED
+    !REPS_SHAPE.matches(text) -> NumberEntry.MALFORMED
+    text.toInt() > MAX_REPS -> NumberEntry.OUT_OF_RANGE
+    else -> NumberEntry.ACCEPTED
+}
+
+internal fun weightEntry(text: String, units: UnitSystem): NumberEntry {
+    if (text.isEmpty()) return NumberEntry.ACCEPTED
+    if (!WEIGHT_SHAPE.matches(text)) return NumberEntry.MALFORMED
+
+    val typed = text.toFloatOrNull() ?: return NumberEntry.MALFORMED
+    return if (typed > maxWeightFor(units)) NumberEntry.OUT_OF_RANGE else NumberEntry.ACCEPTED
+}
+
+// A buffer is only a finished face once it is full, and until then it is still
+// taking digits: "63" is the 63 seconds the cell holds, and 16:40 is typed
+// through a "164" that reads as 1:64 for one keystroke.
+internal fun durationEntry(digits: String): NumberEntry = when {
+    digits.isEmpty() -> NumberEntry.ACCEPTED
+    !digits.all { it.isDigit() } -> NumberEntry.MALFORMED
+    digits.length > MAX_DURATION_DIGITS -> NumberEntry.OUT_OF_RANGE
+    digits.startsWith("0") -> NumberEntry.MALFORMED
+    digits.length == MAX_DURATION_DIGITS &&
+        digits.takeLast(2).toInt() > MAX_FACE_SECONDS -> NumberEntry.MALFORMED
+
+    (secondsFromDigits(digits) ?: 0) > MAX_SECONDS -> NumberEntry.OUT_OF_RANGE
+    else -> NumberEntry.ACCEPTED
 }
 
 private const val SECONDS_PER_MINUTE = 60

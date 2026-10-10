@@ -1,7 +1,6 @@
 package com.jericx.trainr.presentation.workout.util
 
 import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
-import com.jericx.trainr.domain.model.WorkoutStatus
 
 private const val DAYS_PER_WEEK = 7
 
@@ -11,9 +10,8 @@ private const val DAYS_PER_WEEK = 7
 fun WeeklyWorkoutPlan.isReadyForTheNextWeek(
     nowMillis: Long = System.currentTimeMillis()
 ): Boolean {
-    val allDone = workoutDays.isNotEmpty() &&
-        workoutDays.all { it.status == WorkoutStatus.COMPLETED }
-    val start = startDateMillis ?: return allDone
+    val allDone = workoutDays.isNotEmpty() && workoutDays.all { it.countsAsCompleted }
+    val start = startDateMillis ?: WorkoutWeek.startOfDay(createdAt)
     val weekIsOver = nowMillis >= WorkoutWeek.dateOfDay(start, DAYS_PER_WEEK + 1)
 
     return allDone || weekIsOver

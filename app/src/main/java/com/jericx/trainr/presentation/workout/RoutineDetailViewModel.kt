@@ -3,6 +3,7 @@ package com.jericx.trainr.presentation.workout
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.jericx.trainr.R
 import com.jericx.trainr.domain.model.ExerciseSet
 import com.jericx.trainr.domain.catalog.ExerciseCatalog
 import com.jericx.trainr.domain.model.UnitSystem
@@ -10,21 +11,42 @@ import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.model.WorkoutExercise
 import com.jericx.trainr.presentation.Screen
 import com.jericx.trainr.domain.model.WorkoutStatus
+import com.jericx.trainr.domain.purchases.AdjustmentAllowance
+import com.jericx.trainr.domain.repository.AdjustmentRepository
 import com.jericx.trainr.domain.repository.UserRepository
+import com.jericx.trainr.domain.time.ElapsedClock
+import com.jericx.trainr.domain.time.WallClock
+import com.jericx.trainr.domain.unstuck.AdjustmentProposal
+import com.jericx.trainr.domain.unstuck.AppliedAdjustment
+import com.jericx.trainr.domain.unstuck.ChangeKind
+import com.jericx.trainr.domain.unstuck.FinishKind
+import com.jericx.trainr.domain.unstuck.UndoResult
+import com.jericx.trainr.domain.unstuck.SessionOutcome
 import com.jericx.trainr.presentation.workout.model.ExerciseTimerUi
 import com.jericx.trainr.presentation.workout.model.ExerciseUi
+import com.jericx.trainr.presentation.workout.model.AdjustedBannerUi
 import com.jericx.trainr.presentation.workout.model.RoutineUi
+import com.jericx.trainr.presentation.workout.model.derivedEquipment
+import com.jericx.trainr.presentation.workout.model.measuredSet
+import com.jericx.trainr.presentation.workout.model.remainingMinutes
+import com.jericx.trainr.presentation.workout.model.visibleExercises
 import com.jericx.trainr.presentation.workout.model.toRoutineUi
 import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
 import com.jericx.trainr.presentation.workout.util.WorkoutWeek
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -43,14 +65,43 @@ data class RoutineDetailUiState(
     val unitSystem: UnitSystem = UnitSystem.Default,
     // False until the stored routine has been read: nothing is drawn before then,
     // and the completion guard must not read the load as finishing the day.
-    val isLoaded: Boolean = true
+    val isLoaded: Boolean = true,
+    val outcome: SessionOutcome? = null,
+    val isConfirmingFinishEarly: Boolean = false,
+    val saveFailed: Boolean = false,
+    val activeAdjustment: AppliedAdjustment? = null,
+    val adjustedBanner: AdjustedBannerUi? = null,
+    val showAdjustSheet: Boolean = false,
+    val isPickingExercise: Boolean = false,
+    val scrollToPosition: Int? = null,
+    val undoKeptSets: Int? = null,
+    // A day in a week that is over is a record: nothing on it may be written.
+    val isReadOnly: Boolean = false,
+    // The same estimate the plan card and the time presets use; null only
+    // without a profile to estimate for, when the header sums the cards.
+    val totalMinutes: Int? = null
+) {
+    val hasRemainingWork: Boolean
+        get() = !isReadOnly && outcome?.finishKind != FinishKind.FULL &&
+            routine.hasUnperformedWork
+}
+
+data class SessionSavedEvent(
+    val dayNumber: Int,
+    val weekNumber: Int,
+    val performedExercises: Int,
+    val plannedExercises: Int
 )
 
 @HiltViewModel
 class RoutineDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val userRepository: UserRepository,
-    private val catalog: ExerciseCatalog
+    private val adjustmentRepository: AdjustmentRepository,
+    private val allowance: AdjustmentAllowance,
+    private val catalog: ExerciseCatalog,
+    private val clock: ElapsedClock,
+    private val wallClock: WallClock
 ) : ViewModel() {
 
     private val requestedDayNumber: Int =
@@ -73,84 +124,214 @@ class RoutineDetailViewModel @Inject constructor(
     )
     val uiState: StateFlow<RoutineDetailUiState> = _uiState.asStateFlow()
 
+    // Fires once per save and is never rebuilt from stored state, so a screen
+    // restored after process death does not navigate a second time.
+    private val _savedEvents = Channel<SessionSavedEvent>(Channel.BUFFERED)
+    val savedEvents: Flow<SessionSavedEvent> = _savedEvents.receiveAsFlow()
+
+    // The end of a countdown is the only thing the screen has to announce, and
+    // a screen that was away for it has nothing to catch up on.
+    private val _timerFinished = MutableSharedFlow<Unit>()
+    val timerFinished: SharedFlow<Unit> = _timerFinished.asSharedFlow()
+
     private var tickJob: Job? = null
+    private var finishJob: Job? = null
 
     // Null until the stored day is read, so nothing persists rows that do not exist.
     private var storedDay: WorkoutDay? = null
     private var weeklyPlanId = 0L
 
     init {
-        viewModelScope.launch {
-            val user = userRepository.getCurrentUser()
-            val units = user?.weightUnits ?: UnitSystem.Default
-            val plan = user
-                ?.let { profile ->
-                    val plans = userRepository.getWeeklyWorkoutPlans(profile.id).first()
-                    if (requestedWeekNumber == null) {
-                        plans.maxByOrNull { it.weekNumber }
-                    } else {
-                        plans.firstOrNull { it.weekNumber == requestedWeekNumber }
-                    }
-                }
-            val index = plan?.workoutDays
-                ?.indexOfFirst { it.dayNumber == requestedDayNumber } ?: -1
+        refresh()
+    }
 
-            if (plan == null || index < 0) {
-                _uiState.update { it.copy(isLoaded = true, unitSystem = units) }
+    // Re-reads the stored day without losing what the screen is doing: the
+    // timer, the open tutorial and the scroll request all survive. The date is
+    // read again with it, so a screen left open past the end of its week stops
+    // being writable rather than keeping the answer it loaded with.
+    fun refresh() {
+        viewModelScope.launch { read() }
+    }
+
+    private suspend fun read() {
+        val user = userRepository.getCurrentUser()
+        val units = user?.weightUnits ?: UnitSystem.Default
+        val plan = user?.let { profile ->
+            val plans = userRepository.getWeeklyWorkoutPlans(profile.id).first()
+            if (requestedWeekNumber == null) {
+                plans.maxByOrNull { it.weekNumber }
             } else {
-                val day = plan.workoutDays[index]
-                storedDay = day
-                weeklyPlanId = plan.id
-                // History stops at this day's own completion, so a finished day
-                // reviewed later still shows what "previous" meant at the time.
-                val before = day.completedAt ?: Long.MAX_VALUE
-                val previousByKey = day.exercises
-                    .filter { it.exerciseKey.isNotBlank() }
-                    .associate {
-                        it.exerciseKey to userRepository.getPreviousSets(
-                            plan.userId, it.exerciseKey, day.id, before
-                        )
-                    }
-                    .filterValues { sets -> sets.isNotEmpty() }
-                _uiState.value = RoutineDetailUiState(
-                    unitSystem = units,
-                    routine = day.toRoutineUi(previousByKey, catalog, user?.injuries.orEmpty()),
-                    equipment = day.equipment,
-                    dateMillis = plan.startDateMillis
-                        ?.let { WorkoutWeek.dateOfDay(it, day.dayNumber) }
-                        ?: SampleWorkoutData.dateOf(day.dayNumber),
-                    dayNumber = index + 1,
-                    weekNumber = plan.weekNumber,
-                    completesTheWeek = completesTheWeek(plan.workoutDays, index + 1)
+                plans.firstOrNull { it.weekNumber == requestedWeekNumber }
+            }
+        }
+        val index = plan?.workoutDays
+            ?.indexOfFirst { it.dayNumber == requestedDayNumber } ?: -1
+
+        if (plan == null || index < 0) {
+            _uiState.update { it.copy(isLoaded = true, unitSystem = units) }
+            return
+        }
+
+        val day = plan.workoutDays[index]
+        storedDay = day
+        weeklyPlanId = plan.id
+        // History stops at this day's own completion, so a finished day
+        // reviewed later still shows what "previous" meant at the time.
+        val before = day.completedAt ?: Long.MAX_VALUE
+        val previousByKey = day.exercises
+            .filter { it.exerciseKey.isNotBlank() }
+            .associate {
+                it.exerciseKey to userRepository.getPreviousSets(
+                    plan.userId, it.exerciseKey, day.id, before
                 )
             }
+            .filterValues { sets -> sets.isNotEmpty() }
+        val adjustment = adjustmentRepository.getActiveAdjustment(day.id)
+        val weekStart = plan.startDateMillis ?: WorkoutWeek.startOfDay(plan.createdAt)
+
+        val routine = day.toRoutineUi(previousByKey, catalog, user?.injuries.orEmpty(), user)
+        val timer = survivingTimer(routine)
+        _uiState.update {
+            it.copy(
+                unitSystem = units,
+                routine = routine,
+                timer = timer,
+                equipment = day.derivedEquipment(catalog),
+                totalMinutes = user?.let { profile -> day.remainingMinutes(profile, catalog) },
+                dateMillis = WorkoutWeek.dateOfDay(weekStart, day.dayNumber),
+                dayNumber = index + 1,
+                weekNumber = plan.weekNumber,
+                completesTheWeek = completesTheWeek(plan.workoutDays, index + 1),
+                outcome = adjustmentRepository.getOutcome(day.id),
+                activeAdjustment = adjustment,
+                adjustedBanner = adjustment?.let { applied -> bannerFor(applied.proposal, day) },
+                // The note belongs to one undo, not to whatever the day shows next.
+                undoKeptSets = null,
+                isReadOnly = WorkoutWeek.hasEnded(weekStart, wallClock.nowMillis()),
+                isLoaded = true
+            )
         }
     }
 
-    fun toggleExercise(position: Int) {
-        val state = _uiState.value
-        val routine = state.routine.toggleCompleted(position)
-        val nowCompleted = routine.exercises.any { it.position == position && it.isCompleted }
-        val clearsTimer = nowCompleted && state.timer?.position == position
+    private val isReadOnly: Boolean get() = _uiState.value.isReadOnly
 
-        if (clearsTimer) cancelTick()
+    fun openAdjustSheet() {
+        if (isReadOnly) return
+        _uiState.update { it.copy(showAdjustSheet = true, isPickingExercise = false) }
+    }
+
+    // A note asking how a movement is done has already answered the sheet's
+    // first question, so it opens on the exercises.
+    fun openExercisePicker() {
+        if (isReadOnly) return
+        _uiState.update { it.copy(showAdjustSheet = true, isPickingExercise = true) }
+    }
+
+    fun dismissAdjustSheet() {
+        _uiState.update { it.copy(showAdjustSheet = false, isPickingExercise = false) }
+    }
+
+    // "Show me how" is the existing tutorial on the card, not a new screen.
+    fun showHowTo(position: Int) {
+        val exercise = _uiState.value.routine.exercises
+            .firstOrNull { it.position == position } ?: return
+        val hasSteps = exercise.steps.isNotEmpty()
         _uiState.update {
-            it.copy(routine = routine, timer = if (clearsTimer) null else it.timer)
+            it.copy(
+                showAdjustSheet = false,
+                isPickingExercise = false,
+                expandedHowTo = if (hasSteps) position else it.expandedHowTo,
+                expandedVideo = if (hasSteps) it.expandedVideo else position,
+                scrollToPosition = position
+            )
         }
+    }
+
+    // The key, not the position: a replaced exercise is a new row whose place
+    // in the day only the stored plan knows.
+    fun showHowToFor(exerciseKey: String) {
+        val index = storedDay?.visibleExercises?.indexOfFirst { it.exerciseKey == exerciseKey }
+        if (index == null || index < 0) return
+        showHowTo(index + 1)
+    }
+
+    fun scrolled() {
+        _uiState.update { it.copy(scrollToPosition = null) }
+    }
+
+    fun undoAdjustment() {
+        if (isReadOnly) return
+        val adjustment = _uiState.value.activeAdjustment ?: return
+
+        viewModelScope.launch {
+            val result = adjustmentRepository.undo(adjustment.id, System.currentTimeMillis())
+            if (result is UndoResult.Restored) allowance.restore(adjustment.proposal.proposalId)
+            val kept = (result as? UndoResult.Restored)?.keptPerformedSubstituteSets ?: 0
+            read()
+            if (result is UndoResult.Restored) reopen()
+            _uiState.update { it.copy(undoKeptSets = kept.takeIf { count -> count > 0 }) }
+        }
+    }
+
+    private fun bannerFor(proposal: AdjustmentProposal, day: WorkoutDay): AdjustedBannerUi {
+        val replaced = proposal.changes.firstOrNull { it.kind == ChangeKind.REPLACE_UNPERFORMED }
+        if (replaced != null) {
+            return AdjustedBannerUi(
+                messageRes = R.string.adjusted_replaced_banner_format,
+                fromName = day.nameOf(replaced.before.catalogKey),
+                toName = replaced.after?.catalogKey?.let { day.nameOf(it) }.orEmpty()
+            )
+        }
+        // The review orders its regions the same way, and one day cannot be
+        // described twice in two orders.
+        val regions = proposal.changes
+            .mapNotNull { catalog[it.before.catalogKey]?.primary?.region }
+            .distinct()
+            .sorted()
+        val omitted = proposal.changes.any { it.kind == ChangeKind.OMIT_UNPERFORMED }
+        return if (omitted || regions.isEmpty()) {
+            AdjustedBannerUi(messageRes = R.string.adjusted_reduced_banner)
+        } else {
+            AdjustedBannerUi(
+                messageRes = R.string.adjusted_time_banner_format,
+                regions = regions
+            )
+        }
+    }
+
+    private fun WorkoutDay.nameOf(catalogKey: String): String =
+        exercises.firstOrNull { it.exerciseKey == catalogKey }?.name
+            ?: catalog[catalogKey]?.name.orEmpty()
+
+    fun toggleExercise(position: Int) {
+        if (isReadOnly) return
+        reopen()
+        val routine = _uiState.value.routine.toggleCompleted(position)
+        val nowCompleted = routine.exercises.any { it.position == position && it.isCompleted }
+
+        _uiState.update { it.copy(routine = routine) }
+        if (nowCompleted) clearTimerOf(position)
         persistExerciseCompleted(position, nowCompleted)
     }
 
     fun updateSet(position: Int, set: ExerciseSet) {
+        if (isReadOnly) return
         val was = completionOf(position)
+        if (set.isCompleted != tickOf(position, set.setNumber)) reopen()
         _uiState.update { it.copy(routine = it.routine.updateSet(position, set)) }
         reconcileCompletion(position, was)
 
         val exercise = storedExerciseAt(position) ?: return
-        if (set.id == 0L) return
-        viewModelScope.launch { userRepository.updateExerciseSet(set, exercise.id) }
+        // The state holds the origin-stamped copy; the row only knows the numbers.
+        val stamped = _uiState.value.routine.exercises.firstOrNull { it.position == position }
+            ?.sets?.firstOrNull { it.setNumber == set.setNumber } ?: return
+        if (stamped.id == 0L) return
+        viewModelScope.launch { userRepository.updateExerciseSet(stamped, exercise.id) }
     }
 
     fun addSet(position: Int) {
+        if (isReadOnly) return
+        reopen()
         val was = completionOf(position)
         _uiState.update { it.copy(routine = it.routine.addSet(position)) }
         reconcileCompletion(position, was)
@@ -172,10 +353,12 @@ class RoutineDetailViewModel @Inject constructor(
     // Deletion is keyed by set number, not instance: the row that reports the
     // swipe may hold a set from before a reload replaced every instance.
     fun deleteSet(position: Int, setNumber: Int) {
+        if (isReadOnly) return
         val sets = _uiState.value.routine.exercises
             .firstOrNull { it.position == position }?.sets ?: return
         val set = sets.firstOrNull { it.setNumber == setNumber } ?: return
 
+        reopen()
         val was = completionOf(position)
         _uiState.update { it.copy(routine = it.routine.removeSet(position, setNumber)) }
         reconcileCompletion(position, was)
@@ -192,23 +375,102 @@ class RoutineDetailViewModel @Inject constructor(
     }
 
     fun completeRoutine() {
+        if (isReadOnly) return
         cancelTick()
+        reopen()
         _uiState.update { it.copy(routine = it.routine.completeAll(), timer = null) }
 
         val day = storedDay ?: return
-        val completed = day.copy(exercises = day.exercises.map { it.copy(isCompleted = true) })
+        val completed = day.copy(
+            exercises = day.exercises.map {
+                if (it.isOmittedToday) it else it.copy(isCompleted = true)
+            }
+        )
         storedDay = completed
         viewModelScope.launch {
-            completed.exercises.forEach { userRepository.updateWorkoutExercise(it, day.id) }
+            completed.visibleExercises.forEach { userRepository.updateWorkoutExercise(it, day.id) }
             persistFilledSets(_uiState.value.routine.exercises.map { it.position })
             persistDayStatus()
+            val planned = plannedSetCount()
+            val outcome = SessionOutcome(
+                workoutDayId = day.id,
+                finishKind = FinishKind.FULL,
+                finishedAt = System.currentTimeMillis(),
+                performedSetCount = planned,
+                plannedSetCount = planned
+            )
+            adjustmentRepository.saveOutcome(outcome)
+            _uiState.update { it.copy(outcome = outcome) }
         }
     }
+
+    fun askToFinishEarly() {
+        if (isReadOnly) return
+        _uiState.update { it.copy(isConfirmingFinishEarly = true, saveFailed = false) }
+    }
+
+    fun keepTraining() {
+        _uiState.update { it.copy(isConfirmingFinishEarly = false, saveFailed = false) }
+    }
+
+    // Saves what was logged and nothing more: no set is filled and no exercise
+    // is ticked, so the record reads back as the work actually done.
+    fun finishEarly() {
+        if (isReadOnly || finishJob?.isActive == true) return
+        cancelTick()
+        _uiState.update { it.copy(timer = null) }
+
+        val day = storedDay ?: return
+        finishJob = viewModelScope.launch {
+            val now = System.currentTimeMillis()
+            val sets = _uiState.value.routine.exercises.flatMap { it.sets }
+            val finished = day.copy(
+                status = WorkoutStatus.COMPLETED,
+                completedAt = day.completedAt ?: now
+            )
+            val outcome = SessionOutcome(
+                workoutDayId = day.id,
+                finishKind = FinishKind.PARTIAL,
+                finishedAt = now,
+                performedSetCount = sets.count { it.isCompleted },
+                plannedSetCount = sets.count { it.omittedBy == null }
+            )
+            val saved = runCatching {
+                userRepository.updateWorkoutDay(finished, weeklyPlanId)
+                adjustmentRepository.saveOutcome(outcome)
+            }
+            if (saved.isFailure) {
+                // Two writes, no transaction: put the day back so home does not
+                // show a completed chip for a session that was never saved.
+                runCatching { userRepository.updateWorkoutDay(day, weeklyPlanId) }
+                _uiState.update { it.copy(saveFailed = true) }
+                return@launch
+            }
+
+            storedDay = finished
+            _uiState.update {
+                it.copy(outcome = outcome, isConfirmingFinishEarly = false, saveFailed = false)
+            }
+            val routine = _uiState.value.routine
+            _savedEvents.send(
+                SessionSavedEvent(
+                    dayNumber = _uiState.value.dayNumber,
+                    weekNumber = _uiState.value.weekNumber,
+                    performedExercises = routine.performedExerciseCount,
+                    plannedExercises = routine.plannedExerciseCount
+                )
+            )
+        }
+    }
+
+    fun retryFinishEarly() = finishEarly()
 
     // Clears the ticks and the logged numbers; the prescribed targets were
     // never overwritten, so they need no restoring.
     fun clearProgress() {
+        if (isReadOnly) return
         cancelTick()
+        reopen(anyOutcome = true)
         _uiState.update { it.copy(routine = it.routine.clearProgress(), timer = null) }
 
         val day = storedDay ?: return
@@ -218,19 +480,25 @@ class RoutineDetailViewModel @Inject constructor(
             cleared.exercises.forEach { userRepository.updateWorkoutExercise(it, day.id) }
             persistFilledSets(_uiState.value.routine.exercises.map { it.position })
             persistDayStatus()
+            if (adjustmentRepository.withdrawUndoneSubstitutes(day.id) > 0) read()
         }
     }
 
     // One timer at a time: starting an exercise replaces whatever was running.
     fun startTimer(exercise: ExerciseUi) {
+        if (isReadOnly) return
         cancelTick()
+        // A held set is timed by its own span: the minutes on the card are the
+        // whole block rounded up, and the countdown's length is what gets logged.
+        val countdown = exercise.measuredSet?.targetSeconds
+            ?: (exercise.minutes * SECONDS_PER_MINUTE)
         _uiState.update {
             it.copy(
-                timer = ExerciseTimerUi(
+                timer = ExerciseTimerUi.running(
                     position = exercise.position,
-                    remainingSeconds = exercise.minutes * SECONDS_PER_MINUTE,
-                    isRunning = true,
-                    totalSeconds = exercise.minutes * SECONDS_PER_MINUTE
+                    exerciseId = exercise.exerciseId,
+                    totalSeconds = countdown,
+                    nowMillis = clock.elapsedMillis()
                 )
             )
         }
@@ -239,14 +507,15 @@ class RoutineDetailViewModel @Inject constructor(
 
     fun pauseTimer() {
         cancelTick()
-        _uiState.update { state -> state.copy(timer = state.timer?.copy(isRunning = false)) }
+        _uiState.update { state -> state.copy(timer = state.timer?.paused(clock.elapsedMillis())) }
     }
 
     fun resumeTimer() {
-        if (_uiState.value.timer == null) return
+        val timer = _uiState.value.timer ?: return
+        if (timer.isFinished) return
 
         cancelTick()
-        _uiState.update { state -> state.copy(timer = state.timer?.copy(isRunning = true)) }
+        _uiState.update { state -> state.copy(timer = timer.resumed(clock.elapsedMillis())) }
         tickJob = viewModelScope.launch { tick() }
     }
 
@@ -257,13 +526,7 @@ class RoutineDetailViewModel @Inject constructor(
 
     fun resetTimer() {
         cancelTick()
-        _uiState.update { state ->
-            state.copy(
-                timer = state.timer?.let {
-                    it.copy(remainingSeconds = it.totalSeconds, isRunning = false)
-                }
-            )
-        }
+        _uiState.update { state -> state.copy(timer = state.timer?.reset()) }
     }
 
     fun toggleVideo(position: Int) {
@@ -285,43 +548,100 @@ class RoutineDetailViewModel @Inject constructor(
         tickJob = null
     }
 
+    // Hiding a control must not leave what it controls running.
+    private fun clearTimerOf(position: Int) {
+        if (_uiState.value.timer?.position != position) return
+        cancelTick()
+        _uiState.update { it.copy(timer = null) }
+    }
+
+    // The timer outlives a reload, but only on its own exercise: an adjustment
+    // can leave a different movement where it was started, and a hold must
+    // never be logged against a set nobody did.
+    private fun survivingTimer(routine: RoutineUi): ExerciseTimerUi? {
+        val timer = _uiState.value.timer ?: return null
+        val standing = routine.exercises.firstOrNull { it.position == timer.position }
+        if (standing?.exerciseId == timer.exerciseId) return timer
+        cancelTick()
+        return null
+    }
+
     private suspend fun tick() {
         while (true) {
-            delay(TICK_MILLIS)
-
             val timer = _uiState.value.timer ?: return
-            val remaining = timer.remainingSeconds - 1
+            val advanced = timer.advanced(clock.elapsedMillis())
 
-            if (remaining > 0) {
-                _uiState.update { it.copy(timer = timer.copy(remainingSeconds = remaining)) }
-            } else {
-                _uiState.update {
-                    it.copy(routine = it.routine.markCompleted(timer.position), timer = null)
-                }
-                persistExerciseCompleted(timer.position, completed = true)
+            if (advanced.remainingSeconds <= 0) {
+                finish(timer)
                 return
             }
+            _uiState.update { it.copy(timer = advanced) }
+            delay(TICK_MILLIS)
         }
+    }
+
+    // Running out ends the countdown and says so. It ticks nothing and never
+    // writes a rep or a weight; the one number it may leave is the time it
+    // measured, on a set that is itself a span of time.
+    private suspend fun finish(timer: ExerciseTimerUi) {
+        _uiState.update {
+            it.copy(
+                routine = it.routine.logMeasuredSeconds(timer.position, timer.totalSeconds),
+                timer = timer.finished()
+            )
+        }
+        persistFilledSets(listOf(timer.position))
+        _timerFinished.emit(Unit)
     }
 
     private fun completionOf(position: Int): Boolean? =
         _uiState.value.routine.exercises.firstOrNull { it.position == position }?.isCompleted
 
+    private fun tickOf(position: Int, setNumber: Int): Boolean? =
+        _uiState.value.routine.exercises.firstOrNull { it.position == position }
+            ?.sets?.firstOrNull { it.setNumber == setNumber }?.isCompleted
+
+    // A corrected number is not new work, so it leaves the day closed; starting
+    // over is, and takes the full outcome with it.
+    private fun reopen(anyOutcome: Boolean = false) {
+        val day = storedDay ?: return
+        val kind = _uiState.value.outcome?.finishKind ?: return
+        if (!anyOutcome && kind != FinishKind.PARTIAL) return
+        storedDay = day.copy(completedAt = null)
+        _uiState.update { it.copy(outcome = null) }
+        viewModelScope.launch {
+            adjustmentRepository.deleteOutcome(day.id)
+            persistDayStatus()
+        }
+    }
+
     private fun reconcileCompletion(position: Int, was: Boolean?) {
         val now = completionOf(position) ?: return
-        if (now != was) persistExerciseCompleted(position, now)
+        if (now == was) return
+        if (now) clearTimerOf(position)
+        persistExerciseCompleted(position, now)
+    }
+
+    // A card's position counts the exercises still in today's session; the
+    // stored day also holds the ones an adjustment omitted, so the two lists
+    // index differently and only the visible one may be counted from.
+    private fun storedIndexAt(position: Int): Int {
+        val day = storedDay ?: return -1
+        val target = day.visibleExercises.getOrNull(position - 1) ?: return -1
+        return day.exercises.indexOfFirst { it === target }
     }
 
     private fun storedExerciseAt(position: Int): WorkoutExercise? =
-        storedDay?.exercises?.getOrNull(position - 1)
+        storedDay?.exercises?.getOrNull(storedIndexAt(position))
 
     private fun persistExerciseCompleted(position: Int, completed: Boolean) {
         val day = storedDay ?: return
+        val storedIndex = storedIndexAt(position)
         val exercise = storedExerciseAt(position)?.copy(isCompleted = completed) ?: return
 
         storedDay = day.copy(
             exercises = day.exercises.mapIndexed { index, e ->
-                if (index == position - 1) exercise else e
+                if (index == storedIndex) exercise else e
             }
         )
         viewModelScope.launch {
@@ -337,7 +657,8 @@ class RoutineDetailViewModel @Inject constructor(
     private suspend fun persistFilledSets(positions: List<Int>) {
         var day = storedDay ?: return
         positions.forEach { position ->
-            val stored = day.exercises.getOrNull(position - 1) ?: return@forEach
+            val storedIndex = storedIndexAt(position)
+            val stored = day.exercises.getOrNull(storedIndex) ?: return@forEach
             val logged = _uiState.value.routine.exercises
                 .firstOrNull { it.position == position }?.sets.orEmpty()
             val before = stored.sets.associateBy { it.id }
@@ -348,21 +669,30 @@ class RoutineDetailViewModel @Inject constructor(
 
             day = day.copy(
                 exercises = day.exercises.mapIndexed { index, exercise ->
-                    if (index == position - 1) exercise.copy(sets = logged) else exercise
+                    if (index != storedIndex) {
+                        exercise
+                    } else {
+                        // The omitted rows are not on screen and must survive:
+                        // undo puts them back.
+                        exercise.copy(
+                            sets = (exercise.sets.filter { it.omittedBy != null } + logged)
+                                .sortedBy { it.setNumber }
+                        )
+                    }
                 }
             )
         }
         storedDay = day
     }
 
+    private fun plannedSetCount(): Int =
+        _uiState.value.routine.exercises.flatMap { it.sets }.count { it.omittedBy == null }
+
     private suspend fun persistDayStatus() {
         val day = storedDay ?: return
-        val completedCount = day.exercises.count { it.isCompleted }
-        val status = when (completedCount) {
-            0 -> WorkoutStatus.NOT_STARTED
-            day.exercises.size -> WorkoutStatus.COMPLETED
-            else -> WorkoutStatus.IN_PROGRESS
-        }
+        if (_uiState.value.outcome?.finishKind == FinishKind.PARTIAL) return
+        val visible = day.visibleExercises
+        val status = WorkoutStatus.derived(visible.count { it.isCompleted }, visible.size)
         val updated = day.copy(
             status = status,
             completedAt = if (status == WorkoutStatus.COMPLETED) {
@@ -399,6 +729,6 @@ class RoutineDetailViewModel @Inject constructor(
 
         fun completesTheWeek(days: List<WorkoutDay>, dayNumber: Int): Boolean =
             days.filterIndexed { index, _ -> index != dayNumber - 1 }
-                .all { it.status == WorkoutStatus.COMPLETED }
+                .all { it.countsAsCompleted }
     }
 }

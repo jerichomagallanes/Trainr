@@ -95,7 +95,7 @@ class PlanSkeletonBuilder(private val catalog: ExerciseCatalog) {
         private val pool: List<CatalogExercise>,
         private val lastWeek: Set<String>
     ) {
-        private val shape = shapeFor(user.fitnessGoal)
+        private val shape = SessionShape.forGoal(user.fitnessGoal)
         private val usesThisWeek = mutableMapOf<String, Int>()
         private val directSets = mutableMapOf<MuscleRegion, Int>()
         private val maxSets = SessionBudget.maxSetsPerSession(user)
@@ -162,13 +162,14 @@ class PlanSkeletonBuilder(private val catalog: ExerciseCatalog) {
             return SkeletonDay(
                 dayNumber = day.dayNumber,
                 focus = day.focus,
-                slots = day.slots.sortedBy { it.tier.ordinal }.map { it.toSlot() }
+                slots = day.slots.sortedBy { it.tier.ordinal }.map { it.toSlot() },
+                minutes = SessionMinutes.forDay(day.slots.map { minutesOf(it, atTop = false) })
             )
         }
 
         private fun trimToCount(day: DayDraft, drop: List<String>) {
             val removable = drop.iterator()
-            while (day.slots.size > shape.count && removable.hasNext()) {
+            while (day.slots.size > shape.slotCount && removable.hasNext()) {
                 val id = removable.next()
                 day.slots.removeAll { it.id == id && it.isDroppable }
             }
@@ -211,10 +212,11 @@ class PlanSkeletonBuilder(private val catalog: ExerciseCatalog) {
             day.slots.removeAll { it.candidates.isEmpty() }
         }
 
-        // Pass B: the minimums have to fit before anything is topped up.
+        // Pass B: the minimums have to fit before anything is topped up, and
+        // what the goal gives up first is what a short answer gives up.
         private fun fitMinimums(day: DayDraft, drop: List<String>) {
             val removable = drop.iterator()
-            while (!fits(day) && removable.hasNext()) {
+            while ((!fits(day) || overrunsTheAnswer(day)) && removable.hasNext()) {
                 val id = removable.next()
                 day.slots.removeAll { it.id == id && it.isDroppable }
             }
@@ -260,37 +262,58 @@ class PlanSkeletonBuilder(private val catalog: ExerciseCatalog) {
             }
         }
 
-        // The hard limit: never more sets than the session pays for, and
-        // never past its ceiling even at the top of every rep window, so no
-        // week of the ladder can break it.
+        // The hard limit: never more sets than the session pays for, and never
+        // past its ceiling, priced at the dearest movement that could fill each
+        // slot at the top of every rep window, so no cast and no week of the
+        // ladder can break it.
         private fun fits(day: DayDraft): Boolean =
             day.slots.sumOf { it.sets } <= maxSets &&
                 SessionMinutes.forDay(day.slots.map { minutesOf(it, atTop = true) }) <= ceiling
 
-        // The aim: about as long as the answer, priced at the reps a set is
-        // typically done at rather than the most it could ever ask.
+        // The aim: about as long as the answer, priced at the reps this week
+        // prescribes rather than the most a later week could ask.
         private fun isWithinTheAnswer(day: DayDraft): Boolean =
             SessionMinutes.forDay(day.slots.map { minutesOf(it, atTop = false) }) <= user.workoutDuration
 
+        // A minute or two past the answer is still about the length asked for;
+        // losing a whole movement over it is not.
+        private fun overrunsTheAnswer(day: DayDraft): Boolean =
+            SessionMinutes.forDay(day.slots.map { minutesOf(it, atTop = false) }) >
+                user.workoutDuration * OVER_TOLERANCE_NUMERATOR / OVER_TOLERANCE_DENOMINATOR
+
+        // The cast is drawn after the day is sized, so a slot is budgeted at
+        // what the movements that could fill it cost: every one of them against
+        // the ceiling, which is a bound, and the two really in play against the
+        // answer, which is an aim.
         private fun minutesOf(slot: Draft, atTop: Boolean): Int {
-            val top = slot.candidates.firstOrNull()?.let { catalog[it] } ?: return 0
-            return if (top.measure == ExerciseMeasure.DURATION) {
-                SessionMinutes.forExercise(
-                    ExerciseMeasure.DURATION, List(slot.sets) { secondsFor(slot, top) }, restFor(slot)
-                )
-            } else {
-                val window = RepWindow.forExercise(user, top)
-                val reps = if (atTop) window.last else minOf(window.first + TYPICAL_REP_CLIMB, window.last)
-                SessionMinutes.forExercise(top.measure, List(slot.sets) { reps }, restFor(slot), top.unilateral)
-            }
+            if (atTop) return slot.candidates.mapNotNull { catalog[it] }
+                .maxOfOrNull { minutesOf(slot, it, atTop = true) } ?: 0
+            val inPlay = slot.candidates.take(SkeletonSlot.VARIETY_DEPTH).mapNotNull { catalog[it] }
+            if (inPlay.isEmpty()) return 0
+            return inPlay.sumOf { minutesOf(slot, it, atTop = false) } / inPlay.size
         }
 
-        private fun secondsFor(slot: Draft, top: CatalogExercise): Int = when (slot.tier) {
+        private fun minutesOf(slot: Draft, movement: CatalogExercise, atTop: Boolean): Int =
+            if (movement.measure == ExerciseMeasure.DURATION) {
+                SessionMinutes.forExercise(
+                    ExerciseMeasure.DURATION, List(slot.sets) { secondsFor(slot, movement, atTop) }, restFor(slot)
+                )
+            } else {
+                val reps = if (atTop) RepWindow.forExercise(user, movement).last
+                else RepWindow.openingReps(user, movement)
+                SessionMinutes.forExercise(
+                    movement.measure, List(slot.sets) { reps }, restFor(slot), movement.unilateral
+                )
+            }
+
+        // A hold climbs from a first week to the ceiling the engine stops at,
+        // the same ladder a rep window is.
+        private fun secondsFor(slot: Draft, top: CatalogExercise, atTop: Boolean = true): Int = when (slot.tier) {
             SlotTier.WARM_UP ->
                 if (top.key == WARM_UP_KEY) SeedLoad.WARM_UP_SECONDS else SeedLoad.MOBILITY_SECONDS
             SlotTier.MOBILITY -> SeedLoad.MOBILITY_SECONDS
             SlotTier.CONDITIONING -> slot.conditioningSeconds
-            else -> HOLD_BUDGET_SECONDS
+            else -> if (atTop) HOLD_BUDGET_SECONDS else SeedLoad.holdSeconds(user)
         }
 
         private fun restFor(slot: Draft): Int = when {
@@ -370,70 +393,7 @@ class PlanSkeletonBuilder(private val catalog: ExerciseCatalog) {
             }
 
         private fun dropOrderFor(focus: SessionFocus): List<String> =
-            if (focus == SessionFocus.ACTIVE_RECOVERY) listOf("mobility_2", "core") else shape.drop
-    }
-
-    private data class Shape(
-        val count: Int,
-        val sets: Map<SlotTier, Pair<Int, Int>>,
-        val drop: List<String>,
-        // Weight loss and endurance take the rest of the session as
-        // conditioning; every other goal takes a short fixed block.
-        val conditioningFillsTheSession: Boolean = false
-    )
-
-    // A strength day sheds breadth to keep depth, a weight-loss day sheds the
-    // lifting tail to keep its conditioning, and a flexibility day has no
-    // compound slots at all.
-    private fun shapeFor(goal: FitnessGoal): Shape = when (goal) {
-        FitnessGoal.STRENGTH -> Shape(
-            count = 6,
-            sets = mapOf(
-                SlotTier.WARM_UP to (1 to 1), SlotTier.PRIMARY_COMPOUND to (3 to 5),
-                SlotTier.SECONDARY_COMPOUND to (2 to 4), SlotTier.ACCESSORY to (2 to 3),
-                SlotTier.ISOLATION to (2 to 2), SlotTier.CORE to (1 to 2), SlotTier.CONDITIONING to (1 to 1)
-            ),
-            drop = listOf("isolation_2", "conditioning", "mobility_1", "accessory", "core", "isolation_1"),
-        )
-        FitnessGoal.MUSCLE_GAIN -> Shape(
-            count = 8,
-            sets = mapOf(
-                SlotTier.WARM_UP to (1 to 1), SlotTier.PRIMARY_COMPOUND to (2 to 4),
-                SlotTier.SECONDARY_COMPOUND to (2 to 3), SlotTier.ACCESSORY to (2 to 3),
-                SlotTier.ISOLATION to (2 to 3), SlotTier.CORE to (1 to 3),
-                SlotTier.CONDITIONING to (1 to 1), SlotTier.MOBILITY to (1 to 1)
-            ),
-            drop = listOf("mobility_1", "conditioning", "isolation_2", "core", "accessory", "isolation_1"),
-        )
-        FitnessGoal.GENERAL_FITNESS -> Shape(
-            count = 8,
-            sets = mapOf(
-                SlotTier.WARM_UP to (1 to 1), SlotTier.PRIMARY_COMPOUND to (2 to 3),
-                SlotTier.SECONDARY_COMPOUND to (2 to 3), SlotTier.ACCESSORY to (2 to 3),
-                SlotTier.ISOLATION to (2 to 3), SlotTier.CORE to (1 to 3),
-                SlotTier.CONDITIONING to (1 to 1), SlotTier.MOBILITY to (1 to 1)
-            ),
-            drop = listOf("mobility_1", "isolation_2", "isolation_1", "core", "conditioning", "accessory"),
-        )
-        FitnessGoal.WEIGHT_LOSS, FitnessGoal.ENDURANCE -> Shape(
-            count = 7,
-            sets = mapOf(
-                SlotTier.WARM_UP to (1 to 1), SlotTier.PRIMARY_COMPOUND to (2 to 3),
-                SlotTier.SECONDARY_COMPOUND to (2 to 3), SlotTier.ACCESSORY to (2 to 3),
-                SlotTier.ISOLATION to (2 to 2), SlotTier.CORE to (2 to 3),
-                SlotTier.CONDITIONING to (1 to 1), SlotTier.MOBILITY to (1 to 1)
-            ),
-            drop = listOf("isolation_2", "isolation_1", "accessory", "mobility_1", "secondary", "core"),
-            conditioningFillsTheSession = true
-        )
-        FitnessGoal.FLEXIBILITY -> Shape(
-            count = 6,
-            sets = mapOf(
-                SlotTier.WARM_UP to (1 to 1), SlotTier.CORE to (1 to 2),
-                SlotTier.CONDITIONING to (1 to 1), SlotTier.MOBILITY to (3 to 4)
-            ),
-            drop = listOf("core", "conditioning", "mobility_4", "mobility_3"),
-        )
+            if (focus == SessionFocus.ACTIVE_RECOVERY) listOf("mobility_2", "core") else shape.dropOrder
     }
 
     // How many of the week's days carry a conditioning block, spread across
@@ -457,7 +417,8 @@ class PlanSkeletonBuilder(private val catalog: ExerciseCatalog) {
         private const val MAX_SETS_PER_SLOT = 10
         private const val HOLD_BUDGET_SECONDS = 90
         private const val STRETCH_SETS = 2
-        private const val TYPICAL_REP_CLIMB = 2
+        private const val OVER_TOLERANCE_NUMERATOR = 11
+        private const val OVER_TOLERANCE_DENOMINATOR = 10
         private const val CONDITIONING_FLOOR_SECONDS = 300
         private const val CONDITIONING_STEP_SECONDS = 60
         private const val CONDITIONING_CEILING_SECONDS = 3600

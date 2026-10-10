@@ -1,11 +1,15 @@
 package com.jericx.trainr.presentation.workout.components
 
 import androidx.activity.ComponentActivity
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
@@ -14,12 +18,18 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.down
 import androidx.compose.ui.test.moveTo
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.swipe
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.unit.Density
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.R
@@ -36,7 +46,8 @@ class ExerciseSetTableTest {
     @get:Rule
     val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 
-    private fun string(id: Int) = composeTestRule.activity.getString(id)
+    private fun string(id: Int, vararg args: Any) =
+        composeTestRule.activity.getString(id, *args)
 
     private fun setTable(
         measure: ExerciseMeasure,
@@ -45,7 +56,8 @@ class ExerciseSetTableTest {
         ),
         onSetChanged: (ExerciseSet) -> Unit = {},
         onAddSet: () -> Unit = {},
-        onDeleteSet: (ExerciseSet) -> Unit = {}
+        onDeleteSet: (ExerciseSet) -> Unit = {},
+        isReadOnly: Boolean = false
     ) {
         composeTestRule.setContent {
             TrainrTheme {
@@ -54,10 +66,49 @@ class ExerciseSetTableTest {
                     sets = sets,
                     onSetChanged = onSetChanged,
                     onAddSet = onAddSet,
-                    onDeleteSet = onDeleteSet
+                    onDeleteSet = onDeleteSet,
+                    isReadOnly = isReadOnly
                 )
             }
         }
+    }
+
+    @Test
+    fun aRecordedSetShowsItsNumbersWithNoWayToChangeThem() {
+        setTable(
+            ExerciseMeasure.WEIGHT_AND_REPS,
+            sets = listOf(
+                ExerciseSet(
+                    setNumber = 1,
+                    targetReps = 12,
+                    targetWeightKg = 20f,
+                    actualReps = 9,
+                    actualWeightKg = 17.5f,
+                    isCompleted = true
+                )
+            ),
+            isReadOnly = true
+        )
+
+        composeTestRule.onNodeWithText("9").assertIsDisplayed()
+        composeTestRule.onNodeWithText("17.5").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription(string(R.string.completed)).assertIsDisplayed()
+
+        composeTestRule.onNodeWithText(string(R.string.add_set)).assertDoesNotExist()
+        composeTestRule.onNodeWithContentDescription(string(R.string.delete_set)).assertDoesNotExist()
+        composeTestRule.onNodeWithContentDescription(string(R.string.mark_set_incomplete))
+            .assertDoesNotExist()
+        assertThat(composeTestRule.onAllNodes(hasSetTextAction()).fetchSemanticsNodes()).isEmpty()
+    }
+
+    // The prescription is all a set nobody logged has left to show.
+    @Test
+    fun aRecordedSetNeverLoggedFallsBackToWhatItAskedFor() {
+        setTable(ExerciseMeasure.REPS, isReadOnly = true)
+
+        composeTestRule.onNodeWithText("12").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription(string(R.string.not_completed))
+            .assertIsDisplayed()
     }
 
     @Test
@@ -120,6 +171,231 @@ class ExerciseSetTableTest {
         composeTestRule.onNode(hasSetTextAction()).performTextInput("500")
 
         assertThat(logged?.actualSeconds).isEqualTo(300)
+    }
+
+    // The screen feeds every change back, so the field shows what is stored.
+    private fun loggingTable(
+        measure: ExerciseMeasure,
+        initial: List<ExerciseSet> = listOf(
+            ExerciseSet(setNumber = 1, targetReps = 12, targetWeightKg = 20f, targetSeconds = 60)
+        ),
+        onLogged: (ExerciseSet) -> Unit = {}
+    ) {
+        composeTestRule.setContent {
+            var sets by remember { mutableStateOf(initial) }
+            TrainrTheme {
+                ExerciseSetTable(
+                    measure = measure,
+                    sets = sets,
+                    onSetChanged = { changed ->
+                        sets = sets.map { if (it.setNumber == changed.setNumber) changed else it }
+                        onLogged(changed)
+                    },
+                    onAddSet = {}
+                )
+            }
+        }
+    }
+
+    private fun SemanticsNodeInteraction.shownText(): String =
+        fetchSemanticsNode().config[SemanticsProperties.EditableText].text
+
+    private fun weightField() = composeTestRule.onAllNodes(hasSetTextAction()).onFirst()
+
+    private fun onlyField() = composeTestRule.onNode(hasSetTextAction())
+
+    // A slipped dot used to clear the number and start the next keystroke anew.
+    @Test
+    fun aSecondDecimalPointLeavesTheNumberAndTheRecordAlone() {
+        var logged: ExerciseSet? = null
+        loggingTable(ExerciseMeasure.WEIGHT_AND_REPS, onLogged = { logged = it })
+
+        weightField().performTextInput("22.5")
+        weightField().performTextInput(".")
+
+        assertThat(weightField().shownText()).isEqualTo("22.5")
+        assertThat(logged?.actualWeightKg).isEqualTo(22.5f)
+    }
+
+    // An external keyboard offers letters whatever the on-screen pad shows.
+    @Test
+    fun aLetterNeverReachesTheFieldOrTheRecord() {
+        var logged: ExerciseSet? = null
+        loggingTable(ExerciseMeasure.REPS, onLogged = { logged = it })
+
+        onlyField().performTextInput("abc")
+
+        assertThat(onlyField().shownText()).isEmpty()
+        assertThat(logged).isNull()
+    }
+
+    @Test
+    fun aWeightOverTheMaximumIsRefusedAndSaysWhatTheRangeIs() {
+        var logged: ExerciseSet? = null
+        loggingTable(ExerciseMeasure.WEIGHT_AND_REPS, onLogged = { logged = it })
+
+        weightField().performTextInput("1500")
+
+        assertThat(weightField().shownText()).isEmpty()
+        assertThat(logged).isNull()
+        weightRangeMessage().assertIsDisplayed()
+
+        weightField().performTextInput("20")
+
+        weightRangeMessage().assertDoesNotExist()
+    }
+
+    // The keystroke is dropped, so the message is the only sign the person gets
+    // that anything was refused.
+    @Test
+    fun aCountOverTheMaximumSaysWhatTheRangeIsUntilADigitIsAccepted() {
+        loggingTable(ExerciseMeasure.REPS)
+
+        onlyField().performTextInput("9999")
+
+        repsRangeMessage().assertIsDisplayed()
+
+        onlyField().performTextInput("12")
+
+        assertThat(onlyField().shownText()).isEqualTo("12")
+        repsRangeMessage().assertDoesNotExist()
+    }
+
+    // The whole number arriving at once was never the real path: a finger types
+    // one digit, and the fourth one on 999 must not reach the cell or the record.
+    @Test
+    fun aCountTypedOneDigitAtATimePastTheMaximumIsRefused() {
+        var logged: ExerciseSet? = null
+        loggingTable(ExerciseMeasure.REPS, onLogged = { logged = it })
+
+        repeat(4) { onlyField().performTextInput("9") }
+
+        assertThat(onlyField().shownText()).isEqualTo("999")
+        assertThat(logged?.actualReps).isEqualTo(999)
+        repsRangeMessage().assertIsDisplayed()
+    }
+
+    @Test
+    fun aWeightTypedOneDigitAtATimePastTheMaximumIsRefused() {
+        var logged: ExerciseSet? = null
+        loggingTable(ExerciseMeasure.WEIGHT_AND_REPS, onLogged = { logged = it })
+
+        listOf("1", "0", "0", "0", "0").forEach { weightField().performTextInput(it) }
+
+        assertThat(weightField().shownText()).isEqualTo("1000")
+        assertThat(logged?.actualWeightKg).isEqualTo(1000f)
+        weightRangeMessage().assertIsDisplayed()
+    }
+
+    // The time cell is refused through the same transformation, so a fifth digit
+    // on 16:40 must not reach the face or the record either.
+    @Test
+    fun aTimeTypedOneDigitAtATimePastTheLongestTimeIsRefused() {
+        var logged: ExerciseSet? = null
+        loggingTable(
+            ExerciseMeasure.DURATION,
+            initial = listOf(ExerciseSet(setNumber = 1)),
+            onLogged = { logged = it }
+        )
+
+        listOf("1", "6", "4", "0", "0").forEach { onlyField().performTextInput(it) }
+
+        assertThat(onlyField().shownText()).isEqualTo("16:40")
+        assertThat(logged?.actualSeconds).isEqualTo(1000)
+        timeRangeMessage().assertIsDisplayed()
+    }
+
+    // A buffer short of four digits is still taking them, so 9:99 is the 639
+    // seconds the cell holds; it is the fourth 9 that makes a face of 99:99 and
+    // has to be turned away.
+    @Test
+    fun aTimeTypedOneDigitAtATimePastTheClockFaceIsRefused() {
+        var logged: ExerciseSet? = null
+        loggingTable(
+            ExerciseMeasure.DURATION,
+            initial = listOf(ExerciseSet(setNumber = 1)),
+            onLogged = { logged = it }
+        )
+
+        repeat(4) { onlyField().performTextInput("9") }
+
+        assertThat(onlyField().shownText()).isEqualTo("9:99")
+        assertThat(logged?.actualSeconds).isEqualTo(639)
+    }
+
+    private fun timeRangeMessage() = composeTestRule.onNodeWithText(
+        string(R.string.value_range_hint, string(R.string.time_column), "0:01", "99:59")
+    )
+
+    private fun weightRangeMessage() = composeTestRule.onNodeWithText(
+        string(
+            R.string.value_range_hint,
+            string(R.string.weight_label),
+            "0",
+            "1000 " + string(R.string.weight_column)
+        )
+    )
+
+    private fun repsRangeMessage() = composeTestRule.onNodeWithText(
+        string(R.string.value_range_hint, string(R.string.reps_column), "0", "999")
+    )
+
+    // 6-3-0 used to stall at 0:06, with the last two keystrokes swallowed.
+    @Test
+    fun everyDigitOfASixMinuteTimeReachesTheCell() {
+        var logged: ExerciseSet? = null
+        loggingTable(
+            ExerciseMeasure.DURATION,
+            initial = listOf(ExerciseSet(setNumber = 1)),
+            onLogged = { logged = it }
+        )
+
+        onlyField().performTextInput("6")
+        onlyField().performTextInput("3")
+        onlyField().performTextInput("0")
+
+        assertThat(logged?.actualSeconds).isEqualTo(390)
+    }
+
+    // 1-6-4-0 used to stall at 0:16, the same stall one digit further along.
+    @Test
+    fun everyDigitOfASixteenMinuteTimeReachesTheCell() {
+        var logged: ExerciseSet? = null
+        loggingTable(
+            ExerciseMeasure.DURATION,
+            initial = listOf(ExerciseSet(setNumber = 1)),
+            onLogged = { logged = it }
+        )
+
+        listOf("1", "6", "4", "0").forEach { onlyField().performTextInput(it) }
+
+        assertThat(logged?.actualSeconds).isEqualTo(1000)
+    }
+
+    @Test
+    fun aCountOverTheMaximumIsRefused() {
+        var logged: ExerciseSet? = null
+        loggingTable(ExerciseMeasure.REPS, onLogged = { logged = it })
+
+        onlyField().performTextInput("999999")
+
+        assertThat(onlyField().shownText()).isEmpty()
+        assertThat(logged).isNull()
+    }
+
+    // The number pad has no Return key of its own.
+    @Test
+    fun theNumberPadIsClosedByItsOwnDoneKey() {
+        loggingTable(ExerciseMeasure.REPS)
+
+        onlyField().performClick()
+        onlyField().assertIsFocused()
+        assertThat(onlyField().fetchSemanticsNode().config[SemanticsProperties.ImeAction])
+            .isEqualTo(ImeAction.Done)
+
+        onlyField().performImeAction()
+
+        onlyField().assertIsNotFocused()
     }
 
     // Swipe across the row, not the set-number cell; distance decides the delete.
@@ -290,5 +566,31 @@ class ExerciseSetTableTest {
         composeTestRule.onNodeWithText(string(R.string.add_set)).performClick()
 
         assertThat(added).isTrue()
+    }
+
+    // A fixed 24dp box clipped the tick at the largest accessibility size.
+    @Test
+    fun theSetTickGrowsWithTheTextSetting() {
+        composeTestRule.setContent {
+            val base = LocalDensity.current
+            CompositionLocalProvider(
+                LocalDensity provides Density(base.density, fontScale = 2f)
+            ) {
+                TrainrTheme {
+                    ExerciseSetTable(
+                        measure = ExerciseMeasure.REPS,
+                        sets = listOf(ExerciseSet(setNumber = 1, targetReps = 12)),
+                        onSetChanged = {},
+                        onAddSet = {}
+                    )
+                }
+            }
+        }
+
+        val tick = composeTestRule.onNodeWithContentDescription(
+            string(R.string.mark_set_complete)
+        ).getUnclippedBoundsInRoot()
+
+        assertThat((tick.right - tick.left).value).isAtLeast(40f)
     }
 }

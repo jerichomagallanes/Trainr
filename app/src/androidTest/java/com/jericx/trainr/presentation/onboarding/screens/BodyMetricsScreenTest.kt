@@ -21,6 +21,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import com.jericx.trainr.domain.model.UnitSystem
 import com.jericx.trainr.domain.model.UserProfile
+import com.jericx.trainr.presentation.onboarding.BodyMetricsEntry
+import com.jericx.trainr.presentation.onboarding.util.BodyMetricsConverter
 
 @RunWith(AndroidJUnit4::class)
 class BodyMetricsScreenTest {
@@ -50,6 +52,67 @@ class BodyMetricsScreenTest {
         composeTestRule.onNodeWithText(string(R.string.next)).performClick()
 
         assertThat(captured).isEqualTo(UnitSystem.IMPERIAL)
+    }
+
+    // Looking at a measurement in the other units must not edit it.
+    @Test
+    fun aRoundTripThroughImperialLeavesTheMeasurementsAlone() {
+        var height = 0f
+        var weight = 0f
+        composeTestRule.setContent {
+            TrainrTheme {
+                BodyMetricsScreen(
+                    onNextClick = { h, w, _ -> height = h; weight = w },
+                    onBackClick = {}
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.height_placeholder_cm))
+            .performTextInput("177")
+        composeTestRule.onNodeWithText(string(R.string.weight_placeholder_kg))
+            .performTextInput("95.5")
+        composeTestRule.onNodeWithText(string(R.string.imperial)).performClick()
+        composeTestRule.onNodeWithText(string(R.string.metric)).performClick()
+
+        composeTestRule.onNodeWithText("177").assertIsDisplayed()
+        composeTestRule.onNodeWithText("95.5").assertIsDisplayed()
+
+        composeTestRule.onNodeWithText(string(R.string.next)).performClick()
+
+        assertThat(height).isEqualTo(177f)
+        assertThat(weight).isEqualTo(95.5f)
+    }
+
+    // The person has not changed, so neither has the index: reading it off the
+    // fields would round the height to a whole inch and move it.
+    @Test
+    fun theIndexHoldsStillWhenOnlyTheUnitsChange() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                BodyMetricsScreen(
+                    age = 30,
+                    onNextClick = { _, _, _ -> },
+                    onBackClick = {}
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.height_placeholder_cm))
+            .performTextInput("175")
+        composeTestRule.onNodeWithText(string(R.string.weight_placeholder_kg))
+            .performTextInput("72")
+
+        composeTestRule.onNodeWithText("${string(R.string.bmi_label)} 23.5")
+            .performScrollTo()
+            .assertIsDisplayed()
+
+        composeTestRule.onNodeWithText(string(R.string.imperial)).performScrollTo().performClick()
+
+        composeTestRule.onNodeWithText("5'9\"").performScrollTo().assertIsDisplayed()
+        composeTestRule.onNodeWithText("${string(R.string.bmi_label)} 23.5")
+            .performScrollTo()
+            .assertIsDisplayed()
     }
 
     @Test
@@ -153,7 +216,7 @@ class BodyMetricsScreenTest {
         composeTestRule.onNodeWithText(string(R.string.imperial)).performClick()
 
         composeTestRule.onNodeWithText("5'7\"").assertIsDisplayed()
-        composeTestRule.onNodeWithText("154").assertIsDisplayed()
+        composeTestRule.onNodeWithText("154.3").assertIsDisplayed()
     }
 
     // Switching units rewrites the field, its keyboard and its filter, so focus must not stay behind.
@@ -188,7 +251,7 @@ class BodyMetricsScreenTest {
 
         composeTestRule.onNodeWithText(string(R.string.imperial)).performClick()
 
-        composeTestRule.onNodeWithText("154").assertIsNotFocused()
+        composeTestRule.onNodeWithText("154.3").assertIsNotFocused()
     }
 
     @Test
@@ -361,8 +424,12 @@ class BodyMetricsScreenTest {
         composeTestRule.onNodeWithText(string(R.string.weight_placeholder_kg))
             .performTextInput("72")
 
-        composeTestRule.onNodeWithText(string(R.string.normal_weight)).assertIsDisplayed()
-        composeTestRule.onNodeWithText(string(R.string.bmi_screening_note)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.normal_weight))
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.bmi_screening_note))
+            .performScrollTo()
+            .assertIsDisplayed()
         composeTestRule.onNodeWithText(string(R.string.bmi_about_sources))
             .performScrollTo()
             .performClick()
@@ -411,5 +478,121 @@ class BodyMetricsScreenTest {
         composeTestRule.onNodeWithText(string(R.string.underweight)).assertDoesNotExist()
         composeTestRule.onNodeWithText(string(R.string.bmi_label), substring = true)
             .assertDoesNotExist()
+    }
+
+    @Test
+    fun measurementsTypedBeforeGoingBackAreShownAgain() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                BodyMetricsScreen(
+                    inProgress = BodyMetricsEntry(height = "5'10\"", weight = "165", useMetric = false),
+                    onNextClick = { _, _, _ -> },
+                    onBackClick = {}
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText("5'10\"").assertIsDisplayed()
+        composeTestRule.onNodeWithText("165").assertIsDisplayed()
+    }
+
+    // "175" passes the imperial filter but is not feet and inches, so the
+    // switch keeps it as it is. What it keeps is a height again in the field it
+    // was left in.
+    @Test
+    fun aHeightKeptAcrossTheSwitchIsReadInTheUnitsItIsShownIn() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                BodyMetricsScreen(onNextClick = { _, _, _ -> }, onBackClick = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.imperial)).performClick()
+        composeTestRule.onNodeWithText(string(R.string.height_placeholder_imperial))
+            .performTextInput("175")
+        composeTestRule.onNodeWithText(string(R.string.weight_placeholder_lbs))
+            .performTextInput("154")
+        composeTestRule.onNodeWithText(string(R.string.next)).assertIsNotEnabled()
+
+        composeTestRule.onNodeWithText(string(R.string.metric)).performClick()
+
+        composeTestRule.onNodeWithText("175").assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.next)).assertIsEnabled()
+    }
+
+    // A stored measurement shown in inches is a conversion like any other: read
+    // off the field, 175 shown back as 5'9" is 175.26 and a different index for
+    // the same person, which SAVE would then write over the stored one.
+    @Test
+    fun aProfileReopenedInInchesKeepsItsIndexAndItsMeasurements() {
+        var height = 0f
+        var weight = 0f
+        composeTestRule.setContent {
+            TrainrTheme {
+                BodyMetricsScreen(
+                    initial = UserProfile(
+                        age = 30,
+                        height = 175f,
+                        weight = 72f,
+                        bodyUnitSystem = UnitSystem.IMPERIAL
+                    ),
+                    isEditing = true,
+                    onNextClick = { h, w, _ -> height = h; weight = w },
+                    onBackClick = {}
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText("5'9\"").assertIsDisplayed()
+        composeTestRule.onNodeWithText("${string(R.string.bmi_label)} 23.5")
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.save).uppercase()).performClick()
+
+        assertThat(height).isEqualTo(175f)
+        assertThat(weight).isWithin(0.01f).of(72f)
+    }
+
+    // The swap travels with the text it belongs to, so a step left and come
+    // back to does not read the index off the fields again.
+    @Test
+    fun aStepComeBackToKeepsTheIndexItShowed() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                BodyMetricsScreen(
+                    age = 30,
+                    inProgress = BodyMetricsEntry(
+                        height = "5'9\"",
+                        weight = "158.7",
+                        useMetric = false,
+                        heightSwap = BodyMetricsConverter.UnitSwap("5'9\"", "175"),
+                        weightSwap = BodyMetricsConverter.UnitSwap("158.7", "72")
+                    ),
+                    onNextClick = { _, _, _ -> },
+                    onBackClick = {}
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText("${string(R.string.bmi_label)} 23.5")
+            .performScrollTo()
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun aPartTypedImperialHeightSurvivesTheUnitTabs() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                BodyMetricsScreen(onNextClick = { _, _, _ -> }, onBackClick = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.imperial)).performClick()
+        composeTestRule.onNodeWithText(string(R.string.height_placeholder_imperial))
+            .performTextInput("5")
+
+        composeTestRule.onNodeWithText(string(R.string.metric)).performClick()
+
+        composeTestRule.onNodeWithText("5").assertIsDisplayed()
     }
 }

@@ -2,6 +2,9 @@ package com.jericx.trainr.presentation.workout
 
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.assertIsNotFocused
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
@@ -22,7 +25,11 @@ import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.R
+import com.jericx.trainr.domain.unstuck.FinishKind
+import com.jericx.trainr.domain.unstuck.SessionOutcome
+import com.jericx.trainr.domain.catalog.MuscleRegion
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
+import com.jericx.trainr.presentation.workout.model.AdjustedBannerUi
 import com.jericx.trainr.presentation.workout.util.WorkoutDateFormatter
 import java.util.Locale
 import org.junit.Rule
@@ -37,7 +44,11 @@ class RoutineDetailScreenTest {
 
     private val state = RoutineDetailViewModel.sampleState()
 
-    private fun string(id: Int) = composeTestRule.activity.getString(id)
+    private fun string(id: Int, vararg args: Any) =
+        composeTestRule.activity.getString(id, *args)
+
+    private fun plural(id: Int, count: Int, vararg args: Any) =
+        composeTestRule.activity.resources.getQuantityString(id, count, *args)
 
     private fun setScreen(
         onToggleExercise: (Int) -> Unit = {},
@@ -52,6 +63,20 @@ class RoutineDetailScreenTest {
                 )
             }
         }
+    }
+
+    // The pad used to sit over the bottom of the session until the person left it.
+    @Test
+    fun tappingOutsideAFieldClosesTheNumberPad() {
+        setScreen()
+
+        val field = composeTestRule.onAllNodes(hasSetTextAction()).onFirst()
+        field.performClick()
+        field.assertIsFocused()
+
+        composeTestRule.onNodeWithText(state.routine.exercises.first().name).performClick()
+
+        field.assertIsNotFocused()
     }
 
     @Test
@@ -153,7 +178,7 @@ class RoutineDetailScreenTest {
         composeTestRule.setContent {
             var current by remember { mutableStateOf(state.copy(isLoaded = false)) }
             TrainrTheme {
-                RoutineDetailScreen(state = current, onDayCompleted = { reported = it })
+                RoutineDetailScreen(state = current, onDayCompleted = { day, _ -> reported = day })
                 LaunchedEffect(Unit) {
                     current = state.copy(routine = state.routine.completeAll())
                 }
@@ -172,7 +197,7 @@ class RoutineDetailScreenTest {
 
         composeTestRule.setContent {
             TrainrTheme {
-                RoutineDetailScreen(state = finished, onDayCompleted = { reported = it })
+                RoutineDetailScreen(state = finished, onDayCompleted = { day, _ -> reported = day })
             }
         }
 
@@ -191,7 +216,7 @@ class RoutineDetailScreenTest {
                 RoutineDetailScreen(
                     state = current,
                     onToggleExercise = { current = current.copy(routine = current.routine.completeAll()) },
-                    onDayCompleted = { reported = it }
+                    onDayCompleted = { day, _ -> reported = day }
                 )
             }
         }
@@ -304,5 +329,349 @@ class RoutineDetailScreenTest {
         assertThat(cleared).isFalse()
         composeTestRule.onNodeWithText(string(R.string.start_workout_over))
             .assertIsDisplayed()
+    }
+
+    private val finishedEarly = state.copy(
+        outcome = SessionOutcome(
+            workoutDayId = 2,
+            finishKind = FinishKind.PARTIAL,
+            finishedAt = 1L,
+            performedSetCount = 1,
+            plannedSetCount = 4
+        )
+    )
+
+    @Test
+    fun anUnfinishedWorkoutOffersToFinishEarly() {
+        setScreen()
+
+        composeTestRule.onNodeWithText(string(R.string.finish_early))
+            .performScrollTo()
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun aFinishedWorkoutDoesNotOfferToFinishEarly() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                RoutineDetailScreen(state = state.copy(routine = state.routine.completeAll()))
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.finish_early)).assertDoesNotExist()
+    }
+
+    @Test
+    fun finishingEarlyAsksFirstWithTheTruthfulCount() {
+        var saved = false
+        composeTestRule.setContent {
+            var current by remember { mutableStateOf(state) }
+            TrainrTheme {
+                RoutineDetailScreen(
+                    state = current,
+                    onAskToFinishEarly = { current = current.copy(isConfirmingFinishEarly = true) },
+                    onKeepTraining = { current = current.copy(isConfirmingFinishEarly = false) },
+                    onFinishEarly = { saved = true }
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.finish_early))
+            .performScrollTo()
+            .performClick()
+
+        composeTestRule.onNodeWithText(string(R.string.finish_early_title)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(
+            plural(
+                R.plurals.exercises_completed_of_format,
+                state.routine.plannedExerciseCount,
+                state.routine.performedExerciseCount,
+                state.routine.plannedExerciseCount
+            )
+        ).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.finish_early_card_message)).assertIsDisplayed()
+        assertThat(saved).isFalse()
+
+        composeTestRule.onNodeWithText(string(R.string.save_workout).uppercase()).performClick()
+        assertThat(saved).isTrue()
+    }
+
+    @Test
+    fun keepTrainingReturnsToTheWorkout() {
+        composeTestRule.setContent {
+            var current by remember { mutableStateOf(state.copy(isConfirmingFinishEarly = true)) }
+            TrainrTheme {
+                RoutineDetailScreen(
+                    state = current,
+                    onKeepTraining = { current = current.copy(isConfirmingFinishEarly = false) }
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.finish_early_title)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.keep_training)).performClick()
+
+        composeTestRule.onNodeWithText(string(R.string.finish_early_title)).assertDoesNotExist()
+        composeTestRule.onNodeWithText("CARDIO & CORE").assertIsDisplayed()
+    }
+
+    @Test
+    fun aFailedSaveSaysSoAndOffersToTryAgain() {
+        var retried = false
+        composeTestRule.setContent {
+            TrainrTheme {
+                RoutineDetailScreen(
+                    state = state.copy(isConfirmingFinishEarly = true, saveFailed = true),
+                    onRetryFinishEarly = { retried = true }
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.finish_early_failed)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.try_again).uppercase()).performClick()
+
+        assertThat(retried).isTrue()
+    }
+
+    @Test
+    fun tickingTheLastExerciseOfAWorkoutFinishedEarlyReportsNothing() {
+        var reported: Int? = null
+
+        composeTestRule.setContent {
+            var current by remember { mutableStateOf(finishedEarly) }
+            TrainrTheme {
+                RoutineDetailScreen(
+                    state = current,
+                    onToggleExercise = { current = current.copy(routine = current.routine.completeAll()) },
+                    onDayCompleted = { day, _ -> reported = day },
+                    onWeekCompleted = { day, _ -> reported = day }
+                )
+            }
+        }
+
+        composeTestRule.onAllNodesWithContentDescription(string(R.string.mark_exercise_complete))
+            .onFirst()
+            .performClick()
+        composeTestRule.waitForIdle()
+
+        assertThat(reported).isNull()
+    }
+
+    @Test
+    fun aWorkoutFinishedEarlyCanBeFinishedOrStartedOverButNotFinishedEarlyAgain() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                RoutineDetailScreen(state = finishedEarly)
+            }
+        }
+
+        composeTestRule.onNodeWithText(
+            plural(
+                R.plurals.finished_early_summary_format,
+                state.routine.plannedExerciseCount,
+                state.routine.performedExerciseCount,
+                state.routine.plannedExerciseCount
+            )
+        ).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.slide_to_complete_routine))
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.start_workout_over))
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.finish_early)).assertDoesNotExist()
+    }
+
+    @Test
+    fun aSessionStillRunningOffersToAdjustToday() {
+        setScreen()
+
+        composeTestRule.onNodeWithText(string(R.string.adjust_today)).performScrollTo()
+            .assertIsDisplayed()
+        composeTestRule.onAllNodesWithText(string(R.string.need_an_alternative)).onFirst()
+            .performScrollTo()
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun aSessionFinishedInFullIsNotOfferedAnAdjustment() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                RoutineDetailScreen(
+                    state = state.copy(
+                        routine = state.routine.completeAll(),
+                        outcome = SessionOutcome(
+                            workoutDayId = 1,
+                            finishKind = FinishKind.FULL,
+                            finishedAt = 1L,
+                            performedSetCount = 4,
+                            plannedSetCount = 4
+                        )
+                    )
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.adjust_today)).assertDoesNotExist()
+        assertThat(
+            composeTestRule.onAllNodesWithText(string(R.string.need_an_alternative))
+                .fetchSemanticsNodes()
+        ).isEmpty()
+    }
+
+    @Test
+    fun aSessionFinishedEarlyIsStillOfferedAnAdjustment() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                RoutineDetailScreen(
+                    state = finishedEarly.copy(
+                        adjustedBanner = AdjustedBannerUi(messageRes = R.string.adjusted_reduced_banner)
+                    )
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.adjust_today)).performScrollTo()
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.undo_adjustment)).performScrollTo()
+            .assertIsDisplayed()
+        composeTestRule.onAllNodesWithText(string(R.string.need_an_alternative)).onFirst()
+            .performScrollTo()
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun anAppliedAdjustmentIsAnnouncedAndCanBeUndone() {
+        var undone = false
+        composeTestRule.setContent {
+            TrainrTheme {
+                RoutineDetailScreen(
+                    state = state.copy(
+                        adjustedBanner = AdjustedBannerUi(
+                            messageRes = R.string.adjusted_time_banner_format,
+                            regions = listOf(MuscleRegion.ARMS)
+                        )
+                    ),
+                    onUndoAdjustment = { undone = true }
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.adjusted_for_today)).performScrollTo()
+            .assertIsDisplayed()
+        composeTestRule
+            .onNodeWithText(
+                string(R.string.adjusted_time_banner_format, string(R.string.region_arms))
+            )
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.undo_adjustment)).performClick()
+
+        assertThat(undone).isTrue()
+    }
+
+    @Test
+    fun tappingAdjustTodayOpensTheChooser() {
+        var opened = false
+        composeTestRule.setContent {
+            TrainrTheme {
+                RoutineDetailScreen(state = state, onOpenAdjustSheet = { opened = true })
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.adjust_today)).performScrollTo()
+            .performClick()
+
+        assertThat(opened).isTrue()
+    }
+
+    // The week this day belongs to is over, so the screen is the record of it.
+    private val record = state.copy(
+        isReadOnly = true,
+        adjustedBanner = AdjustedBannerUi(messageRes = R.string.adjusted_reduced_banner)
+    )
+
+    private fun setRecord() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                RoutineDetailScreen(state = record)
+            }
+        }
+    }
+
+    private fun assertNoneWithContentDescription(id: Int) {
+        assertThat(
+            composeTestRule.onAllNodesWithContentDescription(string(id)).fetchSemanticsNodes()
+        ).isEmpty()
+    }
+
+    @Test
+    fun aRecordOffersNothingThatWrites() {
+        setRecord()
+
+        listOf(
+            R.string.slide_to_complete_routine,
+            R.string.finish_early,
+            R.string.start_workout_over,
+            R.string.adjust_today,
+            R.string.add_set,
+            R.string.undo_adjustment,
+            R.string.start_timer,
+            R.string.need_an_alternative
+        ).forEach {
+            composeTestRule.onNodeWithText(string(it)).assertDoesNotExist()
+        }
+
+        listOf(
+            R.string.mark_exercise_complete,
+            R.string.mark_exercise_incomplete,
+            R.string.mark_set_complete,
+            R.string.mark_set_incomplete,
+            R.string.delete_set
+        ).forEach(::assertNoneWithContentDescription)
+    }
+
+    @Test
+    fun aRecordShowsTheNumbersAsTheyWereLogged() {
+        setRecord()
+
+        composeTestRule.onNodeWithText("CARDIO & CORE").assertIsDisplayed()
+        composeTestRule.onNodeWithText("5:00").assertExists()
+        composeTestRule.onNodeWithText(string(R.string.adjusted_for_today))
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeTestRule.onAllNodesWithText(string(R.string.show_how_to_perform))
+            .onFirst()
+            .performScrollTo()
+            .assertIsDisplayed()
+    }
+
+    // Every exercise ticked is the usual shape of a record, and how a movement
+    // is done is one of the few things left to read on one.
+    @Test
+    fun aRecordOfADayFullyDoneStillShowsHowTheWorkWasPerformed() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                RoutineDetailScreen(state = record.copy(routine = record.routine.completeAll()))
+            }
+        }
+
+        composeTestRule.onAllNodesWithText(string(R.string.show_how_to_perform))
+            .onFirst()
+            .performScrollTo()
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun aRecordStillSaysWhichWorkWasDone() {
+        setRecord()
+
+        assertThat(
+            composeTestRule.onAllNodesWithContentDescription(string(R.string.completed))
+                .fetchSemanticsNodes()
+        ).isNotEmpty()
+        assertThat(
+            composeTestRule.onAllNodesWithContentDescription(string(R.string.not_completed))
+                .fetchSemanticsNodes()
+        ).isNotEmpty()
     }
 }

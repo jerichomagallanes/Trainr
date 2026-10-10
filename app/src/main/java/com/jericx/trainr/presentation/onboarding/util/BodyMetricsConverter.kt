@@ -10,16 +10,36 @@ object BodyMetricsConverter {
 
     const val ADULT_BMI_AGE = 20
 
-    fun parseMetrics(height: String, weight: String, useMetric: Boolean): Pair<Float, Float> {
-        return if (useMetric) {
-            val h = height.toFloatOrNull() ?: 0f
-            val w = weight.toFloatOrNull() ?: 0f
-            Pair(h, w)
-        } else {
-            val h = parseImperialHeight(height)
-            val w = (weight.toFloatOrNull() ?: 0f) / Constants.Workout.KG_TO_LBS
-            Pair(h, w)
-        }
+    fun parseHeightCm(height: String, useMetric: Boolean): Float =
+        if (useMetric) height.toFloatOrNull() ?: 0f else parseImperialHeight(height)
+
+    fun parseWeightKg(weight: String, useMetric: Boolean): Float {
+        val typed = weight.toFloatOrNull() ?: 0f
+        return if (useMetric) typed else typed / Constants.Workout.KG_TO_LBS
+    }
+
+    fun parseMetrics(height: String, weight: String, useMetric: Boolean): Pair<Float, Float> =
+        Pair(parseHeightCm(height, useMetric), parseWeightKg(weight, useMetric))
+
+    // The measurements themselves, which a unit switch does not change. A field
+    // showing what a conversion made of a measurement is read back as the
+    // measurement it was given: a whole inch is coarser than a centimetre, so
+    // the fields alone would move the index when only the units moved.
+    fun keptMetrics(
+        height: String,
+        weight: String,
+        useMetric: Boolean,
+        heightSwap: UnitSwap,
+        weightSwap: UnitSwap
+    ): Pair<Float, Float> {
+        val before = !useMetric
+        val cm = heightSwap.measurementBehind(height)
+            ?.let { parseHeightCm(it, before) }
+            ?: parseHeightCm(height, useMetric)
+        val kg = weightSwap.measurementBehind(weight)
+            ?.let { parseWeightKg(it, before) }
+            ?: parseWeightKg(weight, useMetric)
+        return Pair(cm, kg)
     }
 
     // A pasted measurement often carries the prime marks, and iOS substitutes curly
@@ -59,15 +79,16 @@ object BodyMetricsConverter {
     }
 
     fun calculateBMI(height: String, weight: String, useMetric: Boolean): Float? {
-        return try {
-            val (h, w) = parseMetrics(height, weight, useMetric)
-            if (h.isFinite() && w.isFinite() && h > 0 && w > 0) {
-                val heightMeters = h / 100f
-                w / (heightMeters * heightMeters)
-            } else null
-        } catch (e: Exception) {
-            null
+        val (h, w) = parseMetrics(height, weight, useMetric)
+        return bodyMassIndex(h, w)
+    }
+
+    fun bodyMassIndex(heightCm: Float, weightKg: Float): Float? {
+        if (!heightCm.isFinite() || !weightKg.isFinite() || heightCm <= 0f || weightKg <= 0f) {
+            return null
         }
+        val heightMeters = heightCm / CM_PER_METRE
+        return weightKg / (heightMeters * heightMeters)
     }
 
     fun convertHeightToImperial(heightCm: String): String {
@@ -83,19 +104,47 @@ object BodyMetricsConverter {
         return if (cm > 0) cm.roundToInt().toString() else ""
     }
 
-    // Trims the float noise a pounds round trip leaves in a typed field.
-    fun formatKilograms(kg: Float): String =
-        if (kg % 1f == 0f) kg.toInt().toString() else ((kg * 10).roundToInt() / 10f).toString()
+    // The tenth the field accepts, kept in both directions: rounding pounds to
+    // a whole number on the way out loses the tenth of a kilogram on the way back.
+    fun formatWeight(value: Float): String {
+        val rounded = (value * TENTHS).roundToInt() / TENTHS
+        return if (rounded % 1f == 0f) rounded.toInt().toString() else rounded.toString()
+    }
 
     fun convertWeightToImperial(weightKg: String): String {
         val kg = weightKg.toFloatOrNull() ?: return ""
         val lbs = kg * Constants.Workout.KG_TO_LBS
-        return if (lbs > 0) lbs.roundToInt().toString() else ""
+        return if (lbs > 0) formatWeight(lbs) else ""
     }
 
     fun convertWeightToMetric(weightLbs: String): String {
         val lbs = weightLbs.toFloatOrNull() ?: return ""
         val kg = lbs / Constants.Workout.KG_TO_LBS
-        return if (kg > 0) kg.roundToInt().toString() else ""
+        return if (kg > 0) formatWeight(kg) else ""
     }
+
+    // What a field shows and the text it was converted from. A whole inch is
+    // coarser than a centimetre, so no pair of conversions can be each other's
+    // inverse; the text handed over is kept and given back instead.
+    data class UnitSwap(val shown: String = "", val typed: String? = null) {
+        // Nothing is behind a part-typed measurement that was kept rather than
+        // converted: it never left the units the field is showing.
+        fun measurementBehind(current: String): String? =
+            typed?.takeIf { shown == current && it != shown }
+    }
+
+    fun swapUnits(current: String, last: UnitSwap, convert: (String) -> String): UnitSwap {
+        if (last.typed != null && last.shown == current) return UnitSwap(last.typed)
+
+        // A part-typed measurement converts to nothing. Emptying the field would
+        // throw away what was being written, so it is left exactly as it is and
+        // the range message under it says it is not a measurement yet.
+        val converted = convert(current)
+        if (converted.isEmpty() && current.isNotEmpty()) return UnitSwap(current, current)
+
+        return UnitSwap(converted, current)
+    }
+
+    private const val TENTHS = 10f
+    private const val CM_PER_METRE = 100f
 }

@@ -6,11 +6,15 @@ import com.jericx.trainr.domain.model.Injury
 
 data class ExerciseUi(
     val position: Int,
+    val exerciseId: Long = 0,
     val name: String,
     val description: String,
     val minutes: Int,
     val measure: ExerciseMeasure = ExerciseMeasure.REPS,
     val sets: List<ExerciseSet> = emptyList(),
+    // Today's adjustment hides these rows but storage still holds them, so
+    // their numbers are taken and a new set may not reuse one.
+    val omittedSetNumbers: List<Int> = emptyList(),
     // Sets from the last completed day with this movement, matched on exerciseKey.
     val previousSets: List<ExerciseSet> = emptyList(),
     val videoUrl: String? = null,
@@ -19,8 +23,8 @@ data class ExerciseUi(
     val primaryMuscle: String = "",
     val secondaryMuscles: List<String> = emptyList(),
     val steps: List<String> = emptyList(),
-    // The injury the client declared that this movement asks care with.
-    val caution: Injury? = null,
+    // Every injury the client declared that this movement asks care with.
+    val cautions: List<Injury> = emptyList(),
     val isCompleted: Boolean = false
 ) {
     // A weight never lifted before is the app's guess from the profile, and

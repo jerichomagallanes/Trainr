@@ -1,14 +1,12 @@
 package com.jericx.trainr.domain.generation
 
 import com.jericx.trainr.domain.catalog.CatalogExercise
-import com.jericx.trainr.domain.catalog.ExerciseRole
 import com.jericx.trainr.domain.catalog.MovementPattern
 import com.jericx.trainr.domain.catalog.MuscleGroup
 import com.jericx.trainr.domain.catalog.role
 import com.jericx.trainr.domain.model.Equipment
 import com.jericx.trainr.domain.model.ExerciseMeasure
 import com.jericx.trainr.domain.model.ExerciseSet
-import com.jericx.trainr.domain.model.ExperienceLevel
 import com.jericx.trainr.domain.model.FitnessGoal
 import com.jericx.trainr.domain.model.UserProfile
 import kotlin.math.max
@@ -151,9 +149,7 @@ object ProgressionEngine {
         }
 
         fun bodyweight(): ProgressionTarget {
-            val first = if (user.experienceLevel == ExperienceLevel.BEGINNER &&
-                exercise.role == ExerciseRole.COMPOUND
-            ) min(window.first, BEGINNER_BODYWEIGHT_REPS) else window.first
+            val first = RepWindow.openingReps(user, exercise)
 
             if (sessions.isEmpty()) {
                 return repsTarget(first, askedSets, ProgressionOutcome.CALIBRATED, estimate = true)
@@ -410,7 +406,6 @@ object ProgressionEngine {
     private const val RESEED_OFFSET = 5
     private const val EPLEY_CEILING = 12
     private const val EPLEY_DIVISOR = 30f
-    private const val BEGINNER_BODYWEIGHT_REPS = 8
     private const val HOLD_STEP_SECONDS = 5
     private const val HOLD_CEILING_SECONDS = 90
     private const val HOLD_CUT_SECONDS = 10

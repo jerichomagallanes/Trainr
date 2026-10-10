@@ -49,7 +49,13 @@ fun WorkoutDayCard(
     day: WorkoutDay,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    isMissed: Boolean = false
+    isMissed: Boolean = false,
+    isPartlyDone: Boolean = false,
+    finishedEarly: Boolean = false,
+    isAdjusted: Boolean = false,
+    minutes: Int = day.duration,
+    exerciseCount: Int = day.exerciseCount,
+    equipment: List<String> = day.equipment
 ) {
     val started = day.status != WorkoutStatus.NOT_STARTED
     val colors = MaterialTheme.trainrColors
@@ -86,11 +92,16 @@ fun WorkoutDayCard(
                     color = if (started) colors.onSurfaceEmphasis else colors.onSurface
                 )
             }
-            // Missed deliberately reads in the same grey as "not started".
-            if (isMissed) {
-                StatusChip(labelRes = R.string.missed, tone = StatusTone.IDLE)
-            } else {
-                StatusChip(labelRes = day.status.labelRes, tone = day.status.chipTone)
+            // Missed deliberately reads in the same grey as "not started"; a day
+            // that was trained but never closed keeps the colour of work done.
+            when {
+                isMissed -> StatusChip(labelRes = R.string.missed, tone = StatusTone.IDLE)
+                isPartlyDone -> StatusChip(labelRes = R.string.partly_done, tone = StatusTone.ACTIVE)
+                finishedEarly -> StatusChip(labelRes = R.string.finished_early, tone = StatusTone.DONE)
+                isAdjusted && day.status != WorkoutStatus.COMPLETED ->
+                    StatusChip(labelRes = R.string.adjusted, tone = StatusTone.ACTIVE)
+
+                else -> StatusChip(labelRes = day.status.labelRes, tone = day.status.chipTone)
             }
         }
 
@@ -116,7 +127,7 @@ fun WorkoutDayCard(
                     )
                     Spacer(modifier = Modifier.size(Spacing.extraSmall))
                     Text(
-                        text = pluralStringResource(R.plurals.minutes, day.duration, day.duration),
+                        text = pluralStringResource(R.plurals.minutes, minutes, minutes),
                         style = MaterialTheme.typography.bodyMedium,
                         // Pure black here, not onSurface: light must stay #000000.
                         color = colors.onSurfaceStrong
@@ -124,7 +135,7 @@ fun WorkoutDayCard(
                 }
 
                 Text(
-                    text = pluralStringResource(R.plurals.exercises_count, day.exerciseCount, day.exerciseCount),
+                    text = pluralStringResource(R.plurals.exercises_count, exerciseCount, exerciseCount),
                     style = MaterialTheme.typography.labelLarge,
                     color = colors.onSurface,
                     modifier = Modifier
@@ -132,13 +143,13 @@ fun WorkoutDayCard(
                         .padding(horizontal = Spacing.small, vertical = 3.dp)
                 )
 
-                if (day.equipment.isNotEmpty()) {
+                if (equipment.isNotEmpty()) {
                     Text(
                         text = buildAnnotatedString {
                             withStyle(SpanStyle(fontWeight = FontWeight.Medium)) {
                                 append(stringResource(R.string.equipment_label) + " ")
                             }
-                            append(day.equipment.joinToString(", "))
+                            append(equipment.joinToString(", "))
                         },
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.onSurface

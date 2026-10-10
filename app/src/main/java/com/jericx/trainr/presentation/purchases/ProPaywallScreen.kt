@@ -7,6 +7,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -29,17 +30,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.jericx.trainr.R
 import com.jericx.trainr.presentation.common.components.core.TrainrButton
+import com.jericx.trainr.presentation.common.components.layout.TrainrCappedScroll
 import com.jericx.trainr.presentation.common.components.layout.TrainrScreenContent
 import com.jericx.trainr.presentation.common.components.layout.TrainrTopBar
 import com.jericx.trainr.presentation.common.components.typography.TrainrScreenTitle
 import com.jericx.trainr.presentation.common.components.typography.TrainrSectionTitle
 import com.jericx.trainr.presentation.common.theme.Spacing
+import com.jericx.trainr.presentation.common.theme.scaledWithText
 import com.jericx.trainr.presentation.common.theme.trainrColors
 
 // Ours rather than the prebuilt one, so it uses the app's own tokens and is
@@ -61,6 +69,9 @@ fun ProPaywallScreen(
 ) {
     val colors = MaterialTheme.trainrColors
     val selected = plans.firstOrNull { it.id == selectedId }
+    val window = with(LocalDensity.current) {
+        LocalWindowInfo.current.containerSize.height.toDp()
+    }
 
     // Paints its own ground: as a destination of its own there is nothing behind
     // it but the window, and the window does not follow the app's theme.
@@ -100,7 +111,7 @@ fun ProPaywallScreen(
                             color = colors.onSurfaceMuted
                         )
                         Text(
-                            text = stringResource(R.string.pro_free_limit),
+                            text = stringResource(reason.freeLimit),
                             style = MaterialTheme.typography.bodySmall,
                             color = colors.onSurfaceMuted
                         )
@@ -183,7 +194,9 @@ fun ProPaywallScreen(
             isWorking = isWorking,
             onSelect = onSelect,
             onBuy = onBuy,
-            onClose = onClose
+            onClose = onClose,
+            barCeiling = window * BAR_SHARE,
+            offerCeiling = window * OFFER_SHARE
         )
         ProNoticeDialog(noticeRes = noticeRes, onDismiss = onNoticeShown)
     }
@@ -205,7 +218,20 @@ private fun Comparison() {
             ColumnHead(stringResource(R.string.pro_compare_free), isPro = false)
             ColumnHead(stringResource(R.string.pro_compare_pro), isPro = true)
         }
+        val freeHead = stringResource(R.string.pro_compare_free)
+        val proHead = stringResource(R.string.pro_compare_pro)
+        val rowFormat = stringResource(R.string.pro_compare_row)
         COMPARISON.forEach { row ->
+            // A tick on its own belongs to no column, so the whole line is read
+            // as one sentence rather than three unrelated elements.
+            val spoken = comparisonRowLabel(
+                feature = stringResource(row.label),
+                freeHead = freeHead,
+                free = markWord(row.free),
+                proHead = proHead,
+                pro = markWord(row.pro),
+                format = rowFormat
+            )
             Column {
                 Box(
                     modifier = Modifier
@@ -216,7 +242,8 @@ private fun Comparison() {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = Spacing.small),
+                        .padding(vertical = Spacing.small)
+                        .clearAndSetSemantics { contentDescription = spoken },
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
@@ -262,6 +289,11 @@ private val COMPARISON = listOf(
     ComparisonRow(R.string.pro_compare_repeat, Mark.No, Mark.Yes),
     ComparisonRow(R.string.pro_compare_rewrite, Mark.No, Mark.Yes),
     ComparisonRow(R.string.pro_compare_fresh, Mark.No, Mark.Yes),
+    ComparisonRow(
+        R.string.pro_compare_adjust,
+        Mark.Count(R.string.pro_compare_one),
+        Mark.Yes
+    ),
     ComparisonRow(R.string.pro_compare_ads, Mark.No, Mark.Yes)
 )
 
@@ -276,6 +308,24 @@ private fun ColumnHead(text: String, isPro: Boolean) {
         modifier = Modifier.width(MARK_WIDTH)
     )
 }
+
+@Composable
+private fun markWord(mark: Mark): String = stringResource(
+    when (mark) {
+        Mark.Yes -> R.string.pro_compare_yes
+        Mark.No -> R.string.pro_compare_no
+        is Mark.Count -> mark.res
+    }
+)
+
+internal fun comparisonRowLabel(
+    feature: String,
+    freeHead: String,
+    free: String,
+    proHead: String,
+    pro: String,
+    format: String
+): String = String.format(format, feature, freeHead, free, proHead, pro)
 
 @Composable
 private fun MarkCell(mark: Mark) {
@@ -362,6 +412,16 @@ private fun Questions() {
 private val MARK_WIDTH = 72.dp
 private val REASON_ICON = 30.dp
 private val CHEVRON = 24.dp
+private val PLAN_MIN_WIDTH = 84.dp
+
+// The list of plans is the one part of the pinned bar that grows without bound,
+// so it is the part held to a share of the screen — a sixth of it. Everything
+// below the list is laid out after it and is never scrolled out of the bar. The
+// bar keeps a ceiling of its own so it can never take the page from the screen
+// it belongs to; a third, which a previous slice gave every bar, cut the
+// subscribe button in half at the largest text setting.
+private const val BAR_SHARE = 0.5f
+private const val OFFER_SHARE = 1f / 6f
 
 @Composable
 private fun Feature(@DrawableRes iconRes: Int, heading: String, detail: String) {
@@ -393,62 +453,65 @@ private fun PurchaseBar(
     isWorking: Boolean,
     onSelect: (String) -> Unit,
     onBuy: () -> Unit,
-    onClose: () -> Unit
+    onClose: () -> Unit,
+    barCeiling: Dp,
+    offerCeiling: Dp
 ) {
     val colors = MaterialTheme.trainrColors
 
-    Column(
+    TrainrCappedScroll(
+        ceiling = barCeiling,
         modifier = Modifier
             .fillMaxWidth()
             .background(colors.surfacePanel)
-            .padding(Spacing.large),
-        verticalArrangement = Arrangement.spacedBy(Spacing.small)
     ) {
-        if (plans.isEmpty()) {
-            Text(
-                text = stringResource(R.string.pro_unavailable),
-                style = MaterialTheme.typography.bodyMedium,
-                color = colors.onSurfaceMuted
-            )
-        } else {
-            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
-                plans.forEach { plan ->
-                    PlanCard(
-                        plan = plan,
-                        isSelected = plan.id == selected?.id,
-                        onClick = { onSelect(plan.id) },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
-        }
-        TrainrButton(
-            text = callToAction(selected),
-            onClick = onBuy,
-            enabled = selected != null && !isWorking,
-            modifier = Modifier.fillMaxWidth()
-        )
-        // Nothing for a lifetime purchase, which never renews, and naming the
-        // trial where one exists: an introductory offer has to say what it
-        // costs once it ends.
-        renewalNote(selected)?.let { note ->
-            Text(
-                text = note,
-                style = MaterialTheme.typography.bodySmall,
-                color = colors.onSurfaceMuted,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-        Text(
-            text = stringResource(R.string.pro_not_now),
-            style = MaterialTheme.typography.labelMedium,
-            color = colors.onSurfaceMuted,
-            textAlign = TextAlign.Center,
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(onClick = onClose)
-        )
+                .padding(Spacing.large),
+            verticalArrangement = Arrangement.spacedBy(Spacing.small)
+        ) {
+            // The offer gives way first, so the button, the price under it and the
+            // way out are in the bar whatever the text setting does to the cards.
+            TrainrCappedScroll(ceiling = offerCeiling) {
+                if (plans.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.pro_unavailable),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colors.onSurfaceMuted
+                    )
+                } else {
+                    PlanChooser(plans = plans, selected = selected, onSelect = onSelect)
+                }
+            }
+            TrainrButton(
+                text = callToAction(selected),
+                onClick = onBuy,
+                enabled = selected != null && !isWorking,
+                modifier = Modifier.fillMaxWidth()
+            )
+            // Nothing for a lifetime purchase, which never renews, and naming the
+            // trial where one exists: an introductory offer has to say what it
+            // costs once it ends.
+            renewalNote(selected)?.let { note ->
+                Text(
+                    text = note,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.onSurfaceMuted,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+            Text(
+                text = stringResource(R.string.pro_not_now),
+                style = MaterialTheme.typography.labelMedium,
+                color = colors.onSurfaceMuted,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onClose)
+            )
+        }
     }
 }
 
@@ -466,15 +529,57 @@ private fun renewalNote(selected: PaywallPlan?): String? = when {
     else -> stringResource(R.string.pro_cancel_anytime)
 }
 
+// Side by side while every card still has room for its own words; once the text
+// setting takes that away they stack full width, where a price has the whole
+// line and nothing has to be broken or cut.
+@Composable
+private fun PlanChooser(
+    plans: List<PaywallPlan>,
+    selected: PaywallPlan?,
+    onSelect: (String) -> Unit
+) {
+    BoxWithConstraints {
+        val abreast = PLAN_MIN_WIDTH.scaledWithText() * plans.size +
+            Spacing.small * (plans.size - 1) <= maxWidth
+
+        if (abreast) {
+            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
+                plans.forEach { plan ->
+                    PlanCard(
+                        plan = plan,
+                        isSelected = plan.id == selected?.id,
+                        onClick = { onSelect(plan.id) },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+        } else {
+            Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
+                plans.forEach { plan ->
+                    PlanCard(
+                        plan = plan,
+                        isSelected = plan.id == selected?.id,
+                        onClick = { onSelect(plan.id) },
+                        stacked = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+        }
+    }
+}
+
 @Composable
 private fun PlanCard(
     plan: PaywallPlan,
     isSelected: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    stacked: Boolean = false
 ) {
     val colors = MaterialTheme.trainrColors
     val ink = if (isSelected) colors.onSurfaceSelected else colors.onSurface
+    val subdued = if (isSelected) colors.onSurfaceSelected else colors.onSurfaceMuted
 
     Column(
         modifier = modifier
@@ -496,24 +601,48 @@ private fun PlanCard(
                     .padding(vertical = 3.dp)
             )
         }
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = Spacing.small, horizontal = 4.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(2.dp)
-        ) {
-            Text(
-                text = stringResource(plan.termRes),
-                style = MaterialTheme.typography.labelMedium,
-                color = ink
-            )
-            Text(text = plan.price, style = MaterialTheme.typography.titleSmall, color = ink)
-            Text(
-                text = stringResource(plan.billingRes),
-                style = MaterialTheme.typography.bodySmall,
-                color = if (isSelected) colors.onSurfaceSelected else colors.onSurfaceMuted
-            )
+        if (stacked) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = Spacing.small, horizontal = Spacing.card),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(plan.termRes),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = ink
+                    )
+                    Text(
+                        text = stringResource(plan.billingRes),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = subdued
+                    )
+                }
+                Text(text = plan.price, style = MaterialTheme.typography.titleSmall, color = ink)
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = Spacing.small, horizontal = 4.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Text(
+                    text = stringResource(plan.termRes),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = ink
+                )
+                Text(text = plan.price, style = MaterialTheme.typography.titleSmall, color = ink)
+                Text(
+                    text = stringResource(plan.billingRes),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = subdued
+                )
+            }
         }
     }
 }
