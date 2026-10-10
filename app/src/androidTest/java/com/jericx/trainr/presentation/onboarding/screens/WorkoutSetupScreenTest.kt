@@ -15,6 +15,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import com.jericx.trainr.domain.model.Equipment
 import com.jericx.trainr.domain.model.EquipmentChoices
+import com.jericx.trainr.domain.model.UserProfile
 
 @RunWith(AndroidJUnit4::class)
 class WorkoutSetupScreenTest {
@@ -90,6 +91,52 @@ class WorkoutSetupScreenTest {
         composeTestRule.onNodeWithText(string(R.string.next)).assertIsNotEnabled()
     }
 
+    // A length the week cannot fill is said on the screen that asks for it,
+    // rather than left to be found later as a day two thirds the size.
+    @Test
+    fun aSessionLengthTheWeekCannotFillSaysSoWhereItIsChosen() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                WorkoutSetupScreen(
+                    initial = answered,
+                    longestSessionMinutes = { _, _, _ -> SHORT_SESSION },
+                    onNextClick = { _, _, _, _ -> },
+                    onBackClick = {}
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(
+            composeTestRule.activity.resources
+                .getQuantityString(R.plurals.sessions_fall_short_message, SHORT_SESSION, SHORT_SESSION)
+        ).assertExists()
+    }
+
+    @Test
+    fun aSessionLengthTheWeekCanFillIsLeftToStand() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                WorkoutSetupScreen(
+                    initial = answered,
+                    longestSessionMinutes = { _, _, duration -> duration },
+                    onNextClick = { _, _, _, _ -> },
+                    onBackClick = {}
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(
+            composeTestRule.activity.resources
+                .getQuantityString(R.plurals.sessions_fall_short_message, SHORT_SESSION, SHORT_SESSION)
+        ).assertDoesNotExist()
+    }
+
+    private val answered = UserProfile(
+        availableEquipment = listOf(Equipment.NONE),
+        workoutDaysPerWeek = 3,
+        workoutDuration = ASKED_SESSION
+    )
+
     private fun Equipment.label(): String = when (this) {
         Equipment.NONE -> string(R.string.bodyweight_only)
         Equipment.BARBELL -> string(R.string.equipment_barbell)
@@ -100,5 +147,10 @@ class WorkoutSetupScreenTest {
         Equipment.RESISTANCE_BAND -> string(R.string.equipment_resistance_band)
         Equipment.SUSPENSION_BAND -> string(R.string.equipment_suspension_band)
         Equipment.OTHER -> string(R.string.equipment_other)
+    }
+
+    private companion object {
+        const val ASKED_SESSION = 90
+        const val SHORT_SESSION = 41
     }
 }

@@ -387,6 +387,7 @@ fun AppContent(
                         initial = onboardingState.filledFor(OnboardingStep.SETUP, editing),
                         isEditing = editing,
                         stockedEquipment = onboardingViewModel.stockedEquipment,
+                        longestSessionMinutes = onboardingViewModel::longestSessionMinutes,
                         onNextClick = { equipment, liftingUnits, days, duration ->
                             onboardingViewModel.updateWorkoutSetup(
                                 equipment, liftingUnits, days, duration

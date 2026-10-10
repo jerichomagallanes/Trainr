@@ -13,13 +13,16 @@ import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.generation.PlanGenerationResult
 import com.jericx.trainr.domain.generation.PlanGenerator
 import com.jericx.trainr.domain.generation.PlanRequest
+import com.jericx.trainr.domain.generation.PlanSkeletonBuilder
 import com.jericx.trainr.domain.repository.UserRepository
 import com.jericx.trainr.presentation.workout.util.WorkoutWeek
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
@@ -33,6 +36,25 @@ class OnboardingViewModel @Inject constructor(
     // screen, so a chip can never lead to an empty week.
     val stockedEquipment: Set<Equipment> = catalog.all.map { it.equipment }.toSet()
 
+    private val skeletons = PlanSkeletonBuilder(catalog)
+
+    // The longest session these answers can actually build, so a length no day
+    // of the split can fill is said on the screen that asks for it rather than
+    // quietly delivered two thirds of. The longest, because a recovery day is
+    // meant to be short and is no sign the answer cannot be met.
+    suspend fun longestSessionMinutes(
+        equipment: List<Equipment>,
+        daysPerWeek: Int,
+        duration: Int
+    ): Int = withContext(Dispatchers.Default) {
+        val profile = _onboardingState.value.userProfile.copy(
+            availableEquipment = equipment,
+            workoutDaysPerWeek = daysPerWeek,
+            workoutDuration = duration
+        )
+        val week = skeletons.build(PlanRequest(user = profile, weekNumber = 1, startDateMillis = 0L))
+        week.days.maxOfOrNull { it.minutes } ?: duration
+    }
 
     private val _onboardingState = MutableStateFlow(OnboardingState())
     val onboardingState: StateFlow<OnboardingState> = _onboardingState.asStateFlow()

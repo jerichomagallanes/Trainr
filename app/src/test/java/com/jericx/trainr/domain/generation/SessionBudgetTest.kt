@@ -13,15 +13,17 @@ class SessionBudgetTest {
         workoutDaysPerWeek = days
     )
 
-    // Three minutes between heavy sets is what the evidence asks for, and half
-    // an hour only pays for six of them. A plan with twelve is a plan the
-    // client abandons halfway.
+    // Three minutes between heavy sets is what the evidence asks for, so the
+    // same half hour buys far fewer of them than a circuit does. The numbers
+    // are the rest a session really spends: priced at a full rest after every
+    // set, including the last of a movement, half an hour bought six and a
+    // 90-minute answer was built as an hour.
     @Test
     fun heavyWorkBuysFewerSetsThanTheSameHalfHourOfConditioning() {
         val strength = SessionBudget.maxSetsPerSession(profile(30, FitnessGoal.STRENGTH))
         val weightLoss = SessionBudget.maxSetsPerSession(profile(30, FitnessGoal.WEIGHT_LOSS))
 
-        assertThat(strength).isEqualTo(6)
+        assertThat(strength).isEqualTo(11)
         assertThat(weightLoss).isGreaterThan(strength)
     }
 

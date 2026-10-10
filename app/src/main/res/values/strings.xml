@@ -90,6 +90,10 @@
         <item quantity="one">%d day</item>
         <item quantity="other">%d days</item>
     </plurals>
+    <plurals name="sessions_fall_short_message">
+        <item quantity="one">With these answers the longest session only fills about %d minute.</item>
+        <item quantity="other">With these answers the longest session only fills about %d minutes.</item>
+    </plurals>
     
     <!-- Limitations Screen -->
     <string name="lets_keep_you_safe">LET\'S KEEP YOU SAFE</string>
