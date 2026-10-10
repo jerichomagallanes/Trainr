@@ -27,6 +27,7 @@ import com.jericx.trainr.presentation.common.components.core.TrainrButton
 import com.jericx.trainr.presentation.common.components.core.TrainrFieldError
 import com.jericx.trainr.presentation.common.components.core.TrainrQuietButton
 import com.jericx.trainr.presentation.common.components.core.TrainrTextField
+import com.jericx.trainr.presentation.common.components.core.dismissesKeyboardOnTap
 import com.jericx.trainr.presentation.common.components.core.TrainrToggleChip
 import com.jericx.trainr.presentation.common.components.layout.TrainrScaffold
 import com.jericx.trainr.presentation.common.components.layout.TrainrScreenContent
@@ -64,7 +65,7 @@ fun AdjustTimeScreen(
             }
         }
     ) { padding ->
-        TrainrScreenContent(modifier = modifier.padding(padding)) {
+        TrainrScreenContent(modifier = modifier.padding(padding).dismissesKeyboardOnTap()) {
             Text(
                 text = stringResource(R.string.adjust_time_title),
                 style = MaterialTheme.typography.titleLarge.copy(

@@ -25,6 +25,7 @@ import com.jericx.trainr.presentation.workout.model.ExerciseUi
 import com.jericx.trainr.presentation.workout.model.AdjustedBannerUi
 import com.jericx.trainr.presentation.workout.model.RoutineUi
 import com.jericx.trainr.presentation.workout.model.derivedEquipment
+import com.jericx.trainr.presentation.workout.model.measuredSet
 import com.jericx.trainr.presentation.workout.model.remainingMinutes
 import com.jericx.trainr.presentation.workout.model.visibleExercises
 import com.jericx.trainr.presentation.workout.model.toRoutineUi
@@ -36,9 +37,12 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
@@ -120,6 +124,11 @@ class RoutineDetailViewModel @Inject constructor(
     // restored after process death does not navigate a second time.
     private val _savedEvents = Channel<SessionSavedEvent>(Channel.BUFFERED)
     val savedEvents: Flow<SessionSavedEvent> = _savedEvents.receiveAsFlow()
+
+    // The end of a countdown is the only thing the screen has to announce, and
+    // a screen that was away for it has nothing to catch up on.
+    private val _timerFinished = MutableSharedFlow<Unit>()
+    val timerFinished: SharedFlow<Unit> = _timerFinished.asSharedFlow()
 
     private var tickJob: Job? = null
     private var finishJob: Job? = null
@@ -476,13 +485,17 @@ class RoutineDetailViewModel @Inject constructor(
     fun startTimer(exercise: ExerciseUi) {
         if (isReadOnly) return
         cancelTick()
+        // A held set is timed by its own span: the minutes on the card are the
+        // whole block rounded up, and the countdown's length is what gets logged.
+        val countdown = exercise.measuredSet?.targetSeconds
+            ?: (exercise.minutes * SECONDS_PER_MINUTE)
         _uiState.update {
             it.copy(
                 timer = ExerciseTimerUi(
                     position = exercise.position,
-                    remainingSeconds = exercise.minutes * SECONDS_PER_MINUTE,
+                    remainingSeconds = countdown,
                     isRunning = true,
-                    totalSeconds = exercise.minutes * SECONDS_PER_MINUTE
+                    totalSeconds = countdown
                 )
             )
         }
@@ -495,7 +508,7 @@ class RoutineDetailViewModel @Inject constructor(
     }
 
     fun resumeTimer() {
-        if (_uiState.value.timer == null) return
+        if (_uiState.value.timer?.isFinished != false) return
 
         cancelTick()
         _uiState.update { state -> state.copy(timer = state.timer?.copy(isRunning = true)) }
@@ -512,7 +525,11 @@ class RoutineDetailViewModel @Inject constructor(
         _uiState.update { state ->
             state.copy(
                 timer = state.timer?.let {
-                    it.copy(remainingSeconds = it.totalSeconds, isRunning = false)
+                    it.copy(
+                        remainingSeconds = it.totalSeconds,
+                        isRunning = false,
+                        isFinished = false
+                    )
                 }
             )
         }
@@ -547,14 +564,24 @@ class RoutineDetailViewModel @Inject constructor(
             if (remaining > 0) {
                 _uiState.update { it.copy(timer = timer.copy(remainingSeconds = remaining)) }
             } else {
-                reopen()
-                _uiState.update {
-                    it.copy(routine = it.routine.markCompleted(timer.position), timer = null)
-                }
-                persistExerciseCompleted(timer.position, completed = true)
+                finish(timer)
                 return
             }
         }
+    }
+
+    // Running out ends the countdown and says so. It ticks nothing and never
+    // writes a rep or a weight; the one number it may leave is the time it
+    // measured, on a set that is itself a span of time.
+    private suspend fun finish(timer: ExerciseTimerUi) {
+        _uiState.update {
+            it.copy(
+                routine = it.routine.logMeasuredSeconds(timer.position, timer.totalSeconds),
+                timer = timer.copy(remainingSeconds = 0, isRunning = false, isFinished = true)
+            )
+        }
+        persistFilledSets(listOf(timer.position))
+        _timerFinished.emit(Unit)
     }
 
     private fun completionOf(position: Int): Boolean? =

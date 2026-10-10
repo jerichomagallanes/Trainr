@@ -45,6 +45,7 @@ import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.components.core.TrainrButton
 import com.jericx.trainr.presentation.common.components.core.TrainrProgress
 import com.jericx.trainr.presentation.common.components.core.TrainrTextField
+import com.jericx.trainr.presentation.common.components.core.dismissesKeyboardOnTap
 import com.jericx.trainr.presentation.common.components.layout.TrainrFormSection
 import com.jericx.trainr.presentation.common.components.layout.TrainrScaffold
 import com.jericx.trainr.presentation.common.components.layout.TrainrScreenContent
@@ -184,6 +185,7 @@ fun BodyMetricsScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .dismissesKeyboardOnTap()
                 .padding(paddingValues)
         ) {
             if (!isEditing) {

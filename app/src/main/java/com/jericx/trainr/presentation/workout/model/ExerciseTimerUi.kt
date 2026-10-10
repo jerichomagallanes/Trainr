@@ -4,7 +4,8 @@ data class ExerciseTimerUi(
     val position: Int,
     val remainingSeconds: Int,
     val isRunning: Boolean,
-    val totalSeconds: Int = remainingSeconds
+    val totalSeconds: Int = remainingSeconds,
+    val isFinished: Boolean = false
 ) {
     val display: String
         get() = "${remainingSeconds / SECONDS_PER_MINUTE}:" +

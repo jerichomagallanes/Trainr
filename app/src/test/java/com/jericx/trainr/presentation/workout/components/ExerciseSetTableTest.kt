@@ -3,6 +3,7 @@ package com.jericx.trainr.presentation.workout.components
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.domain.model.ExerciseMeasure
 import com.jericx.trainr.domain.model.ExerciseSet
+import com.jericx.trainr.domain.model.UnitSystem
 import org.junit.Test
 
 class ExerciseSetTableTest {
@@ -58,6 +59,107 @@ class ExerciseSetTableTest {
         for (seconds in listOf(5, 45, 90, 300, 750)) {
             assertThat(secondsFromDigits(durationDigits(seconds))).isEqualTo(seconds)
         }
+    }
+
+    // A slipped second dot used to clear the number that was already typed.
+    @Test
+    fun aSecondDecimalPointIsRefusedRatherThanWipingTheNumber() {
+        assertThat(weightEntry("22.5", UnitSystem.METRIC)).isEqualTo(NumberEntry.ACCEPTED)
+        assertThat(weightEntry("22.5.", UnitSystem.METRIC)).isEqualTo(NumberEntry.MALFORMED)
+        assertThat(weightEntry("22.5.7", UnitSystem.METRIC)).isEqualTo(NumberEntry.MALFORMED)
+        assertThat(weightEntry(".", UnitSystem.METRIC)).isEqualTo(NumberEntry.MALFORMED)
+    }
+
+    @Test
+    fun aWeightIsDigitsWithAtMostOneDotAndTwoPlacesAfterIt() {
+        assertThat(weightEntry("22", UnitSystem.METRIC)).isEqualTo(NumberEntry.ACCEPTED)
+        assertThat(weightEntry("22.", UnitSystem.METRIC)).isEqualTo(NumberEntry.ACCEPTED)
+        assertThat(weightEntry(".5", UnitSystem.METRIC)).isEqualTo(NumberEntry.ACCEPTED)
+        assertThat(weightEntry("22.25", UnitSystem.METRIC)).isEqualTo(NumberEntry.ACCEPTED)
+        assertThat(weightEntry("22.255", UnitSystem.METRIC)).isEqualTo(NumberEntry.MALFORMED)
+    }
+
+    // A hardware keyboard offers letters whatever the on-screen pad shows.
+    @Test
+    fun aCharacterThatCannotBelongToTheNumberIsRefused() {
+        listOf("abc", "2a", "2e3", "-5", "+5", "2f", "NaN", "Infinity", "2 ", "1,5").forEach {
+            assertThat(weightEntry(it, UnitSystem.METRIC)).isEqualTo(NumberEntry.MALFORMED)
+            assertThat(repsEntry(it)).isEqualTo(NumberEntry.MALFORMED)
+            assertThat(durationEntry(it)).isEqualTo(NumberEntry.MALFORMED)
+        }
+    }
+
+    @Test
+    fun repsAreWholeNumbersUpToNineHundredAndNinetyNine() {
+        assertThat(repsEntry("12")).isEqualTo(NumberEntry.ACCEPTED)
+        assertThat(repsEntry("0")).isEqualTo(NumberEntry.ACCEPTED)
+        assertThat(repsEntry("999")).isEqualTo(NumberEntry.ACCEPTED)
+        assertThat(repsEntry("1000")).isEqualTo(NumberEntry.OUT_OF_RANGE)
+        assertThat(repsEntry("999999")).isEqualTo(NumberEntry.OUT_OF_RANGE)
+        assertThat(repsEntry("12.5")).isEqualTo(NumberEntry.MALFORMED)
+    }
+
+    // The maximum is the one the person reads, so it follows the unit they type in.
+    @Test
+    fun aWeightStopsAtAThousandKilosOrTheSameInPounds() {
+        assertThat(weightEntry("1000", UnitSystem.METRIC)).isEqualTo(NumberEntry.ACCEPTED)
+        assertThat(weightEntry("1000.5", UnitSystem.METRIC)).isEqualTo(NumberEntry.OUT_OF_RANGE)
+        assertThat(weightEntry("999999", UnitSystem.METRIC)).isEqualTo(NumberEntry.OUT_OF_RANGE)
+        assertThat(weightEntry("2205", UnitSystem.IMPERIAL)).isEqualTo(NumberEntry.ACCEPTED)
+        assertThat(weightEntry("2206", UnitSystem.IMPERIAL)).isEqualTo(NumberEntry.OUT_OF_RANGE)
+        assertThat(weightEntry("1500", UnitSystem.METRIC)).isEqualTo(NumberEntry.OUT_OF_RANGE)
+    }
+
+    @Test
+    fun aTimeStopsAtNinetyNineMinutesAndFiftyNineSeconds() {
+        assertThat(durationEntry("9900")).isEqualTo(NumberEntry.ACCEPTED)
+        assertThat(durationEntry("9959")).isEqualTo(NumberEntry.ACCEPTED)
+        assertThat(durationEntry("10000")).isEqualTo(NumberEntry.OUT_OF_RANGE)
+        assertThat(durationEntry("99999")).isEqualTo(NumberEntry.OUT_OF_RANGE)
+    }
+
+    // The cell shows the digits it holds with a colon spliced in, so a face the
+    // stored time would not be written as is refused.
+    @Test
+    fun aTimeIsShownTheWayItIsStored() {
+        listOf("5", "45", "100", "130", "1045", "9959").forEach {
+            assertThat(durationEntry(it)).isEqualTo(NumberEntry.ACCEPTED)
+            assertThat(durationDigits(secondsFromDigits(it)!!)).isEqualTo(it)
+        }
+    }
+
+    @Test
+    fun aSecondsFigureOfSixtyOrMoreIsRefused() {
+        assertThat(durationEntry("60")).isEqualTo(NumberEntry.MALFORMED)
+        assertThat(durationEntry("99")).isEqualTo(NumberEntry.MALFORMED)
+        assertThat(durationEntry("160")).isEqualTo(NumberEntry.MALFORMED)
+        assertThat(durationEntry("1094")).isEqualTo(NumberEntry.MALFORMED)
+    }
+
+    @Test
+    fun aTimeThatStartsWithAZeroIsRefused() {
+        assertThat(durationEntry("0")).isEqualTo(NumberEntry.MALFORMED)
+        assertThat(durationEntry("0500")).isEqualTo(NumberEntry.MALFORMED)
+    }
+
+    // A number logged over the maximum has to be editable, and every step down
+    // from it is over the maximum too.
+    @Test
+    fun aStoredNumberOverTheMaximumCanBeTypedBackIntoRange() {
+        assertThat(movesTowardRange("999999", "99999", ::repsEntry)).isTrue()
+        assertThat(movesTowardRange("1000", "100", ::repsEntry)).isTrue()
+        assertThat(movesTowardRange("999999", "9999999", ::repsEntry)).isFalse()
+        assertThat(movesTowardRange("12", "123", ::repsEntry)).isFalse()
+        assertThat(movesTowardRange("1000.17", "1000.1") { weightEntry(it, UnitSystem.METRIC) })
+            .isTrue()
+    }
+
+    // Clearing the field is the person clearing it, and is always allowed.
+    @Test
+    fun anEmptyFieldIsAccepted() {
+        assertThat(weightEntry("", UnitSystem.METRIC)).isEqualTo(NumberEntry.ACCEPTED)
+        assertThat(repsEntry("")).isEqualTo(NumberEntry.ACCEPTED)
+        assertThat(durationEntry("")).isEqualTo(NumberEntry.ACCEPTED)
     }
 
     // The column reports what happened, not what was asked, so an unlogged set shows a dash

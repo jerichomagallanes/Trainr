@@ -95,6 +95,65 @@ class RoutineUiTest {
         )
     )
 
+    private fun timedRoutine(sets: Int, seconds: Int = 60) = RoutineUi(
+        title = "Cardio & Core",
+        exercises = listOf(
+            exercise(1).copy(
+                measure = ExerciseMeasure.DURATION,
+                sets = (1..sets).map { ExerciseSet(setNumber = it, targetSeconds = seconds) }
+            ),
+            exercise(2).copy(sets = listOf(ExerciseSet(setNumber = 1, targetReps = 20)))
+        )
+    )
+
+    @Test
+    fun theTimeMeasuredFillsTheOneSetItMeasuredAndTicksNothing() {
+        val logged = timedRoutine(sets = 1, seconds = 300).logMeasuredSeconds(1, 240)
+
+        val set = logged.exercises.first().sets.single()
+        assertThat(set.actualSeconds).isEqualTo(240)
+        assertThat(set.targetSeconds).isEqualTo(300)
+        assertThat(set.actualReps).isNull()
+        assertThat(set.actualWeightKg).isNull()
+        assertThat(set.isCompleted).isFalse()
+        assertThat(logged.exercises.first().isCompleted).isFalse()
+        assertThat(set.actualOrigin).isEqualTo(ActualOrigin.MEASURED)
+    }
+
+    // One countdown ran, so it is evidence for one set and not for several.
+    @Test
+    fun aTimedExerciseOfSeveralSetsIsLeftAlone() {
+        val routine = timedRoutine(sets = 3)
+
+        assertThat(routine.logMeasuredSeconds(1, 240)).isEqualTo(routine)
+    }
+
+    @Test
+    fun aSetAlreadyTimedIsNotOverwritten() {
+        val logged = timedRoutine(sets = 1).logMeasuredSeconds(1, 240)
+
+        assertThat(logged.logMeasuredSeconds(1, 90)).isEqualTo(logged)
+    }
+
+    // Ticking is the person saying the set is done; a countdown ending after
+    // that may not write a number onto it.
+    @Test
+    fun aSetAlreadyTickedIsNotFilledByTheTimer() {
+        val ticked = timedRoutine(sets = 1).let { routine ->
+            routine.updateSet(1, routine.exercises.first().sets.single().copy(isCompleted = true))
+        }
+
+        assertThat(ticked.logMeasuredSeconds(1, 240)).isEqualTo(ticked)
+    }
+
+    @Test
+    fun anExerciseCountedInRepsIsNeverFilledByTheTimer() {
+        val routine = routineWithSets()
+
+        assertThat(routine.logMeasuredSeconds(1, 240)).isEqualTo(routine)
+        assertThat(routine.logMeasuredSeconds(2, 240)).isEqualTo(routine)
+    }
+
     private fun RoutineUi.tickEverySetOf(position: Int): RoutineUi =
         exercises.first { it.position == position }.sets
             .fold(this) { routine, set -> routine.updateSet(position, set.copy(isCompleted = true)) }
@@ -138,7 +197,7 @@ class RoutineUiTest {
     fun unTickingAnExerciseClearsItsMarksAndKeepsItsNumbers() {
         val logged = routineWithSets()
             .updateSet(1, ExerciseSet(setNumber = 1, targetReps = 12, targetWeightKg = 20f, actualReps = 9))
-            .markCompleted(1)
+            .toggleCompleted(1)
 
         val reopened = logged.toggleCompleted(1).exercises.first()
 

@@ -54,6 +54,7 @@ import com.jericx.trainr.domain.unstuck.FinishKind
 import com.jericx.trainr.domain.unstuck.intent.DirectReason
 import com.jericx.trainr.presentation.common.components.core.TrainrButton
 import com.jericx.trainr.presentation.common.components.core.TrainrFieldError
+import com.jericx.trainr.presentation.common.components.core.dismissesKeyboardOnTap
 import com.jericx.trainr.presentation.common.components.core.TrainrOptionRow
 import com.jericx.trainr.presentation.common.components.core.TrainrQuietButton
 import com.jericx.trainr.presentation.common.components.core.TrainrProgress
@@ -67,6 +68,7 @@ import com.jericx.trainr.presentation.common.theme.TrainrTheme
 import com.jericx.trainr.presentation.common.theme.trainrColors
 import com.jericx.trainr.presentation.workout.components.ExerciseCard
 import com.jericx.trainr.presentation.workout.components.ExerciseTimer
+import com.jericx.trainr.presentation.workout.components.rememberTimerAlert
 import com.jericx.trainr.presentation.workout.components.HowToSection
 import com.jericx.trainr.presentation.workout.components.VideoTutorial
 import com.jericx.trainr.domain.model.ExerciseSet
@@ -101,6 +103,11 @@ fun RoutineDetailRoute(
 
     LaunchedEffect(viewModel) {
         viewModel.savedEvents.collect { onSessionSaved(it) }
+    }
+
+    val timerAlert = rememberTimerAlert()
+    LaunchedEffect(viewModel, timerAlert) {
+        viewModel.timerFinished.collect { timerAlert() }
     }
 
     LaunchedEffect(finishEarlyRequested) {
@@ -248,6 +255,7 @@ fun RoutineDetailScreen(
         Column(
             modifier = Modifier
                 .verticalScroll(rememberScrollState())
+                .dismissesKeyboardOnTap()
                 .padding(horizontal = Spacing.screen, vertical = Spacing.screen)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {

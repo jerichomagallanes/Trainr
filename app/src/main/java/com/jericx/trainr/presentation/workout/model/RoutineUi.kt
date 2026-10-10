@@ -1,5 +1,6 @@
 package com.jericx.trainr.presentation.workout.model
 
+import com.jericx.trainr.domain.model.ExerciseMeasure
 import com.jericx.trainr.domain.model.ExerciseSet
 import com.jericx.trainr.domain.unstuck.ActualOrigin
 
@@ -34,9 +35,21 @@ data class RoutineUi(
         }
     )
 
-    fun markCompleted(position: Int): RoutineUi = copy(
-        exercises = exercises.map {
-            if (it.position == position) it.loggedAsPrescribed() else it
+    // The timer measured one span of time, so it may fill the one set that span
+    // was: never a second set, never a rep or a weight, and it ticks nothing.
+    fun logMeasuredSeconds(position: Int, seconds: Int): RoutineUi = copy(
+        exercises = exercises.map { exercise ->
+            val measured = exercise.takeIf { it.position == position }?.measuredSet
+                ?: return@map exercise
+            exercise.copy(
+                sets = exercise.sets.map {
+                    if (it.setNumber != measured.setNumber) {
+                        it
+                    } else {
+                        it.copy(actualSeconds = seconds, actualOrigin = ActualOrigin.MEASURED)
+                    }
+                }
+            )
         }
     )
 
@@ -145,6 +158,15 @@ private fun ExerciseUi.notLogged(): ExerciseUi = copy(
     isCompleted = false,
     sets = sets.map { it.copy(isCompleted = false) }
 )
+
+// The one set a countdown may fill: a single span of time, neither held nor
+// ticked already.
+internal val ExerciseUi.measuredSet: ExerciseSet?
+    get() = if (measure != ExerciseMeasure.DURATION) {
+        null
+    } else {
+        sets.singleOrNull()?.takeIf { it.actualSeconds == null && !it.isCompleted }
+    }
 
 private val ExerciseUi.isOmitted: Boolean
     get() = sets.isNotEmpty() && sets.all { it.omittedBy != null }

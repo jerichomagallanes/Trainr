@@ -2,6 +2,9 @@ package com.jericx.trainr.presentation.workout
 
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.assertIsNotFocused
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
@@ -60,6 +63,20 @@ class RoutineDetailScreenTest {
                 )
             }
         }
+    }
+
+    // The pad used to sit over the bottom of the session until the person left it.
+    @Test
+    fun tappingOutsideAFieldClosesTheNumberPad() {
+        setScreen()
+
+        val field = composeTestRule.onAllNodes(hasSetTextAction()).onFirst()
+        field.performClick()
+        field.assertIsFocused()
+
+        composeTestRule.onNodeWithText(state.routine.exercises.first().name).performClick()
+
+        field.assertIsNotFocused()
     }
 
     @Test
