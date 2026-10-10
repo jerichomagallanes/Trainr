@@ -181,6 +181,20 @@ class PaywallGateTest {
         assertAsksForPro()
     }
 
+    // The worst of them: the alert said every week and everything logged would
+    // be erased, and the gate only spoke after the whole profile was walked.
+    @Test
+    fun startingANewPlanAsksForProBeforeThreateningToEraseAnything() {
+        seed(finished = true)
+        startApp()
+
+        openPlanMenu()
+        composeTestRule.onNodeWithText(string(R.string.regenerate_plan)).performClick()
+
+        assertAsksForPro()
+        composeTestRule.onNodeWithText(string(R.string.leave_plan_title)).assertDoesNotExist()
+    }
+
     // The gate has to let the first week through, or the test above would pass
     // on an app that asks everyone for money at every turn.
     @Test

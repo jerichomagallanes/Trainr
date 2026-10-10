@@ -6,6 +6,7 @@ import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
 import com.jericx.trainr.domain.model.WorkoutDay
+import com.jericx.trainr.domain.model.WorkoutExercise
 import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.domain.repository.AdjustmentRepository
 import com.jericx.trainr.domain.repository.UserRepository
@@ -79,7 +80,8 @@ class WeeklyPlanViewModelTest {
                 status = WorkoutStatus.NOT_STARTED,
                 duration = 30,
                 exerciseCount = 3,
-                equipment = emptyList()
+                equipment = emptyList(),
+                exercises = listOf(WorkoutExercise(name = "Stored movement"))
             )
         )
     )
@@ -191,7 +193,14 @@ class WeeklyPlanViewModelTest {
     private fun weekStarting(start: Long, vararg statuses: WorkoutStatus) = storedPlan.copy(
         startDateMillis = start,
         workoutDays = statuses.mapIndexed { index, status ->
-            storedPlan.workoutDays.first().copy(id = index + 1L, dayNumber = index + 1, status = status)
+            storedPlan.workoutDays.first().copy(
+                id = index + 1L,
+                dayNumber = index + 1,
+                status = status,
+                exercises = storedPlan.workoutDays.first().exercises.map {
+                    it.copy(isCompleted = status == WorkoutStatus.COMPLETED)
+                }
+            )
         }
     )
 
@@ -316,7 +325,10 @@ class WeeklyPlanViewModelTest {
                 id = index + 1L,
                 dayNumber = index + 1,
                 title = "Session $index",
-                status = status
+                status = status,
+                exercises = storedPlan.workoutDays.first().exercises.map {
+                    it.copy(isCompleted = status == WorkoutStatus.COMPLETED)
+                }
             )
         }
     )
@@ -403,6 +415,27 @@ class WeeklyPlanViewModelTest {
 
         assertThat(state.nextWorkout?.day?.title).isEqualTo("Session 0")
         assertThat(state.nextWorkoutIsToday).isFalse()
+    }
+
+    // Readiness counts the outcome, so the start button must too, or a week
+    // closed with nothing logged offers neither a session nor a way on.
+    @Test
+    fun aDayClosedWithNothingPerformedIsStillOfferedAsTheNextSession() {
+        val start = mondayOf(1_755_000_000_000L)
+        val week = weekOfSessions(start, WorkoutStatus.COMPLETED, WorkoutStatus.COMPLETED)
+        val state = WeeklyPlanViewModel.stateFor(
+            plan = week.copy(
+                workoutDays = week.workoutDays.mapIndexed { index, day ->
+                    if (index == 0) day else day.copy(
+                        exercises = day.exercises.map { it.copy(isCompleted = false) }
+                    )
+                }
+            ),
+            nowMillis = start + TimeUnit.DAYS.toMillis(1)
+        )
+
+        assertThat(state.nextWorkout?.day?.title).isEqualTo("Session 1")
+        assertThat(state.canStartNextWeek).isFalse()
     }
 
     // The day screen reads a week that is over as a record, so home cannot send

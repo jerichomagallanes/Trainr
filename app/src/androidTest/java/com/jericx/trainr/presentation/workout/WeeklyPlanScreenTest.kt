@@ -22,6 +22,7 @@ import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.unstuck.PreferenceKind
 import com.jericx.trainr.domain.unstuck.TrainingPreference
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
+import com.jericx.trainr.presentation.purchases.ProLinks
 import com.jericx.trainr.presentation.unstuck.TodayAdjustmentKind
 import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
 import org.junit.Rule
@@ -59,6 +60,13 @@ class WeeklyPlanScreenTest {
             }
         }
     }
+
+    // What finishing a session actually leaves behind: the day is closed and
+    // the work is logged against it.
+    private fun WorkoutDay.trained() = copy(
+        status = WorkoutStatus.COMPLETED,
+        exercises = exercises.map { it.copy(isCompleted = true) }
+    )
 
     private val pastWeek = WeeklyPlanViewModel.stateFor(
         plan = SampleWorkoutData.weekOne,
@@ -134,7 +142,7 @@ class WeeklyPlanScreenTest {
         val finished = WeeklyPlanViewModel.stateFor(
             plan = SampleWorkoutData.weekOne.copy(
                 workoutDays = SampleWorkoutData.weekOne.workoutDays.map {
-                    it.copy(status = WorkoutStatus.COMPLETED)
+                    it.trained()
                 }
             ),
         )
@@ -232,16 +240,40 @@ class WeeklyPlanScreenTest {
 
     @Test
     fun aboutShowsWhichBuildIsRunning() {
+        openAbout()
+
+        composeTestRule.onNodeWithText(string(R.string.app_version_format, "9.9-test", 42))
+            .assertIsDisplayed()
+    }
+
+    // The paywall is not somewhere everyone goes, and the documents have to be
+    // readable without it.
+    @Test
+    fun aboutLinksToTheTermsAndThePrivacyPolicy() {
+        val opened = mutableListOf<String>()
+
+        openAbout(onOpenLink = { opened += it })
+        composeTestRule.onNodeWithText(string(R.string.pro_terms)).performClick()
+        composeTestRule.onNodeWithText(string(R.string.pro_privacy)).performClick()
+
+        assertThat(opened).containsExactly(ProLinks.TERMS, ProLinks.PRIVACY).inOrder()
+    }
+
+    private fun openAbout(onOpenLink: (String) -> Unit = {}) {
         composeTestRule.setContent {
-            TrainrTheme { WeeklyPlanScreen(state = state, versionName = "9.9-test") }
+            TrainrTheme {
+                WeeklyPlanScreen(
+                    state = state,
+                    versionName = "9.9-test",
+                    buildNumber = 42,
+                    onOpenLink = onOpenLink
+                )
+            }
         }
 
         composeTestRule.onNodeWithContentDescription(string(R.string.profile_and_app))
             .performClick()
         composeTestRule.onNodeWithText(string(R.string.about_the_app)).performClick()
-
-        composeTestRule.onNodeWithText(string(R.string.app_version_format, "9.9-test"))
-            .assertIsDisplayed()
     }
 
     @Test
@@ -249,7 +281,7 @@ class WeeklyPlanScreenTest {
         val finished = WeeklyPlanViewModel.stateFor(
             plan = SampleWorkoutData.weekOne.copy(
                 workoutDays = SampleWorkoutData.weekOne.workoutDays.map {
-                    it.copy(status = WorkoutStatus.COMPLETED)
+                    it.trained()
                 }
             ),
         )
@@ -271,7 +303,7 @@ class WeeklyPlanScreenTest {
         val finished = WeeklyPlanViewModel.stateFor(
             plan = SampleWorkoutData.weekOne.copy(
                 workoutDays = SampleWorkoutData.weekOne.workoutDays.map {
-                    it.copy(status = WorkoutStatus.COMPLETED)
+                    it.trained()
                 }
             ),
         )
@@ -327,6 +359,30 @@ class WeeklyPlanScreenTest {
         composeTestRule.onNodeWithText(string(R.string.regenerate_week_confirm)).performClick()
 
         assertThat(regenerated).isTrue()
+    }
+
+    // The same alert, named for what it destroys, must not be raised for a
+    // rewrite that the gate will refuse.
+    @Test
+    fun aGatedRewriteNeverRaisesTheAlertThatNamesWhatItCosts() {
+        var asked = false
+        var regenerated = false
+        composeTestRule.setContent {
+            TrainrTheme {
+                WeeklyPlanScreen(
+                    state = state,
+                    askBeforeRewritingWeek = { asked = true },
+                    onRegenerateWeekClick = { regenerated = true }
+                )
+            }
+        }
+
+        openMenu()
+        composeTestRule.onNodeWithText(string(R.string.regenerate_week)).performClick()
+
+        assertThat(asked).isTrue()
+        assertThat(regenerated).isFalse()
+        composeTestRule.onNodeWithText(string(R.string.regenerate_week_title)).assertDoesNotExist()
     }
 
     @Test
@@ -406,6 +462,29 @@ class WeeklyPlanScreenTest {
         composeTestRule.onNodeWithText(string(R.string.start_todays_workout)).performClick()
 
         assertThat(started).isTrue()
+    }
+
+    // Nobody should confirm erasing everything they have logged and only then
+    // be told the action needs Pro.
+    @Test
+    fun aGatedNewPlanNeverRaisesTheAlertThatThreatensYourHistory() {
+        var asked = false
+        var left = false
+        composeTestRule.setContent {
+            TrainrTheme {
+                WeeklyPlanScreen(
+                    state = state,
+                    onLeavePlanConfirmed = { left = true },
+                    askBeforeNewPlan = { asked = true }
+                )
+            }
+        }
+
+        openRegenerate()
+
+        assertThat(asked).isTrue()
+        assertThat(left).isFalse()
+        composeTestRule.onNodeWithText(string(R.string.leave_plan_title)).assertDoesNotExist()
     }
 
     @Test
@@ -641,7 +720,7 @@ class WeeklyPlanScreenTest {
         val finished = WeeklyPlanViewModel.stateFor(
             plan = SampleWorkoutData.weekOne.copy(
                 workoutDays = SampleWorkoutData.weekOne.workoutDays.map {
-                    it.copy(status = WorkoutStatus.COMPLETED)
+                    it.trained()
                 }
             ),
             nowMillis = SampleWorkoutData.dateOf(3)

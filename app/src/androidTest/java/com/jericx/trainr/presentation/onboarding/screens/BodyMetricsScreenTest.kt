@@ -52,6 +52,36 @@ class BodyMetricsScreenTest {
         assertThat(captured).isEqualTo(UnitSystem.IMPERIAL)
     }
 
+    // Looking at a measurement in the other units must not edit it.
+    @Test
+    fun aRoundTripThroughImperialLeavesTheMeasurementsAlone() {
+        var height = 0f
+        var weight = 0f
+        composeTestRule.setContent {
+            TrainrTheme {
+                BodyMetricsScreen(
+                    onNextClick = { h, w, _ -> height = h; weight = w },
+                    onBackClick = {}
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.height_placeholder_cm))
+            .performTextInput("177")
+        composeTestRule.onNodeWithText(string(R.string.weight_placeholder_kg))
+            .performTextInput("95.5")
+        composeTestRule.onNodeWithText(string(R.string.imperial)).performClick()
+        composeTestRule.onNodeWithText(string(R.string.metric)).performClick()
+
+        composeTestRule.onNodeWithText("177").assertIsDisplayed()
+        composeTestRule.onNodeWithText("95.5").assertIsDisplayed()
+
+        composeTestRule.onNodeWithText(string(R.string.next)).performClick()
+
+        assertThat(height).isEqualTo(177f)
+        assertThat(weight).isEqualTo(95.5f)
+    }
+
     @Test
     fun displaysScreenTitle() {
         composeTestRule.setContent {
@@ -153,7 +183,7 @@ class BodyMetricsScreenTest {
         composeTestRule.onNodeWithText(string(R.string.imperial)).performClick()
 
         composeTestRule.onNodeWithText("5'7\"").assertIsDisplayed()
-        composeTestRule.onNodeWithText("154").assertIsDisplayed()
+        composeTestRule.onNodeWithText("154.3").assertIsDisplayed()
     }
 
     // Switching units rewrites the field, its keyboard and its filter, so focus must not stay behind.
@@ -188,7 +218,7 @@ class BodyMetricsScreenTest {
 
         composeTestRule.onNodeWithText(string(R.string.imperial)).performClick()
 
-        composeTestRule.onNodeWithText("154").assertIsNotFocused()
+        composeTestRule.onNodeWithText("154.3").assertIsNotFocused()
     }
 
     @Test

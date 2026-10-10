@@ -75,10 +75,9 @@ data class WeeklyPlanUiState(
     // dates have run out that day is a record and cannot be trained.
     val nextWorkout: WeeklyPlanDay?
         get() {
-            val upcoming = days
-                .firstOrNull { !it.isPast && it.day.status != WorkoutStatus.COMPLETED }
+            val upcoming = days.firstOrNull { !it.isPast && !it.day.countsAsCompleted }
             if (upcoming != null || weekHasEnded) return upcoming
-            return days.firstOrNull { it.day.status != WorkoutStatus.COMPLETED }
+            return days.firstOrNull { !it.day.countsAsCompleted }
         }
 
     val nextWorkoutIsToday: Boolean get() = nextWorkout?.isToday == true

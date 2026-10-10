@@ -3,7 +3,6 @@ package com.jericx.trainr.presentation.workout
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
-import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.domain.repository.UserRepository
 import com.jericx.trainr.presentation.workout.model.WeekProgressUi
 import com.jericx.trainr.presentation.workout.model.WeekStatus
@@ -82,7 +81,7 @@ class WeeklyProgressViewModel @Inject constructor(
             nowMillis: Long = System.currentTimeMillis()
         ): WeekProgressUi {
             val start = plan.startDateMillis ?: WorkoutWeek.startOfDay(plan.createdAt)
-            val completed = plan.workoutDays.count { it.status == WorkoutStatus.COMPLETED }
+            val completed = plan.workoutDays.count { it.countsAsCompleted }
             val total = plan.workoutDays.size
             // Over once the day after the week has arrived, not before.
             val over = nowMillis >= WorkoutWeek.dateOfDay(start, LAST_ISO_DAY + 1)

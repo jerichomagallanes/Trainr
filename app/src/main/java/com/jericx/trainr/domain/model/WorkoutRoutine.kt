@@ -34,7 +34,17 @@ data class WorkoutDay(
     val equipment: List<String>,
     val exercises: List<WorkoutExercise> = emptyList(),
     val completedAt: Long? = null
-)
+) {
+    // Finishing early closes the day whatever was logged, so the status alone
+    // would count a session nobody performed as a day of training; a ticked set
+    // is work performed, whether or not its exercise was finished.
+    val countsAsCompleted: Boolean
+        get() = status == WorkoutStatus.COMPLETED &&
+            exercises.any { exercise ->
+                !exercise.isOmittedToday &&
+                    (exercise.isCompleted || exercise.sets.any { it.isCompleted })
+            }
+}
 
 data class WorkoutExercise(
     val id: Long = 0,

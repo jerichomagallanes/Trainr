@@ -161,14 +161,19 @@ fun ExerciseCard(
                     )
                 }
 
-                // One line, for the first injury the client declared that this
-                // movement asks care with.
-                exercise.caution?.let { injury ->
+                if (exercise.cautions.isNotEmpty()) {
                     Text(
-                        text = injury.cautionText(),
-                        style = MaterialTheme.typography.bodySmall,
+                        text = stringResource(R.string.caution_title),
+                        style = MaterialTheme.typography.labelMedium,
                         color = colors.dangerInk
                     )
+                    exercise.cautions.forEach { injury ->
+                        Text(
+                            text = injury.cautionText(),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.dangerInk
+                        )
+                    }
                 }
             }
 

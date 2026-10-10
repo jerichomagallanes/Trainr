@@ -690,6 +690,6 @@ class RoutineDetailViewModel @Inject constructor(
 
         fun completesTheWeek(days: List<WorkoutDay>, dayNumber: Int): Boolean =
             days.filterIndexed { index, _ -> index != dayNumber - 1 }
-                .all { it.status == WorkoutStatus.COMPLETED }
+                .all { it.countsAsCompleted }
     }
 }
