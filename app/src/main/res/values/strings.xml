@@ -405,7 +405,7 @@
     <string name="bmi_limitations">BMI does not distinguish muscle from fat and cannot assess your health on its own. It is not a body-fat measurement or a diagnosis. Discuss questions about your measurements or health with a qualified healthcare professional.</string>
     <string name="bmi_cdc_categories">CDC: Adult BMI categories</string>
     <string name="bmi_cdc_about">CDC: About BMI</string>
-    <string name="bmi_source_date">Sources reviewed 2 October 2026. Links open the CDC website in English.</string>
+    <string name="bmi_source_date">Sources reviewed 12 October 2026. Links open the CDC website in English.</string>
     <string name="pro_purchase_failed">The purchase could not be completed. Check your connection and try again. If you were charged, use Restore purchases.</string>
     <string name="pro_restore_failed">Purchases could not be restored. Check your connection and try again with the Apple Account used to purchase.</string>
     <string name="pro_purchase_not_active">Your purchase has not activated Pro yet. Please wait a moment, then use Restore purchases. Do not purchase again.</string>
@@ -413,4 +413,10 @@
     <!-- The Play wording of the two store-specific outcomes above. -->
     <string name="pro_restore_failed_google">Purchases could not be restored. Check your connection and try again with the Google account used to purchase.</string>
     <string name="pro_purchase_pending_google">Your purchase is awaiting approval. Pro will unlock once Google Play confirms payment.</string>
+    <string name="bmi_calculation_title">How BMI is calculated</string>
+    <string name="bmi_categories_title">Adult categories (ages 20+)</string>
+    <string name="bmi_cdc_calculation">CDC: BMI calculation</string>
+    <string name="bmi_formula">BMI = weight (kg) ÷ height (m)²</string>
+    <string name="bmi_limitations_title">What BMI can and cannot tell you</string>
+    <string name="bmi_result_sources">Sources for this calculation and category:</string>
 </resources>
