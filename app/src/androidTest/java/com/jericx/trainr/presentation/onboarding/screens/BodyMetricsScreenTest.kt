@@ -1,26 +1,39 @@
 package com.jericx.trainr.presentation.onboarding.screens
 
+import android.content.ContentValues
+import android.graphics.Bitmap
+import android.os.Build
+import android.provider.MediaStore
 import androidx.activity.ComponentActivity
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsNotFocused
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.R
 import com.jericx.trainr.common.Constants
+import com.jericx.trainr.domain.model.UnitSystem
+import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
+import java.io.File
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import com.jericx.trainr.domain.model.UnitSystem
-import com.jericx.trainr.domain.model.UserProfile
 
 @RunWith(AndroidJUnit4::class)
 class BodyMetricsScreenTest {
@@ -343,33 +356,102 @@ class BodyMetricsScreenTest {
         composeTestRule.onNodeWithText(string(R.string.next)).assertIsEnabled()
         composeTestRule.onNodeWithText(string(R.string.bmi_label), substring = true)
             .assertDoesNotExist()
-        composeTestRule.onNodeWithText(string(R.string.bmi_about_sources)).assertDoesNotExist()
+        composeTestRule.onNodeWithTag("bmiSources").assertExists()
+        composeTestRule.onNodeWithText(string(R.string.bmi_cdc_categories)).assertDoesNotExist()
     }
 
-    // App Review asked where the health number comes from: the sources sit one
-    // tap from the result, and the result says who the ranges are for.
     @Test
-    fun theBmiSourcesAreOneTapFromTheAdultResult() {
+    fun sourcesAreAvailableBeforeEnteringMeasurements() {
         composeTestRule.setContent {
-            TrainrTheme {
+            TrainrTheme(darkTheme = false) {
                 BodyMetricsScreen(age = 20, onNextClick = { _, _, _ -> }, onBackClick = {})
             }
         }
+        composeTestRule.onNodeWithText(string(R.string.next)).assertIsNotEnabled()
+        composeTestRule.onNodeWithTag("bmiSources").assertIsDisplayed()
+        screenshot("before-measurements")
+        composeTestRule.onNodeWithTag("bmiSources").performClick()
+        assertSheetSources(screenshots = true)
+        composeTestRule.onNodeWithTag("bmiSourcesClose").performClick()
+        composeTestRule.onNodeWithText(string(R.string.next)).assertIsNotEnabled()
+    }
 
-        composeTestRule.onNodeWithText(string(R.string.height_placeholder_cm))
-            .performTextInput("175")
-        composeTestRule.onNodeWithText(string(R.string.weight_placeholder_kg))
-            .performTextInput("72")
+    @Test
+    fun theBmiSourcesAreOneTapFromTheAdultResult() {
+        val opened = mutableListOf<String>()
+        val uriHandler = object : UriHandler {
+            override fun openUri(uri: String) { opened += uri }
+        }
+        composeTestRule.setContent {
+            CompositionLocalProvider(LocalUriHandler provides uriHandler) {
+                TrainrTheme(darkTheme = false) {
+                    BodyMetricsScreen(age = 20, onNextClick = { _, _, _ -> }, onBackClick = {})
+                }
+            }
+        }
+        composeTestRule.onNodeWithText(string(R.string.height_placeholder_cm)).performTextInput("175")
+        composeTestRule.onNodeWithText(string(R.string.weight_placeholder_kg)).performTextInput("72")
+        composeTestRule.onNodeWithText(string(R.string.normal_weight)).performScrollTo().assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.bmi_formula)).performScrollTo().assertIsDisplayed()
+        for (source in listOf(BMISource.Calculation, BMISource.Categories)) {
+            composeTestRule.onNodeWithText(string(source.title)).performScrollTo().performClick()
+        }
+        assertThat(opened).containsExactly(
+            "https://www.cdc.gov/bmi/about/index.html",
+            "https://www.cdc.gov/bmi/adult-calculator/bmi-categories.html"
+        ).inOrder()
+        composeTestRule.onNodeWithTag("bmiSources").performScrollTo().performClick()
+        assertSheetSources()
+        composeTestRule.onNodeWithTag("bmiSourcesClose").performClick()
+        composeTestRule.onNodeWithText("175").assertExists()
+        composeTestRule.onNodeWithText("72").assertExists()
+        composeTestRule.onNodeWithText(string(R.string.next)).assertIsEnabled()
+        composeTestRule.onNodeWithText(string(R.string.bmi_cdc_categories)).performScrollTo().assertIsDisplayed()
+        screenshot("result")
+    }
 
-        composeTestRule.onNodeWithText(string(R.string.normal_weight)).assertIsDisplayed()
-        composeTestRule.onNodeWithText(string(R.string.bmi_screening_note)).assertIsDisplayed()
-        composeTestRule.onNodeWithText(string(R.string.bmi_about_sources))
-            .performScrollTo()
-            .performClick()
+    @Test
+    fun citationsRemainReachableInDarkMode() {
+        composeTestRule.setContent {
+            TrainrTheme(darkTheme = true) {
+                BodyMetricsScreen(age = 20, onNextClick = { _, _, _ -> }, onBackClick = {})
+            }
+        }
+        composeTestRule.onNodeWithTag("bmiSources").performScrollTo().performClick()
+        assertSheetSources(darkScreenshot = true)
+        composeTestRule.onNodeWithTag("bmiSourcesClose").assertIsDisplayed().performClick()
+        composeTestRule.onNodeWithText(string(R.string.next)).assertIsNotEnabled()
+    }
 
-        composeTestRule.onNodeWithText(string(R.string.bmi_cdc_categories)).assertIsDisplayed()
-        composeTestRule.onNodeWithText(string(R.string.bmi_cdc_about)).assertIsDisplayed()
-        composeTestRule.onNodeWithText(string(R.string.bmi_limitations)).assertExists()
+    private fun assertSheetSources(screenshots: Boolean = false, darkScreenshot: Boolean = false) {
+        for (source in BMISource.entries) {
+            composeTestRule.onNode(
+                hasText(string(source.title)) and hasAnyAncestor(hasTestTag("bmiSourcesContent"))
+            ).performScrollTo().assertIsDisplayed()
+            if (screenshots) screenshot("sources-${source.name.lowercase()}")
+            if (darkScreenshot && source == BMISource.Calculation) screenshot("dark-font-scale-${composeTestRule.activity.resources.configuration.fontScale}")
+        }
+    }
+
+    private fun screenshot(name: String) {
+        composeTestRule.waitForIdle()
+        val image = requireNotNull(InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot())
+        val activity = composeTestRule.activity
+        // Gradle removes the test app after a successful run, including its cache.
+        // MediaStore keeps these canned UI captures available for the PR evidence.
+        val output = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val values = ContentValues().apply {
+                put(MediaStore.Images.Media.DISPLAY_NAME, "bmi-review-$name.png")
+                put(MediaStore.Images.Media.MIME_TYPE, "image/png")
+                put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/TrainrBMIReview")
+            }
+            val uri = requireNotNull(activity.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values))
+            requireNotNull(activity.contentResolver.openOutputStream(uri))
+        } else {
+            File(activity.externalCacheDir, "bmi-review-$name.png").outputStream()
+        }
+        output.use { image.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        image.recycle()
     }
 
     // An edit opened from the profile carries the stored age the same way.
@@ -392,7 +474,13 @@ class BodyMetricsScreenTest {
         }
 
         composeTestRule.onNodeWithText(string(R.string.bmi_label), substring = true)
-            .assertIsDisplayed()
+            .performScrollTo().assertIsDisplayed()
+        composeTestRule.onNodeWithTag("bmiSources").performScrollTo().performClick()
+        assertSheetSources()
+        composeTestRule.onNodeWithTag("bmiSourcesClose").performClick()
+        composeTestRule.onNodeWithText("175").assertExists()
+        composeTestRule.onNodeWithText("72").assertExists()
+        composeTestRule.onNodeWithText(string(R.string.save).uppercase()).assertIsEnabled()
     }
 
     @Test
