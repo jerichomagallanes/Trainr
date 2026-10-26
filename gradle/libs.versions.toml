@@ -1,7 +1,7 @@
 [versions]
 # Gradle plugins
 agp = "9.4.0"
-kotlin = "2.4.20"
+kotlin = "2.4.21"
 ksp = "2.3.12"
 
 # Compose
@@ -21,7 +21,7 @@ dagger = "2.60.1"
 
 # Coroutines / Serialization
 coroutines = "1.11.0"
-serialization = "1.11.0"
+serialization = "1.12.0"
 
 # Database
 room = "2.8.5"
