@@ -104,16 +104,17 @@ class SampleWorkoutDataTest {
         assertThat(names).doesNotContain("Dumbells")
     }
 
+    // A week's dates are the plan's, so the sample must not move with the phone.
     @Test
-    fun datesFollowTheCurrentTimeZoneRatherThanTheOneAtFirstUse() {
+    fun datesReadTheSameWhereverThePhoneIs() {
         TimeZone.setDefault(TimeZone.getTimeZone("Asia/Tokyo"))
         val tokyoStart = SampleWorkoutData.weekStartMillis
 
-        TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
-        val utcStart = SampleWorkoutData.weekStartMillis
+        TimeZone.setDefault(TimeZone.getTimeZone("Pacific/Honolulu"))
+        val honoluluStart = SampleWorkoutData.weekStartMillis
 
-        assertThat(tokyoStart).isNotEqualTo(utcStart)
-        assertThat(weekdayOf(utcStart)).isEqualTo("Monday")
+        assertThat(honoluluStart).isEqualTo(tokyoStart)
+        assertThat(weekdayOf(honoluluStart)).isEqualTo("Monday")
     }
 
     // The routine screen lists each exercise's minutes and the plan card the total; they must agree

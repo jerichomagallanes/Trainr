@@ -33,6 +33,7 @@ import com.jericx.trainr.presentation.workout.model.visibleExercises
 import com.jericx.trainr.presentation.workout.model.toRoutineUi
 import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
 import com.jericx.trainr.presentation.workout.util.WorkoutWeek
+import com.jericx.trainr.presentation.workout.util.weekStartDate
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.Job
@@ -187,7 +188,7 @@ class RoutineDetailViewModel @Inject constructor(
             }
             .filterValues { sets -> sets.isNotEmpty() }
         val adjustment = adjustmentRepository.getActiveAdjustment(day.id)
-        val weekStart = plan.startDateMillis ?: WorkoutWeek.startOfDay(plan.createdAt)
+        val weekStart = plan.weekStartDate()
 
         val routine = day.toRoutineUi(previousByKey, catalog, user?.injuries.orEmpty(), user)
         val timer = survivingTimer(routine)

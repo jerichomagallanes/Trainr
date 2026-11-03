@@ -5,6 +5,8 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import java.util.Calendar
+import java.util.TimeZone
 
 @Database(
     entities = [
@@ -19,7 +21,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         TrainingPreferenceEntity::class,
         SessionNoteEntity::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -63,7 +65,48 @@ abstract class TrainrDatabase : RoomDatabase() {
             }
         }
 
-        val MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_4_5)
+        // Every shipped version wrote a week's anchor as midnight in whatever
+        // zone the phone was in, so the week re-dated itself the moment the
+        // phone moved west. Rewrite each one to midnight UTC on the day it was
+        // meant to be, once, in the zone the phone is in as it upgrades. Held
+        // here rather than read from WorkoutWeek: a migration is history and
+        // must not move when that does.
+        val MIGRATION_5_6: Migration = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                val zone = TimeZone.getDefault()
+                val anchors = mutableListOf<Pair<Long, Long>>()
+                db.query(
+                    "SELECT id, startDateMillis FROM weekly_workout_plans WHERE startDateMillis IS NOT NULL"
+                ).use { cursor ->
+                    while (cursor.moveToNext()) {
+                        anchors += cursor.getLong(0) to utcMidnightOf(cursor.getLong(1), zone)
+                    }
+                }
+                anchors.forEach { (id, anchor) ->
+                    db.execSQL(
+                        "UPDATE weekly_workout_plans SET startDateMillis = ? WHERE id = ?",
+                        arrayOf<Any>(anchor, id)
+                    )
+                }
+            }
+        }
+
+        // The offset in force at that instant, not today's, so a plan anchored
+        // the other side of a daylight-saving change keeps its own date.
+        internal fun utcMidnightOf(storedMillis: Long, zone: TimeZone): Long {
+            val local = Calendar.getInstance(zone).apply { timeInMillis = storedMillis }
+            return Calendar.getInstance(TimeZone.getTimeZone("UTC")).run {
+                clear()
+                set(
+                    local.get(Calendar.YEAR),
+                    local.get(Calendar.MONTH),
+                    local.get(Calendar.DAY_OF_MONTH)
+                )
+                timeInMillis
+            }
+        }
+
+        val MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_4_5, MIGRATION_5_6)
 
         // Predate the 2026-09-13 store upload: the only versions that may be wiped.
         val LEGACY_VERSIONS = intArrayOf(1, 2, 3)

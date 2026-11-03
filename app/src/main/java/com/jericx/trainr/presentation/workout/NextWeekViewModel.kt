@@ -14,6 +14,7 @@ import com.jericx.trainr.domain.repository.UserRepository
 import com.jericx.trainr.domain.unstuck.ActualOrigin
 import com.jericx.trainr.presentation.workout.util.WorkoutWeek
 import com.jericx.trainr.presentation.workout.util.isReadyForTheNextWeek
+import com.jericx.trainr.presentation.workout.util.weekStartDate
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -96,8 +97,7 @@ class NextWeekViewModel @Inject constructor(
                     PlanRequest(
                         user = user,
                         weekNumber = current.weekNumber,
-                        startDateMillis = current.startDateMillis
-                            ?: WorkoutWeek.startOfDay(current.createdAt),
+                        startDateMillis = current.weekStartDate(),
                         // The weeks before this one, so a replacement still
                         // progresses from what was actually lifted.
                         history = plans.filter { it.weekNumber < current.weekNumber }
@@ -189,9 +189,7 @@ class NextWeekViewModel @Inject constructor(
     // Never overlaps the week it follows and never starts in the past: someone
     // coming back a fortnight late begins today.
     private fun startAfter(previous: WeeklyWorkoutPlan): Long = maxOf(
-        previous.startDateMillis
-            ?.let { WorkoutWeek.dateOfDay(it, DAYS_PER_WEEK + 1) }
-            ?: WorkoutWeek.startOfDay(),
+        WorkoutWeek.dateOfDay(previous.weekStartDate(), DAYS_PER_WEEK + 1),
         WorkoutWeek.startOfDay()
     )
 
