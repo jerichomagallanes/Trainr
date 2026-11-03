@@ -131,6 +131,23 @@ bool append_piece(const llama_vocab * vocab, llama_token token, std::string & te
     return true;
 }
 
+bool prompt_tokens(
+    Session * session,
+    const std::string & system,
+    const std::string & user,
+    std::vector<llama_token> & tokens
+) {
+    std::string prompt;
+    if (!format_prompt(session->model, system, user, prompt)) {
+        return false;
+    }
+    return tokenize(llama_model_get_vocab(session->model), prompt, tokens);
+}
+
+bool fits_context(Session * session, const std::vector<llama_token> & tokens, int32_t max_tokens) {
+    return tokens.size() + static_cast<size_t>(max_tokens) <= llama_n_ctx(session->context);
+}
+
 } // namespace
 
 extern "C" JNIEXPORT void JNICALL
@@ -202,19 +219,15 @@ Java_com_jericx_trainr_llama_LlamaNative_complete(
     const std::string user = bytes_of(env, juser);
     const std::string grammar = bytes_of(env, jgrammar);
 
-    std::string prompt;
-    if (!format_prompt(session->model, system, user, prompt)) {
-        return nullptr;
-    }
-    const llama_vocab * vocab = llama_model_get_vocab(session->model);
     std::vector<llama_token> tokens;
-    if (!tokenize(vocab, prompt, tokens)) {
+    if (!prompt_tokens(session, system, user, tokens)) {
         return nullptr;
     }
-    if (tokens.size() + static_cast<size_t>(max_tokens) > llama_n_ctx(session->context)) {
+    if (!fits_context(session, tokens, max_tokens)) {
         fail("prompt and answer would not fit the context");
         return nullptr;
     }
+    const llama_vocab * vocab = llama_model_get_vocab(session->model);
 
     llama_sampler * grammar_sampler = llama_sampler_init_grammar(vocab, grammar.c_str(), "root");
     if (grammar_sampler == nullptr) {
@@ -250,6 +263,27 @@ Java_com_jericx_trainr_llama_LlamaNative_complete(
         return nullptr;
     }
     return bytes_to_java(env, text);
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_jericx_trainr_llama_LlamaNative_fits(
+    JNIEnv * env,
+    jobject,
+    jlong handle,
+    jbyteArray jsystem,
+    jbyteArray juser,
+    jint max_tokens
+) {
+    Session * session = session_of(handle);
+    if (session == nullptr) {
+        fail("no model loaded");
+        return JNI_FALSE;
+    }
+    std::vector<llama_token> tokens;
+    if (!prompt_tokens(session, bytes_of(env, jsystem), bytes_of(env, juser), tokens)) {
+        return JNI_FALSE;
+    }
+    return fits_context(session, tokens, max_tokens) ? JNI_TRUE : JNI_FALSE;
 }
 
 extern "C" JNIEXPORT void JNICALL

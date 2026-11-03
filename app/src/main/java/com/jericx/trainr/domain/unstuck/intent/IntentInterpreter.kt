@@ -19,7 +19,7 @@ sealed interface InterpreterResult {
     data class Failed(val kind: FailureKind) : InterpreterResult
 }
 
-enum class FailureKind { TIMEOUT, OUT_OF_MEMORY, CANCELLED, RUNTIME }
+enum class FailureKind { TIMEOUT, OUT_OF_MEMORY, CANCELLED, RUNTIME, NOTE_TOO_LONG }
 
 object UnavailableInterpreter : IntentInterpreter {
 

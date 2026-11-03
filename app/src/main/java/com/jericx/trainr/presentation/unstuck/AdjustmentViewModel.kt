@@ -27,6 +27,7 @@ import com.jericx.trainr.domain.unstuck.TimeScope
 import com.jericx.trainr.domain.unstuck.TrainingPreference
 import com.jericx.trainr.domain.unstuck.UnstuckPolicy
 import com.jericx.trainr.domain.unstuck.intent.DirectReason
+import com.jericx.trainr.domain.unstuck.intent.FailureKind
 import com.jericx.trainr.domain.unstuck.intent.IntentInterpreter
 import com.jericx.trainr.domain.unstuck.intent.IntentValidation
 import com.jericx.trainr.domain.unstuck.intent.IntentRouting
@@ -35,6 +36,7 @@ import com.jericx.trainr.domain.unstuck.intent.InterpreterResult
 import com.jericx.trainr.domain.unstuck.intent.LocalModelInstaller
 import com.jericx.trainr.domain.unstuck.intent.MentionScope
 import com.jericx.trainr.domain.unstuck.intent.ModelState
+import com.jericx.trainr.domain.unstuck.intent.NoteText
 import com.jericx.trainr.domain.unstuck.intent.SafetyRouting
 import com.jericx.trainr.domain.unstuck.intent.UnstuckRoute
 import com.jericx.trainr.presentation.Screen
@@ -56,7 +58,7 @@ data class ExerciseChoice(val id: Long, val name: String)
 
 enum class ApplyErrorUi { STALE_REBUILT, NOT_APPLIED }
 
-enum class ContextHint { CHOOSER, FAILED }
+enum class ContextHint { CHOOSER, FAILED, TOO_LONG }
 
 sealed interface InterpreterUi {
     data object Unsupported : InterpreterUi
@@ -101,6 +103,12 @@ data class AdjustmentUiState(
         get() = if (hasPerformedWork) TimeScope.REMAINING else TimeScope.WHOLE_SESSION
 
     val isPresetSelected: Boolean get() = customMinutesText.isEmpty() && selectedMinutes != null
+
+    val noteLength: Int get() = NoteText.length(note)
+
+    val noteLimit: Int get() = NoteText.CHARACTER_LIMIT
+
+    val isNoteTooLong: Boolean get() = noteLength > noteLimit
 
     // Nothing to name the limit after, and a remaining-time answer is not a
     // limit for the whole weekday.
@@ -260,6 +268,7 @@ class AdjustmentViewModel @Inject constructor(
                     reason = route.asDirectReason() ?: reason,
                     contextHint = when {
                         route != UnstuckRoute.CHOOSER -> null
+                        result.failedWith(FailureKind.NOTE_TOO_LONG) -> ContextHint.TOO_LONG
                         result is InterpreterResult.Failed -> ContextHint.FAILED
                         else -> ContextHint.CHOOSER
                     }
@@ -525,6 +534,9 @@ class AdjustmentViewModel @Inject constructor(
         )
     }
 }
+
+private fun InterpreterResult?.failedWith(kind: FailureKind): Boolean =
+    this is InterpreterResult.Failed && this.kind == kind
 
 private fun MentionScope?.contradicts(scope: TimeScope): Boolean = when (this) {
     MentionScope.WHOLE_SESSION -> scope == TimeScope.REMAINING

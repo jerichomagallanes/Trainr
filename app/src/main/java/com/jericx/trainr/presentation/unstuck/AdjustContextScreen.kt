@@ -11,11 +11,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import com.jericx.trainr.R
 import com.jericx.trainr.domain.unstuck.intent.DirectReason
+import com.jericx.trainr.domain.unstuck.intent.NoteText
+import androidx.compose.foundation.layout.fillMaxWidth
 import com.jericx.trainr.presentation.common.components.core.TrainrButton
+import com.jericx.trainr.presentation.common.components.core.TrainrFieldError
 import com.jericx.trainr.presentation.common.components.core.TrainrOptionRow
 import com.jericx.trainr.presentation.common.components.core.TrainrProgress
 import com.jericx.trainr.presentation.common.components.core.TrainrQuietButton
@@ -32,6 +36,9 @@ fun AdjustContextScreen(
     note: String,
     interpreter: InterpreterUi,
     modifier: Modifier = Modifier,
+    noteLength: Int = NoteText.length(note),
+    noteLimit: Int = NoteText.CHARACTER_LIMIT,
+    isNoteTooLong: Boolean = noteLength > noteLimit,
     isInterpreting: Boolean = false,
     hint: ContextHint? = null,
     onTypeNote: (String) -> Unit = {},
@@ -60,7 +67,7 @@ fun AdjustContextScreen(
                             keyboard?.hide()
                             onUseNote()
                         },
-                        enabled = note.isNotBlank() && !isInterpreting
+                        enabled = note.isNotBlank() && !isInterpreting && !isNoteTooLong
                     )
                 }
                 TrainrQuietButton(
@@ -91,6 +98,20 @@ fun AdjustContextScreen(
                 placeholder = stringResource(R.string.context_placeholder),
                 modifier = Modifier.padding(top = Spacing.small)
             )
+            if (noteLength >= noteLimit - COUNTER_SHOWN_WITHIN) {
+                Text(
+                    text = stringResource(R.string.context_note_counter_format, noteLength, noteLimit),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (isNoteTooLong) colors.dangerInk else colors.onSurfaceMuted,
+                    textAlign = TextAlign.End,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = Spacing.tight)
+                )
+            }
+            if (isNoteTooLong) {
+                TrainrFieldError(message = stringResource(R.string.context_note_too_long))
+            }
             Text(
                 text = stringResource(R.string.context_private),
                 style = MaterialTheme.typography.bodySmall,
@@ -117,6 +138,7 @@ fun AdjustContextScreen(
                         when (it) {
                             ContextHint.CHOOSER -> R.string.context_hint_chooser
                             ContextHint.FAILED -> R.string.context_hint_failed
+                            ContextHint.TOO_LONG -> R.string.context_hint_too_long
                         }
                     ),
                     style = MaterialTheme.typography.bodyMedium,
@@ -144,6 +166,8 @@ fun AdjustContextScreen(
         }
     }
 }
+
+private const val COUNTER_SHOWN_WITHIN = 40
 
 @Composable
 private fun PrivateCoaching(

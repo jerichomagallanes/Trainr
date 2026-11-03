@@ -204,6 +204,9 @@ private fun ContextStep(navController: NavHostController, graph: NavBackStackEnt
     AdjustContextScreen(
         note = state.note,
         interpreter = state.interpreter,
+        noteLength = state.noteLength,
+        noteLimit = state.noteLimit,
+        isNoteTooLong = state.isNoteTooLong,
         isInterpreting = state.isInterpreting,
         hint = state.contextHint,
         onTypeNote = viewModel::typeNote,

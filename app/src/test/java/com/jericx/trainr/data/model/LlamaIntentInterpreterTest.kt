@@ -11,6 +11,7 @@ import com.jericx.trainr.domain.unstuck.intent.InterpreterAvailability
 import com.jericx.trainr.domain.unstuck.intent.InterpreterResult
 import com.jericx.trainr.domain.unstuck.intent.LocalModelInstaller
 import com.jericx.trainr.domain.unstuck.intent.ModelState
+import com.jericx.trainr.domain.unstuck.intent.NoteText
 import com.jericx.trainr.domain.unstuck.intent.RejectionReason
 import com.jericx.trainr.llama.CompletionResult
 import com.jericx.trainr.llama.LocalModel
@@ -108,6 +109,27 @@ class LlamaIntentInterpreterTest {
     }
 
     @Test
+    fun aNoteLongerThanTheGrammarsReachIsRefusedBeforeTheModelRuns() = runTest {
+        val model = FakeModel(CompletionResult.Text(validAnswer))
+        val tooLong = "分".repeat(NoteText.CHARACTER_LIMIT + 1)
+
+        val result = interpreter(model = model).interpret(tooLong, Locale.ENGLISH, DirectReason.OTHER)
+
+        assertThat(result).isEqualTo(InterpreterResult.Failed(FailureKind.NOTE_TOO_LONG))
+        assertThat(model.calls).isEqualTo(0)
+    }
+
+    @Test
+    fun aNoteExactlyAtTheLimitStillReachesTheModel() = runTest {
+        val model = FakeModel(CompletionResult.Text(validAnswer))
+        val atLimit = "分".repeat(NoteText.CHARACTER_LIMIT)
+
+        interpreter(model = model).interpret(atLimit, Locale.ENGLISH, DirectReason.OTHER)
+
+        assertThat(model.calls).isEqualTo(1)
+    }
+
+    @Test
     fun theRawTextGoesThroughTheValidator() = runTest {
         val model = FakeModel(CompletionResult.Text(validAnswer))
 
@@ -148,5 +170,7 @@ class LlamaIntentInterpreterTest {
             .isEqualTo(InterpreterResult.Failed(FailureKind.OUT_OF_MEMORY))
         assertThat(outcome(CompletionResult.Failed))
             .isEqualTo(InterpreterResult.Failed(FailureKind.RUNTIME))
+        assertThat(outcome(CompletionResult.TooLong))
+            .isEqualTo(InterpreterResult.Failed(FailureKind.NOTE_TOO_LONG))
     }
 }

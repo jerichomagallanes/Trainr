@@ -8,6 +8,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import com.jericx.trainr.domain.unstuck.intent.DirectReason
+import com.jericx.trainr.domain.unstuck.intent.FailureKind
 import com.jericx.trainr.domain.unstuck.intent.IntentInterpreter
 import com.jericx.trainr.domain.unstuck.intent.IntentKind
 import com.jericx.trainr.domain.unstuck.intent.IntentRouting
@@ -15,6 +16,7 @@ import com.jericx.trainr.domain.unstuck.intent.IntentValidation
 import com.jericx.trainr.domain.unstuck.intent.InterpreterAvailability
 import com.jericx.trainr.domain.unstuck.intent.InterpreterResult
 import com.jericx.trainr.domain.unstuck.intent.MentionScope
+import com.jericx.trainr.domain.unstuck.intent.NoteText
 import com.jericx.trainr.domain.unstuck.intent.SafetyRouting
 import com.jericx.trainr.domain.unstuck.intent.UnstuckRoute
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -95,6 +97,25 @@ class LlamaInterpreterTest {
         }
         assertThat(IntentRouting.routeFor(DirectReason.OTHER, false, validation))
             .isEqualTo(UnstuckRoute.CHOOSER)
+    }
+
+    // The visible limit is the grammar's reach; this is the half of it that
+    // cannot be checked without the real tokenizer.
+    @Test
+    fun aNoteAtTheVisibleLimitStillFitsTheModelsContext() {
+        val result = interpret("\u5206".repeat(NoteText.CHARACTER_LIMIT))
+
+        assertThat(result).isNotEqualTo(InterpreterResult.Failed(FailureKind.NOTE_TOO_LONG))
+    }
+
+    @Test
+    fun aJapaneseNoteIsReadRatherThanQuotedWhole() {
+        val result = interpret("\u4ECA\u65E5\u306F30\u5206\u3057\u304B\u3042\u308A\u307E\u305B\u3093\u3002")
+
+        assertThat(result).isInstanceOf(InterpreterResult.Interpreted::class.java)
+        val validation = (result as InterpreterResult.Interpreted).validation
+        assertWithMessage("$validation").that(validation)
+            .isInstanceOf(IntentValidation.Valid::class.java)
     }
 
     private fun interpret(note: String): InterpreterResult {

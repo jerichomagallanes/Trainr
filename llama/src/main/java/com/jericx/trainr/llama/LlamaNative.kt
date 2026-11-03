@@ -18,6 +18,13 @@ object LlamaNative {
         maxTokens: Int
     ): ByteArray?
 
+    external fun fits(
+        handle: Long,
+        system: ByteArray,
+        user: ByteArray,
+        maxTokens: Int
+    ): Boolean
+
     external fun cancel(handle: Long)
 
     external fun free(handle: Long)
