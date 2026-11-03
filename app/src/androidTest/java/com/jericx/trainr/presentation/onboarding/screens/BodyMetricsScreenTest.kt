@@ -365,7 +365,7 @@ class BodyMetricsScreenTest {
                 "${Constants.Workout.MAX_HEIGHT_CM.toInt()} " +
                     composeTestRule.activity.getString(R.string.unit_cm)
             )
-        ).performScrollTo().assertIsDisplayed()
+        ).assertIsDisplayed()
     }
 
     @Test
