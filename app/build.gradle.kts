@@ -26,7 +26,10 @@ val commitCount = providers.exec {
 // already uploaded, which Play would reject. Note for whoever adds a job that
 // builds a release: actions/checkout fetches one commit by default, so it would
 // count 1 and fall back to this floor. Such a job needs fetch-depth: 0.
-val minimumVersionCode = 2
+// Build 166 was uploaded before this PR was squash-merged, then superseded.
+// Keep the next release above it while preserving one increment per merge.
+val versionCodeOffset = 1
+val minimumVersionCode = 167
 
 android {
     namespace = "com.jericx.trainr"
@@ -36,8 +39,11 @@ android {
         applicationId = "com.jericx.trainr"
         minSdk = 24
         targetSdk = 36
-        versionCode = maxOf(runCatching { commitCount.get() }.getOrDefault(0), minimumVersionCode)
-        versionName = "1.1"
+        versionCode = maxOf(
+            runCatching { commitCount.get() + versionCodeOffset }.getOrDefault(0),
+            minimumVersionCode
+        )
+        versionName = "1.2"
 
         // Hilt's, so an instrumented test can reach the real graph: the
         // paywall gate is wired in the navigation and cannot be seen from a

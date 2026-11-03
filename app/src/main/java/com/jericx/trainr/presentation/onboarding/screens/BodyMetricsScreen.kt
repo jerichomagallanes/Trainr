@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -21,6 +22,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLocale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -94,6 +96,7 @@ fun BodyMetricsScreen(
     var height by remember { mutableStateOf(inProgress?.height ?: seededHeight.shown) }
     var weight by remember { mutableStateOf(inProgress?.weight ?: seededWeight.shown) }
     var useMetric by remember { mutableStateOf(inProgress?.useMetric ?: !startsImperial) }
+    var showingSources by remember { mutableStateOf(false) }
 
     // Switching units must not edit the measurement: what a conversion was
     // given is kept so the way back reads what was typed. It travels with the
@@ -215,6 +218,20 @@ fun BodyMetricsScreen(
                 TrainrSubtitle(
                     text = stringResource(R.string.measurements_description)
                 )
+                Text(
+                    text = stringResource(R.string.bmi_about_sources),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.trainrColors.brandStrong,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp)
+                        .clickable(role = Role.Button) {
+                            focusManager.clearFocus()
+                            showingSources = true
+                        }
+                        .padding(vertical = Spacing.small)
+                        .testTag("bmiSources")
+                )
 
                 Spacer(modifier = Modifier.height(Spacing.extraLarge))
 
@@ -311,6 +328,10 @@ fun BodyMetricsScreen(
             }
         }
     }
+
+    if (showingSources) {
+        BMISourcesSheet(onDismiss = { showingSources = false })
+    }
 }
 
 @Composable
@@ -356,8 +377,6 @@ private fun UnitTab(
 private fun BMICard(bmi: Float) {
     // Read through the composition local so the value re-formats if the locale changes.
     val locale = LocalLocale.current.platformLocale
-    var showingSources by remember { mutableStateOf(false) }
-
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
@@ -401,21 +420,20 @@ private fun BMICard(bmi: Float) {
                 modifier = Modifier.padding(top = Spacing.extraSmall)
             )
 
-            // The citation is one tap from the number it explains.
             Text(
-                text = stringResource(R.string.bmi_about_sources),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.trainrColors.brandStrong,
-                modifier = Modifier
-                    .padding(top = Spacing.small)
-                    .clickable(role = Role.Button) { showingSources = true }
-                    .padding(vertical = Spacing.extraSmall)
+                text = stringResource(R.string.bmi_formula),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.trainrColors.onSurface,
+                modifier = Modifier.padding(top = Spacing.small)
             )
+            Text(
+                text = stringResource(R.string.bmi_result_sources),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.trainrColors.onSurfaceMuted
+            )
+            BMISourceLink(BMISource.Calculation)
+            BMISourceLink(BMISource.Categories)
         }
-    }
-
-    if (showingSources) {
-        BMISourcesSheet(onDismiss = { showingSources = false })
     }
 }
 
