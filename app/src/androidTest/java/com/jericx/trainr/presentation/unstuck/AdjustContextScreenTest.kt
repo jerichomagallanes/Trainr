@@ -254,6 +254,18 @@ class AdjustContextScreenTest {
         composeTestRule.onNodeWithText(string(R.string.context_use_note).uppercase()).assertIsNotEnabled()
     }
 
+    // Without the model there is no "use my note" button, so nothing on the
+    // screen can act on being told the note is too long for it.
+    @Test
+    fun aPhoneWithoutTheModelIsNotToldToShortenItsNote() {
+        val length = NoteText.TOKEN_LIMIT + 1
+        setScreen(interpreter = InterpreterUi.NotInstalled, note = "ab ".repeat(length))
+
+        composeTestRule
+            .onNodeWithText(string(R.string.context_note_counter_format, length, NoteText.TOKEN_LIMIT))
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.context_note_too_long)).assertDoesNotExist()
+    }
 
     // The read takes a while and the answer lands on another screen, so the
     // keyboard has nothing left to type into.
