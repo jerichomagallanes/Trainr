@@ -5,6 +5,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.data.local.TrainrDatabase
+import java.util.Calendar
+import java.util.TimeZone
 import org.junit.After
 import org.junit.Rule
 import org.junit.Test
@@ -250,5 +252,63 @@ class TrainrMigrationsTest {
             assertThat(cursor.count).isEqualTo(0)
         }
         database.close()
+    }
+
+    // The one-shot rewrite of everybody's current week, against a real file: an
+    // anchor the shipped app wrote as local midnight lands on its own calendar
+    // date, and one already on a calendar date is left exactly where it is.
+    @Test
+    fun migratingToSixPutsEveryAnchorOnItsOwnCalendarDate() {
+        helper.createDatabase(name, 5).apply {
+            execSQL(
+                """
+                INSERT INTO users (id, firstName, age, gender, height, weight, fitnessGoal,
+                    experienceLevel, availableEquipment, workoutDaysPerWeek, workoutDuration,
+                    injuries, bodyUnitSystem, liftingUnitSystem, createdAt)
+                VALUES (1, 'Jeco', 26, 'MALE', 175.0, 72.0, 'MUSCLE_GAIN', 'BEGINNER',
+                    '["DUMBBELL"]', 3, 45, '[]', 'METRIC', NULL, 1700000000000)
+                """.trimIndent()
+            )
+            execSQL(
+                """
+                INSERT INTO weekly_workout_plans (id, userId, weekNumber, title, startDateMillis,
+                    createdAt, updatedAt)
+                VALUES (1, 1, 1, 'Week 1', $LOCAL_MIDNIGHT, 1700000000000, 1700000000000),
+                    (2, 1, 2, 'Week 2', $AUGUST_17, 1700000000000, 1700000000000),
+                    (3, 1, 3, 'Week 3', NULL, 1700000000000, 1700000000000)
+                """.trimIndent()
+            )
+            close()
+        }
+
+        val database = helper.runMigrationsAndValidate(name, 6, true, *TrainrDatabase.MIGRATIONS)
+
+        database.query(
+            "SELECT id, startDateMillis FROM weekly_workout_plans ORDER BY id"
+        ).use { cursor ->
+            assertThat(cursor.count).isEqualTo(3)
+
+            assertThat(cursor.moveToNext()).isTrue()
+            assertThat(cursor.getLong(1)).isEqualTo(AUGUST_24)
+
+            assertThat(cursor.moveToNext()).isTrue()
+            assertThat(cursor.getLong(1)).isEqualTo(AUGUST_17)
+
+            assertThat(cursor.moveToNext()).isTrue()
+            assertThat(cursor.isNull(1)).isTrue()
+        }
+        database.close()
+    }
+
+    private companion object {
+        const val AUGUST_24 = 1_787_529_600_000L
+        const val AUGUST_17 = 1_786_924_800_000L
+
+        // What every shipped build wrote: midnight where the phone was standing.
+        val LOCAL_MIDNIGHT: Long = Calendar.getInstance(TimeZone.getDefault()).run {
+            clear()
+            set(2026, Calendar.AUGUST, 24)
+            timeInMillis
+        }
     }
 }

@@ -98,7 +98,7 @@ class PreferencesViewModel @Inject constructor(
         val today = WorkoutWeek.startOfDay()
 
         val day = week.days.firstOrNull {
-            WorkoutWeek.startOfDay(WorkoutWeek.dateOfDay(start, it.dayNumber)) == today
+            WorkoutWeek.dateOfDay(start, it.dayNumber) == today
         } ?: return null
 
         if (adjustmentRepository.getOutcome(day.id) != null) return null

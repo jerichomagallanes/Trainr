@@ -48,6 +48,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import com.jericx.trainr.presentation.workout.util.WorkoutWeek
 import java.util.Calendar
 import java.util.TimeZone
 import org.junit.After
@@ -777,17 +778,17 @@ class AdjustmentViewModelTest {
         assertThat(written.captured.id).isEqualTo(12L)
     }
 
-    // T30: the same instant is a different weekday in UTC either side of
-    // midnight, and the day belongs to the person's own calendar.
+    // T30: the day a preference is remembered for is the plan's own, so it
+    // cannot change under a phone that has crossed a zone.
     @Test
-    fun theWeekdayComesFromTheLocalDate() = runTest {
+    fun theWeekdayComesFromThePlansOwnDate() = runTest {
         val original = TimeZone.getDefault()
-        TimeZone.setDefault(TimeZone.getTimeZone("Asia/Tokyo"))
+        TimeZone.setDefault(TimeZone.getTimeZone("America/Los_Angeles"))
         try {
-            val sundayEveningInUtc = utcMillis(2026, Calendar.SEPTEMBER, 20, 23)
+            val mondayTheWeekStarts = WorkoutWeek.dateOf(2026, Calendar.SEPTEMBER, 21)
             val repository = adjustments()
             val viewModel = viewModel(
-                repository = repositoryWith(fullDay, startDateMillis = sundayEveningInUtc),
+                repository = repositoryWith(fullDay, startDateMillis = mondayTheWeekStarts),
                 adjustmentRepository = repository
             )
             viewModel.selectMinutes(viewModel.uiState.value.plannedMinutes + 5)
@@ -845,13 +846,6 @@ class AdjustmentViewModelTest {
             null
         )
     }
-
-    private fun utcMillis(year: Int, month: Int, day: Int, hour: Int) =
-        Calendar.getInstance(TimeZone.getTimeZone("UTC")).run {
-            clear()
-            set(year, month, day, hour, 0)
-            timeInMillis
-        }
 
     private fun proposed(viewModel: AdjustmentViewModel) =
         viewModel.uiState.value.decision as PolicyDecision.Proposed

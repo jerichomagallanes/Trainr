@@ -23,12 +23,14 @@ import com.jericx.trainr.presentation.workout.model.remainingMinutes
 import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
 import com.jericx.trainr.presentation.workout.util.WorkoutWeek
 import com.jericx.trainr.presentation.workout.util.isReadyForTheNextWeek
+import com.jericx.trainr.presentation.workout.util.weekStartDate
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.util.TimeZone
 import javax.inject.Inject
 
 data class WeeklyPlanDay(
@@ -235,12 +237,13 @@ class WeeklyPlanViewModel @Inject constructor(
             outcomes: Map<Long, SessionOutcome> = emptyMap(),
             adjustedDayIds: Set<Long> = emptySet(),
             user: UserProfile? = null,
-            catalog: ExerciseCatalog? = null
+            catalog: ExerciseCatalog? = null,
+            zone: TimeZone = TimeZone.getDefault()
         ): WeeklyPlanUiState {
-            val start = plan.startDateMillis ?: WorkoutWeek.startOfDay(plan.createdAt)
-            val readyForTheNext = plan.isReadyForTheNextWeek(nowMillis)
+            val start = plan.weekStartDate(zone)
+            val readyForTheNext = plan.isReadyForTheNextWeek(nowMillis, zone)
 
-            val today = WorkoutWeek.startOfDay(nowMillis)
+            val today = WorkoutWeek.startOfDay(nowMillis, zone)
 
             return WeeklyPlanUiState(
                 plan = plan,
@@ -249,8 +252,8 @@ class WeeklyPlanViewModel @Inject constructor(
                     WeeklyPlanDay(
                         day = it,
                         dateMillis = date,
-                        isToday = WorkoutWeek.startOfDay(date) == today,
-                        isPast = WorkoutWeek.startOfDay(date) < today,
+                        isToday = date == today,
+                        isPast = date < today,
                         finishKind = outcomes[it.id]?.finishKind,
                         isAdjusted = it.id in adjustedDayIds,
                         minutes = if (user != null && catalog != null) {
@@ -265,7 +268,7 @@ class WeeklyPlanViewModel @Inject constructor(
                 },
                 weekStartMillis = start,
                 weekEndMillis = WorkoutWeek.dateOfDay(start, LAST_ISO_DAY),
-                weekHasEnded = WorkoutWeek.hasEnded(start, nowMillis),
+                weekHasEnded = WorkoutWeek.hasEnded(start, nowMillis, zone),
                 hasLoaded = true,
                 hasPlan = true,
                 isCurrentWeek = isCurrentWeek,

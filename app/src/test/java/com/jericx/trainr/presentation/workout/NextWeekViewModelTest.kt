@@ -211,6 +211,24 @@ class NextWeekViewModelTest {
         assertThat(request.captured.startDateMillis).isGreaterThan(WorkoutWeek.startOfDay())
     }
 
+    // The undated week is drawn from the day it was made, so the week after it
+    // begins where that one ends rather than overlapping it
+    @Test
+    fun theWeekAfterAnUndatedOneFollowsTheDayItWasMade() = runTest {
+        val madeTwoDaysAgo = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(2)
+        val undated = finishedWeek.copy(startDateMillis = null, createdAt = madeTwoDaysAgo)
+        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(undated))
+        val request = slot<PlanRequest>()
+        coEvery { planGenerator.generate(capture(request)) } returns
+            PlanGenerationResult.Generated(undated.copy(weekNumber = 2))
+
+        viewModel().generateNextWeek()
+        advanceUntilIdle()
+
+        assertThat(request.captured.startDateMillis)
+            .isEqualTo(WorkoutWeek.dateOfDay(WorkoutWeek.startOfDay(madeTwoDaysAgo), 8))
+    }
+
     // The week before seeds the request, so a replacement still progresses from what was lifted
     @Test
     fun regeneratingReplacesTheWeekBeingTrainedInPlace() = runTest {
