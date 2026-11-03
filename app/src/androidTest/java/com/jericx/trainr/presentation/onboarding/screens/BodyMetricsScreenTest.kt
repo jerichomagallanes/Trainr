@@ -466,6 +466,7 @@ class BodyMetricsScreenTest {
         ).inOrder()
         composeTestRule.onNodeWithTag("bmiSources").performScrollTo().performClick()
         assertSheetSources()
+        composeTestRule.onNodeWithText(string(R.string.bmi_limitations)).assertExists()
         composeTestRule.onNodeWithTag("bmiSourcesClose").performClick()
         composeTestRule.onNodeWithText("175").assertExists()
         composeTestRule.onNodeWithText("72").assertExists()
