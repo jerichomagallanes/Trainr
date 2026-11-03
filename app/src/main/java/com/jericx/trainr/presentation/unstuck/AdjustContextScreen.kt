@@ -201,7 +201,9 @@ private fun PrivateCoaching(
             )
         }
 
-        InterpreterUi.Unsupported, InterpreterUi.Ready -> Unit
+        InterpreterUi.Unsupported -> Notice(R.string.private_coaching_unsupported_message)
+
+        InterpreterUi.Ready -> Unit
     }
 }
 

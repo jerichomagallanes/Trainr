@@ -90,12 +90,18 @@ class AdjustContextScreenTest {
     }
 
     @Test
-    fun anUnsupportedDeviceSeesNothingAboutTheModel() {
-        setScreen(interpreter = InterpreterUi.Unsupported)
+    fun anUnsupportedDeviceIsToldWhyAndStillPicksAReason() {
+        var chosen: DirectReason? = null
+        setScreen(interpreter = InterpreterUi.Unsupported, onChoose = { chosen = it })
 
+        composeTestRule.onNodeWithText(string(R.string.private_coaching_unsupported_message))
+            .assertIsDisplayed()
         composeTestRule.onNodeWithText(string(R.string.private_coaching_setup_title))
             .assertDoesNotExist()
         composeTestRule.onNodeWithText(string(R.string.context_use_note).uppercase()).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.context_option_time)).performClick()
+
+        assertThat(chosen).isEqualTo(DirectReason.LESS_TIME)
     }
 
     @Test
