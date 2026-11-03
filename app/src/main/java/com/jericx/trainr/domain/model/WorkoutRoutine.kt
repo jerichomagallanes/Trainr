@@ -7,8 +7,9 @@ data class WeeklyWorkoutPlan(
     val userId: Long,
     val weekNumber: Int,
     val title: String,
-    // Local midnight of the Monday the week begins; a day's date is this plus
-    // dayNumber - 1 days.
+    // Midnight UTC on the calendar date the week begins, not local midnight: a
+    // week's dates are the plan's and must not move with the phone. A day's
+    // date is this plus dayNumber - 1 days.
     val startDateMillis: Long? = null,
     val workoutDays: List<WorkoutDay>,
     val createdAt: Long = System.currentTimeMillis(),

@@ -14,7 +14,7 @@ import org.junit.Before
 import org.junit.Test
 
 // The zone the phone is in is driven through the seam, never the machine's own,
-// which is pinned to UTC so a week date rendering against it would show.
+// which is pinned away from UTC so a week date rendered against it would show.
 class WeekTimeZoneTest {
 
     private lateinit var originalTimeZone: TimeZone
@@ -22,7 +22,7 @@ class WeekTimeZoneTest {
     @Before
     fun setUp() {
         originalTimeZone = TimeZone.getDefault()
-        TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
+        TimeZone.setDefault(LOS_ANGELES)
     }
 
     @After

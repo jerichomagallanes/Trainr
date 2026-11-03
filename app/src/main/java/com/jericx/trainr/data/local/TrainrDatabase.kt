@@ -70,13 +70,18 @@ abstract class TrainrDatabase : RoomDatabase() {
         // phone moved west. Rewrite each one to midnight UTC on the day it was
         // meant to be, once, in the zone the phone is in as it upgrades. Held
         // here rather than read from WorkoutWeek: a migration is history and
-        // must not move when that does.
+        // must not move when that does. An anchor already on a calendar date is
+        // skipped: it was written at no offset and is already right, and
+        // rewriting it in the zone the phone has since moved to would slide it.
         val MIGRATION_5_6: Migration = object : Migration(5, 6) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 val zone = TimeZone.getDefault()
                 val anchors = mutableListOf<Pair<Long, Long>>()
                 db.query(
-                    "SELECT id, startDateMillis FROM weekly_workout_plans WHERE startDateMillis IS NOT NULL"
+                    """
+                    SELECT id, startDateMillis FROM weekly_workout_plans
+                    WHERE startDateMillis IS NOT NULL AND startDateMillis % $MILLIS_PER_DAY != 0
+                    """.trimIndent()
                 ).use { cursor ->
                     while (cursor.moveToNext()) {
                         anchors += cursor.getLong(0) to utcMidnightOf(cursor.getLong(1), zone)
@@ -105,6 +110,8 @@ abstract class TrainrDatabase : RoomDatabase() {
                 timeInMillis
             }
         }
+
+        private const val MILLIS_PER_DAY = 86_400_000L
 
         val MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_4_5, MIGRATION_5_6)
 
