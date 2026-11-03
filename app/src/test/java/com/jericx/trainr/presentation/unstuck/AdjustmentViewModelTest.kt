@@ -562,7 +562,7 @@ class AdjustmentViewModelTest {
             reason = DirectReason.OTHER,
             interpreter = readyInterpreter(InterpreterResult.Failed(FailureKind.NOTE_TOO_LONG))
         )
-        viewModel.typeNote("\u5206".repeat(NoteText.CHARACTER_LIMIT + 1))
+        viewModel.typeNote("\u5206".repeat(NoteText.TOKEN_LIMIT + 1))
 
         val seen = mutableListOf<UnstuckRoute>()
         val job = launch { viewModel.routeEvents.collect { seen += it } }
@@ -579,12 +579,12 @@ class AdjustmentViewModelTest {
         val viewModel = viewModel(reason = DirectReason.OTHER)
         advanceUntilIdle()
 
-        viewModel.typeNote("\uD83C\uDFCB".repeat(NoteText.CHARACTER_LIMIT))
-        assertThat(viewModel.uiState.value.noteLength).isEqualTo(NoteText.CHARACTER_LIMIT)
-        assertThat(viewModel.uiState.value.noteLimit).isEqualTo(NoteText.CHARACTER_LIMIT)
+        viewModel.typeNote("\u5206".repeat(NoteText.TOKEN_LIMIT))
+        assertThat(viewModel.uiState.value.noteLength).isEqualTo(NoteText.TOKEN_LIMIT)
+        assertThat(viewModel.uiState.value.noteLimit).isEqualTo(NoteText.TOKEN_LIMIT)
         assertThat(viewModel.uiState.value.isNoteTooLong).isFalse()
 
-        viewModel.typeNote("a".repeat(NoteText.CHARACTER_LIMIT + 1))
+        viewModel.typeNote("ab ".repeat(NoteText.TOKEN_LIMIT + 1))
         assertThat(viewModel.uiState.value.isNoteTooLong).isTrue()
     }
 

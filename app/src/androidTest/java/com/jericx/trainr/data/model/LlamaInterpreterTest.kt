@@ -103,7 +103,7 @@ class LlamaInterpreterTest {
     // cannot be checked without the real tokenizer.
     @Test
     fun aNoteAtTheVisibleLimitStillFitsTheModelsContext() {
-        val result = interpret("\u5206".repeat(NoteText.CHARACTER_LIMIT))
+        val result = interpret("\u5206".repeat(NoteText.TOKEN_LIMIT))
 
         assertThat(result).isNotEqualTo(InterpreterResult.Failed(FailureKind.NOTE_TOO_LONG))
     }

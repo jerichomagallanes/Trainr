@@ -37,7 +37,7 @@ fun AdjustContextScreen(
     interpreter: InterpreterUi,
     modifier: Modifier = Modifier,
     noteLength: Int = NoteText.length(note),
-    noteLimit: Int = NoteText.CHARACTER_LIMIT,
+    noteLimit: Int = NoteText.TOKEN_LIMIT,
     isNoteTooLong: Boolean = noteLength > noteLimit,
     isInterpreting: Boolean = false,
     hint: ContextHint? = null,

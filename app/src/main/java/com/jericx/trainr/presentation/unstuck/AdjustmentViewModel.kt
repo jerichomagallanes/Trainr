@@ -106,7 +106,7 @@ data class AdjustmentUiState(
 
     val noteLength: Int get() = NoteText.length(note)
 
-    val noteLimit: Int get() = NoteText.CHARACTER_LIMIT
+    val noteLimit: Int get() = NoteText.TOKEN_LIMIT
 
     val isNoteTooLong: Boolean get() = noteLength > noteLimit
 

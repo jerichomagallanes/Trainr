@@ -111,7 +111,7 @@ class LlamaIntentInterpreterTest {
     @Test
     fun aNoteLongerThanTheGrammarsReachIsRefusedBeforeTheModelRuns() = runTest {
         val model = FakeModel(CompletionResult.Text(validAnswer))
-        val tooLong = "分".repeat(NoteText.CHARACTER_LIMIT + 1)
+        val tooLong = "分".repeat(NoteText.TOKEN_LIMIT + 1)
 
         val result = interpreter(model = model).interpret(tooLong, Locale.ENGLISH, DirectReason.OTHER)
 
@@ -122,7 +122,7 @@ class LlamaIntentInterpreterTest {
     @Test
     fun aNoteExactlyAtTheLimitStillReachesTheModel() = runTest {
         val model = FakeModel(CompletionResult.Text(validAnswer))
-        val atLimit = "分".repeat(NoteText.CHARACTER_LIMIT)
+        val atLimit = "分".repeat(NoteText.TOKEN_LIMIT)
 
         interpreter(model = model).interpret(atLimit, Locale.ENGLISH, DirectReason.OTHER)
 
