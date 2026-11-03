@@ -160,6 +160,54 @@ class PlanSkeletonBuilderTest {
         }
     }
 
+    // The gap this closes: ninety minutes of muscle gain with a barbell and
+    // dumbbells was built as a sixty-seven-minute day, a quarter of the answer
+    // missing because the skeleton never asked for the sets the budget already
+    // allowed. A training day now reaches the answer wherever the split holds
+    // enough honest work to fill it, which at 30, 45 and 60 minutes it does.
+    @Test
+    fun aTrainingDayIsBuiltToTheSessionLengthThatWasAskedFor() {
+        listOf(FitnessGoal.MUSCLE_GAIN, FitnessGoal.STRENGTH).forEach { goal ->
+            listOf(30, 45, 60).forEach { minutes ->
+                val answer = user(goal = goal, days = 7, minutes = minutes, kit = listOf(Equipment.BARBELL, Equipment.DUMBBELL))
+                build(answer).days.filter { it.focus.isHard }.forEach { day ->
+                    assertWithMessage("$goal ${minutes}m ${day.id}")
+                        .that(day.minutes).isIn(minutes * 9 / 10..minutes * 11 / 10)
+                }
+            }
+        }
+    }
+
+    // Ninety minutes is more than eight movements of muscle gain honestly
+    // hold, so the day is left at what it really contains rather than padded
+    // with sets nobody asked for, and the setup screen says so.
+    @Test
+    fun anAnswerTheSplitCannotFillIsLeftShortRatherThanPadded() {
+        val answer = user(goal = FitnessGoal.MUSCLE_GAIN, days = 7, minutes = 90, kit = everything)
+        val days = build(answer).days
+
+        assertThat(days.maxOf { it.minutes }).isLessThan(90 * 9 / 10)
+        days.flatMap { it.slots }.forEach { slot ->
+            assertWithMessage(slot.id).that(slot.sets).isAtMost(MAX_HONEST_SETS)
+        }
+    }
+
+    // Where a day cannot be filled it is left short rather than padded, and
+    // nothing is ever built past the length that was asked for by more than
+    // the tenth the brief allows either way: dropping a whole movement to save
+    // a single minute costs the client more than the minute does.
+    @Test
+    fun noDayIsEverBudgetedPastTheAnswer() {
+        everyAnswer().forEach { user ->
+            build(user).days.forEach { day ->
+                assertWithMessage(
+                    "${user.fitnessGoal} ${user.workoutDaysPerWeek}d ${user.workoutDuration}m " +
+                        "${user.availableEquipment} ${day.id}"
+                ).that(day.minutes).isAtMost(user.workoutDuration * 11 / 10)
+            }
+        }
+    }
+
     // A full-body week has its press and its pull in the second and third
     // slots, not the first; dealt only to the first, every such week would
     // report itself as having neither.
@@ -260,5 +308,11 @@ class PlanSkeletonBuilderTest {
     @Test
     fun theWeekIsTitledForWhoItIsFor() {
         assertThat(build(user(experience = ExperienceLevel.BEGINNER)).title).isEqualTo("Beginner Muscle Building")
+    }
+
+    private companion object {
+        // The most sets the muscle-gain shape prescribes for one movement,
+        // plus the two a long session may stretch it by.
+        const val MAX_HONEST_SETS = 6
     }
 }

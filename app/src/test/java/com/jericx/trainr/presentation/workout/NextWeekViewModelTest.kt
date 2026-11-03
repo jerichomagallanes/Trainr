@@ -1,5 +1,6 @@
 package com.jericx.trainr.presentation.workout
 
+import androidx.lifecycle.ViewModelStore
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.domain.generation.PlanGenerator
 import com.jericx.trainr.domain.generation.PlanGenerationResult
@@ -10,16 +11,22 @@ import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
 import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.model.WorkoutExercise
 import com.jericx.trainr.domain.model.WorkoutStatus
+import com.jericx.trainr.domain.purchases.UnspentAllowance
+import com.jericx.trainr.domain.purchases.gateOver
 import com.jericx.trainr.domain.repository.UserRepository
+import com.jericx.trainr.domain.unstuck.ActualOrigin
 import com.jericx.trainr.presentation.workout.util.WorkoutWeek
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -32,6 +39,8 @@ import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class NextWeekViewModelTest {
+
+    private val allowance = UnspentAllowance()
 
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var userRepository: UserRepository
@@ -51,7 +60,7 @@ class NextWeekViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun viewModel() = NextWeekViewModel(userRepository, planGenerator)
+    private fun viewModel() = NextWeekViewModel(userRepository, planGenerator, gateOver(allowance))
 
     // Recent enough that the week after it still lies ahead, the ordinary case
     private val weekOneStart = WorkoutWeek.startOfDay() - TimeUnit.DAYS.toMillis(3)
@@ -227,8 +236,30 @@ class NextWeekViewModelTest {
         assertThat(request.captured.startDateMillis).isEqualTo(current.startDateMillis)
         assertThat(request.captured.previousWeek?.weekNumber).isEqualTo(1)
         assertThat(request.captured.freshCast).isTrue()
-        coVerify { userRepository.deleteWeeklyWorkoutPlan(10) }
-        coVerify { userRepository.saveWeeklyWorkoutPlan(replacement) }
+        coVerify { userRepository.replaceWeeklyWorkoutPlan(10, replacement) }
+        coVerify(exactly = 0) { userRepository.deleteWeeklyWorkoutPlan(any()) }
+    }
+
+    // Every other screen dates an undated plan from the day it was made, so a
+    // replacement starting today would move the same week forward
+    @Test
+    fun regeneratingAnUndatedWeekKeepsItWhereEveryScreenDrawsIt() = runTest {
+        val current = finishedWeek.copy(
+            startDateMillis = null,
+            createdAt = weekOneStart,
+            workoutDays = finishedWeek.workoutDays.map {
+                it.copy(status = WorkoutStatus.NOT_STARTED, completedAt = null)
+            }
+        )
+        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(current))
+        val request = slot<PlanRequest>()
+        coEvery { planGenerator.generate(capture(request)) } returns
+            PlanGenerationResult.Generated(current)
+
+        viewModel().regenerateThisWeek()
+        advanceUntilIdle()
+
+        assertThat(request.captured.startDateMillis).isEqualTo(weekOneStart)
     }
 
     // Ask the model first and drop the old week only once there is one to put in its place
@@ -246,9 +277,10 @@ class NextWeekViewModelTest {
         viewModel.regenerateThisWeek()
         advanceUntilIdle()
 
-        coVerify(exactly = 0) { userRepository.deleteWeeklyWorkoutPlan(any()) }
+        coVerify(exactly = 0) { userRepository.replaceWeeklyWorkoutPlan(any(), any()) }
         coVerify(exactly = 0) { userRepository.saveWeeklyWorkoutPlan(any()) }
         assertThat(viewModel.failure.value).isEqualTo(PlanGenerationResult.Failed)
+        assertThat(allowance.wasSpent).isFalse()
         assertThat(viewModel.isReady.value).isFalse()
     }
 
@@ -260,7 +292,7 @@ class NextWeekViewModelTest {
         advanceUntilIdle()
 
         coVerify(exactly = 0) { planGenerator.generate(any()) }
-        coVerify(exactly = 0) { userRepository.deleteWeeklyWorkoutPlan(any()) }
+        coVerify(exactly = 0) { userRepository.replaceWeeklyWorkoutPlan(any(), any()) }
     }
 
     // Enforced at the write, not only where the menu is drawn: a newer week would take the title of current
@@ -338,6 +370,58 @@ class NextWeekViewModelTest {
     }
 
     @Test
+    fun repeatingAWeekLeavesOutASubstituteAddedForOneDay() = runTest {
+        val day = finishedWeek.workoutDays.single()
+        val squat = day.exercises.single().copy(sortOrder = 0)
+        val substitute = squat.copy(id = 8, name = "Split squat", exerciseKey = "split_squat", sortOrder = 1, addedBy = 5)
+        val row = squat.copy(id = 9, name = "Row", exerciseKey = "row", sortOrder = 2)
+        val adjusted = finishedWeek.copy(
+            workoutDays = listOf(day.copy(exercises = listOf(squat, substitute, row)))
+        )
+        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(adjusted))
+        val saved = slot<WeeklyWorkoutPlan>()
+        coEvery { userRepository.saveWeeklyWorkoutPlan(capture(saved)) } returns 2L
+
+        viewModel().repeatWeek()
+        advanceUntilIdle()
+
+        val exercises = saved.captured.workoutDays.single().exercises
+        assertThat(exercises.map { it.exerciseKey }).containsExactly(squat.exerciseKey, "row").inOrder()
+        assertThat(exercises.map { it.sortOrder }).containsExactly(0, 1).inOrder()
+        assertThat(exercises.map { it.addedBy }).containsExactly(null, null)
+    }
+
+    @Test
+    fun repeatingAWeekBringsBackASetOmittedForOneDay() = runTest {
+        val day = finishedWeek.workoutDays.single()
+        val exercise = day.exercises.single()
+        val omitted = ExerciseSet(id = 4, setNumber = 2, targetReps = 10, omittedBy = 5)
+        val adjusted = finishedWeek.copy(
+            workoutDays = listOf(
+                day.copy(
+                    exercises = listOf(
+                        exercise.copy(
+                            sets = listOf(exercise.sets.single().copy(actualOrigin = ActualOrigin.TYPED), omitted)
+                        )
+                    )
+                )
+            )
+        )
+        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(adjusted))
+        val saved = slot<WeeklyWorkoutPlan>()
+        coEvery { userRepository.saveWeeklyWorkoutPlan(capture(saved)) } returns 2L
+
+        viewModel().repeatWeek()
+        advanceUntilIdle()
+
+        val sets = saved.captured.workoutDays.single().exercises.single().sets
+        assertThat(sets.map { it.setNumber }).containsExactly(1, 2).inOrder()
+        assertThat(sets.map { it.omittedBy }).containsExactly(null, null)
+        assertThat(sets.map { it.actualOrigin }).containsExactly(ActualOrigin.NONE, ActualOrigin.NONE)
+        assertThat(sets.map { it.targetReps }).containsExactly(10, 10)
+    }
+
+    @Test
     fun repeatingCannotStackASecondCopyOfAWeekThatExists() = runTest {
         every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(finishedWeek))
         coEvery { userRepository.getWeeklyWorkoutPlan(1, 2) } returns
@@ -377,5 +461,121 @@ class NextWeekViewModelTest {
         coVerify(exactly = 1) { userRepository.saveWeeklyWorkoutPlan(any()) }
     }
 
+    // A week already on the plan is written by nobody, so there is nothing to
+    // charge for; this used to cost the free week for showing a screen.
+    @Test
+    fun aWeekThatWasAlreadyThereCostsNothing() = runTest {
+        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(finishedWeek))
+        coEvery { userRepository.getWeeklyWorkoutPlan(1, 2) } returns
+            finishedWeek.copy(id = 10, weekNumber = 2)
 
+        val viewModel = viewModel()
+        viewModel.generateNextWeek()
+        advanceUntilIdle()
+
+        assertThat(viewModel.isReady.value).isTrue()
+        assertThat(allowance.wasSpent).isFalse()
+    }
+
+    @Test
+    fun theWeekThatIsWrittenIsTheWeekThatIsCharged() = runTest {
+        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(finishedWeek))
+        coEvery { planGenerator.generate(any()) } returns
+            PlanGenerationResult.Generated(finishedWeek.copy(id = 0, weekNumber = 2))
+
+        viewModel().generateNextWeek()
+        advanceUntilIdle()
+
+        coVerify { userRepository.saveWeeklyWorkoutPlan(any()) }
+        assertThat(allowance.wasSpent).isTrue()
+    }
+
+    // Behind the same gate as a built week, so it must cost the same: a copy
+    // the free week paid for is still a week that was not there before.
+    @Test
+    fun aWeekCopiedFromAnotherIsChargedForLikeAnyOther() = runTest {
+        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(finishedWeek))
+
+        viewModel().repeatWeek()
+        advanceUntilIdle()
+
+        coVerify { userRepository.saveWeeklyWorkoutPlan(any()) }
+        assertThat(allowance.wasSpent).isTrue()
+    }
+
+    @Test
+    fun aWeekThatCouldNotBeCopiedCostsNothing() = runTest {
+        val unfinished = finishedWeek.copy(
+            workoutDays = finishedWeek.workoutDays.map {
+                it.copy(status = WorkoutStatus.NOT_STARTED, completedAt = null)
+            }
+        )
+        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(unfinished))
+
+        viewModel().repeatWeek()
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { userRepository.saveWeeklyWorkoutPlan(any()) }
+        assertThat(allowance.wasSpent).isFalse()
+    }
+
+    // Popping the screen clears the back stack entry's ViewModelStore, which
+    // cancels the scope this runs in. The generator has no cancellation point
+    // of its own and answers anyway, and nothing may be taken away on behalf
+    // of someone who has left: the week they were training is still theirs.
+    @Test
+    fun aRewriteAbandonedBeforeTheWriteLeavesTheWeekWhereItWas() = runTest {
+        val current = finishedWeek.copy(
+            workoutDays = finishedWeek.workoutDays.map {
+                it.copy(status = WorkoutStatus.NOT_STARTED, completedAt = null)
+            }
+        )
+        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(current))
+        val answered = CompletableDeferred<Unit>()
+        coEvery { planGenerator.generate(any()) } coAnswers {
+            withContext(NonCancellable) { answered.await() }
+            PlanGenerationResult.Generated(current.copy(id = 0, title = "Something else"))
+        }
+
+        val store = ViewModelStore()
+        val viewModel = viewModel()
+        store.put("rewrite", viewModel)
+        viewModel.regenerateThisWeek()
+        advanceUntilIdle()
+
+        store.clear()
+        answered.complete(Unit)
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { userRepository.replaceWeeklyWorkoutPlan(any(), any()) }
+        coVerify(exactly = 0) { userRepository.deleteWeeklyWorkoutPlan(any()) }
+        coVerify(exactly = 0) { userRepository.saveWeeklyWorkoutPlan(any()) }
+        assertThat(allowance.wasSpent).isFalse()
+    }
+
+    // The same back press on the screen that builds the week after this one.
+    // That screen's view model goes with the back stack entry too, so a week
+    // arriving afterwards belongs to nobody and may not be charged for.
+    @Test
+    fun aGenerationAbandonedBeforeTheWriteLeavesNoWeekAndNoCharge() = runTest {
+        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(finishedWeek))
+        val answered = CompletableDeferred<Unit>()
+        coEvery { planGenerator.generate(any()) } coAnswers {
+            withContext(NonCancellable) { answered.await() }
+            PlanGenerationResult.Generated(finishedWeek.copy(id = 0, weekNumber = 2))
+        }
+
+        val store = ViewModelStore()
+        val viewModel = viewModel()
+        store.put("generate", viewModel)
+        viewModel.generateNextWeek()
+        advanceUntilIdle()
+
+        store.clear()
+        answered.complete(Unit)
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { userRepository.saveWeeklyWorkoutPlan(any()) }
+        assertThat(allowance.wasSpent).isFalse()
+    }
 }

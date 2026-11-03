@@ -150,12 +150,20 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
+        // ggml scans nativeLibraryDir for its CPU variants, so they must be extracted.
+        jniLibs {
+            useLegacyPackaging = true
+        }
     }
 
     lint {
         // Emit SARIF so CI can publish lint findings into GitHub code scanning.
         sarifReport = true
         abortOnError = true
+    }
+
+    sourceSets {
+        getByName("androidTest").assets.srcDirs("$projectDir/schemas")
     }
 
     testOptions {
@@ -204,6 +212,7 @@ kotlin {
 ksp {
     arg("dagger.fastInit", "enabled")
     arg("dagger.hilt.android.internal.disableAndroidSuperclassValidation", "true")
+    arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 dependencies {
@@ -236,6 +245,8 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.crashlytics)
 
+    implementation(project(":llama"))
+
     implementation(libs.youtube.player)
 
     implementation(libs.revenuecat)
@@ -255,6 +266,7 @@ dependencies {
     androidTestImplementation(libs.compose.ui.test.junit4)
     androidTestImplementation(libs.truth)
     androidTestImplementation(libs.hilt.android.testing)
+    androidTestImplementation(libs.room.testing)
     kspAndroidTest(libs.hilt.android.compiler)
 }
 

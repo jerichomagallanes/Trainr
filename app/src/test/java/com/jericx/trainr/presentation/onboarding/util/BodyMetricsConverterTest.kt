@@ -151,21 +151,21 @@ class BodyMetricsConverterTest {
     }
 
     @Test
-    fun `convertWeightToImperial rounds kg to lbs`() {
+    fun `convertWeightToImperial keeps the tenth the field accepts`() {
         val input = "70"
 
         val result = BodyMetricsConverter.convertWeightToImperial(input)
 
-        assertThat(result).isEqualTo("154")
+        assertThat(result).isEqualTo("154.3")
     }
 
     @Test
-    fun `convertWeightToImperial rounds up when fractional part exceeds half`() {
-        val input = "80"
+    fun `convertWeightToImperial drops a tenth that is not there`() {
+        val input = "650"
 
         val result = BodyMetricsConverter.convertWeightToImperial(input)
 
-        assertThat(result).isEqualTo("176")
+        assertThat(result).isEqualTo("1433")
     }
 
     @Test
@@ -178,12 +178,12 @@ class BodyMetricsConverterTest {
     }
 
     @Test
-    fun `convertWeightToMetric rounds lbs to kg`() {
+    fun `convertWeightToMetric keeps the tenth the field accepts`() {
         val input = "154"
 
         val result = BodyMetricsConverter.convertWeightToMetric(input)
 
-        assertThat(result).isEqualTo("70")
+        assertThat(result).isEqualTo("69.9")
     }
 
     @Test
@@ -196,26 +196,98 @@ class BodyMetricsConverterTest {
     }
 
     @Test
-    fun `weight metric-imperial-metric round trip preserves value within 1 kg`() {
-        val original = "70"
+    fun `a weight round trip gives back the kilograms that were typed`() {
+        listOf("70", "95.5", "80.1", "20", "650").forEach { original ->
+            val imperial = BodyMetricsConverter.convertWeightToImperial(original)
+            val backToMetric = BodyMetricsConverter.convertWeightToMetric(imperial)
 
-        val imperial = BodyMetricsConverter.convertWeightToImperial(original)
-        val backToMetric = BodyMetricsConverter.convertWeightToMetric(imperial)
-
-        val diff = kotlin.math.abs(backToMetric.toInt() - original.toInt())
-        assertThat(diff).isAtMost(1)
+            assertThat(backToMetric.toFloat()).isEqualTo(original.toFloat())
+        }
     }
 
     @Test
-    fun `height metric-imperial-metric round trip preserves value within 2 cm`() {
-        val original = "170"
+    fun `a swapped field gives back the centimetres that were typed`() {
+        val original = "177"
 
-        val imperial = BodyMetricsConverter.convertHeightToImperial(original)
-        val backToMetric = BodyMetricsConverter.convertHeightToMetric(imperial)
+        val toImperial = BodyMetricsConverter.swapUnits(
+            original,
+            BodyMetricsConverter.UnitSwap(),
+            BodyMetricsConverter::convertHeightToImperial
+        )
+        val back = BodyMetricsConverter.swapUnits(
+            toImperial.shown,
+            toImperial,
+            BodyMetricsConverter::convertHeightToMetric
+        )
 
-        // imperial is integer inches, so max round-trip drift is ~1.27 cm
-        val diff = kotlin.math.abs(backToMetric.toInt() - original.toInt())
-        assertThat(diff).isAtMost(2)
+        assertThat(toImperial.shown).isEqualTo("5'10\"")
+        assertThat(back.shown).isEqualTo(original)
+    }
+
+    @Test
+    fun `an edited field is converted rather than given back`() {
+        val toImperial = BodyMetricsConverter.swapUnits(
+            "177",
+            BodyMetricsConverter.UnitSwap(),
+            BodyMetricsConverter::convertHeightToImperial
+        )
+
+        val back = BodyMetricsConverter.swapUnits(
+            "5'11\"",
+            toImperial,
+            BodyMetricsConverter::convertHeightToMetric
+        )
+
+        assertThat(back.shown).isEqualTo("180")
+    }
+
+    @Test
+    fun `a part-typed imperial height survives the unit tabs`() {
+        val toMetric = BodyMetricsConverter.swapUnits(
+            "5",
+            BodyMetricsConverter.UnitSwap(),
+            BodyMetricsConverter::convertHeightToMetric
+        )
+        val back = BodyMetricsConverter.swapUnits(
+            toMetric.shown,
+            toMetric,
+            BodyMetricsConverter::convertHeightToImperial
+        )
+
+        assertThat(toMetric.shown).isEqualTo("5")
+        assertThat(back.shown).isEqualTo("5")
+    }
+
+    @Test
+    fun `an empty field stays empty across the unit tabs`() {
+        val swapped = BodyMetricsConverter.swapUnits(
+            "",
+            BodyMetricsConverter.UnitSwap(),
+            BodyMetricsConverter::convertHeightToMetric
+        )
+
+        assertThat(swapped.shown).isEmpty()
+    }
+
+    @Test
+    fun `switching units repeatedly never drifts`() {
+        var text = "177"
+        var swap = BodyMetricsConverter.UnitSwap()
+        var metric = true
+
+        repeat(6) {
+            swap = BodyMetricsConverter.swapUnits(text, swap) {
+                if (metric) {
+                    BodyMetricsConverter.convertHeightToImperial(it)
+                } else {
+                    BodyMetricsConverter.convertHeightToMetric(it)
+                }
+            }
+            text = swap.shown
+            metric = !metric
+        }
+
+        assertThat(text).isEqualTo("177")
     }
 
     @Test
@@ -274,5 +346,76 @@ class BodyMetricsConverterTest {
         val result = BodyMetricsConverter.calculateBMI("0", "70", useMetric = true)
 
         assertThat(result).isNull()
+    }
+
+    @Test
+    fun `the index does not move when only the units are switched`() {
+        val heightSwap = BodyMetricsConverter.swapUnits(
+            "175",
+            BodyMetricsConverter.UnitSwap(),
+            BodyMetricsConverter::convertHeightToImperial
+        )
+        val weightSwap = BodyMetricsConverter.swapUnits(
+            "72",
+            BodyMetricsConverter.UnitSwap(),
+            BodyMetricsConverter::convertWeightToImperial
+        )
+
+        val (cm, kg) = BodyMetricsConverter.keptMetrics(
+            height = heightSwap.shown,
+            weight = weightSwap.shown,
+            useMetric = false,
+            heightSwap = heightSwap,
+            weightSwap = weightSwap
+        )
+
+        assertThat(heightSwap.shown).isEqualTo("5'9\"")
+        assertThat(cm).isEqualTo(175f)
+        assertThat(kg).isWithin(0.01f).of(72f)
+        assertThat(BodyMetricsConverter.bodyMassIndex(cm, kg))
+            .isEqualTo(BodyMetricsConverter.calculateBMI("175", "72", useMetric = true))
+    }
+
+    // The imperial filter allows "175", which is not feet and inches, so the
+    // switch keeps it as it is rather than emptying the field. What it keeps is
+    // in the units it is now shown in, not the ones it was typed in.
+    @Test
+    fun `a measurement kept across the switch is read in the units it is shown in`() {
+        val heightSwap = BodyMetricsConverter.swapUnits(
+            "175",
+            BodyMetricsConverter.UnitSwap(),
+            BodyMetricsConverter::convertHeightToMetric
+        )
+
+        val (cm, _) = BodyMetricsConverter.keptMetrics(
+            height = heightSwap.shown,
+            weight = "72",
+            useMetric = true,
+            heightSwap = heightSwap,
+            weightSwap = BodyMetricsConverter.UnitSwap()
+        )
+
+        assertThat(heightSwap.shown).isEqualTo("175")
+        assertThat(cm).isEqualTo(175f)
+    }
+
+    @Test
+    fun `a measurement edited after the switch is read as it is shown`() {
+        val heightSwap = BodyMetricsConverter.swapUnits(
+            "175",
+            BodyMetricsConverter.UnitSwap(),
+            BodyMetricsConverter::convertHeightToImperial
+        )
+
+        val (cm, kg) = BodyMetricsConverter.keptMetrics(
+            height = "6'0\"",
+            weight = "160",
+            useMetric = false,
+            heightSwap = heightSwap,
+            weightSwap = BodyMetricsConverter.UnitSwap()
+        )
+
+        assertThat(cm).isWithin(0.01f).of(182.88f)
+        assertThat(kg).isWithin(0.01f).of(160f / 2.20462f)
     }
 }

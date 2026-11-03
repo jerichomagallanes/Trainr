@@ -135,9 +135,31 @@ class ExerciseCardTest {
 
     @Test
     fun aMovementAnInjuryAsksCareWithSaysWhatToWatch() {
-        setCard(sampleExercises[0].copy(caution = Injury.KNEE))
+        setCard(sampleExercises[0].copy(cautions = listOf(Injury.KNEE)))
 
+        composeTestRule.onNodeWithText(string(R.string.caution_title)).assertIsDisplayed()
         composeTestRule.onNodeWithText(string(R.string.caution_knee)).assertIsDisplayed()
+    }
+
+    // Every injury the client declared gets heard, not only whichever one they
+    // happened to tick first.
+    @Test
+    fun aMovementThatTouchesSeveralInjuriesShowsALineForEach() {
+        setCard(
+            sampleExercises[0].copy(cautions = listOf(Injury.KNEE, Injury.HIP, Injury.ANKLE))
+        )
+
+        composeTestRule.onNodeWithText(string(R.string.caution_title)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.caution_knee)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.caution_hip)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.caution_ankle)).assertIsDisplayed()
+    }
+
+    @Test
+    fun aMovementNoInjuryTouchesShowsNoHeading() {
+        setCard(sampleExercises[0].copy(cautions = emptyList()))
+
+        composeTestRule.onNodeWithText(string(R.string.caution_title)).assertDoesNotExist()
     }
 
     @Test

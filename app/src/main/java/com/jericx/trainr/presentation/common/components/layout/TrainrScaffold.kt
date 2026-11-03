@@ -1,7 +1,9 @@
 package com.jericx.trainr.presentation.common.components.layout
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -40,24 +42,35 @@ fun TrainrScaffold(
     Scaffold(
         topBar = topBar,
         bottomBar = {
-            Surface(
-                color = MaterialTheme.trainrColors.surfaceRaised,
-                modifier = Modifier
-                    .navigationBarsPadding()
-                    .drawWithContent {
-                        drawContent()
-                        val stroke = 1.dp.toPx()
-                        drawLine(
-                            color = raisedEdge,
-                            start = Offset(0f, stroke / 2f),
-                            end = Offset(size.width, stroke / 2f),
-                            strokeWidth = stroke
-                        )
-                    },
-                shadowElevation = 8.dp
-            ) {
-                Box(modifier = Modifier.padding(Spacing.large)) {
-                    bottomButton()
+            // A bar that holds more than a button grows with the text setting
+            // until the screen it belongs to is a strip. It is held to a share
+            // of what the screen has and scrolls inside that.
+            BoxWithConstraints {
+                val ceiling = maxHeight * PINNED_SHARE
+                Surface(
+                    color = MaterialTheme.trainrColors.surfaceRaised,
+                    modifier = Modifier
+                        .navigationBarsPadding()
+                        // Edge to edge the window is never resized, so without this
+                        // the keyboard covers the button the screen is asking for.
+                        .imePadding()
+                        .drawWithContent {
+                            drawContent()
+                            val stroke = 1.dp.toPx()
+                            drawLine(
+                                color = raisedEdge,
+                                start = Offset(0f, stroke / 2f),
+                                end = Offset(size.width, stroke / 2f),
+                                strokeWidth = stroke
+                            )
+                        },
+                    shadowElevation = 8.dp
+                ) {
+                    TrainrCappedScroll(ceiling = ceiling) {
+                        Box(modifier = Modifier.padding(Spacing.large)) {
+                            bottomButton()
+                        }
+                    }
                 }
             }
         },
@@ -67,6 +80,8 @@ fun TrainrScaffold(
         content(paddingValues)
     }
 }
+
+private const val PINNED_SHARE = 0.34f
 
 @Preview(showBackground = true)
 @Composable

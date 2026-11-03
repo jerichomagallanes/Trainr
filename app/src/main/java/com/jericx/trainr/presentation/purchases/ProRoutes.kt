@@ -74,6 +74,6 @@ fun ProRoute(onClose: () -> Unit) {
     }
 }
 
-private fun android.content.Context.openLink(url: String) {
+internal fun android.content.Context.openLink(url: String) {
     runCatching { startActivity(Intent(Intent.ACTION_VIEW, url.toUri())) }
 }

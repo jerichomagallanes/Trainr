@@ -19,6 +19,8 @@ import com.jericx.trainr.domain.model.UnitSystem
 import com.jericx.trainr.domain.generation.PlanGenerator
 import com.jericx.trainr.domain.generation.PlanGenerationResult
 import com.jericx.trainr.domain.generation.PlanRequest
+import com.jericx.trainr.domain.purchases.UnspentAllowance
+import com.jericx.trainr.domain.purchases.gateOver
 import com.jericx.trainr.domain.repository.UserRepository
 import com.jericx.trainr.presentation.workout.util.WorkoutWeek
 import io.mockk.coEvery
@@ -50,6 +52,8 @@ class OnboardingViewModelTest {
     )
 
 
+    private val allowance = UnspentAllowance()
+
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var userRepository: UserRepository
     private lateinit var planGenerator: PlanGenerator
@@ -72,7 +76,7 @@ class OnboardingViewModelTest {
                 )
             )
         }
-        viewModel = OnboardingViewModel(userRepository, planGenerator, catalog)
+        viewModel = OnboardingViewModel(userRepository, planGenerator, gateOver(allowance), catalog)
     }
 
     @After
@@ -116,6 +120,17 @@ class OnboardingViewModelTest {
         assertThat(profile.weight).isEqualTo(60f)
         assertThat(profile.firstName).isEqualTo("Ana")
         assertThat(profile.age).isEqualTo(25)
+    }
+
+    // A catalog this thin cannot fill an hour and a half, and the screen that
+    // asks for the length is told what the sessions will really come to rather
+    // than quietly handing over a third of one.
+    @Test
+    fun aSessionLengthTheSplitCannotFillIsReportedAtWhatItWillComeTo() = runTest {
+        val minutes = viewModel.longestSessionMinutes(listOf(Equipment.NONE), daysPerWeek = 3, duration = 90)
+
+        assertThat(minutes).isLessThan(90)
+        assertThat(minutes).isGreaterThan(0)
     }
 
     @Test
@@ -197,7 +212,6 @@ class OnboardingViewModelTest {
 
     @Test
     fun `saveUserProfile on success sets isCompleted and invokes callback`() = runTest(testDispatcher) {
-        coEvery { userRepository.saveUser(any()) } returns 42L
         var callbackInvoked = false
 
         viewModel.saveUserProfile(onSuccess = { callbackInvoked = true })
@@ -206,24 +220,24 @@ class OnboardingViewModelTest {
         val state = viewModel.onboardingState.value
         assertThat(state.isCompleted).isTrue()
         assertThat(callbackInvoked).isTrue()
-        coVerify { userRepository.saveUser(any()) }
+        coVerify { userRepository.saveUserWithFirstWeek(any(), any()) }
     }
 
     @Test
-    fun `the generated plan is stored against the saved user`() = runTest(testDispatcher) {
+    fun `the generated plan is stored with the user in one operation`() = runTest(testDispatcher) {
         coEvery { userRepository.getCurrentUser() } returns null
-        coEvery { userRepository.saveUser(any()) } returns 42L
         val plan = slot<WeeklyWorkoutPlan>()
-        coEvery { userRepository.saveWeeklyWorkoutPlan(capture(plan)) } returns 1L
+        coEvery { userRepository.saveUserWithFirstWeek(any(), capture(plan)) } returns 42L
 
         viewModel.saveUserProfile(onSuccess = {})
         advanceUntilIdle()
 
         with(plan.captured) {
-            assertThat(userId).isEqualTo(42L)
             assertThat(weekNumber).isEqualTo(1)
             assertThat(startDateMillis).isNotNull()
         }
+        coVerify(exactly = 0) { userRepository.saveUser(any()) }
+        coVerify(exactly = 0) { userRepository.saveWeeklyWorkoutPlan(any()) }
     }
 
     @Test
@@ -239,7 +253,7 @@ class OnboardingViewModelTest {
             assertThat(isCompleted).isFalse()
         }
         assertThat(done).isFalse()
-        coVerify(exactly = 0) { userRepository.saveWeeklyWorkoutPlan(any()) }
+        coVerify(exactly = 0) { userRepository.saveUserWithFirstWeek(any(), any()) }
     }
 
     // The answers survive a failure nobody caused; saved without a plan, the app opens on the empty state
@@ -252,7 +266,7 @@ class OnboardingViewModelTest {
         advanceUntilIdle()
 
         coVerify(exactly = 1) { userRepository.saveUser(any()) }
-        coVerify(exactly = 0) { userRepository.saveWeeklyWorkoutPlan(any()) }
+        coVerify(exactly = 0) { userRepository.saveUserWithFirstWeek(any(), any()) }
     }
 
     // Saving the user first REPLACEs the row, which cascades every stored week away
@@ -265,13 +279,12 @@ class OnboardingViewModelTest {
         advanceUntilIdle()
 
         coVerify(exactly = 0) { userRepository.saveUser(any()) }
-        coVerify(exactly = 0) { userRepository.saveWeeklyWorkoutPlan(any()) }
+        coVerify(exactly = 0) { userRepository.saveUserWithFirstWeek(any(), any()) }
     }
 
     @Test
     fun `a generated plan is saved instead of the sample fallback`() = runTest(testDispatcher) {
         coEvery { userRepository.getCurrentUser() } returns null
-        coEvery { userRepository.saveUser(any()) } returns 42L
         val generated = WeeklyWorkoutPlan(
             userId = 42L, weekNumber = 1, title = "Generated week",
             startDateMillis = 1L, workoutDays = emptyList()
@@ -280,7 +293,7 @@ class OnboardingViewModelTest {
         coEvery { planGenerator.generate(capture(request)) } returns
             PlanGenerationResult.Generated(generated)
         val saved = slot<WeeklyWorkoutPlan>()
-        coEvery { userRepository.saveWeeklyWorkoutPlan(capture(saved)) } returns 1L
+        coEvery { userRepository.saveUserWithFirstWeek(any(), capture(saved)) } returns 42L
 
         viewModel.saveUserProfile(onSuccess = {})
         advanceUntilIdle()
@@ -297,7 +310,7 @@ class OnboardingViewModelTest {
     @Test
     fun `a stored profile is loaded so editing starts from saved answers`() = runTest(testDispatcher) {
         coEvery { userRepository.getCurrentUser() } returns UserProfile(id = 7L, firstName = "Jeco", age = 26)
-        val loaded = OnboardingViewModel(userRepository, planGenerator, catalog)
+        val loaded = OnboardingViewModel(userRepository, planGenerator, gateOver(allowance), catalog)
 
         advanceUntilIdle()
 
@@ -308,17 +321,17 @@ class OnboardingViewModelTest {
     @Test
     fun `saveUserProfile replaces the existing user rather than adding another`() = runTest(testDispatcher) {
         coEvery { userRepository.getCurrentUser() } returns UserProfile(id = 7L, firstName = "Old")
-        coEvery { userRepository.saveUser(any()) } returns 7L
 
         viewModel.saveUserProfile(onSuccess = {})
         advanceUntilIdle()
 
-        coVerify { userRepository.saveUser(match { it.id == 7L }) }
+        coVerify { userRepository.saveUserWithFirstWeek(match { it.id == 7L }, any()) }
     }
 
     @Test
     fun `saveUserProfile on repository failure surfaces error and does not complete`() = runTest(testDispatcher) {
-        coEvery { userRepository.saveUser(any()) } throws RuntimeException("DB write failed")
+        coEvery { userRepository.saveUserWithFirstWeek(any(), any()) } throws
+            RuntimeException("DB write failed")
         var callbackInvoked = false
 
         viewModel.saveUserProfile(onSuccess = { callbackInvoked = true })
@@ -333,7 +346,7 @@ class OnboardingViewModelTest {
     fun `updateProfileOnly saves the profile and leaves the plan alone`() = runTest {
         val stored = UserProfile(id = 4, firstName = "Jet", age = 28)
         coEvery { userRepository.getCurrentUser() } returns stored
-        val viewModel = OnboardingViewModel(userRepository, planGenerator, catalog)
+        val viewModel = OnboardingViewModel(userRepository, planGenerator, gateOver(allowance), catalog)
         advanceUntilIdle()
         viewModel.updateFitnessGoal(FitnessGoal.STRENGTH)
 
@@ -347,7 +360,7 @@ class OnboardingViewModelTest {
             )
         }
         coVerify(exactly = 0) { userRepository.saveUser(any()) }
-        coVerify(exactly = 0) { userRepository.saveWeeklyWorkoutPlan(any()) }
+        coVerify(exactly = 0) { userRepository.saveUserWithFirstWeek(any(), any()) }
         coVerify(exactly = 0) { planGenerator.generate(any()) }
         assertThat(done).isTrue()
     }
@@ -368,20 +381,17 @@ class OnboardingViewModelTest {
 
     @Test
     fun `a second tap while generating is ignored`() = runTest(testDispatcher) {
-        coEvery { userRepository.saveUser(any()) } returns 42L
-
         viewModel.saveUserProfile()
         viewModel.saveUserProfile()
         advanceUntilIdle()
 
         coVerify(exactly = 1) { planGenerator.generate(any()) }
-        coVerify(exactly = 1) { userRepository.saveWeeklyWorkoutPlan(any()) }
+        coVerify(exactly = 1) { userRepository.saveUserWithFirstWeek(any(), any()) }
     }
 
     // The view model outlives the screen, so a regeneration must not start out complete
     @Test
     fun `regenerating starts from not complete`() = runTest(testDispatcher) {
-        coEvery { userRepository.saveUser(any()) } returns 42L
         viewModel.saveUserProfile()
         advanceUntilIdle()
         assertThat(viewModel.onboardingState.value.isCompleted).isTrue()
@@ -414,5 +424,50 @@ class OnboardingViewModelTest {
             .containsExactly(OnboardingStep.BASIC_INFO, OnboardingStep.GOALS)
     }
 
+    @Test
+    fun `a preferred name is stored without the space that was typed after it`() {
+        viewModel.updateBasicInfo("Jericho ", 30, Gender.MALE, ExperienceLevel.BEGINNER)
 
+        assertThat(viewModel.onboardingState.value.userProfile.firstName).isEqualTo("Jericho")
+    }
+
+    @Test
+    fun `measurements that were typed but not submitted are given back`() {
+        viewModel.rememberBodyMetrics(BodyMetricsEntry("5", "154", useMetric = false))
+
+        assertThat(viewModel.bodyMetricsInProgress())
+            .isEqualTo(BodyMetricsEntry("5", "154", useMetric = false))
+    }
+
+    @Test
+    fun `submitting the measurements step clears what it was holding`() {
+        viewModel.rememberBodyMetrics(BodyMetricsEntry("175", "70", useMetric = true))
+
+        viewModel.updateBodyMetrics(175f, 70f, UnitSystem.METRIC)
+
+        assertThat(viewModel.bodyMetricsInProgress()).isNull()
+    }
+
+    // The screen can be left while this runs, and it writes the week anyway.
+    // Backing out of it used to hand over a week of training for nothing.
+    @Test
+    fun `a week written after the screen is gone is charged for all the same`() =
+        runTest(testDispatcher) {
+            viewModel.saveUserProfile()
+            advanceUntilIdle()
+
+            coVerify { userRepository.saveUserWithFirstWeek(any(), any()) }
+            assertThat(allowance.wasSpent).isTrue()
+        }
+
+    @Test
+    fun `a generation that wrote no week costs nothing`() = runTest(testDispatcher) {
+        coEvery { planGenerator.generate(any()) } returns PlanGenerationResult.Failed
+
+        viewModel.saveUserProfile()
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { userRepository.saveUserWithFirstWeek(any(), any()) }
+        assertThat(allowance.wasSpent).isFalse()
+    }
 }

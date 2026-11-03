@@ -1,17 +1,28 @@
 package com.jericx.trainr.domain.model
 
+import com.jericx.trainr.domain.unstuck.ActualOrigin
+
 data class WeeklyWorkoutPlan(
     val id: Long = 0,
     val userId: Long,
     val weekNumber: Int,
     val title: String,
     // Local midnight of the Monday the week begins; a day's date is this plus
-    // dayNumber - 1 days. Null on plans stored before the column existed.
+    // dayNumber - 1 days.
     val startDateMillis: Long? = null,
     val workoutDays: List<WorkoutDay>,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 )
+
+data class WeekOutline(
+    val id: Long,
+    val weekNumber: Int,
+    val startDateMillis: Long?,
+    val days: List<DayOutline>
+)
+
+data class DayOutline(val id: Long, val dayNumber: Int)
 
 data class WorkoutDay(
     val id: Long = 0,
@@ -23,7 +34,19 @@ data class WorkoutDay(
     val equipment: List<String>,
     val exercises: List<WorkoutExercise> = emptyList(),
     val completedAt: Long? = null
-)
+) {
+    // A ticked set is work performed, whether or not its exercise was finished.
+    val hasPerformedWork: Boolean
+        get() = exercises.any { exercise ->
+            !exercise.isOmittedToday &&
+                (exercise.isCompleted || exercise.sets.any { it.isCompleted })
+        }
+
+    // Finishing early closes the day whatever was logged, so the status alone
+    // would count a session nobody performed as a day of training.
+    val countsAsCompleted: Boolean
+        get() = status == WorkoutStatus.COMPLETED && hasPerformedWork
+}
 
 data class WorkoutExercise(
     val id: Long = 0,
@@ -43,8 +66,12 @@ data class WorkoutExercise(
     val equipment: List<String> = emptyList(),
     val videoTutorialUrl: String? = null,
     val isCompleted: Boolean = false,
-    val notes: String = ""
-)
+    val notes: String = "",
+    val sortOrder: Int = 0,
+    val addedBy: Long? = null
+) {
+    val isOmittedToday: Boolean get() = sets.isNotEmpty() && sets.all { it.omittedBy != null }
+}
 
 data class ExerciseSet(
     val id: Long = 0,
@@ -55,7 +82,9 @@ data class ExerciseSet(
     val actualReps: Int? = null,
     val actualWeightKg: Float? = null,
     val actualSeconds: Int? = null,
-    val isCompleted: Boolean = false
+    val isCompleted: Boolean = false,
+    val actualOrigin: ActualOrigin = ActualOrigin.NONE,
+    val omittedBy: Long? = null
 )
 
 enum class ExerciseMeasure {
@@ -67,5 +96,13 @@ enum class ExerciseMeasure {
 enum class WorkoutStatus {
     NOT_STARTED,
     IN_PROGRESS,
-    COMPLETED
+    COMPLETED;
+
+    companion object {
+        fun derived(performed: Int, planned: Int): WorkoutStatus = when (performed) {
+            0 -> NOT_STARTED
+            planned -> COMPLETED
+            else -> IN_PROGRESS
+        }
+    }
 }

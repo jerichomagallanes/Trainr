@@ -32,6 +32,7 @@ import com.jericx.trainr.presentation.common.components.layout.TrainrScaffold
 import com.jericx.trainr.presentation.common.components.cards.TrainrSelectionCard
 import com.jericx.trainr.presentation.common.components.core.TrainrRadioChip
 import com.jericx.trainr.presentation.common.components.core.TrainrTextField
+import com.jericx.trainr.presentation.common.components.core.dismissesKeyboardOnTap
 import com.jericx.trainr.presentation.common.components.layout.TrainrFormSection
 import com.jericx.trainr.presentation.common.components.layout.TrainrScreenContent
 import com.jericx.trainr.presentation.common.components.typography.TrainrScreenTitle
@@ -81,6 +82,7 @@ fun BasicInfoScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .dismissesKeyboardOnTap()
                 .padding(paddingValues)
         ) {
             if (!isEditing) {

@@ -2,6 +2,7 @@ package com.jericx.trainr.domain.repository
 
 import com.jericx.trainr.domain.model.ExerciseSet
 import com.jericx.trainr.domain.model.UserProfile
+import com.jericx.trainr.domain.model.WeekOutline
 import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
 import com.jericx.trainr.domain.model.WorkoutDay
 import com.jericx.trainr.domain.model.WorkoutExercise
@@ -14,10 +15,20 @@ interface UserRepository {
     suspend fun hasUsers(): Boolean
 
     suspend fun saveWeeklyWorkoutPlan(plan: WeeklyWorkoutPlan): Long
+
+    // One operation, because saving the user cascades away every week they
+    // have trained: written apart, a failure between the two leaves no plan.
+    suspend fun saveUserWithFirstWeek(user: UserProfile, firstWeek: WeeklyWorkoutPlan): Long
+
+    // One operation, because a week half replaced is worse than either week:
+    // the old one is gone and the new one has days without sets.
+    suspend fun replaceWeeklyWorkoutPlan(planId: Long, replacement: WeeklyWorkoutPlan): Long
     fun getWeeklyWorkoutPlans(userId: Long): Flow<List<WeeklyWorkoutPlan>>
     suspend fun getWeeklyWorkoutPlan(userId: Long, weekNumber: Int): WeeklyWorkoutPlan?
     suspend fun updateWeeklyWorkoutPlan(plan: WeeklyWorkoutPlan)
     suspend fun deleteWeeklyWorkoutPlan(planId: Long)
+    suspend fun getWeekOutline(userId: Long, weekNumber: Int?): WeekOutline?
+    suspend fun getWeekOutlineOf(dayId: Long): WeekOutline?
 
     suspend fun saveWorkoutDay(day: WorkoutDay, weeklyPlanId: Long): Long
     suspend fun saveWorkoutDays(days: List<WorkoutDay>, weeklyPlanId: Long)

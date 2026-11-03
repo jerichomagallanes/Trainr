@@ -14,6 +14,7 @@ import androidx.compose.ui.test.hasProgressBarRangeInfo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.R
+import com.jericx.trainr.common.Constants
 import com.jericx.trainr.domain.model.FitnessGoal
 import com.jericx.trainr.domain.model.UnitSystem
 import com.jericx.trainr.domain.model.UserProfile
@@ -234,10 +235,14 @@ class ReviewScreenTest {
     }
 
 
-    // Stored in centimetres and kilograms whatever units were typed.
+    // Stored in centimetres and kilograms whatever units were typed, and read
+    // back as the pounds that were typed rather than a rounded neighbour.
     @Test
     fun measurementsReadBackInTheUnitsTheyWereEnteredIn() {
-        setScreen(sampleProfile.copy(bodyUnitSystem = UnitSystem.IMPERIAL))
+        val typedAsPounds = 159f / Constants.Workout.KG_TO_LBS
+        setScreen(
+            sampleProfile.copy(bodyUnitSystem = UnitSystem.IMPERIAL, weight = typedAsPounds)
+        )
 
         composeTestRule.onNodeWithText("159 lbs").performScrollTo().assertIsDisplayed()
         composeTestRule.onNodeWithText("5'9\"").assertIsDisplayed()

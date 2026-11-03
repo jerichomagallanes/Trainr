@@ -13,6 +13,8 @@ import com.jericx.trainr.data.local.TrainrDatabase
 import com.jericx.trainr.data.preferences.ThemePreferences
 import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.model.WorkoutStatus
+import com.jericx.trainr.domain.purchases.AdjustmentAllowance
+import com.jericx.trainr.domain.purchases.AdjustmentGate
 import com.jericx.trainr.domain.purchases.FreeGenerationAllowance
 import com.jericx.trainr.domain.purchases.ProGate
 import com.jericx.trainr.domain.diagnostics.Breadcrumbs
@@ -93,12 +95,25 @@ class PaywallGateTest {
         }
     )
 
+    // Nothing here exercises the adjustment allowance, so it stays open and
+    // cannot turn an unrelated tap into a Pro prompt.
+    private fun openAdjustmentGate() = AdjustmentGate(
+        isPro = { false },
+        canSell = { true },
+        allowance = object : AdjustmentAllowance {
+            override fun includedCycleId(): String? = null
+            override fun consume(cycleId: String) = Unit
+            override fun restore(cycleId: String) = Unit
+        }
+    )
+
     private fun startApp(gate: ProGate = spentGate()) {
         composeTestRule.setContent {
             AppContent(
                 versionName = "1.0",
                 themePreferences = themePreferences,
                 proGate = gate,
+                adjustmentGate = openAdjustmentGate(),
                 breadcrumbs = breadcrumbs,
                 startDestination = Screen.Home.route
             )
@@ -164,6 +179,20 @@ class PaywallGateTest {
         composeTestRule.onNodeWithText(string(R.string.regenerate_week)).performClick()
 
         assertAsksForPro()
+    }
+
+    // The worst of them: the alert said every week and everything logged would
+    // be erased, and the gate only spoke after the whole profile was walked.
+    @Test
+    fun startingANewPlanAsksForProBeforeThreateningToEraseAnything() {
+        seed(finished = true)
+        startApp()
+
+        openPlanMenu()
+        composeTestRule.onNodeWithText(string(R.string.regenerate_plan)).performClick()
+
+        assertAsksForPro()
+        composeTestRule.onNodeWithText(string(R.string.leave_plan_title)).assertDoesNotExist()
     }
 
     // The gate has to let the first week through, or the test above would pass
