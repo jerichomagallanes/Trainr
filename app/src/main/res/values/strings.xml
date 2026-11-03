@@ -380,6 +380,7 @@
     <string name="private_coaching_verifying">Checking the download…</string>
     <string name="private_coaching_storage_message">Not enough space for private coaching. Free up about 1.5 GB and try again.</string>
     <string name="private_coaching_failed_message">The download didn\'t finish.</string>
+    <string name="private_coaching_unsupported_message">Reading a note needs a more capable phone. You can still pick a reason below.</string>
     <string name="pain_title">Pause this exercise</string>
     <string name="pain_body">Don\'t push through pain to finish the plan.</string>
     <string name="pain_card_title">Get the right help</string>
