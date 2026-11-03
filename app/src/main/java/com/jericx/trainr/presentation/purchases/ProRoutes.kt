@@ -55,6 +55,7 @@ fun ProRoute(onClose: () -> Unit) {
             noticeRes = state.noticeRes,
             onRestore = viewModel::restore,
             onNoticeShown = viewModel::noticeShown,
+            onBack = onClose,
             onOpenLink = { context.openLink(it) }
         )
     } else {

@@ -246,11 +246,19 @@ fun AppContent(
     val onboardingState by onboardingViewModel.onboardingState.collectAsStateWithLifecycle()
 
     val splashScreenDuration = 2000L
-    var showSplashScreen by remember { mutableStateOf(startDestination == Screen.SplashScreen.route) }
+    // Asked of the view model rather than remembered here: a configuration
+    // change recreates the Activity and the navigation back stack comes back
+    // with it, so a remembered flag would start the wait again and land the
+    // person somewhere they never left.
+    var showSplashScreen by remember {
+        mutableStateOf(
+            startDestination == Screen.SplashScreen.route &&
+                !onboardingViewModel.startupDecided
+        )
+    }
 
     LaunchedEffect(showSplashScreen) {
         if (showSplashScreen) {
-            delay(splashScreenDuration)
             // Resolved before showSplashScreen flips: that flip restarts this
             // effect and would cancel a suspend call sitting after it.
             val destination = if (onboardingViewModel.hasCompletedOnboarding()) {
@@ -258,9 +266,13 @@ fun AppContent(
             } else {
                 Screen.Welcome.route
             }
+            delay(splashScreenDuration)
+            onboardingViewModel.startupDecided = true
             showSplashScreen = false
+            // The whole stack, not the splash alone: popping a destination that
+            // is no longer there would leave this a push onto whatever is.
             navController.navigate(destination) {
-                popUpTo(Screen.SplashScreen.route) { inclusive = true }
+                popUpTo(0) { inclusive = true }
             }
         }
     }

@@ -3,6 +3,7 @@ package com.jericx.trainr.presentation.purchases
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -28,6 +29,7 @@ class ProStatusScreenTest {
         isLifetime: Boolean = false,
         onRestore: () -> Unit = {},
         onNoticeShown: () -> Unit = {},
+        onBack: () -> Unit = {},
         onOpenLink: (String) -> Unit = {}
     ) {
         composeTestRule.setContent {
@@ -38,6 +40,7 @@ class ProStatusScreenTest {
                     noticeRes = noticeRes,
                     onRestore = onRestore,
                     onNoticeShown = onNoticeShown,
+                    onBack = onBack,
                     onOpenLink = onOpenLink
                 )
             }
@@ -58,6 +61,18 @@ class ProStatusScreenTest {
         setScreen()
 
         composeTestRule.onNodeWithText(string(R.string.pro_feature_ads_title)).assertIsDisplayed()
+    }
+
+    // On a gesture-navigation device the system back is invisible, and this was
+    // the only destination in the app that offered nothing else.
+    @Test
+    fun thereIsAVisibleWayBack() {
+        var left = false
+        setScreen(onBack = { left = true })
+
+        composeTestRule.onNodeWithContentDescription(string(R.string.back)).performClick()
+
+        assertThat(left).isTrue()
     }
 
     @Test
