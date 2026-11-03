@@ -24,6 +24,7 @@ import com.jericx.trainr.domain.unstuck.intent.InterpreterAvailability
 import com.jericx.trainr.domain.unstuck.intent.InterpreterResult
 import com.jericx.trainr.domain.unstuck.intent.LocalModelInstaller
 import com.jericx.trainr.domain.unstuck.intent.ModelState
+import com.jericx.trainr.domain.unstuck.intent.NoteText
 import com.jericx.trainr.domain.unstuck.intent.UnavailableInterpreter
 import com.jericx.trainr.domain.unstuck.intent.UnstuckRoute
 import com.jericx.trainr.domain.unstuck.planned
@@ -553,6 +554,38 @@ class AdjustmentViewModelTest {
         assertThat(seen).containsExactly(UnstuckRoute.CHOOSER)
         assertThat(viewModel.uiState.value.contextHint).isEqualTo(ContextHint.FAILED)
         assertThat(viewModel.uiState.value.selectedMinutes).isNull()
+    }
+
+    @Test
+    fun aNoteTooLongToReadSaysSoRatherThanBlamingTheWording() = runTest {
+        val viewModel = viewModel(
+            reason = DirectReason.OTHER,
+            interpreter = readyInterpreter(InterpreterResult.Failed(FailureKind.NOTE_TOO_LONG))
+        )
+        viewModel.typeNote("\u5206".repeat(NoteText.CHARACTER_LIMIT + 1))
+
+        val seen = mutableListOf<UnstuckRoute>()
+        val job = launch { viewModel.routeEvents.collect { seen += it } }
+        viewModel.chooseFromContext(DirectReason.OTHER)
+        advanceUntilIdle()
+        job.cancel()
+
+        assertThat(seen).containsExactly(UnstuckRoute.CHOOSER)
+        assertThat(viewModel.uiState.value.contextHint).isEqualTo(ContextHint.TOO_LONG)
+    }
+
+    @Test
+    fun theScreenKnowsHowMuchRoomTheNoteHasLeft() = runTest {
+        val viewModel = viewModel(reason = DirectReason.OTHER)
+        advanceUntilIdle()
+
+        viewModel.typeNote("\uD83C\uDFCB".repeat(NoteText.CHARACTER_LIMIT))
+        assertThat(viewModel.uiState.value.noteLength).isEqualTo(NoteText.CHARACTER_LIMIT)
+        assertThat(viewModel.uiState.value.noteLimit).isEqualTo(NoteText.CHARACTER_LIMIT)
+        assertThat(viewModel.uiState.value.isNoteTooLong).isFalse()
+
+        viewModel.typeNote("a".repeat(NoteText.CHARACTER_LIMIT + 1))
+        assertThat(viewModel.uiState.value.isNoteTooLong).isTrue()
     }
 
     @Test

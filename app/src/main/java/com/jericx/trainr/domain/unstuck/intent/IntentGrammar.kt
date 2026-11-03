@@ -1,14 +1,11 @@
 package com.jericx.trainr.domain.unstuck.intent
 
-import java.text.Normalizer
-
 object IntentGrammar {
 
     const val MAX_TOKENS = 256
+    const val TOKEN_LIMIT = 200
 
-    private const val TOKEN_LIMIT = 200
     private const val TOKEN_SLOT = "{TOKENS}"
-    private val WHITESPACE = Regex("[\\s\\p{Z}]+")
 
     private const val TEMPLATE: String = """root ::= "{" ws "\"schemaVersion\"" ws ":" ws "\"1.1\"" ws "," ws "\"intent\"" ws ":" ws intent ws "," ws "\"concern\"" ws ":" ws concern ws "," ws "\"clarification\"" ws ":" ws clar ws "," ws "\"evidence\"" ws ":" ws evlist ws "," ws "\"timeBudget\"" ws ":" ws budget ws "," ws "\"equipmentMention\"" ws ":" ws strornull ws "," ws "\"memoryCandidate\"" ws ":" ws bool ws "}"
 intent ::= "\"less_time\"" | "\"equipment_unavailable\"" | "\"exercise_guidance\"" | "\"pain_concern\"" | "\"other_or_unclear\""
@@ -35,9 +32,8 @@ ws ::= [ ]*"""
     }
 
     private fun tokens(note: String): List<String> =
-        Normalizer.normalize(note, Normalizer.Form.NFC)
-            .split(WHITESPACE)
-            .filter { it.isNotEmpty() && '"' !in it && '\\' !in it }
+        NoteText.tokens(note)
+            .filter { '"' !in it && '\\' !in it }
             .distinct()
             .take(TOKEN_LIMIT)
 }

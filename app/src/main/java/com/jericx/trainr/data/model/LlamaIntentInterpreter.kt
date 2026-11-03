@@ -10,6 +10,7 @@ import com.jericx.trainr.domain.unstuck.intent.InterpreterAvailability
 import com.jericx.trainr.domain.unstuck.intent.InterpreterResult
 import com.jericx.trainr.domain.unstuck.intent.LocalModelInstaller
 import com.jericx.trainr.domain.unstuck.intent.ModelState
+import com.jericx.trainr.domain.unstuck.intent.NoteText
 import com.jericx.trainr.llama.CompletionResult
 import com.jericx.trainr.llama.LocalModel
 import java.util.Locale
@@ -35,6 +36,9 @@ class LlamaIntentInterpreter(
     ): InterpreterResult {
         if (directReason == DirectReason.PAIN) return InterpreterResult.Unavailable
         if (availability != InterpreterAvailability.READY) return InterpreterResult.Unavailable
+        if (!NoteText.isWithinLimit(text)) {
+            return InterpreterResult.Failed(FailureKind.NOTE_TOO_LONG)
+        }
         val grammar = IntentGrammar.forNote(text) ?: return InterpreterResult.Unavailable
 
         val result = model.complete(
@@ -49,6 +53,7 @@ class LlamaIntentInterpreter(
                 InterpreterResult.Interpreted(IntentValidator.validate(result.text, text))
 
             CompletionResult.Timeout -> InterpreterResult.Failed(FailureKind.TIMEOUT)
+            CompletionResult.TooLong -> InterpreterResult.Failed(FailureKind.NOTE_TOO_LONG)
             CompletionResult.Cancelled -> InterpreterResult.Failed(FailureKind.CANCELLED)
             CompletionResult.OutOfMemory -> InterpreterResult.Failed(FailureKind.OUT_OF_MEMORY)
             CompletionResult.Failed -> InterpreterResult.Failed(FailureKind.RUNTIME)

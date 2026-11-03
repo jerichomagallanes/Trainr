@@ -373,6 +373,9 @@
     <string name="context_reading_note">Reading your note…</string>
     <string name="context_hint_chooser">Couldn\'t tell what you need from the note. Pick one below.</string>
     <string name="context_hint_failed">Couldn\'t read the note. Pick one below.</string>
+    <string name="context_hint_too_long">That note was too long to read. Shorten it, or pick one below.</string>
+    <string name="context_note_counter_format">%1$d / %2$d</string>
+    <string name="context_note_too_long">Too long to read. Shorten it to use your note.</string>
     <string name="private_coaching_setup_title">Set up private coaching</string>
     <string name="private_coaching_setup_message">Downloads a 731 MB model once. Your notes are read on this device and never sent anywhere.</string>
     <string name="private_coaching_licence">Model licence</string>

@@ -60,6 +60,58 @@ class IntentValidatorTest {
     }
 
     @Test
+    fun aQuoteSpanningALineBreakIsAccepted() {
+        val note = "The gym closes soon.\nI have 20 minutes left."
+        val across = extraction(
+            intent = IntentKind.LESS_TIME,
+            timeBudget = TimeBudgetMention(minutes = 20, scope = MentionScope.REMAINING),
+            evidence = listOf(Evidence(EvidenceField.TIME_BUDGET, "soon. I have 20 minutes left."))
+        )
+
+        assertThat(validated(across, note).actionable.minutes).isEqualTo(20)
+    }
+
+    @Test
+    fun aQuoteSpanningADoubleSpaceIsAccepted() {
+        val note = "I have 20  minutes left."
+        val across = extraction(
+            intent = IntentKind.LESS_TIME,
+            timeBudget = TimeBudgetMention(minutes = 20, scope = MentionScope.REMAINING),
+            evidence = listOf(Evidence(EvidenceField.TIME_BUDGET, "20 minutes left."))
+        )
+
+        assertThat(validated(across, note).actionable.minutes).isEqualTo(20)
+    }
+
+    @Test
+    fun aPartOfAJapaneseNoteIsQuotable() {
+        val note = "今日は30分しかありません。"
+        val partial = extraction(
+            intent = IntentKind.LESS_TIME,
+            timeBudget = TimeBudgetMention(minutes = 30, scope = MentionScope.WHOLE_SESSION),
+            evidence = listOf(Evidence(EvidenceField.TIME_BUDGET, "30 分"))
+        )
+
+        assertThat(validated(partial, note).actionable.minutes).isEqualTo(30)
+    }
+
+    @Test
+    fun aJapaneseQuoteFromAnotherNoteIsRejected() {
+        val invented = extraction(evidence = listOf(Evidence(EvidenceField.INTENT, "ベ ン チ")))
+
+        assertThat(rejection(IntentValidator.validate(invented.asJson(), "今日は30分しかありません。")))
+            .containsExactly(RejectionReason.EVIDENCE_QUOTE_MISMATCH)
+    }
+
+    @Test
+    fun aQuoteOfOnlyWhitespaceIsRejected() {
+        val blank = extraction(evidence = listOf(Evidence(EvidenceField.INTENT, " ")))
+
+        assertThat(rejection(IntentValidator.validate(blank.asJson(), plainNote)))
+            .containsExactly(RejectionReason.EVIDENCE_QUOTE_MISMATCH)
+    }
+
+    @Test
     fun aQuoteNotInTheNoteIsRejected() {
         val invented = extraction(
             evidence = listOf(Evidence(EvidenceField.INTENT, "40 minutes"))

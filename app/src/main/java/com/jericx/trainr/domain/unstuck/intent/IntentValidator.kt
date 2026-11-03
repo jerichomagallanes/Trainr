@@ -61,7 +61,6 @@ object IntentValidator {
             return IntentValidation.Rejected(listOf(decodeFailure(error)))
         }
 
-        val normalized = Normalizer.normalize(input, Normalizer.Form.NFC)
         val reasons = linkedSetOf<RejectionReason>()
 
         if (extraction.schemaVersion != SCHEMA_VERSION) {
@@ -77,7 +76,7 @@ object IntentValidator {
         }
         if (extraction.evidence.size > MAX_EVIDENCE_ENTRIES) reasons += RejectionReason.TOO_MUCH_EVIDENCE
 
-        reasons += quoteFailures(extraction.evidence, normalized)
+        reasons += quoteFailures(extraction.evidence, input)
         if (factsWithoutEvidence(extraction)) reasons += RejectionReason.FACT_WITHOUT_EVIDENCE
         if (minutesNotQuoted(extraction)) reasons += RejectionReason.MINUTES_NOT_IN_QUOTE
 
@@ -88,13 +87,16 @@ object IntentValidator {
         }
     }
 
-    private fun quoteFailures(evidence: List<Evidence>, normalized: String): Set<RejectionReason> {
+    private fun quoteFailures(evidence: List<Evidence>, input: String): Set<RejectionReason> {
         val failures = linkedSetOf<RejectionReason>()
+        val note = NoteText.canonical(input)
         for (entry in evidence) {
-            val quote = Normalizer.normalize(entry.quote, Normalizer.Form.NFC)
-            if (quote.codePointLength() !in 1..MAX_QUOTE_CODE_POINTS) {
+            val quote = NoteText.canonical(entry.quote)
+            if (Normalizer.normalize(entry.quote, Normalizer.Form.NFC).codePointLength()
+                !in 1..MAX_QUOTE_CODE_POINTS
+            ) {
                 failures += RejectionReason.EVIDENCE_QUOTE_LENGTH
-            } else if (quote !in normalized) {
+            } else if (quote.isEmpty() || quote !in note) {
                 failures += RejectionReason.EVIDENCE_QUOTE_MISMATCH
             }
         }

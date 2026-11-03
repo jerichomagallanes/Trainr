@@ -46,8 +46,19 @@ class IntentGrammarTest {
     }
 
     @Test
-    fun aJapaneseNoteIsOneToken() {
-        assertThat(tokenRule("今日は30分しかありません。")).isEqualTo("token ::= \"今日は30分しかありません。\"")
+    fun aJapaneseNoteIsQuotableInParts() {
+        assertThat(tokenRule("今日は30分しかありません。")).isEqualTo(
+            "token ::= \"今\" | \"日\" | \"は\" | \"30\" | \"分\" | \"し\" | \"か\" | " +
+                "\"あ\" | \"り\" | \"ま\" | \"せ\" | \"ん\" | \"。\""
+        )
+    }
+
+    @Test
+    fun aChineseNoteIsQuotableInParts() {
+        assertThat(tokenRule("我今天只有三十分钟。")).isEqualTo(
+            "token ::= \"我\" | \"今\" | \"天\" | \"只\" | \"有\" | \"三\" | \"十\" | " +
+                "\"分\" | \"钟\" | \"。\""
+        )
     }
 
     @Test

@@ -15,6 +15,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.R
 import com.jericx.trainr.domain.unstuck.intent.DirectReason
+import com.jericx.trainr.domain.unstuck.intent.NoteText
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 import org.junit.Rule
 import org.junit.Test
@@ -45,6 +46,7 @@ class AdjustContextScreenTest {
                 AdjustContextScreen(
                     note = note,
                     interpreter = interpreter,
+                    noteLength = NoteText.length(note),
                     isInterpreting = isInterpreting,
                     hint = hint,
                     onTypeNote = onTypeNote,
@@ -211,6 +213,45 @@ class AdjustContextScreenTest {
         setScreen(interpreter = InterpreterUi.Ready, note = "help", hint = ContextHint.FAILED)
 
         composeTestRule.onNodeWithText(string(R.string.context_hint_failed)).assertIsDisplayed()
+    }
+
+    @Test
+    fun theTooLongHintNamesTheLengthRatherThanTheWording() {
+        setScreen(interpreter = InterpreterUi.Ready, note = "help", hint = ContextHint.TOO_LONG)
+
+        composeTestRule.onNodeWithText(string(R.string.context_hint_too_long)).assertIsDisplayed()
+    }
+
+    @Test
+    fun theCounterOnlyAppearsAsTheLimitComesIntoReach() {
+        setScreen(interpreter = InterpreterUi.Ready, note = "a".repeat(100))
+
+        composeTestRule
+            .onNodeWithText(string(R.string.context_note_counter_format, 100, NoteText.CHARACTER_LIMIT))
+            .assertDoesNotExist()
+    }
+
+    @Test
+    fun theCounterShowsTheRoomLeftBeforeTheLimitIsReached() {
+        val length = NoteText.CHARACTER_LIMIT - 10
+        setScreen(interpreter = InterpreterUi.Ready, note = "a".repeat(length))
+
+        composeTestRule
+            .onNodeWithText(string(R.string.context_note_counter_format, length, NoteText.CHARACTER_LIMIT))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.context_use_note).uppercase()).assertIsEnabled()
+    }
+
+    @Test
+    fun aNoteOverTheLimitCannotBeSent() {
+        val length = NoteText.CHARACTER_LIMIT + 1
+        setScreen(interpreter = InterpreterUi.Ready, note = "a".repeat(length))
+
+        composeTestRule
+            .onNodeWithText(string(R.string.context_note_counter_format, length, NoteText.CHARACTER_LIMIT))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.context_note_too_long)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.context_use_note).uppercase()).assertIsNotEnabled()
     }
 
     // The read takes a while and the answer lands on another screen, so the

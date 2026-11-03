@@ -19,6 +19,7 @@ import kotlinx.coroutines.withTimeout
 sealed interface CompletionResult {
     data class Text(val text: String) : CompletionResult
     data object Timeout : CompletionResult
+    data object TooLong : CompletionResult
     data object Cancelled : CompletionResult
     data object Failed : CompletionResult
     data object OutOfMemory : CompletionResult
@@ -79,12 +80,18 @@ class LlamaEngine(
             }
         }
         val session = handle
+        val systemBytes = system.toByteArray()
+        val userBytes = user.toByteArray()
+        val fits = withContext(dispatcher) {
+            LlamaNative.fits(session, systemBytes, userBytes, maxTokens)
+        }
+        if (!fits) return CompletionResult.TooLong
         val result = coroutineScope {
             val run = async(dispatcher) {
                 LlamaNative.complete(
                     session,
-                    system.toByteArray(),
-                    user.toByteArray(),
+                    systemBytes,
+                    userBytes,
                     grammar.toByteArray(),
                     maxTokens
                 )
