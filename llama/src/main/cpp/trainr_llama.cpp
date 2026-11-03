@@ -15,6 +15,12 @@ constexpr const char * TAG = "trainr_llama";
 constexpr uint32_t CONTEXT_TOKENS = 2048;
 constexpr int32_t BATCH_TOKENS = 512;
 
+// A prompt that could not be built is a different fact from one that is too
+// long, and the person is only told to shorten the note for the second.
+constexpr jint FIT_UNPREPARED = -1;
+constexpr jint FIT_TOO_LONG = 0;
+constexpr jint FIT_OK = 1;
+
 struct Session {
     llama_model * model = nullptr;
     llama_context * context = nullptr;
@@ -265,7 +271,7 @@ Java_com_jericx_trainr_llama_LlamaNative_complete(
     return bytes_to_java(env, text);
 }
 
-extern "C" JNIEXPORT jboolean JNICALL
+extern "C" JNIEXPORT jint JNICALL
 Java_com_jericx_trainr_llama_LlamaNative_fits(
     JNIEnv * env,
     jobject,
@@ -277,13 +283,13 @@ Java_com_jericx_trainr_llama_LlamaNative_fits(
     Session * session = session_of(handle);
     if (session == nullptr) {
         fail("no model loaded");
-        return JNI_FALSE;
+        return FIT_UNPREPARED;
     }
     std::vector<llama_token> tokens;
     if (!prompt_tokens(session, bytes_of(env, jsystem), bytes_of(env, juser), tokens)) {
-        return JNI_FALSE;
+        return FIT_UNPREPARED;
     }
-    return fits_context(session, tokens, max_tokens) ? JNI_TRUE : JNI_FALSE;
+    return fits_context(session, tokens, max_tokens) ? FIT_OK : FIT_TOO_LONG;
 }
 
 extern "C" JNIEXPORT void JNICALL

@@ -2,6 +2,12 @@ package com.jericx.trainr.llama
 
 object LlamaNative {
 
+    // fits() answers three ways, because a prompt that could not be built is a
+    // different fact from one that is too long to read.
+    const val FIT_UNPREPARED = -1
+    const val FIT_TOO_LONG = 0
+    const val FIT_OK = 1
+
     init {
         System.loadLibrary("trainr_llama")
     }
@@ -23,7 +29,7 @@ object LlamaNative {
         system: ByteArray,
         user: ByteArray,
         maxTokens: Int
-    ): Boolean
+    ): Int
 
     external fun cancel(handle: Long)
 
