@@ -15,6 +15,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import java.util.Locale
 import javax.inject.Inject
@@ -29,18 +30,52 @@ class ProPaywallViewModel @Inject constructor(
         val selectedId: String? = null,
         val isWorking: Boolean = false,
         val noticeRes: Int? = null,
-        val isPro: Boolean = false,
-        val isLifetime: Boolean = false
+        // Null until the store has answered. Nothing may be drawn that depends
+        // on the answer while it is null.
+        val isPro: Boolean? = null,
+        val isLifetime: Boolean = false,
+        // The store was asked and gave up. Distinct from the null above, which
+        // is an answer still on its way.
+        val readFailed: Boolean = false
     )
 
-    private val _state = MutableStateFlow(State())
+    private val _state = MutableStateFlow(
+        State(
+            isPro = settled(),
+            isLifetime = entitlements.isLifetime.value,
+            readFailed = entitlements.readFailed.value
+        )
+    )
     val state: StateFlow<State> = _state.asStateFlow()
 
     private var packages: List<Package> = emptyList()
 
+    // The entitlement is mirrored from the store's own state rather than
+    // written at the end of load(): a read that has already landed is in the
+    // first composition, and a later one arrives the moment it lands instead of
+    // waiting for the offering call beside it.
+    init {
+        viewModelScope.launch {
+            combine(
+                entitlements.isPro,
+                entitlements.hasRead,
+                entitlements.isLifetime,
+                entitlements.readFailed
+            ) { isPro, hasRead, isLifetime, readFailed ->
+                Triple(isPro.takeIf { hasRead }, isLifetime, readFailed)
+            }.collect { (isPro, isLifetime, readFailed) ->
+                _state.value = _state.value.copy(
+                    isPro = isPro,
+                    isLifetime = isLifetime,
+                    readFailed = readFailed
+                )
+            }
+        }
+    }
+
     fun load() {
         viewModelScope.launch {
-            val isPro = entitlements.refresh()
+            entitlements.refresh()
             entitlements.loadOffering()
             // Only the three things we sell. Anything else in the offering is
             // ignored rather than shown with a guessed label.
@@ -48,8 +83,6 @@ class ProPaywallViewModel @Inject constructor(
                 .filter { it.packageType in SOLD }
             val plans = packages.map { it.toPlan(packages) }
             _state.value = _state.value.copy(
-                isPro = isPro,
-                isLifetime = entitlements.isLifetime.value,
                 plans = plans,
                 selectedId = preferred(plans)?.id
             )
@@ -64,11 +97,9 @@ class ProPaywallViewModel @Inject constructor(
         val chosen = packages.firstOrNull { it.identifier == _state.value.selectedId } ?: return
         viewModelScope.launch {
             _state.value = _state.value.copy(isWorking = true)
-            val bought = entitlements.purchase(activity, chosen)
+            entitlements.purchase(activity, chosen)
             _state.value = _state.value.copy(
                 isWorking = false,
-                isPro = bought || _state.value.isPro,
-                isLifetime = entitlements.isLifetime.value,
                 noticeRes = entitlements.purchaseNotice
             )
         }
@@ -79,12 +110,10 @@ class ProPaywallViewModel @Inject constructor(
             _state.value = _state.value.copy(isWorking = true)
             val restored = entitlements.restore()
             // A restore that could not reach the store is not an empty one: it
-            // says so, and it takes nothing away from a subscriber who has Pro.
-            val failed = entitlements.purchaseNotice != null
+            // says so, and it leaves the entitlement where it was, which a
+            // subscriber's Pro depends on.
             _state.value = _state.value.copy(
                 isWorking = false,
-                isPro = if (failed) _state.value.isPro else restored,
-                isLifetime = entitlements.isLifetime.value,
                 noticeRes = entitlements.purchaseNotice
                     ?: if (restored) R.string.pro_restored else R.string.pro_nothing_to_restore
             )
@@ -126,6 +155,9 @@ class ProPaywallViewModel @Inject constructor(
 
     private fun Package.trialLength(): String? =
         product.defaultOption?.freePhase?.billingPeriod?.let(::periodText)
+
+    private fun settled(): Boolean? =
+        entitlements.isPro.value.takeIf { entitlements.hasRead.value }
 
     private fun preferred(plans: List<PaywallPlan>) =
         plans.firstOrNull { it.savePercent != null } ?: plans.firstOrNull()
