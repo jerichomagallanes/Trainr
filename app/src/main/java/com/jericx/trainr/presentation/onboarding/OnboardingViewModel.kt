@@ -142,6 +142,12 @@ class OnboardingViewModel @Inject constructor(
     private fun answeredWith(step: OnboardingStep): Set<OnboardingStep> =
         _onboardingState.value.answeredSteps + step
 
+    // Whether the splash has already chosen where this launch opens. It
+    // belongs beside the answers rather than in saved state: both are gone
+    // once the process is, and a decision that outlived them would restore a
+    // half-answered flow onto a profile nobody filled in.
+    var startupDecided: Boolean = false
+
     suspend fun hasCompletedOnboarding(): Boolean = userRepository.hasUsers()
 
     // Updated in place to leave training history alone: saveUserProfile's
