@@ -611,6 +611,7 @@
     <string name="pro_active_lifetime">Pro is yours for good</string>
     <string name="pro_manage">Manage subscription</string>
     <string name="pro_unavailable">Pro is not available right now. Please try again later.</string>
+    <string name="pro_check_failed">Your purchases could not be checked. Check your connection and try again.</string>
     <string name="pro_terms">Terms of Use</string>
     <string name="pro_privacy">Privacy Policy</string>
     <string name="pro_renewal_apple">Payment is charged to your Apple ID at confirmation. It renews automatically unless you cancel at least 24 hours before the period ends. Manage it in Settings.</string>

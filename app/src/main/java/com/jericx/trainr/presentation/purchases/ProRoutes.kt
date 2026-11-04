@@ -20,8 +20,11 @@ fun ProPaywallRoute(reason: PaywallReason?, onClose: () -> Unit) {
     LaunchedEffect(Unit) { viewModel.load() }
 
     // Opened before the first entitlement read landed: a subscriber must not be
-    // asked to pay again.
-    LaunchedEffect(state.isPro) { if (state.isPro == true) onClose() }
+    // asked to pay again. A notice waiting to be read goes first, or a restore
+    // that worked would close the screen without ever saying what it found.
+    LaunchedEffect(state.isPro, state.noticeRes) {
+        if (state.isPro == true && state.noticeRes == null) onClose()
+    }
 
     ProPaywallScreen(
         reason = reason,

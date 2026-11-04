@@ -33,11 +33,18 @@ class ProPaywallViewModel @Inject constructor(
         // Null until the store has answered. Nothing may be drawn that depends
         // on the answer while it is null.
         val isPro: Boolean? = null,
-        val isLifetime: Boolean = false
+        val isLifetime: Boolean = false,
+        // The store was asked and gave up. Distinct from the null above, which
+        // is an answer still on its way.
+        val readFailed: Boolean = false
     )
 
     private val _state = MutableStateFlow(
-        State(isPro = settled(), isLifetime = entitlements.isLifetime.value)
+        State(
+            isPro = settled(),
+            isLifetime = entitlements.isLifetime.value,
+            readFailed = entitlements.readFailed.value
+        )
     )
     val state: StateFlow<State> = _state.asStateFlow()
 
@@ -52,11 +59,16 @@ class ProPaywallViewModel @Inject constructor(
             combine(
                 entitlements.isPro,
                 entitlements.hasRead,
-                entitlements.isLifetime
-            ) { isPro, hasRead, isLifetime ->
-                isPro.takeIf { hasRead } to isLifetime
-            }.collect { (isPro, isLifetime) ->
-                _state.value = _state.value.copy(isPro = isPro, isLifetime = isLifetime)
+                entitlements.isLifetime,
+                entitlements.readFailed
+            ) { isPro, hasRead, isLifetime, readFailed ->
+                Triple(isPro.takeIf { hasRead }, isLifetime, readFailed)
+            }.collect { (isPro, isLifetime, readFailed) ->
+                _state.value = _state.value.copy(
+                    isPro = isPro,
+                    isLifetime = isLifetime,
+                    readFailed = readFailed
+                )
             }
         }
     }

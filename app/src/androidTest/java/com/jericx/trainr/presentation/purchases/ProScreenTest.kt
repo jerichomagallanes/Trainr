@@ -38,12 +38,17 @@ class ProScreenTest {
     private fun setScreen(
         isPro: Boolean?,
         plans: List<PaywallPlan> = emptyList(),
+        readFailed: Boolean = false,
         onClose: () -> Unit = {}
     ) {
         composeTestRule.setContent {
             TrainrTheme {
                 ProScreen(
-                    state = ProPaywallViewModel.State(isPro = isPro, plans = plans),
+                    state = ProPaywallViewModel.State(
+                        isPro = isPro,
+                        plans = plans,
+                        readFailed = readFailed
+                    ),
                     onSelect = {},
                     onBuy = {},
                     onRestore = {},
@@ -86,6 +91,19 @@ class ProScreenTest {
 
         composeTestRule.onNodeWithText(string(R.string.pro_full_access)).assertDoesNotExist()
         composeTestRule.onNodeWithText(string(R.string.pro_unavailable)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.pro_active)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.pro_check_failed)).assertDoesNotExist()
+    }
+
+    // A read that gave up is not a read still running: waiting it out would
+    // leave a subscriber on a new phone with no way to restore anything.
+    @Test
+    fun aReadThatFailedSaysSoAndStillOffersRestore() {
+        setScreen(isPro = null, readFailed = true)
+
+        composeTestRule.onNodeWithText(string(R.string.pro_check_failed)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.pro_restore)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.pro_full_access)).assertDoesNotExist()
         composeTestRule.onNodeWithText(string(R.string.pro_active)).assertDoesNotExist()
     }
 

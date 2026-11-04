@@ -42,6 +42,12 @@ class Entitlements(
     private val _hasRead = MutableStateFlow(false)
     val hasRead: StateFlow<Boolean> = _hasRead.asStateFlow()
 
+    // The store was asked and could not answer. Not the same as never having
+    // asked: nothing more is coming, so the screen can say so and keep offering
+    // the restore rather than wait out an answer that will not arrive.
+    private val _readFailed = MutableStateFlow(false)
+    val readFailed: StateFlow<Boolean> = _readFailed.asStateFlow()
+
     // A lifetime purchase has no expiry, and nothing to manage or cancel.
     private val _isLifetime = MutableStateFlow(false)
     val isLifetime: StateFlow<Boolean> = _isLifetime.asStateFlow()
@@ -81,7 +87,10 @@ class Entitlements(
             return false
         }
         return runCatching { read(Purchases.sharedInstance.awaitCustomerInfo()) }
-            .onFailure { breadcrumbs.record("entitlement_read_failed") }
+            .onFailure {
+                _readFailed.value = true
+                breadcrumbs.record("entitlement_read_failed")
+            }
             .getOrDefault(false)
     }
 
@@ -135,6 +144,7 @@ class Entitlements(
         val active = pro?.isActive == true
         _isPro.value = active
         _isLifetime.value = active && pro?.expirationDate == null
+        _readFailed.value = false
         _hasRead.value = true
         return active
     }
