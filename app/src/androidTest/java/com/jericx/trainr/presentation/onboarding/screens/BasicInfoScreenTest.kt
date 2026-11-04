@@ -115,8 +115,12 @@ class BasicInfoScreenTest {
             .performTextInput("Jericho")
         composeTestRule.onNodeWithText(string(R.string.enter_your_age))
             .performTextInput("30")
-        composeTestRule.onNodeWithText(string(R.string.male)).performClick()
-        composeTestRule.onNodeWithText(string(R.string.beginner_level)).performClick()
+        // The keyboard the age field raises shortens the form, so the answers
+        // below it have to be brought back into view before they can be tapped.
+        composeTestRule.onNodeWithText(string(R.string.male)).performScrollTo().performClick()
+        composeTestRule.onNodeWithText(string(R.string.beginner_level))
+            .performScrollTo()
+            .performClick()
 
         composeTestRule.onNodeWithText(string(R.string.next)).assertIsEnabled()
     }
@@ -146,8 +150,10 @@ class BasicInfoScreenTest {
             .performTextInput("Ana")
         composeTestRule.onNodeWithText(string(R.string.enter_your_age))
             .performTextInput("28")
-        composeTestRule.onNodeWithText(string(R.string.female)).performClick()
-        composeTestRule.onNodeWithText(string(R.string.intermediate_level)).performClick()
+        composeTestRule.onNodeWithText(string(R.string.female)).performScrollTo().performClick()
+        composeTestRule.onNodeWithText(string(R.string.intermediate_level))
+            .performScrollTo()
+            .performClick()
         composeTestRule.onNodeWithText(string(R.string.next)).performClick()
 
         assertThat(capturedFirstName).isEqualTo("Ana")

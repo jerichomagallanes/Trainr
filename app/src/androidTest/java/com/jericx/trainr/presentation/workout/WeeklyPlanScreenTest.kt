@@ -8,6 +8,7 @@ import androidx.compose.ui.test.down
 import androidx.compose.ui.test.moveBy
 import androidx.compose.ui.test.up
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -644,21 +645,35 @@ class WeeklyPlanScreenTest {
                 it.copy(status = WorkoutStatus.NOT_STARTED)
             }
         ),
-        // Looked at after the week has run out, so every session was missed.
+        // Looked at after the week has run out, so no session can still be trained.
         nowMillis = SampleWorkoutData.dateOf(9)
     )
 
+    // weekOne logs sets on two of its three days and none on the third, which is
+    // what separates the two labels.
+    private val neverTrained = weekGoneBy.days.filterNot { it.day.hasPerformedWork }
+    private val trainedButNotClosed = weekGoneBy.days.filter { it.day.hasPerformedWork }
+
     @Test
-    fun aSessionWhoseDateHasGoneReadsAsMissed() {
+    fun aSessionWhoseDateHasGoneReadsAsMissedOnlyWhenNothingWasLogged() {
         composeTestRule.setContent {
             TrainrTheme { WeeklyPlanScreen(state = weekGoneBy) }
         }
 
-        assertThat(
-            composeTestRule.onAllNodesWithText(string(R.string.missed)).fetchSemanticsNodes()
-        ).hasSize(weekGoneBy.days.size)
-        // A missed session cannot be trained once its week is over, so the only
-        // way on is the next week.
+        assertThat(neverTrained).hasSize(1)
+        assertThat(trainedButNotClosed).hasSize(2)
+        neverTrained.forEach {
+            composeTestRule.onNode(
+                hasText(it.day.title) and hasText(string(R.string.missed))
+            ).assertExists()
+        }
+        trainedButNotClosed.forEach {
+            composeTestRule.onNode(
+                hasText(it.day.title) and hasText(string(R.string.partly_done))
+            ).assertExists()
+        }
+        // A day whose date has gone cannot be trained once its week is over, so
+        // the only way on is the next week.
         composeTestRule.onNodeWithText(string(R.string.start_next_workout)).assertDoesNotExist()
         composeTestRule.onNodeWithText(string(R.string.generate_next_week).uppercase())
             .assertIsDisplayed()
@@ -673,12 +688,13 @@ class WeeklyPlanScreenTest {
             }
         }
 
-        val height = composeTestRule.onNodeWithText(weekGoneBy.days[1].day.title)
+        val missed = neverTrained.single().day.title
+        val height = composeTestRule.onNodeWithText(missed)
             .fetchSemanticsNode().size.height
-        composeTestRule.onNodeWithText(weekGoneBy.days[0].day.title).performTouchInput {
+        composeTestRule.onNodeWithText(missed).performTouchInput {
             down(center)
             advanceEventTime(viewConfiguration.longPressTimeoutMillis + 200)
-            moveBy(Offset(0f, height * 0.9f))
+            moveBy(Offset(0f, -height * 0.9f))
             advanceEventTime(32)
             up()
         }
