@@ -36,6 +36,12 @@ class Entitlements(
     private val _isPro = MutableStateFlow(false)
     val isPro: StateFlow<Boolean> = _isPro.asStateFlow()
 
+    // "Nobody has asked the store yet" and "this person has not paid" are the
+    // same false, and a screen that cannot tell them apart sells Pro to the
+    // people already paying for it. This is the bit that separates them.
+    private val _hasRead = MutableStateFlow(false)
+    val hasRead: StateFlow<Boolean> = _hasRead.asStateFlow()
+
     // A lifetime purchase has no expiry, and nothing to manage or cancel.
     private val _isLifetime = MutableStateFlow(false)
     val isLifetime: StateFlow<Boolean> = _isLifetime.asStateFlow()
@@ -68,7 +74,12 @@ class Entitlements(
     }
 
     suspend fun refresh(): Boolean {
-        if (!Purchases.isConfigured) return false
+        if (!Purchases.isConfigured) {
+            // There is no entitlement to wait for and never will be in this
+            // build, so that is a settled answer rather than a pending one.
+            _hasRead.value = true
+            return false
+        }
         return runCatching { read(Purchases.sharedInstance.awaitCustomerInfo()) }
             .onFailure { breadcrumbs.record("entitlement_read_failed") }
             .getOrDefault(false)
@@ -124,6 +135,7 @@ class Entitlements(
         val active = pro?.isActive == true
         _isPro.value = active
         _isLifetime.value = active && pro?.expirationDate == null
+        _hasRead.value = true
         return active
     }
 

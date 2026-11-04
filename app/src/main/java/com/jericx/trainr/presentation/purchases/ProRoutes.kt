@@ -21,7 +21,7 @@ fun ProPaywallRoute(reason: PaywallReason?, onClose: () -> Unit) {
 
     // Opened before the first entitlement read landed: a subscriber must not be
     // asked to pay again.
-    LaunchedEffect(state.isPro) { if (state.isPro) onClose() }
+    LaunchedEffect(state.isPro) { if (state.isPro == true) onClose() }
 
     ProPaywallScreen(
         reason = reason,
@@ -48,31 +48,15 @@ fun ProRoute(onClose: () -> Unit) {
 
     LaunchedEffect(Unit) { viewModel.load() }
 
-    if (state.isPro) {
-        ProStatusScreen(
-            isWorking = state.isWorking,
-            isLifetime = state.isLifetime,
-            noticeRes = state.noticeRes,
-            onRestore = viewModel::restore,
-            onNoticeShown = viewModel::noticeShown,
-            onBack = onClose,
-            onOpenLink = { context.openLink(it) }
-        )
-    } else {
-        ProPaywallScreen(
-            reason = null,
-            plans = state.plans,
-            selectedId = state.selectedId,
-            isWorking = state.isWorking,
-            noticeRes = state.noticeRes,
-            onSelect = viewModel::select,
-            onBuy = { (context as? ComponentActivity)?.let(viewModel::buy) },
-            onRestore = viewModel::restore,
-            onNoticeShown = viewModel::noticeShown,
-            onClose = onClose,
-            onOpenLink = { context.openLink(it) }
-        )
-    }
+    ProScreen(
+        state = state,
+        onSelect = viewModel::select,
+        onBuy = { (context as? ComponentActivity)?.let(viewModel::buy) },
+        onRestore = viewModel::restore,
+        onNoticeShown = viewModel::noticeShown,
+        onClose = onClose,
+        onOpenLink = { context.openLink(it) }
+    )
 }
 
 internal fun android.content.Context.openLink(url: String) {
