@@ -70,7 +70,19 @@ class OnboardingViewModel @Inject constructor(
         }
     }
 
+    // What each step has in it before NEXT turns it into an answer. Held
+    // outside the state flow so a keystroke does not recompose the graph, and
+    // here rather than in saved state: a configuration change or a step popped
+    // off the back stack must not lose it, but a process kill must. Saved state
+    // would restore a half-filled form onto a profile nobody ever saved.
+    var basicInfoEntry: BasicInfoEntry? = null
+    var bodyMetricsEntry: BodyMetricsEntry? = null
+    var fitnessGoalEntry: FitnessGoalEntry? = null
+    var workoutSetupEntry: WorkoutSetupEntry? = null
+    var limitationsEntry: LimitationsEntry? = null
+
     fun updateBasicInfo(firstName: String, age: Int, gender: Gender, experience: ExperienceLevel) {
+        basicInfoEntry = null
         _onboardingState.value = _onboardingState.value.copy(
             answeredSteps = answeredWith(OnboardingStep.BASIC_INFO),
             userProfile = _onboardingState.value.userProfile.copy(
@@ -83,19 +95,8 @@ class OnboardingViewModel @Inject constructor(
         )
     }
 
-    // Held outside the state flow so a keystroke does not recompose the graph:
-    // a step popped off the back stack loses its own state, and what was typed
-    // has to outlive it for the rest of the flow.
-    private var metricsInProgress: BodyMetricsEntry? = null
-
-    fun rememberBodyMetrics(entry: BodyMetricsEntry) {
-        metricsInProgress = entry
-    }
-
-    fun bodyMetricsInProgress(): BodyMetricsEntry? = metricsInProgress
-
     fun updateBodyMetrics(height: Float, weight: Float, units: UnitSystem) {
-        metricsInProgress = null
+        bodyMetricsEntry = null
         _onboardingState.value = _onboardingState.value.copy(
             answeredSteps = answeredWith(OnboardingStep.BODY_METRICS),
             userProfile = _onboardingState.value.userProfile.copy(
@@ -107,6 +108,7 @@ class OnboardingViewModel @Inject constructor(
     }
 
     fun updateFitnessGoal(goal: FitnessGoal) {
+        fitnessGoalEntry = null
         _onboardingState.value = _onboardingState.value.copy(
             answeredSteps = answeredWith(OnboardingStep.GOALS),
             userProfile = _onboardingState.value.userProfile.copy(
@@ -121,6 +123,7 @@ class OnboardingViewModel @Inject constructor(
         daysPerWeek: Int,
         duration: Int
     ) {
+        workoutSetupEntry = null
         _onboardingState.value = _onboardingState.value.copy(
             answeredSteps = answeredWith(OnboardingStep.SETUP),
             userProfile = _onboardingState.value.userProfile.copy(
@@ -133,6 +136,7 @@ class OnboardingViewModel @Inject constructor(
     }
 
     fun updateLimitations(injuries: List<Injury>) {
+        limitationsEntry = null
         _onboardingState.value = _onboardingState.value.copy(
             answeredSteps = answeredWith(OnboardingStep.LIMITATIONS),
             userProfile = _onboardingState.value.userProfile.copy(injuries = injuries)
@@ -243,15 +247,40 @@ enum class OnboardingStep {
     LIMITATIONS
 }
 
-// What the measurements step currently has typed in it, in the units it is
-// showing. Text rather than numbers: a part-typed "5" is not a height yet. The
-// swaps carry the measurements behind that text, which the index is read from.
+// What each step currently has typed or chosen in it. Text rather than numbers
+// where a field is typed: a part-typed "5" is not an age or a height yet, and
+// "touched" is what decides whether a blank one is already an error.
+data class BasicInfoEntry(
+    val firstName: String,
+    val age: String,
+    val gender: Gender?,
+    val experience: ExperienceLevel?,
+    val nameTouched: Boolean = false,
+    val ageTouched: Boolean = false
+)
+
+// The swaps carry the measurements behind the shown text, which the index is
+// read from.
 data class BodyMetricsEntry(
     val height: String,
     val weight: String,
     val useMetric: Boolean,
     val heightSwap: BodyMetricsConverter.UnitSwap = BodyMetricsConverter.UnitSwap(),
     val weightSwap: BodyMetricsConverter.UnitSwap = BodyMetricsConverter.UnitSwap()
+)
+
+data class FitnessGoalEntry(val goal: FitnessGoal?)
+
+data class WorkoutSetupEntry(
+    val equipment: Set<Equipment>,
+    val liftingUnits: UnitSystem?,
+    val daysPerWeek: Int?,
+    val duration: Int?
+)
+
+data class LimitationsEntry(
+    val injuries: Set<Injury>,
+    val noneSelected: Boolean
 )
 
 data class OnboardingState(

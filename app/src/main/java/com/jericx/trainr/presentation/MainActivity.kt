@@ -331,6 +331,10 @@ fun AppContent(
                     BasicInfoScreen(
                         initial = onboardingState.filledFor(OnboardingStep.BASIC_INFO, editing),
                         isEditing = editing,
+                        inProgress = onboardingViewModel.basicInfoEntry.takeIf { !editing },
+                        onEntryChanged = { entry ->
+                            if (!editing) onboardingViewModel.basicInfoEntry = entry
+                        },
                         onNextClick = { firstName, age, gender, experience ->
                             onboardingViewModel.updateBasicInfo(firstName, age, gender, experience)
                             if (editing) {
@@ -352,10 +356,9 @@ fun AppContent(
                         initial = onboardingState.filledFor(OnboardingStep.BODY_METRICS, editing),
                         age = onboardingState.userProfile.age.takeIf { it > 0 },
                         isEditing = editing,
-                        inProgress = onboardingViewModel.bodyMetricsInProgress()
-                            .takeIf { !editing },
-                        onEntryChanged = { metrics ->
-                            if (!editing) onboardingViewModel.rememberBodyMetrics(metrics)
+                        inProgress = onboardingViewModel.bodyMetricsEntry.takeIf { !editing },
+                        onEntryChanged = { entry ->
+                            if (!editing) onboardingViewModel.bodyMetricsEntry = entry
                         },
                         onNextClick = { height, weight, units ->
                             onboardingViewModel.updateBodyMetrics(height, weight, units)
@@ -377,6 +380,10 @@ fun AppContent(
                     FitnessGoalScreen(
                         initial = onboardingState.filledFor(OnboardingStep.GOALS, editing),
                         isEditing = editing,
+                        inProgress = onboardingViewModel.fitnessGoalEntry.takeIf { !editing },
+                        onEntryChanged = { entry ->
+                            if (!editing) onboardingViewModel.fitnessGoalEntry = entry
+                        },
                         onNextClick = { goal ->
                             onboardingViewModel.updateFitnessGoal(goal)
                             if (editing) {
@@ -399,6 +406,10 @@ fun AppContent(
                         isEditing = editing,
                         bodyUnits = onboardingState.userProfile.bodyUnitSystem,
                         stockedEquipment = onboardingViewModel.stockedEquipment,
+                        inProgress = onboardingViewModel.workoutSetupEntry.takeIf { !editing },
+                        onEntryChanged = { entry ->
+                            if (!editing) onboardingViewModel.workoutSetupEntry = entry
+                        },
                         longestSessionMinutes = onboardingViewModel::longestSessionMinutes,
                         onNextClick = { equipment, liftingUnits, days, duration ->
                             onboardingViewModel.updateWorkoutSetup(
@@ -422,6 +433,10 @@ fun AppContent(
                     LimitationsScreen(
                         initial = onboardingState.filledFor(OnboardingStep.LIMITATIONS, editing),
                         isEditing = editing,
+                        inProgress = onboardingViewModel.limitationsEntry.takeIf { !editing },
+                        onEntryChanged = { entry ->
+                            if (!editing) onboardingViewModel.limitationsEntry = entry
+                        },
                         onNextClick = { injuries ->
                             onboardingViewModel.updateLimitations(injuries)
                             if (editing) {

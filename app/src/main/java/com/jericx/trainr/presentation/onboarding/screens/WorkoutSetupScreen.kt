@@ -15,6 +15,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,6 +45,7 @@ import com.jericx.trainr.presentation.common.components.typography.TrainrScreenT
 import com.jericx.trainr.presentation.common.theme.ComponentHeight
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.trainrColors
+import com.jericx.trainr.presentation.onboarding.WorkoutSetupEntry
 
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -54,6 +56,8 @@ fun WorkoutSetupScreen(
     // How the client reads their own body, answered two steps earlier.
     bodyUnits: UnitSystem = UnitSystem.Default,
     stockedEquipment: Set<Equipment> = EquipmentChoices.toSet(),
+    inProgress: WorkoutSetupEntry? = null,
+    onEntryChanged: (WorkoutSetupEntry) -> Unit = {},
     // The longest session these answers can really build, which is the answer
     // itself unless the split cannot fill it.
     longestSessionMinutes: suspend (equipment: List<Equipment>, daysPerWeek: Int, duration: Int) -> Int =
@@ -67,13 +71,28 @@ fun WorkoutSetupScreen(
     onBackClick: () -> Unit
 ) {
     var selectedEquipment by remember {
-        mutableStateOf(initial?.availableEquipment?.toSet() ?: emptySet())
+        mutableStateOf(
+            inProgress?.equipment ?: initial?.availableEquipment?.toSet() ?: emptySet()
+        )
     }
     // Nothing starts chosen: a default the client walks past would become an
     // answer the plan is built around.
-    var selectedDays by remember { mutableStateOf(initial?.workoutDaysPerWeek?.takeIf { it > 0 }) }
-    var selectedDuration by remember { mutableStateOf(initial?.workoutDuration?.takeIf { it > 0 }) }
-    var selectedLiftingUnits by remember { mutableStateOf(initial?.liftingUnitSystem) }
+    var selectedDays by remember {
+        mutableStateOf(inProgress?.daysPerWeek ?: initial?.workoutDaysPerWeek?.takeIf { it > 0 })
+    }
+    var selectedDuration by remember {
+        mutableStateOf(inProgress?.duration ?: initial?.workoutDuration?.takeIf { it > 0 })
+    }
+    var selectedLiftingUnits by remember {
+        mutableStateOf(inProgress?.liftingUnits ?: initial?.liftingUnitSystem)
+    }
+
+    // Published synchronously: a LaunchedEffect dispatches the publish, and the
+    // last thing typed or tapped before the Activity is torn down never arrives.
+    val entry = WorkoutSetupEntry(
+        selectedEquipment, selectedLiftingUnits, selectedDays, selectedDuration
+    )
+    SideEffect { onEntryChanged(entry) }
 
     // A bodyweight setup has no plates to read, so lifting units stay unasked
     // and null rather than taking a value.
