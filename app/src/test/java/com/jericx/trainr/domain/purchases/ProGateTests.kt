@@ -97,28 +97,38 @@ class ProGateTests {
             .isEqualTo(ProGate.Decision.WAIT)
     }
 
-    @Test
-    fun `nothing is spent on an answer the store has not given`() {
-        val allowance = FakeAllowance()
-        gateOver(allowance, hasRead = false).spend()
-
-        assertThat(allowance.used).isFalse()
-    }
-
     // A failed read is not a pending one: nothing more is coming, so waiting
     // would strand the person. It falls in with the build that cannot sell,
-    // which lets the week through and takes nothing for it.
+    // which lets the week through rather than asking for money on a guess.
     @Test
-    fun `a read that failed lets the week through rather than asking`() {
+    fun `a read that was never answered at all lets the week through`() {
         assertThat(gate(isPro = false, used = true, hasRead = false, readFailed = true).decide())
             .isEqualTo(ProGate.Decision.ALLOWED)
     }
 
+    // The paywall re-reads, so a read can fail after one has already landed.
+    // Treating that as an unknown store would throw away an answer it gave and
+    // leave every gated week free for the rest of the session.
     @Test
-    fun `a read that failed spends nothing`() {
-        val allowance = FakeAllowance()
+    fun `a read that failed after an answer landed still asks`() {
+        assertThat(gate(isPro = false, used = true, hasRead = true, readFailed = true).decide())
+            .isEqualTo(ProGate.Decision.ASK)
+    }
+
+    @Test
+    fun `a subscriber whose later read failed is still never asked`() {
+        assertThat(gate(isPro = true, used = true, hasRead = true, readFailed = true).decide())
+            .isEqualTo(ProGate.Decision.ALLOWED)
+    }
+
+    // The first plan is written with no gate decision at all, so the only thing
+    // that can close the free allowance is this call. Skipping it while the
+    // store is unreachable hands the free week back on every launch.
+    @Test
+    fun `the first week is charged even though the store never answered`() {
+        val allowance = UnspentAllowance()
         gateOver(allowance, hasRead = false, readFailed = true).spend()
 
-        assertThat(allowance.used).isFalse()
+        assertThat(allowance.wasSpent).isTrue()
     }
 }

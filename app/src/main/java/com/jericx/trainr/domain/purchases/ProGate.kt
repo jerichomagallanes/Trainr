@@ -20,10 +20,12 @@ class ProGate(
 
     fun decide(): Decision = when {
         !canSell() -> Decision.ALLOWED
-        // Read as the same state as a build that cannot sell: the store cannot
-        // say who this is, so nobody is asked for money on a guess, and spend()
-        // below takes nothing for it either.
-        readFailed() -> Decision.ALLOWED
+        // Read as the same state as a build that cannot sell, but only while the
+        // store has never answered at all: it cannot say who this is, so nobody
+        // is asked for money on a guess. A failure after an answer landed is a
+        // different thing, and throwing that answer away would unlock every
+        // gated week for the rest of the session.
+        readFailed() && !hasRead() -> Decision.ALLOWED
         !hasRead() -> Decision.WAIT
         isPro() -> Decision.ALLOWED
         !allowance.hasBeenUsed() -> Decision.ALLOWED
@@ -34,9 +36,11 @@ class ProGate(
     // training, spent exactly once and only when something can be sold.
     // Subscribers spend nothing, so their first week stays available if they
     // ever lapse, and neither does anyone using a build that cannot sell them
-    // the alternative, nor anyone the store has not answered for.
+    // the alternative. The store's answer is deliberately not consulted beyond
+    // that: the first plan is written with no gate decision at all, so refusing
+    // to record it would hand the free week back on every launch the read fails.
     fun spend() {
-        if (canSell() && hasRead() && !readFailed() && !isPro()) allowance.markUsed()
+        if (canSell() && !isPro()) allowance.markUsed()
     }
 
     // WAIT is neither: the answer is still on its way, so the person is told to
