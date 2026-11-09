@@ -61,6 +61,8 @@ class LlamaIntentInterpreter(
     }
 
     private companion object {
-        val TIMEOUT = 60.seconds
+        // Matched to iOS: the same note must not be a read on one platform and
+        // a timeout on the other.
+        val TIMEOUT = 120.seconds
     }
 }
