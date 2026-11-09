@@ -28,7 +28,7 @@ class PlanSkeletonBuilder(private val catalog: ExerciseCatalog) {
             .sortedBy { it.key }
         val required = ExerciseShortlist.requiredPatterns(pool, user.fitnessGoal)
         val lastWeek = request.previousWeek?.workoutDays.orEmpty()
-            .flatMap { day -> day.exercises.map { it.exerciseKey } }
+            .flatMap { day -> day.exercises.filter { it.addedBy == null }.map { it.exerciseKey } }
             .toSet()
 
         val week = Week(user, pool, lastWeek)
