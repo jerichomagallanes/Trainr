@@ -79,6 +79,7 @@ import com.jericx.trainr.presentation.unstuck.labelRes
 import com.jericx.trainr.presentation.workout.model.AdjustedBannerUi
 import com.jericx.trainr.presentation.workout.model.ExerciseUi
 import com.jericx.trainr.presentation.workout.model.YouTubeVideo
+import com.jericx.trainr.presentation.workout.model.isOn
 import com.jericx.trainr.presentation.workout.util.WorkoutDateFormatter
 
 @Composable
@@ -410,7 +411,7 @@ fun RoutineDetailScreen(
                                     YouTubeVideo.from(exercise.videoUrl)?.let {
                                         VideoTutorial(
                                             video = it,
-                                            isExpanded = state.expandedVideo == exercise.position,
+                                            isExpanded = state.expandedVideo.isOn(exercise),
                                             onToggle = { onToggleVideo(exercise.position) }
                                         )
                                     }
@@ -418,7 +419,7 @@ fun RoutineDetailScreen(
                                 if (exercise.steps.isNotEmpty()) {
                                     HowToSection(
                                         steps = exercise.steps,
-                                        isExpanded = state.expandedHowTo == exercise.position,
+                                        isExpanded = state.expandedHowTo.isOn(exercise),
                                         onToggle = { onToggleHowTo(exercise.position) },
                                         video = video
                                     )

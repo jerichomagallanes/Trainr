@@ -24,6 +24,7 @@ import com.jericx.trainr.domain.unstuck.UndoResult
 import com.jericx.trainr.domain.unstuck.SessionOutcome
 import com.jericx.trainr.presentation.workout.model.ExerciseTimerUi
 import com.jericx.trainr.presentation.workout.model.ExerciseUi
+import com.jericx.trainr.presentation.workout.model.ExpandedTutorialUi
 import com.jericx.trainr.presentation.workout.model.AdjustedBannerUi
 import com.jericx.trainr.presentation.workout.model.RoutineUi
 import com.jericx.trainr.presentation.workout.model.derivedEquipment
@@ -57,8 +58,8 @@ data class RoutineDetailUiState(
     val dateMillis: Long,
     val timer: ExerciseTimerUi? = null,
     // One at a time: each player is a WebView that lives as long as its section is open.
-    val expandedVideo: Int? = null,
-    val expandedHowTo: Int? = null,
+    val expandedVideo: ExpandedTutorialUi? = null,
+    val expandedHowTo: ExpandedTutorialUi? = null,
     val dayNumber: Int = 1,
     val weekNumber: Int = 1,
     val completesTheWeek: Boolean = false,
@@ -197,6 +198,8 @@ class RoutineDetailViewModel @Inject constructor(
                 unitSystem = units,
                 routine = routine,
                 timer = timer,
+                expandedVideo = surviving(it.expandedVideo, routine),
+                expandedHowTo = surviving(it.expandedHowTo, routine),
                 equipment = day.derivedEquipment(catalog),
                 totalMinutes = user?.let { profile -> day.remainingMinutes(profile, catalog) },
                 dateMillis = WorkoutWeek.dateOfDay(weekStart, day.dayNumber),
@@ -237,12 +240,13 @@ class RoutineDetailViewModel @Inject constructor(
         val exercise = _uiState.value.routine.exercises
             .firstOrNull { it.position == position } ?: return
         val hasSteps = exercise.steps.isNotEmpty()
+        val opened = ExpandedTutorialUi(position, exercise.exerciseId)
         _uiState.update {
             it.copy(
                 showAdjustSheet = false,
                 isPickingExercise = false,
-                expandedHowTo = if (hasSteps) position else it.expandedHowTo,
-                expandedVideo = if (hasSteps) it.expandedVideo else position,
+                expandedHowTo = if (hasSteps) opened else it.expandedHowTo,
+                expandedVideo = if (hasSteps) it.expandedVideo else opened,
                 scrollToPosition = position
             )
         }
@@ -531,17 +535,22 @@ class RoutineDetailViewModel @Inject constructor(
     }
 
     fun toggleVideo(position: Int) {
-        _uiState.update {
-            it.copy(expandedVideo = if (it.expandedVideo == position) null else position)
-        }
+        _uiState.update { it.copy(expandedVideo = it.toggled(it.expandedVideo, position)) }
     }
 
     // Kept apart from the video: collapsing the section should not also lose
     // the player someone left open inside it.
     fun toggleHowTo(position: Int) {
-        _uiState.update {
-            it.copy(expandedHowTo = if (it.expandedHowTo == position) null else position)
-        }
+        _uiState.update { it.copy(expandedHowTo = it.toggled(it.expandedHowTo, position)) }
+    }
+
+    private fun RoutineDetailUiState.toggled(
+        open: ExpandedTutorialUi?,
+        position: Int
+    ): ExpandedTutorialUi? {
+        if (open?.position == position) return null
+        val exercise = routine.exercises.firstOrNull { it.position == position } ?: return null
+        return ExpandedTutorialUi(position, exercise.exerciseId)
     }
 
     private fun cancelTick() {
@@ -555,6 +564,16 @@ class RoutineDetailViewModel @Inject constructor(
         cancelTick()
         _uiState.update { it.copy(timer = null) }
     }
+
+    // Nobody may be shown the form for a movement that has left their session:
+    // an adjustment, or undoing one, can leave another exercise where a
+    // tutorial was opened, and the player may not stay behind on the old one.
+    private fun surviving(open: ExpandedTutorialUi?, routine: RoutineUi): ExpandedTutorialUi? =
+        open?.takeIf { tutorial ->
+            routine.exercises.any {
+                it.position == tutorial.position && it.exerciseId == tutorial.exerciseId
+            }
+        }
 
     // The timer outlives a reload, but only on its own exercise: an adjustment
     // can leave a different movement where it was started, and a hold must
