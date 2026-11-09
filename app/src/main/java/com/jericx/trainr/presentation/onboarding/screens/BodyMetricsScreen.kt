@@ -14,7 +14,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -105,9 +105,13 @@ fun BodyMetricsScreen(
     var heightSwap by remember { mutableStateOf(inProgress?.heightSwap ?: seededHeight) }
     var weightSwap by remember { mutableStateOf(inProgress?.weightSwap ?: seededWeight) }
 
-    LaunchedEffect(height, weight, useMetric, heightSwap, weightSwap) {
-        onEntryChanged(BodyMetricsEntry(height, weight, useMetric, heightSwap, weightSwap))
-    }
+    var heightTouched by remember { mutableStateOf(inProgress?.heightTouched == true) }
+    var weightTouched by remember { mutableStateOf(inProgress?.weightTouched == true) }
+
+    val entry = BodyMetricsEntry(
+        height, weight, useMetric, heightSwap, weightSwap, heightTouched, weightTouched
+    )
+    SideEffect { onEntryChanged(entry) }
 
     // The age answered one step earlier. A profile that has none yet stores 0.
     val knownAge = age ?: initial?.age?.takeIf { it > 0 }
@@ -127,9 +131,6 @@ fun BodyMetricsScreen(
     val lbsUnit = stringResource(R.string.weight_column_lbs)
 
     val isFormValid = heightIsUsable && weightIsUsable
-
-    var heightTouched by remember { mutableStateOf(false) }
-    var weightTouched by remember { mutableStateOf(false) }
 
     val heightBounds = with(Constants.Workout) {
         if (useMetric) {

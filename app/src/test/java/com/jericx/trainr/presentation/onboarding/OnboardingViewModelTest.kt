@@ -433,19 +433,54 @@ class OnboardingViewModelTest {
 
     @Test
     fun `measurements that were typed but not submitted are given back`() {
-        viewModel.rememberBodyMetrics(BodyMetricsEntry("5", "154", useMetric = false))
+        viewModel.bodyMetricsEntry = BodyMetricsEntry("5", "154", useMetric = false)
 
-        assertThat(viewModel.bodyMetricsInProgress())
+        assertThat(viewModel.bodyMetricsEntry)
             .isEqualTo(BodyMetricsEntry("5", "154", useMetric = false))
     }
 
     @Test
     fun `submitting the measurements step clears what it was holding`() {
-        viewModel.rememberBodyMetrics(BodyMetricsEntry("175", "70", useMetric = true))
+        viewModel.bodyMetricsEntry = BodyMetricsEntry("175", "70", useMetric = true)
 
         viewModel.updateBodyMetrics(175f, 70f, UnitSystem.METRIC)
 
-        assertThat(viewModel.bodyMetricsInProgress()).isNull()
+        assertThat(viewModel.bodyMetricsEntry).isNull()
+    }
+
+    @Test
+    fun `an answer that was typed but not submitted is given back for every step`() {
+        viewModel.basicInfoEntry =
+            BasicInfoEntry("Jericho", "30", Gender.MALE, ExperienceLevel.BEGINNER)
+        viewModel.fitnessGoalEntry = FitnessGoalEntry(FitnessGoal.MUSCLE_GAIN)
+        viewModel.workoutSetupEntry =
+            WorkoutSetupEntry(setOf(Equipment.DUMBBELL), UnitSystem.METRIC, 3, 45)
+        viewModel.limitationsEntry = LimitationsEntry(emptySet(), noneSelected = true)
+
+        assertThat(viewModel.basicInfoEntry?.firstName).isEqualTo("Jericho")
+        assertThat(viewModel.fitnessGoalEntry?.goal).isEqualTo(FitnessGoal.MUSCLE_GAIN)
+        assertThat(viewModel.workoutSetupEntry?.daysPerWeek).isEqualTo(3)
+        assertThat(viewModel.limitationsEntry?.noneSelected).isTrue()
+    }
+
+    @Test
+    fun `submitting a step clears what that step was holding`() {
+        viewModel.basicInfoEntry =
+            BasicInfoEntry("Jericho", "30", Gender.MALE, ExperienceLevel.BEGINNER)
+        viewModel.fitnessGoalEntry = FitnessGoalEntry(FitnessGoal.MUSCLE_GAIN)
+        viewModel.workoutSetupEntry =
+            WorkoutSetupEntry(setOf(Equipment.DUMBBELL), UnitSystem.METRIC, 3, 45)
+        viewModel.limitationsEntry = LimitationsEntry(emptySet(), noneSelected = true)
+
+        viewModel.updateBasicInfo("Jericho", 30, Gender.MALE, ExperienceLevel.BEGINNER)
+        viewModel.updateFitnessGoal(FitnessGoal.MUSCLE_GAIN)
+        viewModel.updateWorkoutSetup(listOf(Equipment.DUMBBELL), UnitSystem.METRIC, 3, 45)
+        viewModel.updateLimitations(emptyList())
+
+        assertThat(viewModel.basicInfoEntry).isNull()
+        assertThat(viewModel.fitnessGoalEntry).isNull()
+        assertThat(viewModel.workoutSetupEntry).isNull()
+        assertThat(viewModel.limitationsEntry).isNull()
     }
 
     // The screen can be left while this runs, and it writes the week anyway.

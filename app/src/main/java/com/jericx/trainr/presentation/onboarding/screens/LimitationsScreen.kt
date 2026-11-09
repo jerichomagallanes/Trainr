@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -28,19 +29,25 @@ import com.jericx.trainr.presentation.common.components.layout.TrainrScreenConte
 import com.jericx.trainr.presentation.common.components.typography.TrainrScreenTitle
 import com.jericx.trainr.presentation.common.components.typography.TrainrSectionTitle
 import com.jericx.trainr.presentation.common.components.typography.TrainrSubtitle
+import com.jericx.trainr.presentation.onboarding.LimitationsEntry
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LimitationsScreen(
     initial: UserProfile? = null,
     isEditing: Boolean = false,
+    inProgress: LimitationsEntry? = null,
+    onEntryChanged: (LimitationsEntry) -> Unit = {},
     onNextClick: (injuries: List<Injury>) -> Unit,
     onBackClick: () -> Unit
 ) {
     var selectedInjuries by remember {
-        mutableStateOf(initial?.injuries?.toSet() ?: emptySet())
+        mutableStateOf(inProgress?.injuries ?: initial?.injuries?.toSet() ?: emptySet())
     }
-    var noneSelected by remember { mutableStateOf(false) }
+    var noneSelected by remember { mutableStateOf(inProgress?.noneSelected == true) }
+
+    val entry = LimitationsEntry(selectedInjuries, noneSelected)
+    SideEffect { onEntryChanged(entry) }
 
     TrainrScaffold(
         onBackClick = onBackClick,

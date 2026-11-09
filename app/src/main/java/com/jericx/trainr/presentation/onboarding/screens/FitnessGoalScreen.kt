@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,15 +26,21 @@ import com.jericx.trainr.presentation.common.components.layout.TrainrScaffold
 import com.jericx.trainr.presentation.common.components.layout.TrainrScreenContent
 import com.jericx.trainr.presentation.common.components.typography.TrainrScreenTitle
 import com.jericx.trainr.presentation.common.components.typography.TrainrSubtitle
+import com.jericx.trainr.presentation.onboarding.FitnessGoalEntry
 
 @Composable
 fun FitnessGoalScreen(
     initial: UserProfile? = null,
     isEditing: Boolean = false,
+    inProgress: FitnessGoalEntry? = null,
+    onEntryChanged: (FitnessGoalEntry) -> Unit = {},
     onNextClick: (FitnessGoal) -> Unit,
     onBackClick: () -> Unit
 ) {
-    var selectedGoal by remember { mutableStateOf(initial?.fitnessGoal) }
+    var selectedGoal by remember { mutableStateOf(inProgress?.goal ?: initial?.fitnessGoal) }
+
+    val entry = FitnessGoalEntry(selectedGoal)
+    SideEffect { onEntryChanged(entry) }
 
     TrainrScaffold(
         onBackClick = onBackClick,

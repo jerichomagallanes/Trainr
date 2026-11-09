@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,22 +37,36 @@ import com.jericx.trainr.presentation.common.components.core.dismissesKeyboardOn
 import com.jericx.trainr.presentation.common.components.layout.TrainrFormSection
 import com.jericx.trainr.presentation.common.components.layout.TrainrScreenContent
 import com.jericx.trainr.presentation.common.components.typography.TrainrScreenTitle
+import com.jericx.trainr.presentation.onboarding.BasicInfoEntry
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BasicInfoScreen(
     initial: UserProfile? = null,
     isEditing: Boolean = false,
+    inProgress: BasicInfoEntry? = null,
+    onEntryChanged: (BasicInfoEntry) -> Unit = {},
     onNextClick: (firstName: String, age: Int, gender: Gender, experience: ExperienceLevel) -> Unit,
     onBackClick: () -> Unit
 ) {
-    var firstName by remember { mutableStateOf(initial?.firstName.orEmpty()) }
-    var age by remember { mutableStateOf(initial?.age?.takeIf { it > 0 }?.toString().orEmpty()) }
-    var selectedGender by remember { mutableStateOf(initial?.gender) }
-    var selectedExperience by remember { mutableStateOf(initial?.experienceLevel) }
+    var firstName by remember {
+        mutableStateOf(inProgress?.firstName ?: initial?.firstName.orEmpty())
+    }
+    var age by remember {
+        mutableStateOf(inProgress?.age ?: initial?.age?.takeIf { it > 0 }?.toString().orEmpty())
+    }
+    var selectedGender by remember { mutableStateOf(inProgress?.gender ?: initial?.gender) }
+    var selectedExperience by remember {
+        mutableStateOf(inProgress?.experience ?: initial?.experienceLevel)
+    }
 
-    var nameTouched by remember { mutableStateOf(false) }
-    var ageTouched by remember { mutableStateOf(false) }
+    var nameTouched by remember { mutableStateOf(inProgress?.nameTouched == true) }
+    var ageTouched by remember { mutableStateOf(inProgress?.ageTouched == true) }
+
+    val entry = BasicInfoEntry(
+        firstName, age, selectedGender, selectedExperience, nameTouched, ageTouched
+    )
+    SideEffect { onEntryChanged(entry) }
 
     val ageRange = Constants.Workout.MIN_AGE..Constants.Workout.MAX_AGE
     val ageIsUsable = (age.toIntOrNull() ?: 0) in ageRange
