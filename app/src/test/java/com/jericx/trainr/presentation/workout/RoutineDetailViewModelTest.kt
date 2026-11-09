@@ -32,6 +32,7 @@ import com.jericx.trainr.domain.unstuck.UndoResult
 import com.jericx.trainr.domain.unstuck.FinishKind
 import com.jericx.trainr.domain.unstuck.SessionOutcome
 import com.jericx.trainr.presentation.workout.model.ExerciseUi
+import com.jericx.trainr.presentation.workout.model.isOn
 import com.jericx.trainr.presentation.workout.model.derivedExerciseCount
 import com.jericx.trainr.presentation.workout.model.remainingMinutes
 import com.jericx.trainr.presentation.workout.model.visibleExercises
@@ -644,10 +645,26 @@ class RoutineDetailViewModelTest {
         assertThat(viewModel.uiState.value.expandedVideo).isNull()
 
         viewModel.toggleVideo(2)
-        assertThat(viewModel.uiState.value.expandedVideo).isEqualTo(2)
+        assertThat(viewModel.uiState.value.expandedVideo?.position).isEqualTo(2)
 
         viewModel.toggleVideo(2)
         assertThat(viewModel.uiState.value.expandedVideo).isNull()
+    }
+
+    // The card shows a tutorial only when it is stamped with that card's own
+    // exercise, so a request by key has to carry the identity and not just the place.
+    @Test
+    fun guidanceOpensTheTutorialOnTheExerciseItNames() = runTest {
+        val viewModel = viewModel(dayNumber = 3, repository = repositoryWith(storedPlan))
+        advanceUntilIdle()
+
+        viewModel.showHowToFor("goblet_squat")
+
+        val named = viewModel.exercise(2)
+        assertThat(viewModel.uiState.value.scrollToPosition).isEqualTo(named.position)
+        with(viewModel.uiState.value) {
+            assertThat((expandedHowTo ?: expandedVideo).isOn(named)).isTrue()
+        }
     }
 
     // The player is a WebView living as long as the section is open, so two open at once means two of them
@@ -658,8 +675,92 @@ class RoutineDetailViewModelTest {
         viewModel.toggleVideo(2)
         viewModel.toggleVideo(3)
 
-        assertThat(viewModel.uiState.value.expandedVideo).isEqualTo(3)
+        assertThat(viewModel.uiState.value.expandedVideo?.position).isEqualTo(3)
     }
+
+    // The card went back to naming the original movement while the player under
+    // it went on demonstrating the substitute nobody was doing any more.
+    @Test
+    fun undoingAnAdjustmentTakesTheWithdrawnSubstitutesTutorialWithIt() = runTest {
+        val viewModel = substitutedViewModel()
+        assertThat(viewModel.exercise(2).name).isEqualTo("Dumbbell Step-Ups")
+        viewModel.toggleVideo(2)
+
+        viewModel.undoAdjustment()
+        advanceUntilIdle()
+
+        assertThat(viewModel.exercise(2).name).isEqualTo("Goblet Squats")
+        assertThat(viewModel.uiState.value.expandedVideo).isNull()
+    }
+
+    @Test
+    fun theRestoredMovementsOwnTutorialStillOpens() = runTest {
+        val viewModel = substitutedViewModel()
+        viewModel.toggleVideo(2)
+        viewModel.undoAdjustment()
+        advanceUntilIdle()
+
+        viewModel.toggleVideo(2)
+
+        assertThat(viewModel.uiState.value.expandedVideo?.exerciseId)
+            .isEqualTo(viewModel.exercise(2).exerciseId)
+    }
+
+    @Test
+    fun anyReloadThatFindsAnotherMovementAtThePositionClosesTheTutorial() = runTest {
+        val viewModel = substitutedViewModel()
+        viewModel.toggleHowTo(2)
+        viewModel.toggleVideo(2)
+
+        viewModel.refresh()
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.expandedHowTo).isNull()
+        assertThat(viewModel.uiState.value.expandedVideo).isNull()
+    }
+
+    @Test
+    fun aReloadLeavesATutorialOnTheMovementThatStayedPutOpen() = runTest {
+        val viewModel = substitutedViewModel()
+        viewModel.toggleVideo(1)
+
+        viewModel.refresh()
+        advanceUntilIdle()
+
+        assertThat(viewModel.exercise(1).name).isEqualTo("Bent-Over Rows")
+        assertThat(viewModel.uiState.value.expandedVideo?.position).isEqualTo(1)
+    }
+
+    // The second position holds a substitute until the adjustment goes, when the
+    // movement it replaced comes back to exactly that place in the day.
+    private fun TestScope.substitutedViewModel(): RoutineDetailViewModel {
+        val adjustments = emptyAdjustments()
+        coEvery { adjustments.getActiveAdjustment(22L) } returns applied() andThen null
+        coEvery { adjustments.undo(5L, any()) } returns UndoResult.Restored(applied(), 0)
+        val repository = mockk<UserRepository>(relaxed = true).also {
+            coEvery { it.getCurrentUser() } returns UserProfile(id = 1)
+            every { it.getWeeklyWorkoutPlans(1) } returns
+                flowOf(listOf(planWithSubstituteInPlace())) andThen flowOf(listOf(storedPlan))
+        }
+        return viewModel(dayNumber = 3, repository = repository, adjustments = adjustments)
+            .also { advanceUntilIdle() }
+    }
+
+    private fun planWithSubstituteInPlace() = storedPlan.copy(
+        workoutDays = storedPlan.workoutDays.map { day ->
+            if (day.id != 22L) {
+                day
+            } else {
+                day.copy(
+                    exercises = listOf(
+                        day.exercises[0],
+                        day.exercises[1].omitting(from = 1),
+                        storedExercise(35, "dumbbell_step_up", "Dumbbell Step-Ups")
+                    )
+                )
+            }
+        }
+    )
 
     @Test
     fun aGuidanceNoteOpensTheSheetOnTheExercisesAndTheReasonsOtherwise() = runTest {
