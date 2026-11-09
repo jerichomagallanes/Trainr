@@ -39,6 +39,8 @@ fun FitnessGoalScreen(
 ) {
     var selectedGoal by remember { mutableStateOf(inProgress?.goal ?: initial?.fitnessGoal) }
 
+    // Published synchronously: a LaunchedEffect dispatches the publish, and the
+    // last thing typed or tapped before the Activity is torn down never arrives.
     val entry = FitnessGoalEntry(selectedGoal)
     SideEffect { onEntryChanged(entry) }
 

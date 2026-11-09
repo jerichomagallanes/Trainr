@@ -105,12 +105,9 @@ fun BodyMetricsScreen(
     var heightSwap by remember { mutableStateOf(inProgress?.heightSwap ?: seededHeight) }
     var weightSwap by remember { mutableStateOf(inProgress?.weightSwap ?: seededWeight) }
 
-    var heightTouched by remember { mutableStateOf(inProgress?.heightTouched == true) }
-    var weightTouched by remember { mutableStateOf(inProgress?.weightTouched == true) }
-
-    val entry = BodyMetricsEntry(
-        height, weight, useMetric, heightSwap, weightSwap, heightTouched, weightTouched
-    )
+    // Published synchronously: a LaunchedEffect dispatches the publish, and the
+    // last thing typed or tapped before the Activity is torn down never arrives.
+    val entry = BodyMetricsEntry(height, weight, useMetric, heightSwap, weightSwap)
     SideEffect { onEntryChanged(entry) }
 
     // The age answered one step earlier. A profile that has none yet stores 0.
@@ -131,6 +128,9 @@ fun BodyMetricsScreen(
     val lbsUnit = stringResource(R.string.weight_column_lbs)
 
     val isFormValid = heightIsUsable && weightIsUsable
+
+    var heightTouched by remember { mutableStateOf(false) }
+    var weightTouched by remember { mutableStateOf(false) }
 
     val heightBounds = with(Constants.Workout) {
         if (useMetric) {

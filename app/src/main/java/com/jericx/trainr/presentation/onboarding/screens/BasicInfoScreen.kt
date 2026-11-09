@@ -63,6 +63,8 @@ fun BasicInfoScreen(
     var nameTouched by remember { mutableStateOf(inProgress?.nameTouched == true) }
     var ageTouched by remember { mutableStateOf(inProgress?.ageTouched == true) }
 
+    // Published synchronously: a LaunchedEffect dispatches the publish, and the
+    // last thing typed or tapped before the Activity is torn down never arrives.
     val entry = BasicInfoEntry(
         firstName, age, selectedGender, selectedExperience, nameTouched, ageTouched
     )

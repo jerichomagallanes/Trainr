@@ -266,9 +266,7 @@ data class BodyMetricsEntry(
     val weight: String,
     val useMetric: Boolean,
     val heightSwap: BodyMetricsConverter.UnitSwap = BodyMetricsConverter.UnitSwap(),
-    val weightSwap: BodyMetricsConverter.UnitSwap = BodyMetricsConverter.UnitSwap(),
-    val heightTouched: Boolean = false,
-    val weightTouched: Boolean = false
+    val weightSwap: BodyMetricsConverter.UnitSwap = BodyMetricsConverter.UnitSwap()
 )
 
 data class FitnessGoalEntry(val goal: FitnessGoal?)

@@ -87,6 +87,8 @@ fun WorkoutSetupScreen(
         mutableStateOf(inProgress?.liftingUnits ?: initial?.liftingUnitSystem)
     }
 
+    // Published synchronously: a LaunchedEffect dispatches the publish, and the
+    // last thing typed or tapped before the Activity is torn down never arrives.
     val entry = WorkoutSetupEntry(
         selectedEquipment, selectedLiftingUnits, selectedDays, selectedDuration
     )

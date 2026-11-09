@@ -46,6 +46,8 @@ fun LimitationsScreen(
     }
     var noneSelected by remember { mutableStateOf(inProgress?.noneSelected == true) }
 
+    // Published synchronously: a LaunchedEffect dispatches the publish, and the
+    // last thing typed or tapped before the Activity is torn down never arrives.
     val entry = LimitationsEntry(selectedInjuries, noneSelected)
     SideEffect { onEntryChanged(entry) }
 

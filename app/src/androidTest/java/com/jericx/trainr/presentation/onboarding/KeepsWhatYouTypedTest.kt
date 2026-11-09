@@ -1,11 +1,13 @@
 package com.jericx.trainr.presentation.onboarding
 
+import android.os.Bundle
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -16,6 +18,7 @@ import androidx.compose.ui.test.swipeUp
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.R
 import com.jericx.trainr.data.local.TrainrDatabase
 import com.jericx.trainr.data.preferences.ThemePreferences
@@ -182,15 +185,35 @@ class KeepsWhatYouTypedTest {
         composeTestRule.onNodeWithText(string(R.string.bmi_limitations)).assertDoesNotExist()
     }
 
-    // Closing the Activity clears the view model the way the system killing the
-    // process does. Nothing of the form is in saved state, so nothing of it
-    // comes back: the next launch starts the flow over rather than restoring a
-    // half-answered step onto a profile nobody saved.
+    // The lifetime a view model buys over a remember, which a recreation alone
+    // would not show: a step left before NEXT is still the person's answer when
+    // they come back to it.
+    @Test
+    fun aStepLeftBeforeNextKeepsWhatWasTypedOnTheWayBack() {
+        openOnboarding()
+        composeTestRule.onNodeWithText(string(R.string.enter_your_first_name))
+            .performTextInput(NAME)
+
+        composeTestRule.onNodeWithContentDescription(string(R.string.back)).performClick()
+        waitFor(button(R.string.get_started))
+        composeTestRule.onNodeWithText(button(R.string.get_started)).performClick()
+        waitFor(string(R.string.tell_us_about_yourself))
+
+        composeTestRule.onNodeWithText(NAME).performScrollTo().assertIsDisplayed()
+    }
+
+    // Saved state is the only thing a killed process leaves behind, so the name
+    // being absent from it is the whole of the guarantee: made saveable instead,
+    // the form would come back onto a profile nobody ever saved. The relaunch
+    // says what the person gets instead, which is the flow from the start.
     @Test
     fun aHalfAnsweredFormIsGoneOnceTheProcessIs() {
         openOnboarding()
         composeTestRule.onNodeWithText(string(R.string.enter_your_first_name))
             .performTextInput(NAME)
+        composeTestRule.waitForIdle()
+
+        assertThat(whatTheSystemWouldKeep()).doesNotContain(NAME)
 
         scenario?.close()
         scenario = null
@@ -199,6 +222,23 @@ class KeepsWhatYouTypedTest {
         waitFor(button(R.string.get_started))
         composeTestRule.onNodeWithText(button(R.string.get_started)).assertIsDisplayed()
         composeTestRule.onNodeWithText(NAME).assertDoesNotExist()
+    }
+
+    private fun whatTheSystemWouldKeep(): String {
+        val saved = Bundle()
+        checkNotNull(scenario).onActivity { activity ->
+            InstrumentationRegistry.getInstrumentation()
+                .callActivityOnSaveInstanceState(activity, saved)
+        }
+        return flattened(saved)
+    }
+
+    @Suppress("DEPRECATION")
+    private fun flattened(value: Any?): String = when (value) {
+        is Bundle -> value.keySet().joinToString { "$it=" + flattened(value.get(it)) }
+        is Iterable<*> -> value.joinToString { flattened(it) }
+        is Array<*> -> value.joinToString { flattened(it) }
+        else -> value.toString()
     }
 
     private fun startFromTheSplash() {
