@@ -288,6 +288,31 @@ class PlanSkeletonBuilderTest {
             .isEqualTo(runnerUp)
     }
 
+    // Unstuck swapped a movement in for one bad day. That was a circumstance,
+    // not a preference, so it is not one of last week's movements.
+    @Test
+    fun aMovementUnstuckSubstitutedIsNotOfferedFirst() {
+        val first = build(user())
+        val primary = first.days.first().slots.first { it.tier == SlotTier.PRIMARY_COMPOUND }
+        val runnerUp = primary.candidates[1]
+        val lastWeek = WeeklyWorkoutPlan(
+            userId = 1, weekNumber = 1, title = "Week",
+            workoutDays = listOf(
+                WorkoutDay(
+                    dayNumber = 1, title = "Day", duration = 45, exerciseCount = 1, equipment = emptyList(),
+                    exercises = listOf(
+                        WorkoutExercise(exerciseKey = runnerUp, name = runnerUp, addedBy = 1L)
+                    )
+                )
+            )
+        )
+
+        val next = build(user(), previous = lastWeek)
+
+        assertThat(next.days.first().slots.first { it.tier == SlotTier.PRIMARY_COMPOUND }.candidates)
+            .isEqualTo(primary.candidates)
+    }
+
     // Isolation is dealt to where the week is short, so it cannot all land on
     // one muscle.
     @Test

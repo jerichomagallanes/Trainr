@@ -141,7 +141,17 @@ class LlamaIntentInterpreterTest {
         assertThat(model.lastSystem).isEqualTo(IntentPrompt.SYSTEM_INSTRUCTION)
         assertThat(model.lastGrammar).isEqualTo(IntentGrammar.forNote(note))
         assertThat(model.lastMaxTokens).isEqualTo(IntentGrammar.MAX_TOKENS)
-        assertThat(model.lastTimeout).isEqualTo(60.seconds)
+    }
+
+    // iOS reads the same note with the same budget; changing one without the
+    // other makes a note a read on one platform and a timeout on the other.
+    @Test
+    fun theReadIsGivenTheSameTwoMinutesAsIOS() {
+        val model = FakeModel(CompletionResult.Text(validAnswer))
+
+        runTest { interpreter(model = model).interpret(note, Locale.ENGLISH, DirectReason.OTHER) }
+
+        assertThat(model.lastTimeout).isEqualTo(120.seconds)
     }
 
     @Test
