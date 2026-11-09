@@ -111,7 +111,9 @@ class UnstuckJourneyTest {
         composeTestRule.onNode(hasSetTextAction()).performTextInput(NOTE)
         button(R.string.context_use_note).assertIsEnabled().performClick()
 
-        waitFor(string(R.string.adjust_time_title), timeoutMillis = 60_000)
+        // A cold read on the emulator takes over a minute, and the interpreter
+        // itself gives up at 120 s, so the wait outlasts both.
+        waitFor(string(R.string.adjust_time_title), timeoutMillis = 150_000)
         composeTestRule.onNodeWithText(string(R.string.adjust_time_whole_session)).assertIsDisplayed()
         composeTestRule.onNode(hasSetTextAction() and hasText("35")).assertIsDisplayed()
         button(R.string.show_recommendation).assertIsEnabled()
