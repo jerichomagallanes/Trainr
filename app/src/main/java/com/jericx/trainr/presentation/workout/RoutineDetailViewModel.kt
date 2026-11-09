@@ -548,9 +548,9 @@ class RoutineDetailViewModel @Inject constructor(
         open: ExpandedTutorialUi?,
         position: Int
     ): ExpandedTutorialUi? {
-        if (open?.position == position) return null
         val exercise = routine.exercises.firstOrNull { it.position == position } ?: return null
-        return ExpandedTutorialUi(position, exercise.exerciseId)
+        val opening = ExpandedTutorialUi(position, exercise.exerciseId)
+        return opening.takeIf { it != open }
     }
 
     private fun cancelTick() {

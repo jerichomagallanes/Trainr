@@ -32,6 +32,7 @@ import com.jericx.trainr.domain.unstuck.UndoResult
 import com.jericx.trainr.domain.unstuck.FinishKind
 import com.jericx.trainr.domain.unstuck.SessionOutcome
 import com.jericx.trainr.presentation.workout.model.ExerciseUi
+import com.jericx.trainr.presentation.workout.model.isOn
 import com.jericx.trainr.presentation.workout.model.derivedExerciseCount
 import com.jericx.trainr.presentation.workout.model.remainingMinutes
 import com.jericx.trainr.presentation.workout.model.visibleExercises
@@ -648,6 +649,22 @@ class RoutineDetailViewModelTest {
 
         viewModel.toggleVideo(2)
         assertThat(viewModel.uiState.value.expandedVideo).isNull()
+    }
+
+    // The card shows a tutorial only when it is stamped with that card's own
+    // exercise, so a request by key has to carry the identity and not just the place.
+    @Test
+    fun guidanceOpensTheTutorialOnTheExerciseItNames() = runTest {
+        val viewModel = viewModel(dayNumber = 3, repository = repositoryWith(storedPlan))
+        advanceUntilIdle()
+
+        viewModel.showHowToFor("goblet_squat")
+
+        val named = viewModel.exercise(2)
+        assertThat(viewModel.uiState.value.scrollToPosition).isEqualTo(named.position)
+        with(viewModel.uiState.value) {
+            assertThat((expandedHowTo ?: expandedVideo).isOn(named)).isTrue()
+        }
     }
 
     // The player is a WebView living as long as the section is open, so two open at once means two of them
