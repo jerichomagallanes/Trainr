@@ -682,6 +682,7 @@
     <string name="pro_prompt_rewrite">You have used your free week. Pro lets you ask for a different week whenever one does not suit you.</string>
     <string name="pro_prompt_fresh">You have used your free week. Pro lets you start a fresh plan whenever your goal, your kit or your days change.</string>
     <string name="pro_prompt_adjust">Your first adjustment was included. Pro keeps adapting your workouts when life gets in the way.</string>
+    <string name="pro_still_checking">Your subscription is still being checked. Try that again in a moment.</string>
     <!-- App Review: BMI sources and StoreKit outcomes, shared with iOS. -->
     <string name="bmi_about_sources">About BMI &amp; sources</string>
     <string name="bmi_screening_note">For adults 20 and older. A screening measure, not a diagnosis.</string>

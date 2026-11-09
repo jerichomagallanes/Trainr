@@ -206,6 +206,8 @@ class UnstuckJourneyTest {
 
     private fun openProGate() = ProGate(
         isPro = { false },
+        hasRead = { true },
+        readFailed = { false },
         canSell = { true },
         allowance = object : FreeGenerationAllowance {
             override fun hasBeenUsed() = false
