@@ -86,8 +86,10 @@ class PaywallGateTest {
         )
     }
 
-    private fun spentGate(used: Boolean = true) = ProGate(
+    private fun spentGate(used: Boolean = true, hasRead: Boolean = true) = ProGate(
         isPro = { false },
+        hasRead = { hasRead },
+        readFailed = { false },
         canSell = { true },
         allowance = object : FreeGenerationAllowance {
             override fun hasBeenUsed() = used
@@ -217,6 +219,23 @@ class PaywallGateTest {
 
         composeTestRule.onNodeWithText(SampleWorkoutData.weekOne.workoutDays.first().title)
             .assertIsDisplayed()
+        assertDoesNotAskForPro()
+    }
+
+    // A tap that lands before the store has answered. A subscriber reads as not
+    // Pro for the whole of that gap, so this prompt was being shown to people
+    // who had already paid. Neither branch is honest yet: letting it through
+    // gives a week away instead. The person is told to try again.
+    @Test
+    fun aTapBeforeTheStoreHasAnsweredIsToldToTryAgain() {
+        seed(finished = true)
+        startApp(gate = spentGate(hasRead = false))
+
+        openPlanMenu()
+        composeTestRule.onNodeWithText(string(R.string.repeat_this_week)).performClick()
+
+        waitFor(string(R.string.pro_still_checking))
+        composeTestRule.onNodeWithText(string(R.string.pro_still_checking)).assertIsDisplayed()
         assertDoesNotAskForPro()
     }
 }

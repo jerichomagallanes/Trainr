@@ -12,8 +12,19 @@ class ProGateTests {
         }
     }
 
-    private fun gate(isPro: Boolean, used: Boolean, canSell: Boolean = true) =
-        ProGate(isPro = { isPro }, canSell = { canSell }, allowance = FakeAllowance(used))
+    private fun gate(
+        isPro: Boolean,
+        used: Boolean,
+        canSell: Boolean = true,
+        hasRead: Boolean = true,
+        readFailed: Boolean = false
+    ) = ProGate(
+        isPro = { isPro },
+        hasRead = { hasRead },
+        readFailed = { readFailed },
+        canSell = { canSell },
+        allowance = FakeAllowance(used)
+    )
 
     @Test
     fun `the first generation is free`() {
@@ -36,7 +47,7 @@ class ProGateTests {
     @Test
     fun `spending is what closes the free allowance`() {
         val allowance = FakeAllowance()
-        val gate = ProGate(isPro = { false }, canSell = { true }, allowance = allowance)
+        val gate = gateOver(allowance)
 
         assertThat(gate.decide()).isEqualTo(ProGate.Decision.ALLOWED)
         gate.spend()
@@ -57,7 +68,7 @@ class ProGateTests {
     @Test
     fun `a build that cannot sell spends nothing`() {
         val allowance = FakeAllowance()
-        ProGate(isPro = { false }, canSell = { false }, allowance = allowance).spend()
+        gateOver(allowance, canSell = false).spend()
 
         assertThat(allowance.used).isFalse()
     }
@@ -66,7 +77,47 @@ class ProGateTests {
     @Test
     fun `a subscriber spends nothing`() {
         val allowance = FakeAllowance()
-        ProGate(isPro = { true }, canSell = { true }, allowance = allowance).spend()
+        gateOver(allowance, isPro = true).spend()
+
+        assertThat(allowance.used).isFalse()
+    }
+
+    // The defect this covers: a subscriber whose entitlement is still being
+    // read is false here like everyone else, so the gate used to decide what
+    // they are charged for from an answer the store had not given.
+    @Test
+    fun `a tap before the store has answered neither allows nor asks`() {
+        assertThat(gate(isPro = false, used = true, hasRead = false).decide())
+            .isEqualTo(ProGate.Decision.WAIT)
+    }
+
+    @Test
+    fun `a subscriber is not asked while the read is still out`() {
+        assertThat(gate(isPro = true, used = true, hasRead = false).decide())
+            .isEqualTo(ProGate.Decision.WAIT)
+    }
+
+    @Test
+    fun `nothing is spent on an answer the store has not given`() {
+        val allowance = FakeAllowance()
+        gateOver(allowance, hasRead = false).spend()
+
+        assertThat(allowance.used).isFalse()
+    }
+
+    // A failed read is not a pending one: nothing more is coming, so waiting
+    // would strand the person. It falls in with the build that cannot sell,
+    // which lets the week through and takes nothing for it.
+    @Test
+    fun `a read that failed lets the week through rather than asking`() {
+        assertThat(gate(isPro = false, used = true, hasRead = false, readFailed = true).decide())
+            .isEqualTo(ProGate.Decision.ALLOWED)
+    }
+
+    @Test
+    fun `a read that failed spends nothing`() {
+        val allowance = FakeAllowance()
+        gateOver(allowance, hasRead = false, readFailed = true).spend()
 
         assertThat(allowance.used).isFalse()
     }

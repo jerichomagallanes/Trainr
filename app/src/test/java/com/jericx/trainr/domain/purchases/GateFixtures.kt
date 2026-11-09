@@ -11,5 +11,16 @@ class UnspentAllowance : FreeGenerationAllowance {
     }
 }
 
-fun gateOver(allowance: FreeGenerationAllowance) =
-    ProGate(isPro = { false }, canSell = { true }, allowance = allowance)
+fun gateOver(
+    allowance: FreeGenerationAllowance,
+    isPro: Boolean = false,
+    hasRead: Boolean = true,
+    readFailed: Boolean = false,
+    canSell: Boolean = true
+) = ProGate(
+    isPro = { isPro },
+    hasRead = { hasRead },
+    readFailed = { readFailed },
+    canSell = { canSell },
+    allowance = allowance
+)

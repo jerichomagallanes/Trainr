@@ -57,6 +57,7 @@ import com.jericx.trainr.domain.purchases.ProGate
 import com.jericx.trainr.presentation.onboarding.screens.GeneratingScreen
 import com.jericx.trainr.presentation.purchases.PaywallReason
 import com.jericx.trainr.presentation.purchases.ProPaywallRoute
+import com.jericx.trainr.presentation.purchases.ProNoticeDialog
 import com.jericx.trainr.presentation.purchases.ProPromptSheet
 import com.jericx.trainr.presentation.purchases.ProRoute
 import com.jericx.trainr.presentation.onboarding.screens.LimitationsScreen
@@ -281,10 +282,16 @@ fun AppContent(
     // is shown a price.
     var prompt by remember { mutableStateOf<PaywallReason?>(null) }
 
+    // A tap that arrived before the store answered. Saying so beats guessing:
+    // letting it through gives a week away, and asking for money may be asking
+    // a subscriber to buy what they already own.
+    var gateNotice by remember { mutableStateOf<Int?>(null) }
+
     fun askThen(reason: PaywallReason, action: () -> Unit) {
         when (proGate.decide()) {
             ProGate.Decision.ALLOWED -> action()
             ProGate.Decision.ASK -> prompt = reason
+            ProGate.Decision.WAIT -> gateNotice = R.string.pro_still_checking
         }
     }
 
@@ -299,6 +306,8 @@ fun AppContent(
                 .systemBarsPadding(),
             color = MaterialTheme.trainrColors.surfacePage
         ) {
+            ProNoticeDialog(noticeRes = gateNotice, onDismiss = { gateNotice = null })
+
             prompt?.let { reason ->
                 ProPromptSheet(
                     reason = reason,
