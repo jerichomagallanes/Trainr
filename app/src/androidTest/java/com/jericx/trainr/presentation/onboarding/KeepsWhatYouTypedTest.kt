@@ -4,7 +4,6 @@ import android.os.Bundle
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
-import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -13,8 +12,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
-import androidx.compose.ui.test.performTouchInput
-import androidx.compose.ui.test.swipeUp
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -311,12 +308,7 @@ class KeepsWhatYouTypedTest {
         composeTestRule.waitUntil(TIMEOUT_MILLIS) {
             composeTestRule.onAllNodesWithText(threeDays()).fetchSemanticsNodes().size == 1
         }
-        // Swiped rather than scrolled to: performScrollTo() onto one of these
-        // chips never settles, which is the note on the class.
-        // The first of the two scrolling areas is the form; the second is the
-        // bar the button sits in.
-        composeTestRule.onAllNodes(hasScrollAction())[0].performTouchInput { swipeUp() }
-        composeTestRule.onNodeWithText(fortyFiveMinutes()).performClick()
+        composeTestRule.onNodeWithText(fortyFiveMinutes()).performScrollTo().performClick()
         if (submit) {
             composeTestRule.onNodeWithText(button(R.string.next)).performClick()
             waitFor(string(R.string.lets_keep_you_safe))
