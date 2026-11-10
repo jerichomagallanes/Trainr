@@ -118,7 +118,7 @@ class BasicInfoScreenTest {
         // The keyboard the age field raises shortens the form, so the answers
         // below it have to be brought back into view before they can be tapped.
         composeTestRule.onNodeWithText(string(R.string.male)).performScrollTo().performClick()
-        composeTestRule.onNodeWithText(string(R.string.beginner_level))
+        composeTestRule.onNodeWithText(string(R.string.beginner))
             .performScrollTo()
             .performClick()
 
@@ -151,7 +151,7 @@ class BasicInfoScreenTest {
         composeTestRule.onNodeWithText(string(R.string.enter_your_age))
             .performTextInput("28")
         composeTestRule.onNodeWithText(string(R.string.female)).performScrollTo().performClick()
-        composeTestRule.onNodeWithText(string(R.string.intermediate_level))
+        composeTestRule.onNodeWithText(string(R.string.intermediate))
             .performScrollTo()
             .performClick()
         composeTestRule.onNodeWithText(string(R.string.next)).performClick()

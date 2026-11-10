@@ -358,7 +358,7 @@ private fun Questions() {
         R.string.pro_faq_human_q to R.string.pro_faq_human_a,
         R.string.pro_faq_renew_q to R.string.pro_faq_renew_a,
         R.string.pro_faq_cancel_q to R.string.pro_faq_cancel_a,
-        R.string.pro_faq_devices_q to R.string.pro_faq_devices_a
+        R.string.pro_faq_devices_q to R.string.pro_faq_devices_a_google
     )
 
     Column(
