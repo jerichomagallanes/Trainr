@@ -1,16 +1,23 @@
 package com.jericx.trainr.presentation.purchases
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.jericx.trainr.R
 import com.jericx.trainr.data.local.TrainrDatabase
 import com.jericx.trainr.data.preferences.ThemePreferences
+import com.jericx.trainr.domain.model.Equipment
+import com.jericx.trainr.domain.model.ExperienceLevel
+import com.jericx.trainr.domain.model.FitnessGoal
+import com.jericx.trainr.domain.model.Gender
 import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.domain.purchases.AdjustmentAllowance
@@ -99,8 +106,10 @@ class PaywallGateTest {
 
     // Nothing here exercises the adjustment allowance, so it stays open and
     // cannot turn an unrelated tap into a Pro prompt.
-    private fun openAdjustmentGate() = AdjustmentGate(
+    private fun openAdjustmentGate(hasRead: Boolean = true) = AdjustmentGate(
         isPro = { false },
+        hasRead = { hasRead },
+        readFailed = { false },
         canSell = { true },
         allowance = object : AdjustmentAllowance {
             override fun includedCycleId(): String? = null
@@ -109,13 +118,16 @@ class PaywallGateTest {
         }
     )
 
-    private fun startApp(gate: ProGate = spentGate()) {
+    private fun startApp(
+        gate: ProGate = spentGate(),
+        adjustmentGate: AdjustmentGate = openAdjustmentGate()
+    ) {
         composeTestRule.setContent {
             AppContent(
                 versionName = "1.0",
                 themePreferences = themePreferences,
                 proGate = gate,
-                adjustmentGate = openAdjustmentGate(),
+                adjustmentGate = adjustmentGate,
                 breadcrumbs = breadcrumbs,
                 startDestination = Screen.Home.route
             )
@@ -236,6 +248,70 @@ class PaywallGateTest {
 
         waitFor(string(R.string.pro_still_checking))
         composeTestRule.onNodeWithText(string(R.string.pro_still_checking)).assertIsDisplayed()
+        assertDoesNotAskForPro()
+    }
+
+    // Two sample days' unperformed exercises on today, so 35 minutes is a real
+    // cut and the policy has something to propose.
+    private fun seedLongDayToday() = runBlocking {
+        val userId = repository.saveUser(
+            UserProfile(
+                firstName = "Jericho",
+                age = 30,
+                gender = Gender.MALE,
+                weight = 80f,
+                fitnessGoal = FitnessGoal.MUSCLE_GAIN,
+                experienceLevel = ExperienceLevel.INTERMEDIATE,
+                availableEquipment = listOf(Equipment.DUMBBELL),
+                workoutDaysPerWeek = 3,
+                workoutDuration = 40
+            )
+        )
+        val exercises =
+            (SampleWorkoutData.dayFor(5).exercises + SampleWorkoutData.dayFor(3).exercises)
+                .filter { exercise -> exercise.sets.none { it.isCompleted } }
+        repository.saveWeeklyWorkoutPlan(
+            SampleWorkoutData.weekOne.copy(
+                id = 0,
+                userId = userId,
+                startDateMillis = WorkoutWeek.startOfDay(),
+                workoutDays = listOf(
+                    SampleWorkoutData.dayFor(5).copy(
+                        id = 0,
+                        dayNumber = 1,
+                        status = WorkoutStatus.NOT_STARTED,
+                        exerciseCount = exercises.size,
+                        exercises = exercises
+                    )
+                )
+            )
+        )
+    }
+
+    // The adjustment gate answers from its own graph, and the wait is threaded
+    // through each step separately: a branch wired to one of them still passes
+    // every unit test there is.
+    @Test
+    fun anAdjustmentBeforeTheStoreHasAnsweredIsToldToTryAgain() {
+        seedLongDayToday()
+        startApp(adjustmentGate = openAdjustmentGate(hasRead = false))
+
+        composeTestRule.onNodeWithText(string(R.string.start_todays_workout)).performClick()
+        waitFor(string(R.string.adjust_today))
+        composeTestRule.onNodeWithText(string(R.string.adjust_today))
+            .performScrollTo().performClick()
+        waitFor(string(R.string.adjust_reason_time))
+        composeTestRule.onNodeWithText(string(R.string.adjust_reason_time))
+            .performScrollTo().performClick()
+        waitFor(string(R.string.adjust_time_title))
+        composeTestRule.onNode(hasSetTextAction()).performTextInput("35")
+        composeTestRule.onNodeWithText(string(R.string.show_recommendation).uppercase())
+            .performScrollTo().performClick()
+
+        waitFor(string(R.string.pro_still_checking))
+        composeTestRule.onNodeWithText(string(R.string.pro_still_checking)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.adjust_review_time_title))
+            .assertDoesNotExist()
         assertDoesNotAskForPro()
     }
 }

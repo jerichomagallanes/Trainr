@@ -212,6 +212,8 @@ class TimerFinishTest {
 
     private fun openAdjustmentGate() = AdjustmentGate(
         isPro = { false },
+        hasRead = { true },
+        readFailed = { false },
         canSell = { true },
         allowance = object : AdjustmentAllowance {
             override fun includedCycleId(): String? = null

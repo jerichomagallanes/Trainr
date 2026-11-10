@@ -30,6 +30,8 @@ class StoredAdjustmentAllowanceTest {
 
     private fun decision(cycleId: String) = AdjustmentGate(
         isPro = { false },
+        hasRead = { true },
+        readFailed = { false },
         canSell = { true },
         allowance = allowance
     ).decide(cycleId)

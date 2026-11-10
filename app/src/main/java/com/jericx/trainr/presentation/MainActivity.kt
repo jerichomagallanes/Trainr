@@ -655,7 +655,8 @@ fun AppContent(
                 adjustGraph(
                     navController = navController,
                     adjustmentGate = adjustmentGate,
-                    onAskForPro = { reason -> prompt = reason }
+                    onAskForPro = { reason -> prompt = reason },
+                    onStillChecking = { gateNotice = R.string.pro_still_checking }
                 )
 
                 feedbackGraph(navController = navController)
