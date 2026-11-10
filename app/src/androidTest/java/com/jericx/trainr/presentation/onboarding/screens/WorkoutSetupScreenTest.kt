@@ -72,7 +72,7 @@ class WorkoutSetupScreenTest {
     }
 
     @Test
-    fun everyDurationChipIsDrawnWhollyInsideTheForm() {
+    fun noDurationChipHangsPastTheForm() {
         composeTestRule.setContent {
             TrainrTheme {
                 WorkoutSetupScreen(onNextClick = { _, _, _, _ -> }, onBackClick = {})
@@ -85,7 +85,7 @@ class WorkoutSetupScreenTest {
     // The form is taller at the largest text setting and the chips are not, so
     // the pixel a chip ends on is a different one.
     @Test
-    fun everyDurationChipIsDrawnWhollyInsideTheFormAtTheLargestTextSize() {
+    fun noDurationChipHangsPastTheFormAtTheLargestTextSize() {
         composeTestRule.setContent {
             val base = LocalDensity.current
             CompositionLocalProvider(
@@ -134,7 +134,9 @@ class WorkoutSetupScreenTest {
             }
         }
 
-        Constants.Workout.DURATION_OPTIONS.forEach { minutes ->
+        // Tapped back to front: the step opens on the last option, so ending on
+        // it would assert the answer the screen already carried.
+        Constants.Workout.DURATION_OPTIONS.reversed().forEach { minutes ->
             composeTestRule.onNodeWithText(minutesLabel(minutes))
                 .performScrollTo()
                 .performClick()
@@ -142,7 +144,7 @@ class WorkoutSetupScreenTest {
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText(string(R.string.next)).performClick()
 
-        assertThat(captured).isEqualTo(Constants.Workout.DURATION_OPTIONS.last())
+        assertThat(captured).isEqualTo(Constants.Workout.DURATION_OPTIONS.first())
     }
 
     // Equipment is the question now: every category the catalog stocks is on
