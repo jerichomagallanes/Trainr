@@ -220,6 +220,8 @@ class UnstuckJourneyTest {
     // The device's stored allowance may already be spent; the paywall is not under test.
     private fun openAdjustmentGate() = AdjustmentGate(
         isPro = { false },
+        hasRead = { true },
+        readFailed = { false },
         canSell = { true },
         allowance = object : AdjustmentAllowance {
             override fun includedCycleId(): String? = null

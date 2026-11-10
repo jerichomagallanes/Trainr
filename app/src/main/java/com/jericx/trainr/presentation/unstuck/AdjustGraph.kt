@@ -29,7 +29,8 @@ const val GUIDE_REQUEST = "guide"
 fun NavGraphBuilder.adjustGraph(
     navController: NavHostController,
     adjustmentGate: AdjustmentGate,
-    onAskForPro: (PaywallReason) -> Unit
+    onAskForPro: (PaywallReason) -> Unit,
+    onStillChecking: () -> Unit
 ) {
     navigation(
         route = Screen.Adjust.route,
@@ -57,9 +58,11 @@ fun NavGraphBuilder.adjustGraph(
         composable(Screen.AdjustEntry.route) { entry ->
             val graph = navController.adjustEntry(entry)
             when (graph.arguments.reason()) {
-                DirectReason.LESS_TIME -> TimeStep(navController, graph, adjustmentGate, onAskForPro)
+                DirectReason.LESS_TIME ->
+                    TimeStep(navController, graph, adjustmentGate, onAskForPro, onStillChecking)
+
                 DirectReason.EQUIPMENT ->
-                    EquipmentStep(navController, graph, adjustmentGate, onAskForPro)
+                    EquipmentStep(navController, graph, adjustmentGate, onAskForPro, onStillChecking)
 
                 DirectReason.PAIN -> PainStep(navController, graph)
                 else -> ContextStep(navController, graph)
@@ -71,7 +74,8 @@ fun NavGraphBuilder.adjustGraph(
                 navController,
                 navController.adjustEntry(entry),
                 adjustmentGate,
-                onAskForPro
+                onAskForPro,
+                onStillChecking
             )
         }
 
@@ -80,7 +84,8 @@ fun NavGraphBuilder.adjustGraph(
                 navController,
                 navController.adjustEntry(entry),
                 adjustmentGate,
-                onAskForPro
+                onAskForPro,
+                onStillChecking
             )
         }
 
@@ -147,7 +152,8 @@ private fun TimeStep(
     navController: NavHostController,
     graph: NavBackStackEntry,
     adjustmentGate: AdjustmentGate,
-    onAskForPro: (PaywallReason) -> Unit
+    onAskForPro: (PaywallReason) -> Unit,
+    onStillChecking: () -> Unit
 ) {
     val viewModel: AdjustmentViewModel = hiltViewModel(graph)
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -156,7 +162,9 @@ private fun TimeStep(
         state = state,
         onSelectMinutes = viewModel::selectMinutes,
         onTypeMinutes = viewModel::typeMinutes,
-        onShowRecommendation = { navController.review(viewModel, adjustmentGate, onAskForPro) },
+        onShowRecommendation = {
+            navController.review(viewModel, adjustmentGate, onAskForPro, onStillChecking)
+        },
         onToggleRemember = viewModel::toggleRemember,
         onKeepPlan = { navController.leaveAdjustment() },
         onBack = { navController.popBackStack() }
@@ -168,7 +176,8 @@ private fun EquipmentStep(
     navController: NavHostController,
     graph: NavBackStackEntry,
     adjustmentGate: AdjustmentGate,
-    onAskForPro: (PaywallReason) -> Unit
+    onAskForPro: (PaywallReason) -> Unit,
+    onStillChecking: () -> Unit
 ) {
     val viewModel: AdjustmentViewModel = hiltViewModel(graph)
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -177,7 +186,9 @@ private fun EquipmentStep(
         state = state,
         onSelectExercise = viewModel::selectExercise,
         onToggleEquipment = viewModel::toggleEquipment,
-        onShowRecommendation = { navController.review(viewModel, adjustmentGate, onAskForPro) },
+        onShowRecommendation = {
+            navController.review(viewModel, adjustmentGate, onAskForPro, onStillChecking)
+        },
         onKeepPlan = { navController.leaveAdjustment() },
         onBack = { navController.popBackStack() }
     )
@@ -246,18 +257,23 @@ private fun NavHostController.adjustEntry(entry: NavBackStackEntry): NavBackStac
 private fun NavHostController.review(
     viewModel: AdjustmentViewModel,
     adjustmentGate: AdjustmentGate,
-    onAskForPro: (PaywallReason) -> Unit
+    onAskForPro: (PaywallReason) -> Unit,
+    onStillChecking: () -> Unit
 ) {
     val proposalId = viewModel.showRecommendation()
     if (viewModel.uiState.value.review == null) return
     // Nothing was proposed, so there is nothing to sell: the gate answers for
     // a change to today's plan, not for being told the plan already fits.
-    val ask = proposalId != null &&
-        adjustmentGate.decide(proposalId) == AdjustmentGate.Decision.ASK
+    val decision = proposalId?.let { adjustmentGate.decide(it) }
+        ?: AdjustmentGate.Decision.ALLOWED
 
     // The draft stays in the graph's view model, so the answer is still there
-    // when the paywall is dismissed.
-    if (ask) onAskForPro(PaywallReason.ADJUST) else navigate(Screen.AdjustReview.route)
+    // when the paywall or the notice is dismissed.
+    when (decision) {
+        AdjustmentGate.Decision.ASK -> onAskForPro(PaywallReason.ADJUST)
+        AdjustmentGate.Decision.WAIT -> onStillChecking()
+        AdjustmentGate.Decision.ALLOWED -> navigate(Screen.AdjustReview.route)
+    }
 }
 
 // Opened from home there is no session screen behind the flow, so leaving

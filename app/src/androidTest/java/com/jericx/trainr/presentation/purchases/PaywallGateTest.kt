@@ -101,6 +101,8 @@ class PaywallGateTest {
     // cannot turn an unrelated tap into a Pro prompt.
     private fun openAdjustmentGate() = AdjustmentGate(
         isPro = { false },
+        hasRead = { true },
+        readFailed = { false },
         canSell = { true },
         allowance = object : AdjustmentAllowance {
             override fun includedCycleId(): String? = null

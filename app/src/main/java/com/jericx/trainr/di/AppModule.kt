@@ -120,6 +120,8 @@ object AppModule {
         allowance: AdjustmentAllowance
     ): AdjustmentGate = AdjustmentGate(
         isPro = { entitlements.isPro.value },
+        hasRead = { entitlements.hasRead.value },
+        readFailed = { entitlements.readFailed.value },
         canSell = { entitlements.canSell },
         allowance = allowance
     )
