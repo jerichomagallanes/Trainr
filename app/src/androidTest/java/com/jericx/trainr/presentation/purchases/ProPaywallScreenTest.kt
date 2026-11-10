@@ -255,6 +255,22 @@ class ProPaywallScreenTest {
         composeTestRule.onNodeWithText(string(R.string.pro_faq_cancel_a)).assertIsDisplayed()
     }
 
+    // The answer names an account the buyer actually has: this one shipped
+    // telling iPhone owners to sign in to Google.
+    @Test
+    fun theNewPhoneAnswerNamesThePlayStoreAndNeverApples() {
+        setScreen()
+
+        composeTestRule.onNodeWithText(string(R.string.pro_faq_devices_q))
+            .performScrollTo()
+            .performClick()
+
+        composeTestRule.onNodeWithText(string(R.string.pro_faq_devices_a_google))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.pro_faq_devices_a_apple))
+            .assertDoesNotExist()
+    }
+
     // Play has no standard EULA to fall back on, so this link is the only terms
     // an Android buyer is ever shown.
     @Test

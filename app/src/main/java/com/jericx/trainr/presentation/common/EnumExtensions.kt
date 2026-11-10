@@ -15,9 +15,9 @@ fun Gender.getLocalizedName(): String = when (this) {
 
 @Composable
 fun ExperienceLevel.getLocalizedName(): String = when (this) {
-    ExperienceLevel.BEGINNER -> stringResource(R.string.beginner_level)
-    ExperienceLevel.INTERMEDIATE -> stringResource(R.string.intermediate_level)
-    ExperienceLevel.ADVANCED -> stringResource(R.string.advanced_level)
+    ExperienceLevel.BEGINNER -> stringResource(R.string.beginner)
+    ExperienceLevel.INTERMEDIATE -> stringResource(R.string.intermediate)
+    ExperienceLevel.ADVANCED -> stringResource(R.string.advanced)
 }
 
 @Composable

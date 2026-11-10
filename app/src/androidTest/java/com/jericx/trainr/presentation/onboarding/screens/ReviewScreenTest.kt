@@ -15,6 +15,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.R
 import com.jericx.trainr.common.Constants
+import com.jericx.trainr.domain.model.ExperienceLevel
 import com.jericx.trainr.domain.model.FitnessGoal
 import com.jericx.trainr.domain.model.UnitSystem
 import com.jericx.trainr.domain.model.UserProfile
@@ -257,6 +258,18 @@ class ReviewScreenTest {
             .assertIsDisplayed()
         composeTestRule.onNodeWithText(string(R.string.height_cm_format).format(175))
             .assertIsDisplayed()
+    }
+
+    // The picker and the read-back drew the experience level from two string
+    // keys holding the same English, so only one of them was ever pinned.
+    @Test
+    fun theProfileReadsBackTheExperienceLevelItHolds() {
+        setScreen(sampleProfile.copy(experienceLevel = ExperienceLevel.ADVANCED))
+
+        composeTestRule.onNodeWithText(string(R.string.advanced))
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.beginner)).assertDoesNotExist()
     }
 
     @Test
