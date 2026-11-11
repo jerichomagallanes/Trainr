@@ -9,6 +9,7 @@ import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.platform.WindowInfo
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -26,6 +27,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.R
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
+import com.jericx.trainr.testing.onOneLine
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -337,18 +339,22 @@ class ProPaywallScreenTest {
     // again, and the bar fits inside it whatever the ceiling does.
     private val reviewWindow = DpSize(375.dp, 667.dp)
 
-    private fun setPaywallInAReviewWindow(scale: Float) {
+    // What a largest display size and a largest font size together leave: the
+    // review window at this text setting still has room to spare.
+    private val narrowestWindow = DpSize(320.dp, 568.dp)
+
+    private fun setPaywallInAReviewWindow(scale: Float, window: DpSize = reviewWindow) {
         composeTestRule.setContent {
             val base = LocalDensity.current
             val container = with(base) {
-                IntSize(reviewWindow.width.roundToPx(), reviewWindow.height.roundToPx())
+                IntSize(window.width.roundToPx(), window.height.roundToPx())
             }
             CompositionLocalProvider(
                 LocalDensity provides Density(base.density, fontScale = scale),
                 LocalWindowInfo provides FixedWindow(container)
             ) {
                 TrainrTheme {
-                    Box(modifier = Modifier.size(reviewWindow).testTag(WINDOW)) {
+                    Box(modifier = Modifier.size(window).testTag(WINDOW)) {
                         ProPaywallScreen(
                             reason = PaywallReason.NEXT_WEEK,
                             plans = listOf(monthly, yearly, lifetime),
@@ -435,14 +441,29 @@ class ProPaywallScreenTest {
         assertEveryPriceIsInsideItsCard()
     }
 
+    // A price is measured before the weighted column beside it and takes its
+    // whole width out of it, so the term and what it bills are what give way
+    // once the line runs short.
+    @Test
+    fun atTheLargestTextEveryPlanShowsItsTermAndItsBillingWhole() {
+        setPaywallInAReviewWindow(scale = 2f)
+
+        assertEveryTermKeepsItsWords()
+    }
+
+    @Test
+    fun onTheNarrowestWindowTheLargestTextStillShowsEveryTermWhole() {
+        setPaywallInAReviewWindow(scale = 2f, window = narrowestWindow)
+
+        assertEveryTermKeepsItsWords()
+    }
+
     // The card merges the words it holds, so the merged node is the card and the
     // unmerged one is the price alone.
     private fun assertEveryPriceIsInsideItsCard() {
         listOf(monthly, yearly, lifetime).forEach { plan ->
             val card = composeTestRule.onNodeWithText(plan.price).getUnclippedBoundsInRoot()
-            val price = composeTestRule
-                .onNodeWithText(plan.price, useUnmergedTree = true)
-                .getUnclippedBoundsInRoot()
+            val price = unmerged(plan.price).getUnclippedBoundsInRoot()
 
             assertThat(price.left.value).isAtLeast(card.left.value)
             assertThat(price.right.value).isAtMost(card.right.value)
@@ -450,6 +471,16 @@ class ProPaywallScreenTest {
             assertThat(price.bottom.value).isAtMost(card.bottom.value)
         }
     }
+
+    private fun assertEveryTermKeepsItsWords() {
+        listOf(monthly, yearly, lifetime).forEach { plan ->
+            unmerged(string(plan.termRes)).assert(onOneLine())
+            unmerged(string(plan.billingRes)).assert(onOneLine())
+        }
+    }
+
+    private fun unmerged(text: String) =
+        composeTestRule.onNodeWithText(text, useUnmergedTree = true)
 }
 
 private const val WINDOW = "reviewWindow"
