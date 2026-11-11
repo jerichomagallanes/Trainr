@@ -30,17 +30,15 @@ class UserMapper {
             id = entity.id,
             firstName = entity.firstName,
             age = entity.age,
-            gender = Gender.valueOf(entity.gender),
+            gender = storedEnum(entity.gender, Gender.PREFER_NOT_TO_SAY),
             height = entity.height,
             weight = entity.weight,
-            fitnessGoal = FitnessGoal.valueOf(entity.fitnessGoal),
-            experienceLevel = ExperienceLevel.valueOf(entity.experienceLevel),
+            fitnessGoal = storedEnum(entity.fitnessGoal, FitnessGoal.GENERAL_FITNESS),
+            experienceLevel = storedEnum(entity.experienceLevel, ExperienceLevel.BEGINNER),
             availableEquipment = entity.availableEquipment.mapNotNull(::storedEquipment).distinct(),
             workoutDaysPerWeek = entity.workoutDaysPerWeek,
             workoutDuration = entity.workoutDuration,
-            injuries = entity.injuries.mapNotNull {
-                try { Injury.valueOf(it) } catch (e: Exception) { null }
-            },
+            injuries = entity.injuries.mapNotNull { storedEnum<Injury>(it) },
             bodyUnitSystem = runCatching { UnitSystem.valueOf(entity.bodyUnitSystem) }
                 .getOrDefault(UnitSystem.Default),
             liftingUnitSystem = entity.liftingUnitSystem
@@ -183,3 +181,14 @@ class UserMapper {
         )
     }
 }
+
+// A constant this build does not know is a profile written by a later release,
+// not corruption: the row is still theirs. Reading it back as the neutral
+// answer costs one setting they can change, where throwing would put every
+// launch into a crash loop and cost them their whole history. The fallbacks are
+// the same ones iOS already uses.
+private inline fun <reified T : Enum<T>> storedEnum(raw: String, fallback: T): T =
+    storedEnum<T>(raw) ?: fallback
+
+private inline fun <reified T : Enum<T>> storedEnum(raw: String): T? =
+    runCatching { enumValueOf<T>(raw) }.getOrNull()
