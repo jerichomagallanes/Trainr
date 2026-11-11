@@ -96,7 +96,7 @@ class ExerciseSetTableTest {
 
         composeTestRule.onNodeWithText(string(R.string.add_set)).assertDoesNotExist()
         composeTestRule.onNodeWithContentDescription(string(R.string.delete_set)).assertDoesNotExist()
-        composeTestRule.onNodeWithContentDescription(string(R.string.mark_set_incomplete))
+        composeTestRule.onNodeWithContentDescription(string(R.string.set_complete))
             .assertDoesNotExist()
         assertThat(composeTestRule.onAllNodes(hasSetTextAction()).fetchSemanticsNodes()).isEmpty()
     }
@@ -150,7 +150,7 @@ class ExerciseSetTableTest {
         var logged: ExerciseSet? = null
         setTable(ExerciseMeasure.REPS, onSetChanged = { logged = it })
 
-        composeTestRule.onAllNodesWithContentDescription(string(R.string.mark_set_complete))
+        composeTestRule.onAllNodesWithContentDescription(string(R.string.set_complete))
             .onFirst()
             .performClick()
 
@@ -588,7 +588,7 @@ class ExerciseSetTableTest {
         }
 
         val tick = composeTestRule.onNodeWithContentDescription(
-            string(R.string.mark_set_complete)
+            string(R.string.set_complete)
         ).getUnclippedBoundsInRoot()
 
         assertThat((tick.right - tick.left).value).isAtLeast(40f)

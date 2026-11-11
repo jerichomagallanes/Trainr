@@ -281,10 +281,9 @@ private fun SetRow(
                 ),
                 contentDescription = stringResource(
                     when {
-                        isReadOnly && set.isCompleted -> R.string.completed
-                        isReadOnly -> R.string.not_completed
-                        set.isCompleted -> R.string.mark_set_incomplete
-                        else -> R.string.mark_set_complete
+                        !isReadOnly -> R.string.set_complete
+                        set.isCompleted -> R.string.completed
+                        else -> R.string.not_completed
                     }
                 ),
                 tint = if (set.isCompleted) colors.statusDoneInk else colors.outlineControl,

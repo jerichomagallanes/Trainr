@@ -17,6 +17,7 @@ import com.jericx.trainr.R
 import com.jericx.trainr.common.Constants
 import com.jericx.trainr.domain.model.ExperienceLevel
 import com.jericx.trainr.domain.model.FitnessGoal
+import com.jericx.trainr.domain.model.Gender
 import com.jericx.trainr.domain.model.UnitSystem
 import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
@@ -270,6 +271,18 @@ class ReviewScreenTest {
             .performScrollTo()
             .assertIsDisplayed()
         composeTestRule.onNodeWithText(string(R.string.beginner)).assertDoesNotExist()
+    }
+
+    // The picker and the read-back drew the gender from two string keys holding
+    // the same English, so only one of them was ever pinned.
+    @Test
+    fun theProfileReadsBackTheGenderItHolds() {
+        setScreen(sampleProfile.copy(gender = Gender.FEMALE))
+
+        composeTestRule.onNodeWithText(string(R.string.female))
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.male)).assertDoesNotExist()
     }
 
     @Test
