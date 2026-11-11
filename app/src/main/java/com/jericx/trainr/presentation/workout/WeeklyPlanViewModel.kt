@@ -28,7 +28,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.TimeZone
 import javax.inject.Inject
@@ -116,15 +115,15 @@ class WeeklyPlanViewModel @Inject constructor(
 
     fun refresh() {
         viewModelScope.launch {
-            user = userRepository.getCurrentUser()
-            val plans = user
-                ?.let { userRepository.getWeeklyWorkoutPlans(it.id).first() }
-                .orEmpty()
-            val newest = plans.maxByOrNull { it.weekNumber }
-            val stored = if (requestedWeekNumber == null) {
-                newest
-            } else {
-                plans.firstOrNull { it.weekNumber == requestedWeekNumber }
+            val profile = userRepository.getCurrentUser()
+            user = profile
+            val newest = profile?.let { userRepository.getLatestWeeklyWorkoutPlan(it.id) }
+            // Two weeks at most, and usually the same one twice: hydrating every
+            // week stored made opening the screen cost more with every week trained.
+            val stored = when {
+                profile == null -> null
+                requestedWeekNumber == null || requestedWeekNumber == newest?.weekNumber -> newest
+                else -> userRepository.getWeeklyWorkoutPlan(profile.id, requestedWeekNumber)
             }
 
             _uiState.value = if (stored == null) {

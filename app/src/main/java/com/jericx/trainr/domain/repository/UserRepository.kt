@@ -25,6 +25,7 @@ interface UserRepository {
     suspend fun replaceWeeklyWorkoutPlan(planId: Long, replacement: WeeklyWorkoutPlan): Long
     fun getWeeklyWorkoutPlans(userId: Long): Flow<List<WeeklyWorkoutPlan>>
     suspend fun getWeeklyWorkoutPlan(userId: Long, weekNumber: Int): WeeklyWorkoutPlan?
+    suspend fun getLatestWeeklyWorkoutPlan(userId: Long): WeeklyWorkoutPlan?
     suspend fun updateWeeklyWorkoutPlan(plan: WeeklyWorkoutPlan)
     suspend fun deleteWeeklyWorkoutPlan(planId: Long)
     suspend fun getWeekOutline(userId: Long, weekNumber: Int?): WeekOutline?

@@ -22,6 +22,8 @@ class OneWeekRepository(var plan: WeeklyWorkoutPlan) : UserRepository {
     override suspend fun getWeeklyWorkoutPlan(userId: Long, weekNumber: Int) =
         plan.takeIf { it.weekNumber == weekNumber }
 
+    override suspend fun getLatestWeeklyWorkoutPlan(userId: Long) = plan
+
     override suspend fun getWeekOutline(userId: Long, weekNumber: Int?): WeekOutline? =
         outline.takeIf { weekNumber == null || weekNumber == plan.weekNumber }
 

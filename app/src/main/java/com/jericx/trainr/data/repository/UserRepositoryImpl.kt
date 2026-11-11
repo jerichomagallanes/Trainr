@@ -73,11 +73,14 @@ class UserRepositoryImpl(
         }
     }
 
-    override suspend fun getWeeklyWorkoutPlan(userId: Long, weekNumber: Int): WeeklyWorkoutPlan? {
-        val planEntity = userDao.getWeeklyWorkoutPlan(userId, weekNumber) ?: return null
-        val days = getWorkoutDaysForPlan(planEntity.id)
-        return mapper.mapToDomain(planEntity, days)
-    }
+    override suspend fun getWeeklyWorkoutPlan(userId: Long, weekNumber: Int): WeeklyWorkoutPlan? =
+        userDao.getWeeklyWorkoutPlan(userId, weekNumber)?.let { planOf(it) }
+
+    override suspend fun getLatestWeeklyWorkoutPlan(userId: Long): WeeklyWorkoutPlan? =
+        userDao.getLatestWeeklyWorkoutPlan(userId)?.let { planOf(it) }
+
+    private suspend fun planOf(planEntity: WeeklyWorkoutPlanEntity): WeeklyWorkoutPlan =
+        mapper.mapToDomain(planEntity, getWorkoutDaysForPlan(planEntity.id))
 
     override suspend fun updateWeeklyWorkoutPlan(plan: WeeklyWorkoutPlan) {
         userDao.updateWeeklyWorkoutPlan(mapper.mapToEntity(plan))
