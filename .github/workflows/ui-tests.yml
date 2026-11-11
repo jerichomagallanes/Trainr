@@ -1,13 +1,14 @@
 name: UI tests
 
 # Instrumentation tests need a booted emulator, so they are kept out of the CI
-# workflow: they run automatically on every PR, but they are deliberately NOT a
-# required check. Emulator flakes should never be able to block a merge on their
-# own — read the result, re-run if it looks like a flake, investigate if it
-# doesn't. The nightly run on main catches anything that slipped through.
+# workflow: they run automatically on every PR into a branch work merges to, but
+# they are deliberately NOT a required check. Emulator flakes should never be
+# able to block a merge on their own — read the result, re-run if it looks like a
+# flake, investigate if it doesn't. The nightly run on main catches anything that
+# slipped through.
 on:
   pull_request:
-    branches: [main]
+    branches: [main, version/2.0]
     paths-ignore:
       - '**/*.md'
       - 'docs/**'

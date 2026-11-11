@@ -10,10 +10,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,6 +31,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.withStyle
@@ -237,7 +240,9 @@ fun BodyMetricsScreen(
                 Spacer(modifier = Modifier.height(Spacing.extraLarge))
 
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("unitTabs"),
                     horizontalArrangement = Arrangement.spacedBy(Spacing.card)
                 ) {
                     UnitTab(
@@ -349,27 +354,36 @@ private fun UnitTab(
         bottomEnd = 0.dp
     )
 
-    Surface(
-        onClick = onClick,
-        modifier = modifier.height(ComponentHeight.ChipTall),
-        shape = shape,
-        color = if (selected)
-            MaterialTheme.trainrColors.surfaceSelected
-        else
-            MaterialTheme.trainrColors.surfaceCard,
-        border = if (selected) null else BorderStroke(1.dp, MaterialTheme.trainrColors.outlineControl)
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Text(
-                text = text,
-                style = MaterialTheme.typography.bodyLarge.copy(
-                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
-                ),
-                color = if (selected)
-                    MaterialTheme.trainrColors.onSurfaceSelected
-                else
-                    MaterialTheme.trainrColors.onSurfaceMuted
-            )
+    // A chip shorter than the 48dp touch target is grown to it and centred back
+    // inside the height asked for here, which for an odd difference rounds half
+    // a pixel the wrong way and leaves the tab hanging past the row it is in.
+    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
+        Surface(
+            onClick = onClick,
+            modifier = modifier.height(ComponentHeight.ChipTall),
+            shape = shape,
+            color = if (selected)
+                MaterialTheme.trainrColors.surfaceSelected
+            else
+                MaterialTheme.trainrColors.surfaceCard,
+            border = if (selected) {
+                null
+            } else {
+                BorderStroke(1.dp, MaterialTheme.trainrColors.outlineControl)
+            }
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Text(
+                    text = text,
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
+                    ),
+                    color = if (selected)
+                        MaterialTheme.trainrColors.onSurfaceSelected
+                    else
+                        MaterialTheme.trainrColors.onSurfaceMuted
+                )
+            }
         }
     }
 }

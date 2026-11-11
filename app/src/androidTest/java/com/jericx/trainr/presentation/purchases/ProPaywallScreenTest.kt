@@ -418,6 +418,38 @@ class ProPaywallScreenTest {
         assertThat(rows[1].top.value).isAtLeast(rows[0].bottom.value)
         assertThat(rows[2].top.value).isAtLeast(rows[1].bottom.value)
     }
+
+    // Stacking is what keeps a price off its own border; these hold the cards to
+    // it by measurement rather than by the shape of the layout that produced it.
+    @Test
+    fun everyPlanCardHoldsItsOwnPrice() {
+        setPaywallInAReviewWindow(scale = 1f)
+
+        assertEveryPriceIsInsideItsCard()
+    }
+
+    @Test
+    fun everyPlanCardHoldsItsOwnPriceAtTheLargestText() {
+        setPaywallInAReviewWindow(scale = 2f)
+
+        assertEveryPriceIsInsideItsCard()
+    }
+
+    // The card merges the words it holds, so the merged node is the card and the
+    // unmerged one is the price alone.
+    private fun assertEveryPriceIsInsideItsCard() {
+        listOf(monthly, yearly, lifetime).forEach { plan ->
+            val card = composeTestRule.onNodeWithText(plan.price).getUnclippedBoundsInRoot()
+            val price = composeTestRule
+                .onNodeWithText(plan.price, useUnmergedTree = true)
+                .getUnclippedBoundsInRoot()
+
+            assertThat(price.left.value).isAtLeast(card.left.value)
+            assertThat(price.right.value).isAtMost(card.right.value)
+            assertThat(price.top.value).isAtLeast(card.top.value)
+            assertThat(price.bottom.value).isAtMost(card.bottom.value)
+        }
+    }
 }
 
 private const val WINDOW = "reviewWindow"

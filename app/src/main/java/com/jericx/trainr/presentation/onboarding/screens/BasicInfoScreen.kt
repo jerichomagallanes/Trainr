@@ -16,6 +16,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import com.jericx.trainr.R
@@ -166,7 +167,9 @@ fun BasicInfoScreen(
 
                 TrainrFormSection(title = stringResource(R.string.gender)) {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("genderChoices"),
                         horizontalArrangement = Arrangement.spacedBy(Spacing.card)
                     ) {
                         TrainrRadioChip(

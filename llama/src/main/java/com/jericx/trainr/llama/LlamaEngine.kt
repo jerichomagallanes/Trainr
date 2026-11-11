@@ -5,16 +5,18 @@ import android.content.res.Configuration
 import android.util.Log
 import java.io.File
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeSource
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 
 sealed interface CompletionResult {
     data class Text(val text: String) : CompletionResult
@@ -98,13 +100,19 @@ class LlamaEngine(
                     )
                 }
                 try {
-                    withTimeout(timeout) { run.await() }
-                        ?.let { CompletionResult.Text(String(it)) }
-                        ?: if (releaseRequested) CompletionResult.Cancelled else CompletionResult.Failed
-                } catch (timedOut: TimeoutCancellationException) {
-                    LlamaNative.cancel(session)
-                    withContext(NonCancellable) { run.join() }
-                    CompletionResult.Timeout
+                    if (ranWithin(timeout, run)) {
+                        run.await()
+                            ?.let { CompletionResult.Text(String(it)) }
+                            ?: if (releaseRequested) {
+                                CompletionResult.Cancelled
+                            } else {
+                                CompletionResult.Failed
+                            }
+                    } else {
+                        LlamaNative.cancel(session)
+                        withContext(NonCancellable) { run.join() }
+                        CompletionResult.Timeout
+                    }
                 } catch (cancelled: CancellationException) {
                     LlamaNative.cancel(session)
                     withContext(NonCancellable) { run.join() }
@@ -116,6 +124,16 @@ class LlamaEngine(
         }
         if (releaseRequested) release()
         result
+    }
+
+    private suspend fun ranWithin(timeout: Duration, run: Deferred<*>): Boolean {
+        val budget = ReadBudget(timeout, SLICE)
+        while (!budget.isSpent && !run.isCompleted) {
+            val mark = TimeSource.Monotonic.markNow()
+            withTimeoutOrNull(budget.nextSlice) { run.join() }
+            budget.charge(mark.elapsedNow())
+        }
+        return run.isCompleted
     }
 
     override fun onTrimMemory(level: Int) {
@@ -148,5 +166,6 @@ class LlamaEngine(
         const val TAG = "LlamaEngine"
         const val MIN_THREADS = 2
         const val MAX_THREADS = 6
+        val SLICE = 1.seconds
     }
 }
