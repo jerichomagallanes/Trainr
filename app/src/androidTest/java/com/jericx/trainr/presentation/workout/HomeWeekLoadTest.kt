@@ -188,7 +188,8 @@ class HomeWeekLoadTest {
         assertThat(browsed.state.isCurrentWeek).isFalse()
     }
 
-    // The screen the history belongs to: this one must keep reading all of it.
+    // The screen the history belongs to: every week must still reach it. How
+    // many reads that takes is the screen's own business and may yet drop.
     @Test
     fun weeklyProgressStillReadsEveryWeek() = runBlocking {
         seed(1)
@@ -207,10 +208,13 @@ class HomeWeekLoadTest {
                 "50 weeks ${fifty.queries} queries ${fifty.millis}ms"
         )
 
+        assertThat(ten.state.weeks).hasSize(10)
         assertThat(fifty.state.weeks).hasSize(50)
+        assertThat(fifty.state.weeks.map { it.totalDays }.toSet())
+            .containsExactlyElementsIn(one.state.weeks.map { it.totalDays }.toSet())
+        assertThat(fifty.state.weeks.map { it.completedDays }.toSet())
+            .containsExactlyElementsIn(one.state.weeks.map { it.completedDays }.toSet())
         assertThat(fifty.state.weeks.map { it.weekNumber }).isInStrictOrder()
-        assertThat(ten.queries).isGreaterThan(one.queries)
-        assertThat(fifty.queries).isGreaterThan(ten.queries)
     }
 
     // A past day's chip reads the work logged on it, which lives two tables
