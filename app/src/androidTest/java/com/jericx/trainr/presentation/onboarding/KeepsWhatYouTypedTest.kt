@@ -11,6 +11,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -221,6 +222,75 @@ class KeepsWhatYouTypedTest {
         composeTestRule.onNodeWithText(NAME).assertDoesNotExist()
     }
 
+    // Editing a step from the review had the same defect, and the fix the walk
+    // got could not simply be extended to it: that draft outlives the step it
+    // belongs to, which is what an abandoned edit must not do.
+    @Test
+    fun anEditedStepKeepsTheChangeAcrossARecreation() {
+        walkToTheReview()
+        openThePersonalEdit()
+        retypeTheName()
+
+        recreate(onto = string(R.string.tell_us_about_yourself))
+
+        composeTestRule.onNodeWithText(EDITED_NAME).performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    fun anEditClosedWithoutSavingIsGoneTheNextTimeTheStepIsOpened() {
+        walkToTheReview()
+        openThePersonalEdit()
+        retypeTheName()
+
+        composeTestRule.onNodeWithContentDescription(string(R.string.close)).performClick()
+        waitFor(string(R.string.your_fitness_profile))
+        openThePersonalEdit()
+
+        composeTestRule.onNodeWithText(NAME).performScrollTo().assertIsDisplayed()
+        composeTestRule.onNodeWithText(EDITED_NAME).assertDoesNotExist()
+    }
+
+    @Test
+    fun anEditSavedAfterARecreationIsTheOneThatIsStored() {
+        walkToTheReview()
+        openThePersonalEdit()
+        retypeTheName()
+
+        recreate(onto = string(R.string.tell_us_about_yourself))
+        composeTestRule.onNodeWithText(button(R.string.save)).performClick()
+        waitFor(string(R.string.your_fitness_profile))
+
+        composeTestRule.onNodeWithText(EDITED_NAME).performScrollTo().assertIsDisplayed()
+        // Seeded from the stored profile, because the edit took its draft with it.
+        openThePersonalEdit()
+        composeTestRule.onNodeWithText(EDITED_NAME).performScrollTo().assertIsDisplayed()
+    }
+
+    private fun walkToTheReview() {
+        openOnboarding()
+        answerBasicInfo()
+        answerMeasurements()
+        answerGoal()
+        answerSetup()
+        composeTestRule.onNodeWithText(button(R.string.submit)).performClick()
+        waitFor(string(R.string.your_fitness_profile))
+    }
+
+    private fun openThePersonalEdit() {
+        composeTestRule.onNodeWithContentDescription(
+            InstrumentationRegistry.getInstrumentation().targetContext
+                .getString(R.string.edit_section, string(R.string.personal_information))
+        ).performScrollTo().performClick()
+        waitFor(string(R.string.tell_us_about_yourself))
+    }
+
+    private fun retypeTheName() {
+        composeTestRule.onNodeWithText(NAME).performScrollTo().performTextClearance()
+        composeTestRule.onNodeWithText(string(R.string.enter_your_first_name))
+            .performScrollTo()
+            .performTextInput(EDITED_NAME)
+    }
+
     private fun whatTheSystemWouldKeep(): String {
         val saved = Bundle()
         checkNotNull(scenario).onActivity { activity ->
@@ -370,6 +440,7 @@ class KeepsWhatYouTypedTest {
 
     private companion object {
         const val NAME = "Jericho"
+        const val EDITED_NAME = "Mariano"
         const val AGE = "31"
         const val HEIGHT = "178"
         const val WEIGHT = "72"

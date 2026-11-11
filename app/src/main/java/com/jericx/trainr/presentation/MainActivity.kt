@@ -27,6 +27,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.NavHost
 import androidx.navigation.NavType
@@ -49,6 +50,7 @@ import com.jericx.trainr.presentation.common.theme.trainrColors
 import com.jericx.trainr.presentation.onboarding.OnboardingState
 import com.jericx.trainr.presentation.onboarding.OnboardingStep
 import com.jericx.trainr.presentation.onboarding.OnboardingViewModel
+import com.jericx.trainr.presentation.onboarding.StepEditDraft
 import com.jericx.trainr.presentation.onboarding.screens.BasicInfoScreen
 import com.jericx.trainr.presentation.onboarding.screens.BodyMetricsScreen
 import com.jericx.trainr.presentation.onboarding.screens.FitnessGoalScreen
@@ -337,12 +339,15 @@ fun AppContent(
                     arguments = editArguments
                 ) { entry ->
                     val editing = entry.isEditing
+                    val draft: StepEditDraft = viewModel(viewModelStoreOwner = entry)
                     BasicInfoScreen(
                         initial = onboardingState.filledFor(OnboardingStep.BASIC_INFO, editing),
                         isEditing = editing,
-                        inProgress = onboardingViewModel.basicInfoEntry.takeIf { !editing },
-                        onEntryChanged = { entry ->
-                            if (!editing) onboardingViewModel.basicInfoEntry = entry
+                        inProgress = if (editing) draft.basicInfo
+                        else onboardingViewModel.basicInfoEntry,
+                        onEntryChanged = { typed ->
+                            if (editing) draft.basicInfo = typed
+                            else onboardingViewModel.basicInfoEntry = typed
                         },
                         onNextClick = { firstName, age, gender, experience ->
                             onboardingViewModel.updateBasicInfo(firstName, age, gender, experience)
@@ -361,13 +366,16 @@ fun AppContent(
                     arguments = editArguments
                 ) { entry ->
                     val editing = entry.isEditing
+                    val draft: StepEditDraft = viewModel(viewModelStoreOwner = entry)
                     BodyMetricsScreen(
                         initial = onboardingState.filledFor(OnboardingStep.BODY_METRICS, editing),
                         age = onboardingState.userProfile.age.takeIf { it > 0 },
                         isEditing = editing,
-                        inProgress = onboardingViewModel.bodyMetricsEntry.takeIf { !editing },
-                        onEntryChanged = { entry ->
-                            if (!editing) onboardingViewModel.bodyMetricsEntry = entry
+                        inProgress = if (editing) draft.bodyMetrics
+                        else onboardingViewModel.bodyMetricsEntry,
+                        onEntryChanged = { typed ->
+                            if (editing) draft.bodyMetrics = typed
+                            else onboardingViewModel.bodyMetricsEntry = typed
                         },
                         onNextClick = { height, weight, units ->
                             onboardingViewModel.updateBodyMetrics(height, weight, units)
@@ -386,12 +394,15 @@ fun AppContent(
                     arguments = editArguments
                 ) { entry ->
                     val editing = entry.isEditing
+                    val draft: StepEditDraft = viewModel(viewModelStoreOwner = entry)
                     FitnessGoalScreen(
                         initial = onboardingState.filledFor(OnboardingStep.GOALS, editing),
                         isEditing = editing,
-                        inProgress = onboardingViewModel.fitnessGoalEntry.takeIf { !editing },
-                        onEntryChanged = { entry ->
-                            if (!editing) onboardingViewModel.fitnessGoalEntry = entry
+                        inProgress = if (editing) draft.fitnessGoal
+                        else onboardingViewModel.fitnessGoalEntry,
+                        onEntryChanged = { typed ->
+                            if (editing) draft.fitnessGoal = typed
+                            else onboardingViewModel.fitnessGoalEntry = typed
                         },
                         onNextClick = { goal ->
                             onboardingViewModel.updateFitnessGoal(goal)
@@ -410,14 +421,17 @@ fun AppContent(
                     arguments = editArguments
                 ) { entry ->
                     val editing = entry.isEditing
+                    val draft: StepEditDraft = viewModel(viewModelStoreOwner = entry)
                     WorkoutSetupScreen(
                         initial = onboardingState.filledFor(OnboardingStep.SETUP, editing),
                         isEditing = editing,
                         bodyUnits = onboardingState.userProfile.bodyUnitSystem,
                         stockedEquipment = onboardingViewModel.stockedEquipment,
-                        inProgress = onboardingViewModel.workoutSetupEntry.takeIf { !editing },
-                        onEntryChanged = { entry ->
-                            if (!editing) onboardingViewModel.workoutSetupEntry = entry
+                        inProgress = if (editing) draft.workoutSetup
+                        else onboardingViewModel.workoutSetupEntry,
+                        onEntryChanged = { typed ->
+                            if (editing) draft.workoutSetup = typed
+                            else onboardingViewModel.workoutSetupEntry = typed
                         },
                         longestSessionMinutes = onboardingViewModel::longestSessionMinutes,
                         onNextClick = { equipment, liftingUnits, days, duration ->
@@ -439,12 +453,15 @@ fun AppContent(
                     arguments = editArguments
                 ) { entry ->
                     val editing = entry.isEditing
+                    val draft: StepEditDraft = viewModel(viewModelStoreOwner = entry)
                     LimitationsScreen(
                         initial = onboardingState.filledFor(OnboardingStep.LIMITATIONS, editing),
                         isEditing = editing,
-                        inProgress = onboardingViewModel.limitationsEntry.takeIf { !editing },
-                        onEntryChanged = { entry ->
-                            if (!editing) onboardingViewModel.limitationsEntry = entry
+                        inProgress = if (editing) draft.limitations
+                        else onboardingViewModel.limitationsEntry,
+                        onEntryChanged = { typed ->
+                            if (editing) draft.limitations = typed
+                            else onboardingViewModel.limitationsEntry = typed
                         },
                         onNextClick = { injuries ->
                             onboardingViewModel.updateLimitations(injuries)
