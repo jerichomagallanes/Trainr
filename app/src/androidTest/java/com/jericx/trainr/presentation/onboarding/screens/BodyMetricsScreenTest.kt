@@ -13,6 +13,7 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsNotFocused
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
@@ -680,5 +681,26 @@ class BodyMetricsScreenTest {
         composeTestRule.onNodeWithText(string(R.string.metric)).performClick()
 
         composeTestRule.onNodeWithText("5").assertIsDisplayed()
+    }
+
+    // The tab is shorter than the 48dp touch target, so the target is grown
+    // inside the height the row gave it and the body is drawn a pixel past that
+    // height when the difference between the two rounds to an odd number.
+    @Test
+    fun neitherUnitTabHangsPastTheRowItIsLaidOutIn() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                BodyMetricsScreen(age = 30, onNextClick = { _, _, _ -> }, onBackClick = {})
+            }
+        }
+
+        listOf(R.string.metric, R.string.imperial).forEach { label ->
+            composeTestRule.onNodeWithText(string(label)).performScrollTo()
+            val tab = composeTestRule.onNodeWithText(string(label)).getUnclippedBoundsInRoot()
+            val row = composeTestRule.onNodeWithTag("unitTabs").getUnclippedBoundsInRoot()
+
+            assertThat(tab.top.value).isAtLeast(row.top.value)
+            assertThat(tab.bottom.value).isAtMost(row.bottom.value)
+        }
     }
 }

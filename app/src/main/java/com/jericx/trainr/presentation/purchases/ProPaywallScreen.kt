@@ -30,12 +30,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -569,6 +571,65 @@ private fun PlanChooser(
     }
 }
 
+// The price shares the term's line while the term and what it bills still have
+// room for their own words on it, and takes a line of its own once they do not:
+// a price is measured before the weighted column beside it and takes its whole
+// width out of it, and a term broken mid-word is a plan the screen has not
+// stated.
+@Composable
+private fun StackedPlan(plan: PaywallPlan, ink: Color, subdued: Color) {
+    val term = stringResource(plan.termRes)
+    val billing = stringResource(plan.billingRes)
+    val priceStyle = MaterialTheme.typography.titleSmall
+    val measurer = rememberTextMeasurer()
+
+    BoxWithConstraints(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = Spacing.small, horizontal = Spacing.card)
+    ) {
+        val wanted = with(LocalDensity.current) {
+            maxOf(
+                measurer.measure(term, MaterialTheme.typography.labelMedium).size.width,
+                measurer.measure(billing, MaterialTheme.typography.bodySmall).size.width
+            ).toDp() + measurer.measure(plan.price, priceStyle).size.width.toDp()
+        }
+
+        if (wanted + Spacing.small <= maxWidth) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                PlanTerms(term, billing, ink, subdued, Modifier.weight(1f))
+                Text(text = plan.price, style = priceStyle, color = ink)
+            }
+        } else {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                PlanTerms(term, billing, ink, subdued)
+                Text(text = plan.price, style = priceStyle, color = ink)
+            }
+        }
+    }
+}
+
+@Composable
+private fun PlanTerms(
+    term: String,
+    billing: String,
+    ink: Color,
+    subdued: Color,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier) {
+        Text(text = term, style = MaterialTheme.typography.labelMedium, color = ink)
+        Text(text = billing, style = MaterialTheme.typography.bodySmall, color = subdued)
+    }
+}
+
 @Composable
 private fun PlanCard(
     plan: PaywallPlan,
@@ -602,27 +663,7 @@ private fun PlanCard(
             )
         }
         if (stacked) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = Spacing.small, horizontal = Spacing.card),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = stringResource(plan.termRes),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = ink
-                    )
-                    Text(
-                        text = stringResource(plan.billingRes),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = subdued
-                    )
-                }
-                Text(text = plan.price, style = MaterialTheme.typography.titleSmall, color = ink)
-            }
+            StackedPlan(plan = plan, ink = ink, subdued = subdued)
         } else {
             Column(
                 modifier = Modifier
