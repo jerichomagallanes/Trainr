@@ -91,7 +91,7 @@ class UserMapper {
             id = entity.id,
             dayNumber = entity.dayNumber,
             title = entity.title,
-            status = WorkoutStatus.valueOf(entity.status),
+            status = storedEnum(entity.status, WorkoutStatus.NOT_STARTED),
             duration = entity.duration,
             exerciseCount = entity.exerciseCount,
             equipment = entity.equipment,
@@ -182,11 +182,11 @@ class UserMapper {
     }
 }
 
-// A constant this build does not know is a profile written by a later release,
-// not corruption: the row is still theirs. Reading it back as the neutral
-// answer costs one setting they can change, where throwing would put every
-// launch into a crash loop and cost them their whole history. The fallbacks are
-// the same ones iOS already uses.
+// A constant this build does not know is a row written by a later release, not
+// corruption: the row is still theirs. Reading it back as the neutral answer
+// costs one setting they can change, or a day that reads as not started until
+// they open it, where throwing would put every launch into a crash loop and
+// cost them their whole history. The fallbacks are the same ones iOS uses.
 private inline fun <reified T : Enum<T>> storedEnum(raw: String, fallback: T): T =
     storedEnum<T>(raw) ?: fallback
 

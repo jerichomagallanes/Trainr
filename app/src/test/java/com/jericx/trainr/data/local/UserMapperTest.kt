@@ -8,6 +8,8 @@ import com.jericx.trainr.domain.model.ExperienceLevel
 import com.jericx.trainr.domain.model.FitnessGoal
 import com.jericx.trainr.domain.model.Gender
 import com.jericx.trainr.domain.model.UserProfile
+import com.jericx.trainr.domain.model.WorkoutDay
+import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.domain.unstuck.ActualOrigin
 import org.junit.Test
 
@@ -105,6 +107,21 @@ class UserMapperTest {
         )
 
         assertThat(mapper.mapToDomain(entity).injuries).containsExactly(Injury.LOWER_BACK)
+    }
+
+    @Test
+    fun `a day whose status is unreadable is not started`() {
+        val day = WorkoutDay(
+            dayNumber = 1,
+            title = "Push",
+            status = WorkoutStatus.IN_PROGRESS,
+            duration = 45,
+            exerciseCount = 5,
+            equipment = listOf("dumbbell")
+        )
+        val entity = mapper.mapToEntity(day, 1L).copy(status = "ABANDONED_HALFWAY")
+
+        assertThat(mapper.mapToDomain(entity).status).isEqualTo(WorkoutStatus.NOT_STARTED)
     }
 
     @Test
