@@ -1,3 +1,4 @@
+import com.android.build.api.variant.BuildConfigField
 import java.io.File
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -31,6 +32,31 @@ val commitCount = providers.exec {
 val versionCodeOffset = 1
 val minimumVersionCode = 167
 
+// Google's public test ids. They pay nothing and never risk the account, and
+// Google requires a debug build to use them rather than the real units.
+val TEST_ADMOB_APP_ID = "ca-app-pub-3940256099942544~3347511713"
+val TEST_ADMOB_BANNER_ID = "ca-app-pub-3940256099942544/9214589741"
+
+// AdMob identifiers are public, not secrets, but they are yours, and they come
+// from ~/.gradle/gradle.properties like the signing details. A release that
+// cannot find them used to fall back to the test ids and build cleanly, so a
+// release could ship a banner stamped "Test Ad" that earns nothing until
+// somebody noticed. Resolving the id lazily keeps the failure where it belongs:
+// a release build stops, every other build keeps the test id.
+fun Project.admobId(property: String, testId: String, release: Boolean): Provider<String> =
+    providers.provider {
+        if (!release) return@provider testId
+        val real = (findProperty(property) as String?)?.trim()
+        if (real.isNullOrEmpty()) {
+            throw GradleException(
+                "$property is missing. A release build must carry the real AdMob id; " +
+                    "set $property in ~/.gradle/gradle.properties, or build a debug variant " +
+                    "to use Google's test id."
+            )
+        }
+        real
+    }
+
 android {
     namespace = "com.jericx.trainr"
     compileSdk = 37
@@ -57,17 +83,10 @@ android {
         // manifest); real variants get a labelled name from androidComponents below.
         manifestPlaceholders["appName"] = "Trainr"
 
-        // AdMob identifiers are public, not secrets, but they are yours: they
-        // come from ~/.gradle/gradle.properties like the signing details, and a
-        // machine without them (CI included) builds against Google's test ids,
-        // which serve test ads and pay nothing.
-        manifestPlaceholders["admobAppId"] =
-            findProperty("ADMOB_APP_ID") as String? ?: "ca-app-pub-3940256099942544~3347511713"
-        buildConfigField(
-            "String",
-            "ADMOB_PLAN_BANNER_ID",
-            "\"${findProperty("ADMOB_PLAN_BANNER_ID") as String? ?: "ca-app-pub-3940256099942544/9214589741"}\""
-        )
+        // Declared so every variant has the field; the real value is chosen per
+        // variant in androidComponents below.
+        manifestPlaceholders["admobAppId"] = TEST_ADMOB_APP_ID
+        buildConfigField("String", "ADMOB_PLAN_BANNER_ID", "\"$TEST_ADMOB_BANNER_ID\"")
     }
 
     buildFeatures {
@@ -199,6 +218,18 @@ androidComponents {
             "Trainr $baseVersionName ${variant.flavorName.orEmpty().uppercase()}"
         }
         variant.manifestPlaceholders.put("appName", appName)
+
+        val release = variant.buildType == "release"
+        variant.manifestPlaceholders.put(
+            "admobAppId",
+            admobId("ADMOB_APP_ID", TEST_ADMOB_APP_ID, release)
+        )
+        variant.buildConfigFields?.put(
+            "ADMOB_PLAN_BANNER_ID",
+            admobId("ADMOB_PLAN_BANNER_ID", TEST_ADMOB_BANNER_ID, release).map {
+                BuildConfigField("String", "\"$it\"", null)
+            }
+        )
     }
 }
 
