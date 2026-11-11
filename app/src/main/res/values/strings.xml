@@ -116,8 +116,7 @@
     <string name="leave_plan_message">A new workout plan erases every week you have trained and everything you have logged. Are you sure?</string>
     <string name="leave_plan_confirm">Start new plan</string>
     <string name="cancel">Cancel</string>
-    <string name="mark_exercise_complete">Mark exercise as complete</string>
-    <string name="mark_exercise_incomplete">Mark exercise as not complete</string>
+    <string name="exercise_complete">Exercise complete</string>
     <string name="your_weekly_workout_plan">YOUR WEEKLY WORKOUT PLAN</string>
     <string name="track_weekly_progress">Track Weekly Progress</string>
     <string name="week_number_format">Week %d</string>
@@ -242,8 +241,7 @@
     <string name="set_time_cell">Set %1$s time</string>
     <string name="set_cell_target">%1$s, target %2$s</string>
     <string name="add_set">Add set</string>
-    <string name="mark_set_complete">Mark set as complete</string>
-    <string name="mark_set_incomplete">Mark set as not complete</string>
+    <string name="set_complete">Set complete</string>
     <string name="exercise_in_progress">Exercise in progress…</string>
     <string name="timer_paused">Timer paused</string>
     <string name="timer_finished">Time is up. Tick the set when you are done.</string>
@@ -545,11 +543,6 @@
     <string name="dropdown_content_description">Dropdown menu</string>
     
     <!-- Weekly Plan -->
-    
-    <!-- Gender Options -->
-    <string name="male_gender">Male</string>
-    <string name="female_gender">Female</string>
-    <string name="other_gender">Other</string>
     
     <!-- Fitness Goals -->
     <string name="lose_weight_goal">Lose Weight</string>

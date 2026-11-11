@@ -2,6 +2,8 @@ package com.jericx.trainr.presentation.workout.components
 
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
@@ -52,19 +54,21 @@ class ExerciseCardTest {
     }
 
     @Test
-    fun anUnfinishedExerciseOffersToBeCompleted() {
+    fun anUnfinishedExerciseReportsAnUntickedBox() {
         setCard(sampleExercises[1])
 
-        composeTestRule.onNodeWithContentDescription(string(R.string.mark_exercise_complete))
+        composeTestRule.onNodeWithContentDescription(string(R.string.exercise_complete))
             .assertIsDisplayed()
+            .assertIsOff()
     }
 
     @Test
-    fun aFinishedExerciseOffersToBeUndone() {
+    fun aFinishedExerciseReportsATickedBox() {
         setCard(sampleExercises[0])
 
-        composeTestRule.onNodeWithContentDescription(string(R.string.mark_exercise_incomplete))
+        composeTestRule.onNodeWithContentDescription(string(R.string.exercise_complete))
             .assertIsDisplayed()
+            .assertIsOn()
     }
 
     @Test
@@ -72,7 +76,7 @@ class ExerciseCardTest {
         var toggled = false
         setCard(sampleExercises[1], onToggle = { toggled = true })
 
-        composeTestRule.onNodeWithContentDescription(string(R.string.mark_exercise_complete))
+        composeTestRule.onNodeWithContentDescription(string(R.string.exercise_complete))
             .performClick()
 
         assertThat(toggled).isTrue()
@@ -91,7 +95,7 @@ class ExerciseCardTest {
         var toggled = false
         setCard(sampleExercises[1].copy(sets = emptyList()), onToggle = { toggled = true })
 
-        composeTestRule.onNodeWithContentDescription(string(R.string.mark_exercise_complete))
+        composeTestRule.onNodeWithContentDescription(string(R.string.exercise_complete))
             .performClick()
 
         assertThat(toggled).isTrue()

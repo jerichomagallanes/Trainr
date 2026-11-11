@@ -4,7 +4,9 @@ import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotFocused
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.isOff
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
@@ -132,7 +134,9 @@ class RoutineDetailScreenTest {
         var toggled: Int? = null
         setScreen(onToggleExercise = { toggled = it })
 
-        composeTestRule.onAllNodesWithContentDescription(string(R.string.mark_exercise_complete))
+        composeTestRule.onAllNodes(
+            hasContentDescription(string(R.string.exercise_complete)) and isOff()
+        )
             .onFirst()
             .performClick()
 
@@ -221,7 +225,9 @@ class RoutineDetailScreenTest {
             }
         }
 
-        composeTestRule.onAllNodesWithContentDescription(string(R.string.mark_exercise_complete))
+        composeTestRule.onAllNodes(
+            hasContentDescription(string(R.string.exercise_complete)) and isOff()
+        )
             .onFirst()
             .performClick()
         composeTestRule.waitForIdle()
@@ -449,7 +455,9 @@ class RoutineDetailScreenTest {
             }
         }
 
-        composeTestRule.onAllNodesWithContentDescription(string(R.string.mark_exercise_complete))
+        composeTestRule.onAllNodes(
+            hasContentDescription(string(R.string.exercise_complete)) and isOff()
+        )
             .onFirst()
             .performClick()
         composeTestRule.waitForIdle()
@@ -622,10 +630,8 @@ class RoutineDetailScreenTest {
         }
 
         listOf(
-            R.string.mark_exercise_complete,
-            R.string.mark_exercise_incomplete,
-            R.string.mark_set_complete,
-            R.string.mark_set_incomplete,
+            R.string.exercise_complete,
+            R.string.set_complete,
             R.string.delete_set
         ).forEach(::assertNoneWithContentDescription)
     }

@@ -106,10 +106,9 @@ fun ExerciseCard(
                 ),
                 contentDescription = stringResource(
                     when {
-                        isReadOnly && exercise.isCompleted -> R.string.completed
-                        isReadOnly -> R.string.not_completed
-                        exercise.isCompleted -> R.string.mark_exercise_incomplete
-                        else -> R.string.mark_exercise_complete
+                        !isReadOnly -> R.string.exercise_complete
+                        exercise.isCompleted -> R.string.completed
+                        else -> R.string.not_completed
                     }
                 ),
                 tint = if (exercise.isCompleted) colors.statusDoneInk else colors.outlineControl,
