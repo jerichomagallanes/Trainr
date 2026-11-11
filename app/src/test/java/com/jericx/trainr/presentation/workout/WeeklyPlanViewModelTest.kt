@@ -27,7 +27,6 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -69,6 +68,14 @@ class WeeklyPlanViewModelTest {
         SampleWorkoutData.catalog
     )
 
+    private fun storePlans(vararg plans: WeeklyWorkoutPlan) {
+        coEvery { userRepository.getLatestWeeklyWorkoutPlan(1) } returns
+            plans.maxByOrNull { it.weekNumber }
+        plans.forEach { plan ->
+            coEvery { userRepository.getWeeklyWorkoutPlan(1, plan.weekNumber) } returns plan
+        }
+    }
+
     private val storedPlan = WeeklyWorkoutPlan(
         id = 9,
         userId = 1,
@@ -105,7 +112,7 @@ class WeeklyPlanViewModelTest {
     @Test
     fun fallsBackToSampleDataWhenTheUserHasNoPlanYet() = runTest {
         coEvery { userRepository.getCurrentUser() } returns UserProfile(id = 1)
-        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(emptyList())
+        storePlans()
 
         val viewModel = viewModel()
         advanceUntilIdle()
@@ -116,7 +123,7 @@ class WeeklyPlanViewModelTest {
     @Test
     fun usesTheStoredPlanWhenOneExists() = runTest {
         coEvery { userRepository.getCurrentUser() } returns UserProfile(id = 1)
-        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(storedPlan))
+        storePlans(storedPlan)
 
         val viewModel = viewModel()
         advanceUntilIdle()
@@ -129,8 +136,7 @@ class WeeklyPlanViewModelTest {
     fun showsTheWeekThatWasAskedFor() = runTest {
         val weekTwo = storedPlan.copy(id = 10, weekNumber = 2, title = "Second week")
         coEvery { userRepository.getCurrentUser() } returns UserProfile(id = 1)
-        every { userRepository.getWeeklyWorkoutPlans(1) } returns
-            flowOf(listOf(storedPlan, weekTwo))
+        storePlans(storedPlan, weekTwo)
 
         val viewModel = viewModel(weekNumber = 1)
         advanceUntilIdle()
@@ -142,8 +148,7 @@ class WeeklyPlanViewModelTest {
     fun showsTheLatestWeekWhenSeveralAreStored() = runTest {
         val weekTwo = storedPlan.copy(id = 10, weekNumber = 2, title = "Second week")
         coEvery { userRepository.getCurrentUser() } returns UserProfile(id = 1)
-        every { userRepository.getWeeklyWorkoutPlans(1) } returns
-            flowOf(listOf(weekTwo, storedPlan))
+        storePlans(weekTwo, storedPlan)
 
         val viewModel = viewModel()
         advanceUntilIdle()
@@ -155,8 +160,7 @@ class WeeklyPlanViewModelTest {
     fun aStoredPlanRendersItsOwnDates() = runTest {
         val start = 1_755_000_000_000L
         coEvery { userRepository.getCurrentUser() } returns UserProfile(id = 1)
-        every { userRepository.getWeeklyWorkoutPlans(1) } returns
-            flowOf(listOf(storedPlan.copy(startDateMillis = start)))
+        storePlans(storedPlan.copy(startDateMillis = start))
 
         val viewModel = viewModel()
         advanceUntilIdle()
@@ -172,8 +176,7 @@ class WeeklyPlanViewModelTest {
     @Test
     fun givesEveryWorkoutDayADate() = runTest {
         coEvery { userRepository.getCurrentUser() } returns UserProfile(id = 1)
-        every { userRepository.getWeeklyWorkoutPlans(1) } returns
-            flowOf(listOf(SampleWorkoutData.weekOne))
+        storePlans(SampleWorkoutData.weekOne)
 
         val viewModel = viewModel()
         advanceUntilIdle()
@@ -297,7 +300,7 @@ class WeeklyPlanViewModelTest {
     fun aMovedSessionIsPersistedOnItsNewWeekday() = runTest {
         val plan = storedPlan.copy(workoutDays = sessions())
         coEvery { userRepository.getCurrentUser() } returns UserProfile(id = 1)
-        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(plan))
+        storePlans(plan)
         val viewModel = viewModel()
         advanceUntilIdle()
 
@@ -552,7 +555,7 @@ class WeeklyPlanViewModelTest {
     @Test
     fun aDayFinishedEarlyCarriesItsFinishKind() = runTest {
         coEvery { userRepository.getCurrentUser() } returns UserProfile(id = 1)
-        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(storedPlan))
+        storePlans(storedPlan)
         coEvery { adjustmentRepository.getOutcomes(listOf(1L)) } returns listOf(
             SessionOutcome(
                 workoutDayId = 1,
@@ -578,7 +581,7 @@ class WeeklyPlanViewModelTest {
 
     private fun planLoaded(plan: WeeklyWorkoutPlan = todayPlan) {
         coEvery { userRepository.getCurrentUser() } returns UserProfile(id = 1)
-        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(plan))
+        storePlans(plan)
     }
 
     private fun storedLimit(weekday: Int, minutes: Int = 35) = TrainingPreference(
@@ -620,7 +623,7 @@ class WeeklyPlanViewModelTest {
         val plan = storedPlan.copy(workoutDays = sessions())
         val adjusted = plan.workoutDays[1].id
         coEvery { userRepository.getCurrentUser() } returns UserProfile(id = 1)
-        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(plan))
+        storePlans(plan)
         coEvery { adjustmentRepository.getActiveAdjustments(plan.workoutDays.map { it.id }) } returns
             listOf(appliedAdjustment(adjusted))
         val viewModel = viewModel()
@@ -748,7 +751,7 @@ class WeeklyPlanViewModelTest {
     fun aBrowsedWeekCarriesNoCards() = runTest {
         val newer = todayPlan.copy(id = 11, weekNumber = 2)
         coEvery { userRepository.getCurrentUser() } returns UserProfile(id = 1)
-        every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(todayPlan, newer))
+        storePlans(todayPlan, newer)
         coEvery { adjustmentRepository.getActiveAdjustment(1) } returns appliedAdjustment(1)
 
         val viewModel = viewModel(weekNumber = 1)
