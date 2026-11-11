@@ -4,9 +4,10 @@ import java.text.Normalizer
 
 object NoteText {
 
-    // Every token costs at least one code point, so a note of at most this many
-    // code points can never exceed the grammar's token cap in any script.
-    const val CHARACTER_LIMIT = 200
+    // The grammar can quote only its first tokens, so the note is measured in
+    // the same units: 200 code points of Japanese and 200 words of English both
+    // reach the cap, and a character count would bind one of them far too soon.
+    const val TOKEN_LIMIT = 200
 
     private val SEPARATORS = intArrayOf(
         0x0009, 0x000A, 0x000B, 0x000C, 0x000D, 0x0020, 0x0085, 0x00A0,
@@ -26,9 +27,9 @@ object NoteText {
         0x20000..0x2FA1F
     )
 
-    fun length(note: String): Int = note.codePointCount(0, note.length)
+    fun length(note: String): Int = tokens(note).size
 
-    fun isWithinLimit(note: String): Boolean = length(note) <= CHARACTER_LIMIT
+    fun isWithinLimit(note: String): Boolean = length(note) <= TOKEN_LIMIT
 
     fun tokens(note: String): List<String> {
         val text = Normalizer.normalize(note, Normalizer.Form.NFC)

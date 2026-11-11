@@ -3,7 +3,6 @@ package com.jericx.trainr.domain.unstuck.intent
 object IntentGrammar {
 
     const val MAX_TOKENS = 256
-    const val TOKEN_LIMIT = 200
 
     private const val TOKEN_SLOT = "{TOKENS}"
 
@@ -35,5 +34,5 @@ ws ::= [ ]*"""
         NoteText.tokens(note)
             .filter { '"' !in it && '\\' !in it }
             .distinct()
-            .take(TOKEN_LIMIT)
+            .take(NoteText.TOKEN_LIMIT)
 }

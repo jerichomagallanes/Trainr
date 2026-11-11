@@ -29,6 +29,13 @@ class IntentGrammarTest {
         assertThat(tokenRule("say \"hi\" back\\slash now")).isEqualTo("token ::= \"say\" | \"now\"")
     }
 
+    // The same vector is pinned on iOS, where a grapheme-wise search for the
+    // quote mark would miss this one and put it in the grammar unescaped.
+    @Test
+    fun aQuoteMarkCarryingACombiningAccentIsDroppedToo() {
+        assertThat(tokenRule("a\u0022\u0301 rack")).isEqualTo("token ::= \"rack\"")
+    }
+
     @Test
     fun aNoteWithNothingQuotableHasNoGrammar() {
         assertThat(IntentGrammar.forNote("\"")).isNull()

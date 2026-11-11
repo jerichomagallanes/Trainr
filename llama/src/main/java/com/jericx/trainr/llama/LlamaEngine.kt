@@ -82,33 +82,37 @@ class LlamaEngine(
         val session = handle
         val systemBytes = system.toByteArray()
         val userBytes = user.toByteArray()
-        val fits = withContext(dispatcher) {
+        val fit = withContext(dispatcher) {
             LlamaNative.fits(session, systemBytes, userBytes, maxTokens)
         }
-        if (!fits) return CompletionResult.TooLong
-        val result = coroutineScope {
-            val run = async(dispatcher) {
-                LlamaNative.complete(
-                    session,
-                    systemBytes,
-                    userBytes,
-                    grammar.toByteArray(),
-                    maxTokens
-                )
+        val result = when (fit) {
+            LlamaNative.FIT_TOO_LONG -> CompletionResult.TooLong
+            LlamaNative.FIT_OK -> coroutineScope {
+                val run = async(dispatcher) {
+                    LlamaNative.complete(
+                        session,
+                        systemBytes,
+                        userBytes,
+                        grammar.toByteArray(),
+                        maxTokens
+                    )
+                }
+                try {
+                    withTimeout(timeout) { run.await() }
+                        ?.let { CompletionResult.Text(String(it)) }
+                        ?: if (releaseRequested) CompletionResult.Cancelled else CompletionResult.Failed
+                } catch (timedOut: TimeoutCancellationException) {
+                    LlamaNative.cancel(session)
+                    withContext(NonCancellable) { run.join() }
+                    CompletionResult.Timeout
+                } catch (cancelled: CancellationException) {
+                    LlamaNative.cancel(session)
+                    withContext(NonCancellable) { run.join() }
+                    throw cancelled
+                }
             }
-            try {
-                withTimeout(timeout) { run.await() }
-                    ?.let { CompletionResult.Text(String(it)) }
-                    ?: if (releaseRequested) CompletionResult.Cancelled else CompletionResult.Failed
-            } catch (timedOut: TimeoutCancellationException) {
-                LlamaNative.cancel(session)
-                withContext(NonCancellable) { run.join() }
-                CompletionResult.Timeout
-            } catch (cancelled: CancellationException) {
-                LlamaNative.cancel(session)
-                withContext(NonCancellable) { run.join() }
-                throw cancelled
-            }
+
+            else -> CompletionResult.Failed
         }
         if (releaseRequested) release()
         result

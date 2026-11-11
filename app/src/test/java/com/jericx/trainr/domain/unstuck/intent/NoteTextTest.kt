@@ -72,23 +72,34 @@ class NoteTextTest {
     }
 
     @Test
-    fun theLimitIsCountedInCodePointsNotUtf16Units() {
+    fun theLimitIsCountedInTokensRatherThanCharacters() {
         assertThat(NoteText.length("🏋")).isEqualTo(1)
-        assertThat(NoteText.isWithinLimit("a".repeat(NoteText.CHARACTER_LIMIT))).isTrue()
-        assertThat(NoteText.isWithinLimit("🏋".repeat(NoteText.CHARACTER_LIMIT))).isTrue()
-        assertThat(NoteText.isWithinLimit("a".repeat(NoteText.CHARACTER_LIMIT + 1))).isFalse()
+        assertThat(NoteText.length("30 minutes\nno rack")).isEqualTo(4)
+        assertThat(NoteText.isWithinLimit("分".repeat(NoteText.TOKEN_LIMIT))).isTrue()
+        assertThat(NoteText.isWithinLimit("分".repeat(NoteText.TOKEN_LIMIT + 1))).isFalse()
     }
 
-    // The grammar keeps 200 tokens, so the character limit has to be the point
-    // at which the worst script can still reach every one of them.
+    // The grammar can quote only its first 200 tokens, so a note that stays
+    // inside the limit can always be quoted whole, whatever its script.
     @Test
     fun aNoteAtTheLimitCanNeverOutrunTheGrammar() {
-        val japanese = "分".repeat(NoteText.CHARACTER_LIMIT)
-        val english = "ab ".repeat(NoteText.CHARACTER_LIMIT)
+        val japanese = "分".repeat(NoteText.TOKEN_LIMIT)
+        val english = "ab ".repeat(NoteText.TOKEN_LIMIT)
 
-        assertThat(NoteText.tokens(japanese)).hasSize(NoteText.CHARACTER_LIMIT)
-        assertThat(NoteText.CHARACTER_LIMIT).isAtMost(IntentGrammar.TOKEN_LIMIT)
-        assertThat(NoteText.tokens(english.take(NoteText.CHARACTER_LIMIT)).size)
-            .isAtMost(IntentGrammar.TOKEN_LIMIT)
+        assertThat(NoteText.tokens(japanese)).hasSize(NoteText.TOKEN_LIMIT)
+        assertThat(NoteText.tokens(english)).hasSize(NoteText.TOKEN_LIMIT)
+        assertThat(NoteText.isWithinLimit(english)).isTrue()
+    }
+
+    // A sentence of ordinary English runs well past 200 characters long before
+    // it runs out of tokens, and version/2.0 read notes that long.
+    @Test
+    fun anEnglishSentenceLongerThanTwoHundredCharactersIsStillReadable() {
+        val note = "The gym is packed tonight so the squat rack and both benches are taken. " +
+            "I have about forty minutes before it closes and my lower back is still sore " +
+            "from Monday, so please keep it light and skip the heavy sets."
+
+        assertThat(note.length).isGreaterThan(200)
+        assertThat(NoteText.isWithinLimit(note)).isTrue()
     }
 }

@@ -37,7 +37,7 @@ fun AdjustContextScreen(
     interpreter: InterpreterUi,
     modifier: Modifier = Modifier,
     noteLength: Int = NoteText.length(note),
-    noteLimit: Int = NoteText.CHARACTER_LIMIT,
+    noteLimit: Int = NoteText.TOKEN_LIMIT,
     isNoteTooLong: Boolean = noteLength > noteLimit,
     isInterpreting: Boolean = false,
     hint: ContextHint? = null,
@@ -98,19 +98,21 @@ fun AdjustContextScreen(
                 placeholder = stringResource(R.string.context_placeholder),
                 modifier = Modifier.padding(top = Spacing.small)
             )
-            if (noteLength >= noteLimit - COUNTER_SHOWN_WITHIN) {
-                Text(
-                    text = stringResource(R.string.context_note_counter_format, noteLength, noteLimit),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (isNoteTooLong) colors.dangerInk else colors.onSurfaceMuted,
-                    textAlign = TextAlign.End,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = Spacing.tight)
-                )
-            }
-            if (isNoteTooLong) {
-                TrainrFieldError(message = stringResource(R.string.context_note_too_long))
+            if (interpreter == InterpreterUi.Ready) {
+                if (noteLength >= noteLimit - COUNTER_SHOWN_WITHIN) {
+                    Text(
+                        text = stringResource(R.string.context_note_counter_format, noteLength, noteLimit),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (isNoteTooLong) colors.dangerInk else colors.onSurfaceMuted,
+                        textAlign = TextAlign.End,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = Spacing.tight)
+                    )
+                }
+                if (isNoteTooLong) {
+                    TrainrFieldError(message = stringResource(R.string.context_note_too_long))
+                }
             }
             Text(
                 text = stringResource(R.string.context_private),
