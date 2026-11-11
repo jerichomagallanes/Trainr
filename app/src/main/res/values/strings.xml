@@ -699,6 +699,6 @@
     <!-- Shown when the database will not open. iOS only for now: Room already
          refuses to carry on, so Android never reaches a screen. -->
     <string name="store_unreadable_title">Trainr cannot open your training data</string>
-    <string name="store_unreadable_body">Your plans and the sets you have logged are still on this phone, but Trainr could not open them. Close Trainr and open it again. Nothing you did now would be saved, so Trainr will not go on until it can read them.</string>
+    <string name="store_unreadable_body">Your plans and the sets you have logged are still on this phone, but Trainr could not open them. Try again below, and if that does not work, close Trainr and open it again. Nothing you did now would be saved, so Trainr will not go on until it can read them.</string>
     <string name="store_unreadable_retry">Try again</string>
 </resources>
