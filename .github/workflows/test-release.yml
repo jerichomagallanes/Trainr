@@ -1,0 +1,155 @@
+name: Test release
+
+# One deliberate merge, one candidate, one build. Fix and feature branches keep
+# merging into version/X.Y, which is allowed to be noisy and gets no store build;
+# when a candidate is worth testing, version/X.Y is merged into pre-release and
+# that push builds it. Triggering on version/** instead would have meant thirteen
+# builds and thirteen tester notifications in four days for a release that was
+# unfinished at every one of those moments.
+#
+# This workflow stops at internal testing. Production is reached by promoting
+# this exact artifact with promote-to-production.yml, never by building again.
+on:
+  push:
+    branches: [pre-release]
+  workflow_dispatch:
+
+concurrency:
+  group: test-release-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  internal:
+    name: Build and upload to internal testing
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      # Nothing is built until every secret is in hand. Signing is read from
+      # Gradle properties and a machine without them gets no release signing
+      # config at all rather than a failure, so a half-configured run would
+      # upload an unsigned bundle instead of stopping.
+      - name: Check the release secrets are present
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ADMOB_APP_ID: ${{ secrets.ADMOB_APP_ID }}
+          ADMOB_PLAN_BANNER_ID: ${{ secrets.ADMOB_PLAN_BANNER_ID }}
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          missing=()
+          for name in GOOGLE_SERVICES_JSON ANDROID_KEYSTORE_BASE64 \
+                      ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD \
+                      ADMOB_APP_ID ADMOB_PLAN_BANNER_ID PLAY_SERVICE_ACCOUNT_JSON; do
+            [ -n "${!name}" ] || missing+=("$name")
+          done
+          if [ "${#missing[@]}" -ne 0 ]; then
+            printf '::error::Missing repository secret %s\n' "${missing[@]}"
+            echo "Create them under Settings -> Secrets and variables -> Actions."
+            echo "docs/release-secrets.md says where each value comes from."
+            exit 1
+          fi
+
+      # versionCode is the commit count, and actions/checkout fetches one commit
+      # by default. A shallow clone would count 1, fall back to the floor in
+      # app/build.gradle.kts and be rejected by Play for going backwards.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - uses: ./.github/actions/setup-android
+        with:
+          google-services-json: ${{ secrets.GOOGLE_SERVICES_JSON }}
+
+      # The keystore belongs outside the checkout, the way it does on a
+      # developer machine. RUNNER_TEMP is wiped with the runner.
+      - name: Decode the upload keystore
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/trainr-upload.jks"
+          [ -s "$RUNNER_TEMP/trainr-upload.jks" ] || {
+            echo "::error::ANDROID_KEYSTORE_BASE64 did not decode to a keystore."
+            exit 1
+          }
+
+      # -P rather than ORG_GRADLE_PROJECT_ environment variables: environment
+      # variables rank *below* GRADLE_USER_HOME/gradle.properties in Gradle's
+      # precedence, so a cached properties file on a runner would quietly win.
+      # Command-line properties are the highest priority and cannot be shadowed.
+      - name: Build the production bundle
+        run: |
+          ./gradlew bundleProdRelease \
+            -PTRAINR_UPLOAD_STORE_FILE="$RUNNER_TEMP/trainr-upload.jks" \
+            -PTRAINR_UPLOAD_STORE_PASSWORD="${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
+            -PTRAINR_UPLOAD_KEY_ALIAS="${{ secrets.ANDROID_KEY_ALIAS }}" \
+            -PTRAINR_UPLOAD_KEY_PASSWORD="${{ secrets.ANDROID_KEY_PASSWORD }}" \
+            -PADMOB_APP_ID="${{ secrets.ADMOB_APP_ID }}" \
+            -PADMOB_PLAN_BANNER_ID="${{ secrets.ADMOB_PLAN_BANNER_ID }}"
+
+      # The version code is what a human types into promote-to-production.yml,
+      # so it is read out of the manifest that was actually merged into this
+      # bundle rather than recomputed from git a second time. The file is an AGP
+      # intermediate and could move on a plugin upgrade, so a miss stops the run
+      # instead of uploading a candidate nobody can name.
+      - name: Read the version code out of the merged manifest
+        id: bundle
+        run: |
+          metadata=$(find app/build/intermediates/merged_manifests/prodRelease \
+            -name output-metadata.json | head -1)
+          if [ -z "$metadata" ]; then
+            echo "::error::No merged manifest metadata under app/build/intermediates."
+            echo "The Android Gradle Plugin moved it; this step needs updating."
+            exit 1
+          fi
+          version_code=$(jq -r '.elements[0].versionCode' "$metadata")
+          version_name=$(jq -r '.elements[0].versionName' "$metadata")
+          echo "version-code=$version_code" >> "$GITHUB_OUTPUT"
+          {
+            echo "### Candidate $version_name ($version_code)"
+            echo
+            echo "Uploaded to the internal testing track."
+            echo "To ship it, run **Promote to production** with version code \`$version_code\`."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # The signed bundle is kept with the run so the exact artifact that went to
+      # testers can be inspected later without rebuilding. The mapping file is
+      # deliberately not attached: the build already sends it to Crashlytics and
+      # the upload step below sends it to Play, and it is a hundred megabytes.
+      - name: Upload the bundle to the run
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: trainr-prod-release-${{ steps.bundle.outputs.version-code }}
+          path: app/build/outputs/bundle/prodRelease/*.aab
+          if-no-files-found: error
+          retention-days: 90
+
+      # supply talks to the Play Developer API and already handles the edit
+      # lifecycle and its retries. Pinned so an upstream release cannot change
+      # what an upload does between two runs.
+      - name: Install fastlane
+        run: sudo gem install --no-document fastlane -v 2.241.2
+
+      # The mapping file rides along with the upload so Play can deobfuscate a
+      # crash from this build. The service account JSON is passed in the
+      # environment rather than written to disk or put on the command line.
+      - name: Upload to the internal testing track
+        env:
+          SUPPLY_JSON_KEY_DATA: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          FASTLANE_SKIP_UPDATE_CHECK: '1'
+        run: |
+          fastlane supply \
+            --package_name com.jericx.trainr \
+            --track internal \
+            --release_status completed \
+            --aab app/build/outputs/bundle/prodRelease/app-prod-release.aab \
+            --mapping app/build/outputs/mapping/prodRelease/mapping.txt \
+            --skip_upload_metadata true \
+            --skip_upload_changelogs true \
+            --skip_upload_images true \
+            --skip_upload_screenshots true
