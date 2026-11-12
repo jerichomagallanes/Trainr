@@ -28,16 +28,21 @@ git push -u origin pre-release
 ```
 
 Bring it forward afterwards. `main` moves by squash merge, so `pre-release`
-cannot fast-forward to it; reset instead. Do this in the same push as the next
-candidate, so the release line still gets exactly one build per candidate rather
-than one for the reset and another for the merge:
+cannot fast-forward to it; merge it in. **Never reset `pre-release` to `main`.**
+`versionCode` is the commit count, so throwing away the previous candidate's
+history numbers the next candidate below one Play has already accepted, and Play
+refuses every upload from then on. If the squash commit conflicts, keep what
+`pre-release` already has — it is the same work, arriving a second time. Do this
+in the same push as the next candidate, so the release line still gets exactly
+one build per candidate rather than one for the merge and another for the
+candidate:
 
 ```sh
 git fetch origin
 git switch pre-release
-git reset --hard origin/main
+git merge --no-ff origin/main
 git merge --no-ff origin/version/2.1
-git push --force-with-lease origin pre-release
+git push origin pre-release
 ```
 
 ## The production environment
@@ -46,6 +51,18 @@ git push --force-with-lease origin pre-release
 **Required reviewers** and add yourself. The promotion job does not start, and
 never sees the Play key, until someone approves it there, and GitHub keeps the
 record of who did. Required reviewers are free on a public repository.
+
+## The marketing version
+
+The version a candidate carries: `1.1`, `2.0`, `1.0.2`. On Android it is
+`versionName` in `app/build.gradle.kts`, committed on the release line rather
+than set in GitHub. `versionCode` needs nothing; it is the commit count.
+
+Change it on `version/X.Y` the moment a release line starts a new version,
+before the first candidate of that version is built, and set the iOS
+repository's `MARKETING_VERSION` variable to the same string in the same
+sitting. It is the one number the two stores must agree on for one release of
+one product, and nothing links or checks them.
 
 ## The secrets
 

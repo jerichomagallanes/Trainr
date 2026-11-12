@@ -82,15 +82,24 @@ jobs:
       # variables rank *below* GRADLE_USER_HOME/gradle.properties in Gradle's
       # precedence, so a cached properties file on a runner would quietly win.
       # Command-line properties are the highest priority and cannot be shadowed.
+      # The values still reach the command through the environment rather than
+      # being interpolated into it, so a password carrying a quote or a $ cannot
+      # reshape what runs.
       - name: Build the production bundle
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ADMOB_APP_ID: ${{ secrets.ADMOB_APP_ID }}
+          ADMOB_PLAN_BANNER_ID: ${{ secrets.ADMOB_PLAN_BANNER_ID }}
         run: |
           ./gradlew bundleProdRelease \
             -PTRAINR_UPLOAD_STORE_FILE="$RUNNER_TEMP/trainr-upload.jks" \
-            -PTRAINR_UPLOAD_STORE_PASSWORD="${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
-            -PTRAINR_UPLOAD_KEY_ALIAS="${{ secrets.ANDROID_KEY_ALIAS }}" \
-            -PTRAINR_UPLOAD_KEY_PASSWORD="${{ secrets.ANDROID_KEY_PASSWORD }}" \
-            -PADMOB_APP_ID="${{ secrets.ADMOB_APP_ID }}" \
-            -PADMOB_PLAN_BANNER_ID="${{ secrets.ADMOB_PLAN_BANNER_ID }}"
+            -PTRAINR_UPLOAD_STORE_PASSWORD="$ANDROID_KEYSTORE_PASSWORD" \
+            -PTRAINR_UPLOAD_KEY_ALIAS="$ANDROID_KEY_ALIAS" \
+            -PTRAINR_UPLOAD_KEY_PASSWORD="$ANDROID_KEY_PASSWORD" \
+            -PADMOB_APP_ID="$ADMOB_APP_ID" \
+            -PADMOB_PLAN_BANNER_ID="$ADMOB_PLAN_BANNER_ID"
 
       # The version code is what a human types into promote-to-production.yml,
       # so it is read out of the manifest that was actually merged into this
@@ -109,13 +118,15 @@ jobs:
           fi
           version_code=$(jq -r '.elements[0].versionCode' "$metadata")
           version_name=$(jq -r '.elements[0].versionName' "$metadata")
+          case "$version_code" in
+            ''|*[!0-9]*)
+              echo "::error::No version code in $metadata; refusing to upload a candidate nobody can name."
+              echo "The Android Gradle Plugin renamed the field; this step needs updating."
+              exit 1
+              ;;
+          esac
           echo "version-code=$version_code" >> "$GITHUB_OUTPUT"
-          {
-            echo "### Candidate $version_name ($version_code)"
-            echo
-            echo "Uploaded to the internal testing track."
-            echo "To ship it, run **Promote to production** with version code \`$version_code\`."
-          } >> "$GITHUB_STEP_SUMMARY"
+          echo "version-name=$version_name" >> "$GITHUB_OUTPUT"
 
       # The signed bundle is kept with the run so the exact artifact that went to
       # testers can be inspected later without rebuilding. The mapping file is
@@ -153,3 +164,18 @@ jobs:
             --skip_upload_changelogs true \
             --skip_upload_images true \
             --skip_upload_screenshots true
+
+      # Last, after the upload: a summary that names a version code to promote
+      # is a promise the bundle is on the track, and a failed upload must not
+      # leave one on the run page for somebody to act on.
+      - name: Say what to promote
+        env:
+          VERSION_NAME: ${{ steps.bundle.outputs.version-name }}
+          VERSION_CODE: ${{ steps.bundle.outputs.version-code }}
+        run: |
+          {
+            echo "### Candidate $VERSION_NAME ($VERSION_CODE)"
+            echo
+            echo "Uploaded to the internal testing track."
+            echo "To ship it, run **Promote to production** with version code \`$VERSION_CODE\`."
+          } >> "$GITHUB_STEP_SUMMARY"
