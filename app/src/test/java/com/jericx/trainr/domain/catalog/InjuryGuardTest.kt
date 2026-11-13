@@ -27,7 +27,7 @@ class InjuryGuardTest {
     fun noInjuryRulesNothingOutAndCautionsNothing() {
         listOf(squat, bench, press, deadlift).forEach {
             assertThat(InjuryGuard.excludes(it, emptyList())).isFalse()
-            assertThat(InjuryGuard.cautionFor(it, emptyList())).isNull()
+            assertThat(InjuryGuard.cautionsFor(it, emptyList())).isEmpty()
         }
     }
 
@@ -43,25 +43,42 @@ class InjuryGuardTest {
     // shoulder, with a line saying what to watch.
     @Test
     fun aMovementThatTouchesAnInjuryIsOfferedWithACaution() {
-        assertThat(InjuryGuard.cautionFor(bench, listOf(Injury.SHOULDER)))
-            .isEqualTo(Injury.SHOULDER)
-        assertThat(InjuryGuard.cautionFor(squat, listOf(Injury.KNEE))).isEqualTo(Injury.KNEE)
-        assertThat(InjuryGuard.cautionFor(bench, listOf(Injury.KNEE))).isNull()
+        assertThat(InjuryGuard.cautionsFor(bench, listOf(Injury.SHOULDER)))
+            .containsExactly(Injury.SHOULDER)
+        assertThat(InjuryGuard.cautionsFor(squat, listOf(Injury.KNEE)))
+            .containsExactly(Injury.KNEE)
+        assertThat(InjuryGuard.cautionsFor(bench, listOf(Injury.KNEE))).isEmpty()
     }
 
     // A movement that is never offered has no card to put a caution on.
     @Test
     fun aRuledOutMovementIsNeverAlsoCautioned() {
-        assertThat(InjuryGuard.cautionFor(press, listOf(Injury.SHOULDER))).isNull()
+        assertThat(InjuryGuard.cautionsFor(press, listOf(Injury.SHOULDER))).isEmpty()
     }
 
-    // One line per card, from the injury the client named first.
+    // Every injury the movement touches gets its own line, so no declared
+    // injury goes unheard.
     @Test
-    fun twoInjuriesThatBothTouchAMovementGiveTheOneDeclaredFirst() {
-        assertThat(InjuryGuard.cautionFor(squat, listOf(Injury.KNEE, Injury.HIP)))
-            .isEqualTo(Injury.KNEE)
-        assertThat(InjuryGuard.cautionFor(squat, listOf(Injury.HIP, Injury.KNEE)))
-            .isEqualTo(Injury.HIP)
+    fun everyInjuryThatTouchesAMovementIsCautioned() {
+        assertThat(InjuryGuard.cautionsFor(squat, listOf(Injury.KNEE, Injury.ANKLE, Injury.HIP)))
+            .containsExactly(Injury.KNEE, Injury.HIP, Injury.ANKLE)
+    }
+
+    // The client's answers arrive in whatever order they were tapped; the card
+    // must not.
+    @Test
+    fun theLinesReadNarrowestFirstWhateverOrderTheInjuriesWereDeclaredIn() {
+        val declaredOneWay = InjuryGuard.cautionsFor(squat, listOf(Injury.KNEE, Injury.LOWER_BACK))
+        val declaredTheOther = InjuryGuard.cautionsFor(squat, listOf(Injury.LOWER_BACK, Injury.KNEE))
+
+        assertThat(declaredOneWay).containsExactly(Injury.KNEE, Injury.LOWER_BACK).inOrder()
+        assertThat(declaredTheOther).isEqualTo(declaredOneWay)
+    }
+
+    @Test
+    fun anInjuryDeclaredTwiceIsStillOneLine() {
+        assertThat(InjuryGuard.cautionsFor(squat, listOf(Injury.KNEE, Injury.KNEE)))
+            .containsExactly(Injury.KNEE)
     }
 
     // Loaded from the floor is what a bad back cannot take; the same hinge
@@ -72,8 +89,8 @@ class InjuryGuardTest {
 
         assertThat(InjuryGuard.excludes(deadlift, listOf(Injury.LOWER_BACK))).isTrue()
         assertThat(InjuryGuard.excludes(dumbbellHinge, listOf(Injury.LOWER_BACK))).isFalse()
-        assertThat(InjuryGuard.cautionFor(dumbbellHinge, listOf(Injury.LOWER_BACK)))
-            .isEqualTo(Injury.LOWER_BACK)
+        assertThat(InjuryGuard.cautionsFor(dumbbellHinge, listOf(Injury.LOWER_BACK)))
+            .containsExactly(Injury.LOWER_BACK)
     }
 
     // Every injury has to be able to say something, or declaring it changes
@@ -83,7 +100,7 @@ class InjuryGuardTest {
         val patterns = MovementPattern.entries.map { movement("probe_$it", it) }
 
         Injury.entries.forEach { injury ->
-            assertThat(patterns.mapNotNull { InjuryGuard.cautionFor(it, listOf(injury)) })
+            assertThat(patterns.flatMap { InjuryGuard.cautionsFor(it, listOf(injury)) })
                 .isNotEmpty()
         }
     }

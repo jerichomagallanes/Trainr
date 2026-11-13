@@ -24,6 +24,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.jericx.trainr.R
@@ -68,16 +71,6 @@ fun ReviewScreen(
         },
         bottomButton = {
             Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
-                // The health disclaimer sits with the button, not at the end
-                // of the scroll, so it is read before a plan is written.
-                if (!isProfileUpdate) {
-                    Text(
-                        text = stringResource(R.string.health_disclaimer),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.trainrColors.onSurfaceMuted
-                    )
-                }
-
                 TrainrButton(
                     text = stringResource(
                         if (isProfileUpdate) R.string.save_profile
@@ -85,6 +78,18 @@ fun ReviewScreen(
                     ),
                     onClick = onConfirmClick
                 )
+
+                // The health disclaimer sits with the button, not at the end of
+                // the scroll, so it is read before a plan is written. Under it
+                // rather than over it: the bar is capped, and at the largest
+                // text setting whatever comes second is the part that scrolls.
+                if (!isProfileUpdate) {
+                    Text(
+                        text = stringResource(R.string.health_disclaimer),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.trainrColors.onSurfaceMuted
+                    )
+                }
             }
         }
     ) { paddingValues ->
@@ -270,13 +275,16 @@ private fun ProfileSection(
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.trainrColors.onSurface
             )
+            val editLabel = stringResource(R.string.edit_section, title)
             Text(
                 text = stringResource(R.string.edit),
                 style = MaterialTheme.typography.labelLarge.copy(
                     fontWeight = FontWeight.SemiBold
                 ),
                 color = MaterialTheme.trainrColors.brandStrong,
-                modifier = Modifier.clickable(onClick = onEdit)
+                modifier = Modifier
+                    .clickable(role = Role.Button, onClick = onEdit)
+                    .semantics { contentDescription = editLabel }
             )
         }
 

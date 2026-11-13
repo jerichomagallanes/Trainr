@@ -9,21 +9,27 @@ import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
 import com.jericx.trainr.domain.model.withoutWeekNumber
 import com.jericx.trainr.domain.model.WorkoutStatus
+import com.jericx.trainr.domain.purchases.ProGate
 import com.jericx.trainr.domain.repository.UserRepository
+import com.jericx.trainr.domain.unstuck.ActualOrigin
 import com.jericx.trainr.presentation.workout.util.WorkoutWeek
 import com.jericx.trainr.presentation.workout.util.isReadyForTheNextWeek
+import com.jericx.trainr.presentation.workout.util.weekStartDate
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.coroutines.coroutineContext
 
 @HiltViewModel
 class NextWeekViewModel @Inject constructor(
     private val userRepository: UserRepository,
-    private val planGenerator: PlanGenerator
+    private val planGenerator: PlanGenerator,
+    private val proGate: ProGate
 ) : ViewModel() {
 
     private val _failure = MutableStateFlow<PlanGenerationResult?>(null)
@@ -59,6 +65,9 @@ class NextWeekViewModel @Inject constructor(
                 userRepository.saveWeeklyWorkoutPlan(
                     repeatedWeek(source, latest.weekNumber + 1, startAfter(latest))
                 )
+                // A copy is still a week this client did not have a minute ago,
+                // and it is handed over behind the same gate as a built one.
+                proGate.spend()
             } finally {
                 isWorking = false
                 _isReady.value = true
@@ -88,7 +97,7 @@ class NextWeekViewModel @Inject constructor(
                     PlanRequest(
                         user = user,
                         weekNumber = current.weekNumber,
-                        startDateMillis = current.startDateMillis ?: WorkoutWeek.startOfDay(),
+                        startDateMillis = current.weekStartDate(),
                         // The weeks before this one, so a replacement still
                         // progresses from what was actually lifted.
                         history = plans.filter { it.weekNumber < current.weekNumber }
@@ -103,8 +112,12 @@ class NextWeekViewModel @Inject constructor(
                     return@launch
                 }
 
-                userRepository.deleteWeeklyWorkoutPlan(current.id)
-                userRepository.saveWeeklyWorkoutPlan(result.plan)
+                // The generator has no cancellation point of its own, so the
+                // screen can be long gone by the time it answers. Nothing is
+                // taken away on behalf of someone who left.
+                coroutineContext.ensureActive()
+                userRepository.replaceWeeklyWorkoutPlan(current.id, result.plan)
+                proGate.spend()
                 _isReady.value = true
             } finally {
                 isWorking = false
@@ -149,7 +162,12 @@ class NextWeekViewModel @Inject constructor(
                 return
             }
 
+            // The generator has no cancellation point of its own, so the
+            // screen can be long gone by the time it answers, and a week
+            // nobody waited for is a week nobody can be charged for.
+            coroutineContext.ensureActive()
             userRepository.saveWeeklyWorkoutPlan(result.plan)
+            proGate.spend()
             _isReady.value = true
     }
 
@@ -171,9 +189,7 @@ class NextWeekViewModel @Inject constructor(
     // Never overlaps the week it follows and never starts in the past: someone
     // coming back a fortnight late begins today.
     private fun startAfter(previous: WeeklyWorkoutPlan): Long = maxOf(
-        previous.startDateMillis
-            ?.let { WorkoutWeek.dateOfDay(it, DAYS_PER_WEEK + 1) }
-            ?: WorkoutWeek.startOfDay(),
+        WorkoutWeek.dateOfDay(previous.weekStartDate(), DAYS_PER_WEEK + 1),
         WorkoutWeek.startOfDay()
     )
 
@@ -199,21 +215,26 @@ class NextWeekViewModel @Inject constructor(
                         id = 0,
                         status = WorkoutStatus.NOT_STARTED,
                         completedAt = null,
-                        exercises = day.exercises.map { exercise ->
-                            exercise.copy(
-                                id = 0,
-                                isCompleted = false,
-                                sets = exercise.sets.map {
-                                    it.copy(
-                                        id = 0,
-                                        actualReps = null,
-                                        actualWeightKg = null,
-                                        actualSeconds = null,
-                                        isCompleted = false
-                                    )
-                                }
-                            )
-                        }
+                        exercises = day.exercises
+                            .filter { it.addedBy == null }
+                            .mapIndexed { index, exercise ->
+                                exercise.copy(
+                                    id = 0,
+                                    isCompleted = false,
+                                    sortOrder = index,
+                                    sets = exercise.sets.map {
+                                        it.copy(
+                                            id = 0,
+                                            actualReps = null,
+                                            actualWeightKg = null,
+                                            actualSeconds = null,
+                                            isCompleted = false,
+                                            actualOrigin = ActualOrigin.NONE,
+                                            omittedBy = null
+                                        )
+                                    }
+                                )
+                            }
                     )
                 }
             )

@@ -35,7 +35,8 @@ fun CompletionScreen(
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit = {},
     onSecondaryClick: () -> Unit = {},
-    onPrimaryClick: () -> Unit = {}
+    onPrimaryClick: () -> Unit = {},
+    extra: @Composable () -> Unit = {}
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         TrainrTopBar(onBackClick = onBackClick)
@@ -73,6 +74,8 @@ fun CompletionScreen(
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(top = Spacing.card)
             )
+
+            extra()
         }
 
         Column(

@@ -70,13 +70,10 @@ class Ads(private val breadcrumbs: Breadcrumbs) {
     }
 
     companion object {
-        // AdMob ad units. The debug id is Google's public test unit, which pays
-        // nothing and never risks the account. The release id belongs to the
-        // "Weekly plan banner" unit under the Android app in apps.admob.com.
-        val PLAN_BANNER_UNIT_ID: String = if (BuildConfig.DEBUG) {
-            "ca-app-pub-3940256099942544/9214589741"
-        } else {
-            BuildConfig.ADMOB_PLAN_BANNER_ID
-        }
+        // One source for the unit: the build file gives a debug build Google's
+        // public test id and refuses to produce a release without the real
+        // "Weekly plan banner" unit from apps.admob.com. Choosing again here
+        // would let the two disagree.
+        val PLAN_BANNER_UNIT_ID: String = BuildConfig.ADMOB_PLAN_BANNER_ID
     }
 }

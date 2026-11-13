@@ -108,7 +108,10 @@ data class WorkoutExerciseEntity(
     val equipment: List<String>,
     val videoTutorialUrl: String?,
     val isCompleted: Boolean,
-    val notes: String
+    val notes: String,
+    @ColumnInfo(defaultValue = "0")
+    val sortOrder: Int = 0,
+    val addedBy: Long? = null
 )
 
 @Entity(
@@ -134,5 +137,8 @@ data class ExerciseSetEntity(
     val actualReps: Int?,
     val actualWeightKg: Float?,
     val actualSeconds: Int?,
-    val isCompleted: Boolean
+    val isCompleted: Boolean,
+    @ColumnInfo(defaultValue = "NONE")
+    val actualOrigin: String = "NONE",
+    val omittedBy: Long? = null
 )
