@@ -14,7 +14,10 @@ import androidx.compose.ui.test.hasProgressBarRangeInfo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.R
+import com.jericx.trainr.common.Constants
+import com.jericx.trainr.domain.model.ExperienceLevel
 import com.jericx.trainr.domain.model.FitnessGoal
+import com.jericx.trainr.domain.model.Gender
 import com.jericx.trainr.domain.model.UnitSystem
 import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
@@ -234,10 +237,14 @@ class ReviewScreenTest {
     }
 
 
-    // Stored in centimetres and kilograms whatever units were typed.
+    // Stored in centimetres and kilograms whatever units were typed, and read
+    // back as the pounds that were typed rather than a rounded neighbour.
     @Test
     fun measurementsReadBackInTheUnitsTheyWereEnteredIn() {
-        setScreen(sampleProfile.copy(bodyUnitSystem = UnitSystem.IMPERIAL))
+        val typedAsPounds = 159f / Constants.Workout.KG_TO_LBS
+        setScreen(
+            sampleProfile.copy(bodyUnitSystem = UnitSystem.IMPERIAL, weight = typedAsPounds)
+        )
 
         composeTestRule.onNodeWithText("159 lbs").performScrollTo().assertIsDisplayed()
         composeTestRule.onNodeWithText("5'9\"").assertIsDisplayed()
@@ -252,6 +259,30 @@ class ReviewScreenTest {
             .assertIsDisplayed()
         composeTestRule.onNodeWithText(string(R.string.height_cm_format).format(175))
             .assertIsDisplayed()
+    }
+
+    // The picker and the read-back drew the experience level from two string
+    // keys holding the same English, so only one of them was ever pinned.
+    @Test
+    fun theProfileReadsBackTheExperienceLevelItHolds() {
+        setScreen(sampleProfile.copy(experienceLevel = ExperienceLevel.ADVANCED))
+
+        composeTestRule.onNodeWithText(string(R.string.advanced))
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.beginner)).assertDoesNotExist()
+    }
+
+    // The picker and the read-back drew the gender from two string keys holding
+    // the same English, so only one of them was ever pinned.
+    @Test
+    fun theProfileReadsBackTheGenderItHolds() {
+        setScreen(sampleProfile.copy(gender = Gender.FEMALE))
+
+        composeTestRule.onNodeWithText(string(R.string.female))
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.male)).assertDoesNotExist()
     }
 
     @Test

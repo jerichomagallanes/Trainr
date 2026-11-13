@@ -2,13 +2,12 @@ package com.jericx.trainr.presentation.workout.sample
 
 import com.jericx.trainr.presentation.workout.model.WeekProgressUi
 import com.jericx.trainr.presentation.workout.model.WeekStatus
-import java.util.Calendar
+import com.jericx.trainr.presentation.workout.util.WorkoutWeek
 
 object SampleWeeklyProgress {
 
     private const val DAYS_PER_WEEK = 7
 
-    // Computed per access so the dates follow the current default time zone.
     val weeks: List<WeekProgressUi>
         get() = listOf(
             week(1, completedDays = 3, status = WeekStatus.COMPLETED),
@@ -30,8 +29,6 @@ object SampleWeeklyProgress {
         endDateMillis = shift(SampleWorkoutData.weekEndMillis, number)
     )
 
-    private fun shift(millis: Long, weekNumber: Int): Long = Calendar.getInstance().apply {
-        timeInMillis = millis
-        add(Calendar.DAY_OF_YEAR, (weekNumber - 1) * DAYS_PER_WEEK)
-    }.timeInMillis
+    private fun shift(millis: Long, weekNumber: Int): Long =
+        WorkoutWeek.dateOfDay(millis, (weekNumber - 1) * DAYS_PER_WEEK + 1)
 }

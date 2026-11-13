@@ -1,17 +1,33 @@
 package com.jericx.trainr.presentation.purchases
 
 import androidx.activity.ComponentActivity
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.platform.WindowInfo
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.R
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
+import com.jericx.trainr.testing.onOneLine
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -85,9 +101,39 @@ class ProPaywallScreenTest {
         composeTestRule.onNodeWithText(string(R.string.pro_feature_rewrite_body))
             .assertIsDisplayed()
         composeTestRule.onNodeWithText(string(R.string.pro_free_limit)).assertIsDisplayed()
-        // Its own row in the table is the only other place it appears.
-        composeTestRule.onAllNodesWithText(string(R.string.pro_feature_rewrite_title))
-            .assertCountEquals(2)
+        // Its own row in the table is the only other place it appears, and a
+        // comparison row is read as one sentence, so that one lives in the
+        // unmerged tree alone.
+        composeTestRule.onAllNodesWithText(
+            string(R.string.pro_feature_rewrite_title),
+            useUnmergedTree = true
+        ).assertCountEquals(2)
+    }
+
+    // Reaching the paywall from Unstuck must not open on the free week, which is
+    // a limit the person may never have hit.
+    @Test
+    fun anAdjustmentThatAsksForProLeadsWithAdjusting() {
+        setScreen(reason = PaywallReason.ADJUST)
+
+        composeTestRule.onNodeWithText(string(R.string.pro_feature_adjust_title))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.pro_feature_adjust_body))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.pro_free_limit_adjust)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.pro_free_limit)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.pro_feature_next_week_title)).assertExists()
+    }
+
+    @Test
+    fun itSellsAdjustingAsAFeatureAndARow() {
+        setScreen()
+
+        composeTestRule.onNodeWithText(string(R.string.pro_feature_adjust_title))
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.pro_compare_adjust), useUnmergedTree = true)
+            .assertExists()
     }
 
     // Opened from the profile menu, nothing was reached for, so nothing leads.
@@ -95,8 +141,11 @@ class ProPaywallScreenTest {
     fun itSellsTheEndOfAdsAsAFeatureAndARow() {
         setScreen()
 
-        composeTestRule.onNodeWithText(string(R.string.pro_feature_ads_title)).assertIsDisplayed()
-        composeTestRule.onNodeWithText(string(R.string.pro_compare_ads)).assertExists()
+        composeTestRule.onNodeWithText(string(R.string.pro_feature_ads_title))
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.pro_compare_ads), useUnmergedTree = true)
+            .assertExists()
     }
 
     @Test
@@ -181,13 +230,17 @@ class ProPaywallScreenTest {
     fun theComparisonNamesWhatTheFreeTierGets() {
         setScreen()
 
-        composeTestRule.onNodeWithText(string(R.string.pro_compare_generated))
+        composeTestRule
+            .onNodeWithText(string(R.string.pro_compare_generated), useUnmergedTree = true)
             .performScrollTo()
             .assertIsDisplayed()
-        composeTestRule.onNodeWithText(string(R.string.pro_compare_one)).assertIsDisplayed()
+        // Two rows read "1": the free week, and the adjustment included with it.
+        composeTestRule.onAllNodesWithText(string(R.string.pro_compare_one), useUnmergedTree = true)
+            .assertCountEquals(2)
         // "Every week" and not "Unlimited": what Pro gets is a new week once the
         // current one is finished, which is a promise the plan screen keeps.
-        composeTestRule.onNodeWithText(string(R.string.pro_compare_every_week))
+        composeTestRule
+            .onNodeWithText(string(R.string.pro_compare_every_week), useUnmergedTree = true)
             .assertIsDisplayed()
     }
 
@@ -202,6 +255,22 @@ class ProPaywallScreenTest {
             .performClick()
 
         composeTestRule.onNodeWithText(string(R.string.pro_faq_cancel_a)).assertIsDisplayed()
+    }
+
+    // The answer names an account the buyer actually has: this one shipped
+    // telling iPhone owners to sign in to Google.
+    @Test
+    fun theNewPhoneAnswerNamesThePlayStoreAndNeverApples() {
+        setScreen()
+
+        composeTestRule.onNodeWithText(string(R.string.pro_faq_devices_q))
+            .performScrollTo()
+            .performClick()
+
+        composeTestRule.onNodeWithText(string(R.string.pro_faq_devices_a_google))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.pro_faq_devices_a_apple))
+            .assertDoesNotExist()
     }
 
     // Play has no standard EULA to fall back on, so this link is the only terms
@@ -265,4 +334,157 @@ class ProPaywallScreenTest {
         composeTestRule.onNodeWithText(string(R.string.pro_nothing_to_restore)).assertDoesNotExist()
         composeTestRule.onNodeWithText(string(R.string.pro_restored)).assertDoesNotExist()
     }
+
+    // The defect is a window of this size: the emulator's own is a third taller
+    // again, and the bar fits inside it whatever the ceiling does.
+    private val reviewWindow = DpSize(375.dp, 667.dp)
+
+    // What a largest display size and a largest font size together leave: the
+    // review window at this text setting still has room to spare.
+    private val narrowestWindow = DpSize(320.dp, 568.dp)
+
+    private fun setPaywallInAReviewWindow(scale: Float, window: DpSize = reviewWindow) {
+        composeTestRule.setContent {
+            val base = LocalDensity.current
+            val container = with(base) {
+                IntSize(window.width.roundToPx(), window.height.roundToPx())
+            }
+            CompositionLocalProvider(
+                LocalDensity provides Density(base.density, fontScale = scale),
+                LocalWindowInfo provides FixedWindow(container)
+            ) {
+                TrainrTheme {
+                    Box(modifier = Modifier.size(window).testTag(WINDOW)) {
+                        ProPaywallScreen(
+                            reason = PaywallReason.NEXT_WEEK,
+                            plans = listOf(monthly, yearly, lifetime),
+                            selectedId = "yearly",
+                            isWorking = false,
+                            noticeRes = null,
+                            onSelect = {},
+                            onBuy = {},
+                            onRestore = {},
+                            onNoticeShown = {},
+                            onClose = {},
+                            onOpenLink = {}
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    private fun callToActionBounds() = composeTestRule.onNodeWithText(
+        button(R.string.pro_subscribe_to, string(R.string.pro_yearly))
+    ).getUnclippedBoundsInRoot()
+
+    // The bar is pinned and its one unbounded part is the list of plans, so the
+    // list is what gives way first. At the size the review saw, the way out of
+    // the paywall is on screen, cut off or scrolled away by nothing.
+    @Test
+    fun theWayOutOfThePaywallIsOnScreen() {
+        setPaywallInAReviewWindow(scale = 1f)
+
+        val window = composeTestRule.onNodeWithTag(WINDOW).getUnclippedBoundsInRoot()
+        val wayOut = composeTestRule.onNodeWithText(string(R.string.pro_not_now))
+            .getUnclippedBoundsInRoot()
+
+        assertThat(callToActionBounds().bottom.value).isAtMost(window.bottom.value)
+        assertThat(wayOut.bottom.value).isAtMost(window.bottom.value)
+    }
+
+    // Nothing shows this page and the whole of this bar at the largest text
+    // size, so the bar keeps its ceiling, the page above it stays a page, and
+    // the way out is reached by a scroll the bar draws rather than hides.
+    @Test
+    fun atTheLargestTextThePaywallKeepsItsPageAndItsWayOut() {
+        setPaywallInAReviewWindow(scale = 2f)
+
+        val window = composeTestRule.onNodeWithTag(WINDOW).getUnclippedBoundsInRoot()
+        assertThat(callToActionBounds().top.value)
+            .isAtLeast((window.top.value + window.bottom.value) / 2f)
+
+        composeTestRule.onNodeWithText(string(R.string.pro_not_now)).performScrollTo()
+        val wayOut = composeTestRule.onNodeWithText(string(R.string.pro_not_now))
+            .getUnclippedBoundsInRoot()
+
+        assertThat(wayOut.bottom.value).isAtMost(window.bottom.value)
+    }
+
+    // Three cards abreast leave no room for a price at the largest text size,
+    // and a price that is cut is a price the screen has not stated.
+    @Test
+    fun atTheLargestTextThePlansStackSoEveryPriceHasItsOwnLine() {
+        setPaywallInAReviewWindow(scale = 2f)
+
+        val rows = listOf(monthly, yearly, lifetime).map {
+            composeTestRule.onNodeWithText(it.price).getUnclippedBoundsInRoot()
+        }
+
+        assertThat(rows[1].top.value).isAtLeast(rows[0].bottom.value)
+        assertThat(rows[2].top.value).isAtLeast(rows[1].bottom.value)
+    }
+
+    // Stacking is what keeps a price off its own border; these hold the cards to
+    // it by measurement rather than by the shape of the layout that produced it.
+    @Test
+    fun everyPlanCardHoldsItsOwnPrice() {
+        setPaywallInAReviewWindow(scale = 1f)
+
+        assertEveryPriceIsInsideItsCard()
+    }
+
+    @Test
+    fun everyPlanCardHoldsItsOwnPriceAtTheLargestText() {
+        setPaywallInAReviewWindow(scale = 2f)
+
+        assertEveryPriceIsInsideItsCard()
+    }
+
+    // A price is measured before the weighted column beside it and takes its
+    // whole width out of it, so the term and what it bills are what give way
+    // once the line runs short.
+    @Test
+    fun atTheLargestTextEveryPlanShowsItsTermAndItsBillingWhole() {
+        setPaywallInAReviewWindow(scale = 2f)
+
+        assertEveryTermKeepsItsWords()
+    }
+
+    @Test
+    fun onTheNarrowestWindowTheLargestTextStillShowsEveryTermWhole() {
+        setPaywallInAReviewWindow(scale = 2f, window = narrowestWindow)
+
+        assertEveryTermKeepsItsWords()
+    }
+
+    // The card merges the words it holds, so the merged node is the card and the
+    // unmerged one is the price alone.
+    private fun assertEveryPriceIsInsideItsCard() {
+        listOf(monthly, yearly, lifetime).forEach { plan ->
+            val card = composeTestRule.onNodeWithText(plan.price).getUnclippedBoundsInRoot()
+            val price = unmerged(plan.price).getUnclippedBoundsInRoot()
+
+            assertThat(price.left.value).isAtLeast(card.left.value)
+            assertThat(price.right.value).isAtMost(card.right.value)
+            assertThat(price.top.value).isAtLeast(card.top.value)
+            assertThat(price.bottom.value).isAtMost(card.bottom.value)
+        }
+    }
+
+    private fun assertEveryTermKeepsItsWords() {
+        listOf(monthly, yearly, lifetime).forEach { plan ->
+            unmerged(string(plan.termRes)).assert(onOneLine())
+            unmerged(string(plan.billingRes)).assert(onOneLine())
+        }
+    }
+
+    private fun unmerged(text: String) =
+        composeTestRule.onNodeWithText(text, useUnmergedTree = true)
+}
+
+private const val WINDOW = "reviewWindow"
+
+private class FixedWindow(override val containerSize: IntSize) : WindowInfo {
+    override val isWindowFocused = true
 }
