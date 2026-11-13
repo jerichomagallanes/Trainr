@@ -508,17 +508,17 @@ class NextWeekViewModelTest {
         assertThat(allowance.wasSpent).isTrue()
     }
 
-    // Behind the same gate as a built week, so it must cost the same: a copy
-    // the free week paid for is still a week that was not there before.
+    // A copy carries the same movements and targets with nothing progressed,
+    // so there is nothing new to charge for. Pro sells the week that gets harder.
     @Test
-    fun aWeekCopiedFromAnotherIsChargedForLikeAnyOther() = runTest {
+    fun aWeekCopiedFromAnotherCostsNothing() = runTest {
         every { userRepository.getWeeklyWorkoutPlans(1) } returns flowOf(listOf(finishedWeek))
 
         viewModel().repeatWeek()
         advanceUntilIdle()
 
         coVerify { userRepository.saveWeeklyWorkoutPlan(any()) }
-        assertThat(allowance.wasSpent).isTrue()
+        assertThat(allowance.wasSpent).isFalse()
     }
 
     @Test

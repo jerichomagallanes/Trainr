@@ -584,11 +584,7 @@ fun AppContent(
                         onBackClick = { navController.popBackStack() },
                         onDayClick = openDay,
                         onStartTodayClick = openDay,
-                        onRepeatWeekClick = {
-                            askThen(PaywallReason.NEXT_WEEK) {
-                                nextWeekViewModel.repeatWeek(weekNumber)
-                            }
-                        },
+                        onRepeatWeekClick = { nextWeekViewModel.repeatWeek(weekNumber) },
                         askBeforeRewritingWeek = { allowed ->
                             askThen(PaywallReason.REWRITE, allowed)
                         },
@@ -957,7 +953,7 @@ fun AppContent(
                             askThen(PaywallReason.NEXT_WEEK) { navController.navigate(Screen.GeneratingNextWeek.route) }
                         },
                         onRepeatWeekClick = {
-                            askThen(PaywallReason.NEXT_WEEK) { nextWeekViewModel.repeatWeek() }
+                            nextWeekViewModel.repeatWeek()
                         },
                         askBeforeRewritingWeek = { allowed ->
                             askThen(PaywallReason.REWRITE, allowed)
