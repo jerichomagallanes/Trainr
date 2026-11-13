@@ -27,6 +27,17 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
+      # workflow_dispatch can start a run from any ref, and this workflow checks
+      # out and builds whatever it is pointed at. A candidate only ever comes
+      # from the candidate branch, so a run from anywhere else stops here rather
+      # than shipping the wrong tree to testers.
+      - name: Check this is the candidate branch
+        run: |
+          if [ "$GITHUB_REF_NAME" != "pre-release" ]; then
+            echo "::error::Test release builds pre-release; got '$GITHUB_REF_NAME'."
+            exit 1
+          fi
+
       # Nothing is built until every secret is in hand. Signing is read from
       # Gradle properties and a machine without them gets no release signing
       # config at all rather than a failure, so a half-configured run would
