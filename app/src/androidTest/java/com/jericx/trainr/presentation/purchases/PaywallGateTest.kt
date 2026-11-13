@@ -160,17 +160,18 @@ class PaywallGateTest {
         composeTestRule.onNodeWithText(string(R.string.pro_upgrade_title)).assertDoesNotExist()
     }
 
-    // The one that was missed: a copied week is built without a generator,
-    // which was taken to mean it asks nothing of the client either.
+    // Once gated, now deliberately not: a copy carries the same movements and
+    // targets with nothing progressed, so it is handed over to anyone. This
+    // asserts the open door rather than leaving the case untested.
     @Test
-    fun repeatingAWeekAsksForPro() {
+    fun repeatingAWeekIsNeverAsked() {
         seed(finished = true)
         startApp()
 
         openPlanMenu()
         composeTestRule.onNodeWithText(string(R.string.repeat_this_week)).performClick()
 
-        assertAsksForPro()
+        assertDoesNotAskForPro()
     }
 
     @Test
@@ -209,15 +210,16 @@ class PaywallGateTest {
         composeTestRule.onNodeWithText(string(R.string.leave_plan_title)).assertDoesNotExist()
     }
 
-    // The gate has to let the first week through, or the test above would pass
-    // on an app that asks everyone for money at every turn.
+    // The gate has to let the first week through, or the tests above would pass
+    // on an app that asks everyone for money at every turn. Asked of generating,
+    // not of repeating: repeating is open to everyone now and would prove nothing.
     @Test
     fun aClientWhoStillHasTheirFreeWeekIsNotAsked() {
         seed(finished = true)
         startApp(gate = spentGate(used = false))
 
         openPlanMenu()
-        composeTestRule.onNodeWithText(string(R.string.repeat_this_week)).performClick()
+        composeTestRule.onNodeWithText(string(R.string.generate_next_week)).performClick()
 
         assertDoesNotAskForPro()
     }
@@ -244,7 +246,7 @@ class PaywallGateTest {
         startApp(gate = spentGate(hasRead = false))
 
         openPlanMenu()
-        composeTestRule.onNodeWithText(string(R.string.repeat_this_week)).performClick()
+        composeTestRule.onNodeWithText(string(R.string.generate_next_week)).performClick()
 
         waitFor(string(R.string.pro_still_checking))
         composeTestRule.onNodeWithText(string(R.string.pro_still_checking)).assertIsDisplayed()

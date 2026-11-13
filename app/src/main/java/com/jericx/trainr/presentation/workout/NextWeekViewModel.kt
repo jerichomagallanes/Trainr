@@ -65,9 +65,9 @@ class NextWeekViewModel @Inject constructor(
                 userRepository.saveWeeklyWorkoutPlan(
                     repeatedWeek(source, latest.weekNumber + 1, startAfter(latest))
                 )
-                // A copy is still a week this client did not have a minute ago,
-                // and it is handed over behind the same gate as a built one.
-                proGate.spend()
+                // Deliberately not spent. A copy carries the same movements and
+                // the same targets with nothing progressed, so there is nothing
+                // new to charge for; what Pro sells is the week that gets harder.
             } finally {
                 isWorking = false
                 _isReady.value = true

@@ -6,7 +6,9 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.jericx.trainr.R
+import com.jericx.trainr.domain.model.ExerciseSet
 import com.jericx.trainr.domain.model.WorkoutDay
+import com.jericx.trainr.domain.model.WorkoutExercise
 import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 import org.junit.Rule
@@ -25,7 +27,8 @@ class WorkoutDayCardTest {
         duration: Int,
         exerciseCount: Int,
         status: WorkoutStatus = WorkoutStatus.NOT_STARTED,
-        finishedEarly: Boolean = false
+        finishedEarly: Boolean = false,
+        performedWork: Boolean = false
     ) {
         val day = WorkoutDay(
             id = 1,
@@ -34,7 +37,14 @@ class WorkoutDayCardTest {
             status = status,
             duration = duration,
             exerciseCount = exerciseCount,
-            equipment = listOf("Dumbbells")
+            equipment = listOf("Dumbbells"),
+            exercises = listOf(
+                WorkoutExercise(
+                    id = 1,
+                    name = "Goblet Squat",
+                    sets = listOf(ExerciseSet(setNumber = 1, isCompleted = performedWork))
+                )
+            )
         )
         composeTestRule.setContent {
             TrainrTheme {
@@ -66,7 +76,13 @@ class WorkoutDayCardTest {
 
     @Test
     fun aDayFinishedEarlySaysSoInsteadOfCompleted() {
-        setCard(duration = 45, exerciseCount = 6, status = WorkoutStatus.COMPLETED, finishedEarly = true)
+        setCard(
+            duration = 45,
+            exerciseCount = 6,
+            status = WorkoutStatus.COMPLETED,
+            finishedEarly = true,
+            performedWork = true
+        )
 
         composeTestRule.onNodeWithText(string(R.string.finished_early)).assertIsDisplayed()
         composeTestRule.onNodeWithText(string(R.string.completed)).assertDoesNotExist()
@@ -74,8 +90,28 @@ class WorkoutDayCardTest {
 
     @Test
     fun aDayFinishedInFullStillReadsCompleted() {
-        setCard(duration = 45, exerciseCount = 6, status = WorkoutStatus.COMPLETED)
+        setCard(
+            duration = 45,
+            exerciseCount = 6,
+            status = WorkoutStatus.COMPLETED,
+            performedWork = true
+        )
 
         composeTestRule.onNodeWithText(string(R.string.completed)).assertIsDisplayed()
+    }
+
+    @Test
+    fun aDayClosedWithNothingLoggedReadsSkipped() {
+        setCard(
+            duration = 45,
+            exerciseCount = 6,
+            status = WorkoutStatus.COMPLETED,
+            finishedEarly = true,
+            performedWork = false
+        )
+
+        composeTestRule.onNodeWithText(string(R.string.skipped)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.finished_early)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.completed)).assertDoesNotExist()
     }
 }
