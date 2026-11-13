@@ -7,7 +7,7 @@ import kotlin.math.max
 
 // A session is a time budget, and rest spends most of it. Heavy strength work
 // asks 3-5 minutes between sets (ACSM 2009; Schoenfeld 2016), so half an hour
-// buys six working sets.
+// buys far fewer sets than a circuit does.
 object SessionBudget {
 
     // Warm-up, changing, and the walk between stations.
@@ -38,10 +38,16 @@ object SessionBudget {
         }
     }
 
+    // A bound on volume, not the measure of the day. Rest falls between the
+    // sets of a movement, not after its last one, where the walk to the next
+    // station replaces it; counted after every set this stops being a bound
+    // and becomes the limit a day halts at, well short of the answer.
     fun maxSetsPerSession(user: UserProfile): Int {
-        val usableSeconds = (user.workoutDuration - OVERHEAD_MINUTES) * 60
-        val perSet = WORK_SECONDS_PER_SET + restSeconds(user.fitnessGoal)
-        return max(FLOOR_SETS, usableSeconds / perSet)
+        val movements = SessionShape.forGoal(user.fitnessGoal).slotCount
+        val rest = restSeconds(user.fitnessGoal, ExerciseRole.ISOLATION)
+        val usableSeconds = (user.workoutDuration - OVERHEAD_MINUTES) * 60 -
+            (movements - 1) * SessionMinutes.TRANSITION_SECONDS + movements * rest
+        return max(FLOOR_SETS, usableSeconds / (WORK_SECONDS_PER_SET + rest))
     }
 
     // The session length is what the client answered; this is the point past

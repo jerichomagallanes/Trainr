@@ -6,9 +6,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -35,34 +37,39 @@ fun TrainrToggleChip(
 ) {
     val colors = MaterialTheme.trainrColors
 
-    Surface(
-        onClick = onClick,
-        modifier = modifier.height(height),
-        shape = MaterialTheme.shapes.medium,
-        color = if (selected) colors.surfaceSelected else colors.surfaceCard,
-        // The frames keep the outline on selected chips too.
-        border = BorderStroke(1.dp, colors.outlineControl)
-    ) {
-        Box(
-            modifier = Modifier.padding(horizontal = horizontalPadding),
-            contentAlignment = Alignment.Center
+    // A chip shorter than the 48dp touch target is grown to it and centred back
+    // inside the height asked for here, which for an odd difference rounds half
+    // a pixel the wrong way and leaves the chip hanging past the row it is in.
+    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
+        Surface(
+            onClick = onClick,
+            modifier = modifier.height(height),
+            shape = MaterialTheme.shapes.medium,
+            color = if (selected) colors.surfaceSelected else colors.surfaceCard,
+            // The frames keep the outline on selected chips too.
+            border = BorderStroke(1.dp, colors.outlineControl)
         ) {
-            BasicText(
-                text = text,
-                style = MaterialTheme.typography.bodyLarge.copy(
-                    fontWeight = FontWeight.Medium,
-                    color = if (selected) colors.onSurfaceSelected else colors.onSurface
-                ),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                // Phones narrower than the 412dp frame get a smaller label,
-                // never an ellipsis.
-                autoSize = TextAutoSize.StepBased(
-                    minFontSize = 12.sp,
-                    maxFontSize = 16.sp,
-                    stepSize = 0.5.sp
+            Box(
+                modifier = Modifier.padding(horizontal = horizontalPadding),
+                contentAlignment = Alignment.Center
+            ) {
+                BasicText(
+                    text = text,
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontWeight = FontWeight.Medium,
+                        color = if (selected) colors.onSurfaceSelected else colors.onSurface
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    // Phones narrower than the 412dp frame get a smaller label,
+                    // never an ellipsis.
+                    autoSize = TextAutoSize.StepBased(
+                        minFontSize = 12.sp,
+                        maxFontSize = 16.sp,
+                        stepSize = 0.5.sp
+                    )
                 )
-            )
+            }
         }
     }
 }

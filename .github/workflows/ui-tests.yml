@@ -1,19 +1,32 @@
 name: UI tests
 
 # Instrumentation tests need a booted emulator, so they are kept out of the CI
-# workflow: they run automatically on every PR, but they are deliberately NOT a
-# required check. Emulator flakes should never be able to block a merge on their
-# own — read the result, re-run if it looks like a flake, investigate if it
-# doesn't. The nightly run on main catches anything that slipped through.
+# workflow: they run automatically on every PR into a branch work merges to, but
+# they are deliberately NOT a required check. Emulator flakes should never be
+# able to block a merge on their own — read the result, re-run if it looks like a
+# flake, investigate if it doesn't. The nightly run on main catches anything that
+# slipped through.
+#
+# Nothing requires a pull request to be up to date with its base before merging,
+# so two that were each green can land and break together. The push trigger on
+# version/X.Y re-runs the suite on the merged result, which is the only thing
+# that sees that combination. pre-release is listed because a candidate build
+# goes to real testers, so a pull request into it is the last chance to catch
+# anything that reached it without passing through version/X.Y.
+#
+# The nightly still runs against the default branch, because a schedule always
+# does, and the default branch is what ships today.
 on:
   pull_request:
-    branches: [main]
+    branches: [main, version/2.0, pre-release]
     paths-ignore:
       - '**/*.md'
       - 'docs/**'
       - '.github/ISSUE_TEMPLATE/**'
       - '.gitignore'
       - '.editorconfig'
+  push:
+    branches: [version/2.0]
   schedule:
     - cron: '0 18 * * *'  # 03:00 JST daily, against main
   workflow_dispatch:
@@ -72,7 +85,7 @@ jobs:
 
       - name: Publish test results
         if: ${{ !cancelled() }}
-        uses: mikepenz/action-junit-report@a9170d5795813c01ab4901ffb045b52bab4ab09d # v6.5.0
+        uses: mikepenz/action-junit-report@a16be3a69023e9bd7e748ede768b3282ea7b30ce # v6.7.1
         with:
           report_paths: app/build/outputs/androidTest-results/**/TEST-*.xml
           check_name: Instrumentation test results
@@ -83,7 +96,7 @@ jobs:
 
       - name: Upload test report
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: instrumentation-test-report
           path: |

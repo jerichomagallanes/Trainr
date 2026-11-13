@@ -1,10 +1,14 @@
 package com.jericx.trainr.presentation.onboarding.screens
 
 import androidx.activity.ComponentActivity
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.performClick
@@ -13,6 +17,7 @@ import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.hasProgressBarRangeInfo
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.compose.ui.unit.Density
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.R
 import com.jericx.trainr.common.Constants
@@ -115,8 +120,12 @@ class BasicInfoScreenTest {
             .performTextInput("Jericho")
         composeTestRule.onNodeWithText(string(R.string.enter_your_age))
             .performTextInput("30")
-        composeTestRule.onNodeWithText(string(R.string.male)).performClick()
-        composeTestRule.onNodeWithText(string(R.string.beginner_level)).performClick()
+        // The keyboard the age field raises shortens the form, so the answers
+        // below it have to be brought back into view before they can be tapped.
+        composeTestRule.onNodeWithText(string(R.string.male)).performScrollTo().performClick()
+        composeTestRule.onNodeWithText(string(R.string.beginner))
+            .performScrollTo()
+            .performClick()
 
         composeTestRule.onNodeWithText(string(R.string.next)).assertIsEnabled()
     }
@@ -146,8 +155,10 @@ class BasicInfoScreenTest {
             .performTextInput("Ana")
         composeTestRule.onNodeWithText(string(R.string.enter_your_age))
             .performTextInput("28")
-        composeTestRule.onNodeWithText(string(R.string.female)).performClick()
-        composeTestRule.onNodeWithText(string(R.string.intermediate_level)).performClick()
+        composeTestRule.onNodeWithText(string(R.string.female)).performScrollTo().performClick()
+        composeTestRule.onNodeWithText(string(R.string.intermediate))
+            .performScrollTo()
+            .performClick()
         composeTestRule.onNodeWithText(string(R.string.next)).performClick()
 
         assertThat(capturedFirstName).isEqualTo("Ana")
@@ -212,5 +223,48 @@ class BasicInfoScreenTest {
         composeTestRule.onNodeWithText(string(R.string.enter_your_age)).performClick()
 
         composeTestRule.onAllNodesWithText(asked).assertCountEquals(2)
+    }
+
+    // A chip shorter than the 48dp touch target is grown to it inside the height
+    // the row gave it, and the body is drawn a pixel past that height whenever
+    // the difference between the two rounds to an odd number of pixels.
+    @Test
+    fun noGenderChipHangsPastTheRowItIsLaidOutIn() {
+        setBasicInfo(density = null)
+
+        assertGenderChipsFitTheirRow()
+    }
+
+    // 2.5 is a density where the difference does round odd; the emulator's own
+    // does not, so at that density alone the chips look fine either way.
+    @Test
+    fun noGenderChipHangsPastTheRowAtADensityThatRoundsOdd() {
+        setBasicInfo(density = Density(2.5f, 1f))
+
+        assertGenderChipsFitTheirRow()
+    }
+
+    private fun setBasicInfo(density: Density?) {
+        composeTestRule.setContent {
+            CompositionLocalProvider(
+                LocalDensity provides (density ?: LocalDensity.current)
+            ) {
+                TrainrTheme {
+                    BasicInfoScreen(onNextClick = { _, _, _, _ -> }, onBackClick = {})
+                }
+            }
+        }
+    }
+
+    private fun assertGenderChipsFitTheirRow() {
+        listOf(R.string.male, R.string.female, R.string.other).forEach { label ->
+            composeTestRule.onNodeWithText(string(label)).performScrollTo()
+            val chip = composeTestRule.onNodeWithText(string(label))
+                .getUnclippedBoundsInRoot()
+            val row = composeTestRule.onNodeWithTag("genderChoices").getUnclippedBoundsInRoot()
+
+            assertThat(chip.top.value).isAtLeast(row.top.value)
+            assertThat(chip.bottom.value).isAtMost(row.bottom.value)
+        }
     }
 }

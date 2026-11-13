@@ -6,7 +6,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
@@ -24,6 +24,7 @@ import com.jericx.trainr.R
 import com.jericx.trainr.presentation.common.theme.ComponentHeight
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
+import com.jericx.trainr.presentation.common.theme.scaledWithText
 import com.jericx.trainr.presentation.common.theme.trainrColors
 
 @Composable
@@ -39,7 +40,9 @@ fun TrainrPillButton(
 
     Row(
         modifier = modifier
-            .height(ComponentHeight.Pill)
+            // A floor rather than a height: the label grows with the text
+            // setting and would otherwise be cut off top and bottom.
+            .heightIn(min = ComponentHeight.Pill)
             .clip(MaterialTheme.shapes.medium)
             .background(if (filled) colors.brandStrong else colors.surfaceRaised)
             .then(
@@ -47,23 +50,28 @@ fun TrainrPillButton(
                 else Modifier.border(1.5.dp, colors.outlineControl, MaterialTheme.shapes.medium)
             )
             .clickable(role = Role.Button, onClick = onClick)
-            .padding(start = 5.dp, end = Spacing.card),
+            .padding(start = 5.dp, end = Spacing.card, top = PILL_INSET, bottom = PILL_INSET),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             painter = painterResource(iconRes),
             contentDescription = null,
             tint = contentColor,
-            modifier = Modifier.size(24.dp)
+            modifier = Modifier.size(PILL_ICON.scaledWithText())
         )
         Text(
             text = text,
             style = MaterialTheme.typography.labelLarge,
             color = contentColor,
-            modifier = Modifier.padding(start = Spacing.extraSmall)
+            modifier = Modifier
+                .weight(1f, fill = false)
+                .padding(start = Spacing.extraSmall)
         )
     }
 }
+
+private val PILL_ICON = 24.dp
+private val PILL_INSET = 2.dp
 
 @Preview(showBackground = true)
 @Composable

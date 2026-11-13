@@ -83,7 +83,11 @@ fun TrainrSwipeToDelete(
         Box(
             modifier = Modifier
                 .offset { IntOffset(offsetPx.roundToInt(), 0) }
-                .background(colors.surfaceCard)
+                // Likewise: an idle row would otherwise repaint the card it
+                // already sits on, as a lighter stripe in dark.
+                .then(
+                    if (offsetPx < 0f) Modifier.background(colors.surfaceCard) else Modifier
+                )
                 .then(
                     if (enabled) {
                         Modifier.draggable(

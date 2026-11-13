@@ -2,6 +2,8 @@ package com.jericx.trainr.presentation.workout.components
 
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
@@ -52,19 +54,21 @@ class ExerciseCardTest {
     }
 
     @Test
-    fun anUnfinishedExerciseOffersToBeCompleted() {
+    fun anUnfinishedExerciseReportsAnUntickedBox() {
         setCard(sampleExercises[1])
 
-        composeTestRule.onNodeWithContentDescription(string(R.string.mark_exercise_complete))
+        composeTestRule.onNodeWithContentDescription(string(R.string.exercise_complete))
             .assertIsDisplayed()
+            .assertIsOff()
     }
 
     @Test
-    fun aFinishedExerciseOffersToBeUndone() {
+    fun aFinishedExerciseReportsATickedBox() {
         setCard(sampleExercises[0])
 
-        composeTestRule.onNodeWithContentDescription(string(R.string.mark_exercise_incomplete))
+        composeTestRule.onNodeWithContentDescription(string(R.string.exercise_complete))
             .assertIsDisplayed()
+            .assertIsOn()
     }
 
     @Test
@@ -72,7 +76,7 @@ class ExerciseCardTest {
         var toggled = false
         setCard(sampleExercises[1], onToggle = { toggled = true })
 
-        composeTestRule.onNodeWithContentDescription(string(R.string.mark_exercise_complete))
+        composeTestRule.onNodeWithContentDescription(string(R.string.exercise_complete))
             .performClick()
 
         assertThat(toggled).isTrue()
@@ -91,7 +95,7 @@ class ExerciseCardTest {
         var toggled = false
         setCard(sampleExercises[1].copy(sets = emptyList()), onToggle = { toggled = true })
 
-        composeTestRule.onNodeWithContentDescription(string(R.string.mark_exercise_complete))
+        composeTestRule.onNodeWithContentDescription(string(R.string.exercise_complete))
             .performClick()
 
         assertThat(toggled).isTrue()
@@ -135,9 +139,31 @@ class ExerciseCardTest {
 
     @Test
     fun aMovementAnInjuryAsksCareWithSaysWhatToWatch() {
-        setCard(sampleExercises[0].copy(caution = Injury.KNEE))
+        setCard(sampleExercises[0].copy(cautions = listOf(Injury.KNEE)))
 
+        composeTestRule.onNodeWithText(string(R.string.caution_title)).assertIsDisplayed()
         composeTestRule.onNodeWithText(string(R.string.caution_knee)).assertIsDisplayed()
+    }
+
+    // Every injury the client declared gets heard, not only whichever one they
+    // happened to tick first.
+    @Test
+    fun aMovementThatTouchesSeveralInjuriesShowsALineForEach() {
+        setCard(
+            sampleExercises[0].copy(cautions = listOf(Injury.KNEE, Injury.HIP, Injury.ANKLE))
+        )
+
+        composeTestRule.onNodeWithText(string(R.string.caution_title)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.caution_knee)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.caution_hip)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.caution_ankle)).assertIsDisplayed()
+    }
+
+    @Test
+    fun aMovementNoInjuryTouchesShowsNoHeading() {
+        setCard(sampleExercises[0].copy(cautions = emptyList()))
+
+        composeTestRule.onNodeWithText(string(R.string.caution_title)).assertDoesNotExist()
     }
 
     @Test

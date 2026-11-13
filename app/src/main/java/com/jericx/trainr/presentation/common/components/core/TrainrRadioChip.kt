@@ -7,9 +7,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -36,48 +38,54 @@ fun TrainrRadioChip(
 ) {
     val colors = MaterialTheme.trainrColors
 
-    Surface(
-        onClick = onClick,
-        modifier = modifier
-            .fillMaxWidth()
-            .height(height),
-        shape = MaterialTheme.shapes.medium,
-        color = if (selected) colors.surfaceSelected else colors.surfaceCard,
-        // The frames keep the outline on the selected row too.
-        border = BorderStroke(1.dp, colors.outlineControl)
-    ) {
-        Row(
-            modifier = Modifier
+    // A chip shorter than the 48dp touch target is grown to it and centred back
+    // inside the height asked for here, which for an odd difference rounds half
+    // a pixel the wrong way and leaves the chip hanging past the row it is in.
+    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
+        Surface(
+            onClick = onClick,
+            modifier = modifier
                 .fillMaxWidth()
-                .padding(start = Spacing.card, end = Spacing.tight),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+                .height(height),
+            shape = MaterialTheme.shapes.medium,
+            color = if (selected) colors.surfaceSelected else colors.surfaceCard,
+            // The frames keep the outline on the selected row too.
+            border = BorderStroke(1.dp, colors.outlineControl)
         ) {
-            BasicText(
-                text = text,
-                style = MaterialTheme.typography.bodyLarge.copy(
-                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                    color = when {
-                        selected -> colors.onSurfaceSelected
-                        mutedWhenUnselected -> colors.onSurfaceMuted
-                        else -> colors.onSurface
-                    }
-                ),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                // Phones narrower than the 412dp frame get a smaller label,
-                // never an ellipsis.
-                autoSize = TextAutoSize.StepBased(
-                    minFontSize = 12.sp,
-                    maxFontSize = 16.sp,
-                    stepSize = 0.5.sp
-                ),
-                // Weighted so the label yields to the dot rather than squashing
-                // it: an unweighted text is measured first and takes the row.
-                modifier = Modifier.weight(1f, fill = false)
-            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = Spacing.card, end = Spacing.tight),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                BasicText(
+                    text = text,
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                        color = when {
+                            selected -> colors.onSurfaceSelected
+                            mutedWhenUnselected -> colors.onSurfaceMuted
+                            else -> colors.onSurface
+                        }
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    // Phones narrower than the 412dp frame get a smaller label,
+                    // never an ellipsis.
+                    autoSize = TextAutoSize.StepBased(
+                        minFontSize = 12.sp,
+                        maxFontSize = 16.sp,
+                        stepSize = 0.5.sp
+                    ),
+                    // Weighted so the label yields to the dot rather than
+                    // squashing it: an unweighted text is measured first and
+                    // takes the row.
+                    modifier = Modifier.weight(1f, fill = false)
+                )
 
-            TrainrRadioDot(selected = selected)
+                TrainrRadioDot(selected = selected)
+            }
         }
     }
 }

@@ -26,7 +26,7 @@ class UserRepositoryImplTest {
     @Before
     fun setUp() {
         userDao = mockk(relaxed = true)
-        repository = UserRepositoryImpl(userDao, mapper)
+        repository = UserRepositoryImpl(mockk(relaxed = true), userDao, mapper)
     }
 
     private fun sampleProfile() = UserProfile(
