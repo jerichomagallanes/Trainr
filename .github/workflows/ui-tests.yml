@@ -6,15 +6,27 @@ name: UI tests
 # able to block a merge on their own — read the result, re-run if it looks like a
 # flake, investigate if it doesn't. The nightly run on main catches anything that
 # slipped through.
+#
+# Nothing requires a pull request to be up to date with its base before merging,
+# so two that were each green can land and break together. The push trigger on
+# version/X.Y re-runs the suite on the merged result, which is the only thing
+# that sees that combination. pre-release is listed because a candidate build
+# goes to real testers, so a pull request into it is the last chance to catch
+# anything that reached it without passing through version/X.Y.
+#
+# The nightly still runs against the default branch, because a schedule always
+# does, and the default branch is what ships today.
 on:
   pull_request:
-    branches: [main, version/2.0]
+    branches: [main, version/2.0, pre-release]
     paths-ignore:
       - '**/*.md'
       - 'docs/**'
       - '.github/ISSUE_TEMPLATE/**'
       - '.gitignore'
       - '.editorconfig'
+  push:
+    branches: [version/2.0]
   schedule:
     - cron: '0 18 * * *'  # 03:00 JST daily, against main
   workflow_dispatch:
