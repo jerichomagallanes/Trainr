@@ -69,7 +69,7 @@ android {
             runCatching { commitCount.get() + versionCodeOffset }.getOrDefault(0),
             minimumVersionCode
         )
-        versionName = "1.2"
+        versionName = "2.0"
 
         // Hilt's, so an instrumented test can reach the real graph: the
         // paywall gate is wired in the navigation and cannot be seen from a
