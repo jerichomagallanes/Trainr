@@ -97,6 +97,12 @@ fun WorkoutDayCard(
             when {
                 isMissed -> StatusChip(labelRes = R.string.missed, tone = StatusTone.IDLE)
                 isPartlyDone -> StatusChip(labelRes = R.string.partly_done, tone = StatusTone.ACTIVE)
+                // Finishing early closes the day whatever was logged, so this is
+                // the one closed day that holds no training. It reads grey with
+                // the rest: nothing was done, and a tick would say it was.
+                day.status == WorkoutStatus.COMPLETED && !day.hasPerformedWork ->
+                    StatusChip(labelRes = R.string.skipped, tone = StatusTone.IDLE)
+
                 finishedEarly -> StatusChip(labelRes = R.string.finished_early, tone = StatusTone.DONE)
                 isAdjusted && day.status != WorkoutStatus.COMPLETED ->
                     StatusChip(labelRes = R.string.adjusted, tone = StatusTone.ACTIVE)

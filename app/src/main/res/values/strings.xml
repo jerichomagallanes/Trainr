@@ -646,7 +646,7 @@
     <string name="pro_compare_row">%1$s: %2$s, %3$s. %4$s, %5$s.</string>
     <string name="pro_questions">Any questions?</string>
     <string name="pro_faq_includes_q">What does Trainr Pro include?</string>
-    <string name="pro_faq_includes_a">Pro unlocks every week after your first: build next week from what you lifted, repeat a week that went well, rewrite one that does not suit you, start a fresh plan whenever your goal changes, and removes the ad from your plan.</string>
+    <string name="pro_faq_includes_a">Pro unlocks every week after your first: build next week from what you lifted, rewrite one that does not suit you, start a fresh plan whenever your goal changes, and removes the ad from your plan. Repeating a week you already have is free for everyone.</string>
     <string name="pro_faq_human_q">Is my plan written by a real trainer?</string>
     <string name="pro_faq_human_a">No. Trainr builds it on your phone from the answers you gave, and progresses it from the sets you log. Plans are guidance, not medical advice.</string>
     <string name="pro_faq_renew_q">Does Pro renew automatically?</string>
