@@ -24,6 +24,7 @@ import dagger.hilt.android.testing.HiltAndroidTest
 import java.util.Locale
 import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
+import com.jericx.trainr.testing.RequiresModel
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Rule
@@ -32,6 +33,7 @@ import org.junit.runner.RunWith
 
 @HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
+@RequiresModel
 class LlamaInterpreterTest {
 
     @get:Rule

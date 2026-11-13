@@ -16,6 +16,11 @@ name: UI tests
 #
 # The nightly still runs against the default branch, because a schedule always
 # does, and the default branch is what ships today.
+# The real-model tests are left out by annotation rather than allowed to skip.
+# The GGUF is never on a CI emulator, and a skipped instrumentation test is
+# written into the report as a failure, so every pull request carried a red
+# check that could not go green. Push the model and drop the filter to run them.
+#
 on:
   pull_request:
     branches: [main, version/2.0, pre-release]
@@ -81,7 +86,8 @@ jobs:
       - name: Run instrumentation tests
         run: |
           ./gradlew ciAtdDevDebugAndroidTest \
-            -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect
+            -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect \
+            -Pandroid.testInstrumentationRunnerArguments.notAnnotation=com.jericx.trainr.testing.RequiresModel
 
       - name: Publish test results
         if: ${{ !cancelled() }}
