@@ -1,0 +1,101 @@
+name: Promote to production
+
+# Build once, promote the artifact. The bundle the testers approved is the
+# bundle that ships, so there is no compile step here and nothing to check out:
+# this workflow only moves a version code that is already on the internal track
+# across to production. If a build ever appears in this file, the design has
+# gone wrong.
+#
+# There is deliberately no release branch. Production is reached by promoting an
+# artifact, not by merging. After a release ships, version/X.Y merges into main
+# for the record and the release is tagged there.
+on:
+  workflow_dispatch:
+    inputs:
+      version_code:
+        description: Version code to promote, as printed by the Test release run
+        required: true
+        type: string
+
+# Not cancel-in-progress, unlike the build workflows: a promotion is a single
+# short call that either happened or did not, and interrupting one halfway
+# leaves an open edit on Play rather than saving any work.
+concurrency:
+  group: promote-to-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  promote:
+    name: Promote the internal build to production
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # The approval is recorded in GitHub rather than being tribal knowledge.
+    # Required reviewers on an environment are free on a public repository, and
+    # the job does not start — and never sees the Play key — until one approves.
+    environment: production
+    steps:
+      - name: Check the Play credentials are present
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          if [ -z "$PLAY_SERVICE_ACCOUNT_JSON" ]; then
+            echo "::error::Missing repository secret PLAY_SERVICE_ACCOUNT_JSON"
+            echo "Create it under Settings -> Secrets and variables -> Actions."
+            echo "docs/release-secrets.md says where the value comes from."
+            exit 1
+          fi
+
+      # A typo here promotes the wrong build to real users, and Play's error for
+      # a non-numeric version code is not obvious.
+      - name: Check the version code is a number
+        env:
+          VERSION_CODE: ${{ inputs.version_code }}
+        run: |
+          case "$VERSION_CODE" in
+            ''|*[!0-9]*)
+              echo "::error::version_code must be digits only, got '$VERSION_CODE'."
+              exit 1
+              ;;
+          esac
+
+      - name: Install fastlane
+        run: sudo gem install --no-document fastlane -v 2.241.2
+
+      # --track internal names where the artifact is now, --track_promote_to
+      # names where it goes. No file is passed, because the bundle is already
+      # uploaded; Play moves the one it has. Sending it for review is the
+      # default and is what should happen. The input reaches the command through
+      # the environment, never interpolated into the script itself.
+      - name: Promote the internal track release to production
+        env:
+          SUPPLY_JSON_KEY_DATA: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          VERSION_CODE: ${{ inputs.version_code }}
+          FASTLANE_SKIP_UPDATE_CHECK: '1'
+        run: |
+          fastlane supply \
+            --package_name com.jericx.trainr \
+            --track internal \
+            --version_code "$VERSION_CODE" \
+            --track_promote_to production \
+            --track_promote_release_status completed \
+            --skip_upload_apk true \
+            --skip_upload_aab true \
+            --skip_upload_metadata true \
+            --skip_upload_changelogs true \
+            --skip_upload_images true \
+            --skip_upload_screenshots true
+
+      - name: Say what shipped
+        env:
+          VERSION_CODE: ${{ inputs.version_code }}
+        run: |
+          {
+            echo "### Promoted $VERSION_CODE to production"
+            echo
+            echo "Run started by @${{ github.actor }} and released through the"
+            echo "production environment, which records who approved it."
+            echo "Play has it under review; it reaches users when review passes."
+          } >> "$GITHUB_STEP_SUMMARY"
