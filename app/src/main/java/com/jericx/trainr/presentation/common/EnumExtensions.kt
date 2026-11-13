@@ -7,17 +7,17 @@ import com.jericx.trainr.domain.model.*
 
 @Composable
 fun Gender.getLocalizedName(): String = when (this) {
-    Gender.MALE -> stringResource(R.string.male_gender)
-    Gender.FEMALE -> stringResource(R.string.female_gender)
-    Gender.NON_BINARY -> stringResource(R.string.other_gender)
-    Gender.PREFER_NOT_TO_SAY -> stringResource(R.string.other_gender)
+    Gender.MALE -> stringResource(R.string.male)
+    Gender.FEMALE -> stringResource(R.string.female)
+    Gender.NON_BINARY -> stringResource(R.string.other)
+    Gender.PREFER_NOT_TO_SAY -> stringResource(R.string.other)
 }
 
 @Composable
 fun ExperienceLevel.getLocalizedName(): String = when (this) {
-    ExperienceLevel.BEGINNER -> stringResource(R.string.beginner_level)
-    ExperienceLevel.INTERMEDIATE -> stringResource(R.string.intermediate_level)
-    ExperienceLevel.ADVANCED -> stringResource(R.string.advanced_level)
+    ExperienceLevel.BEGINNER -> stringResource(R.string.beginner)
+    ExperienceLevel.INTERMEDIATE -> stringResource(R.string.intermediate)
+    ExperienceLevel.ADVANCED -> stringResource(R.string.advanced)
 }
 
 @Composable

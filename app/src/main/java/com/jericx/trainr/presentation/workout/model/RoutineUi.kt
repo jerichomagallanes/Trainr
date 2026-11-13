@@ -1,6 +1,8 @@
 package com.jericx.trainr.presentation.workout.model
 
+import com.jericx.trainr.domain.model.ExerciseMeasure
 import com.jericx.trainr.domain.model.ExerciseSet
+import com.jericx.trainr.domain.unstuck.ActualOrigin
 
 import kotlin.math.roundToInt
 
@@ -17,6 +19,12 @@ data class RoutineUi(
 
     val isComplete: Boolean get() = exercises.isNotEmpty() && completedCount == exercises.size
 
+    val plannedExerciseCount: Int get() = exercises.count { !it.isOmitted }
+
+    val performedExerciseCount: Int get() = exercises.count { !it.isOmitted && it.isPerformed }
+
+    val hasUnperformedWork: Boolean get() = exercises.any { !it.isOmitted && !it.isPerformed }
+
     fun toggleCompleted(position: Int): RoutineUi = copy(
         exercises = exercises.map {
             when {
@@ -27,9 +35,21 @@ data class RoutineUi(
         }
     )
 
-    fun markCompleted(position: Int): RoutineUi = copy(
-        exercises = exercises.map {
-            if (it.position == position) it.loggedAsPrescribed() else it
+    // The timer measured one span of time, so it may fill the one set that span
+    // was: never a second set, never a rep or a weight, and it ticks nothing.
+    fun logMeasuredSeconds(position: Int, seconds: Int): RoutineUi = copy(
+        exercises = exercises.map { exercise ->
+            val measured = exercise.takeIf { it.position == position }?.measuredSet
+                ?: return@map exercise
+            exercise.copy(
+                sets = exercise.sets.map {
+                    if (it.setNumber != measured.setNumber) {
+                        it
+                    } else {
+                        it.copy(actualSeconds = seconds, actualOrigin = ActualOrigin.MEASURED)
+                    }
+                }
+            )
         }
     )
 
@@ -39,7 +59,9 @@ data class RoutineUi(
                 exercise
             } else {
                 exercise.copy(
-                    sets = exercise.sets.map { if (it.setNumber == set.setNumber) set else it }
+                    sets = exercise.sets.map {
+                        if (it.setNumber == set.setNumber) set.withOriginAfter(it) else it
+                    }
                 ).tickedFromItsSets()
             }
         }
@@ -51,9 +73,10 @@ data class RoutineUi(
                 exercise
             } else {
                 val last = exercise.sets.lastOrNull()
+                val taken = exercise.sets.map { it.setNumber } + exercise.omittedSetNumbers
                 exercise.copy(
                     sets = exercise.sets + ExerciseSet(
-                        setNumber = exercise.sets.size + 1,
+                        setNumber = (taken.maxOrNull() ?: 0) + 1,
                         targetReps = last?.targetReps,
                         targetWeightKg = last?.targetWeightKg,
                         targetSeconds = last?.targetSeconds
@@ -94,7 +117,8 @@ data class RoutineUi(
                         actualReps = null,
                         actualWeightKg = null,
                         actualSeconds = null,
-                        isCompleted = false
+                        isCompleted = false,
+                        actualOrigin = ActualOrigin.NONE
                     )
                 }
             )
@@ -123,13 +147,48 @@ private fun ExerciseUi.loggedAsPrescribed(): ExerciseUi = copy(
             actualReps = it.actualReps ?: it.targetReps,
             actualWeightKg = it.actualWeightKg ?: it.targetWeightKg,
             actualSeconds = it.actualSeconds ?: it.targetSeconds,
-            isCompleted = true
+            isCompleted = true,
+            actualOrigin = if (it.hasActuals) it.actualOrigin else ActualOrigin.CONFIRMED_TARGET
         )
     }
 )
 
-// Un-ticking clears the marks and leaves the numbers: hand-typed logs stay.
+// Un-ticking clears the marks and leaves the numbers with their origin: hand-typed logs stay.
 private fun ExerciseUi.notLogged(): ExerciseUi = copy(
     isCompleted = false,
     sets = sets.map { it.copy(isCompleted = false) }
 )
+
+// The one set a countdown may fill: a single span of time, neither held nor
+// ticked already.
+internal val ExerciseUi.measuredSet: ExerciseSet?
+    get() = if (measure != ExerciseMeasure.DURATION) {
+        null
+    } else {
+        sets.singleOrNull()?.takeIf { it.actualSeconds == null && !it.isCompleted }
+    }
+
+private val ExerciseUi.isOmitted: Boolean
+    get() = sets.isNotEmpty() && sets.all { it.omittedBy != null }
+
+private val ExerciseUi.isPerformed: Boolean
+    get() {
+        val planned = sets.filter { it.omittedBy == null }
+        return if (planned.isEmpty()) isCompleted else planned.all { it.isCompleted }
+    }
+
+private val ExerciseSet.hasActuals: Boolean
+    get() = actualReps != null || actualWeightKg != null || actualSeconds != null
+
+private fun ExerciseSet.withOriginAfter(stored: ExerciseSet): ExerciseSet {
+    val changed = actualReps != stored.actualReps ||
+        actualWeightKg != stored.actualWeightKg ||
+        actualSeconds != stored.actualSeconds
+    return copy(
+        actualOrigin = when {
+            !hasActuals -> ActualOrigin.NONE
+            changed -> ActualOrigin.TYPED
+            else -> stored.actualOrigin
+        }
+    )
+}

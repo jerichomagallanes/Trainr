@@ -58,7 +58,7 @@ class WeekPlanGenerator(private val catalog: ExerciseCatalog) : PlanGenerator {
         if (previous.workoutDays.size != skeleton.days.size) return null
         val days = skeleton.days.associate { day ->
             val before = previous.workoutDays.firstOrNull { it.dayNumber == day.dayNumber } ?: return null
-            val remaining = before.exercises.map { it.exerciseKey }.toMutableList()
+            val remaining = before.exercises.filter { it.addedBy == null }.map { it.exerciseKey }.toMutableList()
             day.slots.filter { it.isDecided }.forEach { remaining.remove(it.candidates.single()) }
             val slots = day.openSlots.associate { slot ->
                 val key = remaining.firstOrNull { it in slot.candidates } ?: return null
@@ -121,13 +121,13 @@ class WeekPlanGenerator(private val catalog: ExerciseCatalog) : PlanGenerator {
         } else {
             slot.candidates
         }
-        val best = pool.take(VARIETY_DEPTH)
+        val best = pool.take(SkeletonSlot.VARIETY_DEPTH)
         if (best.size < 2) return pool
         // Hashed together rather than xored: xor leaves the choice riding on the
         // seed's lowest bits, so with two candidates every slot in the week
         // turned on one bit and there were only ever two weeks to go round.
         val offset = (mixed(hash("$client:${slot.id}:$dayNumber")) % best.size.toUInt()).toInt()
-        return best.drop(offset) + best.take(offset) + pool.drop(VARIETY_DEPTH)
+        return best.drop(offset) + best.take(offset) + pool.drop(SkeletonSlot.VARIETY_DEPTH)
     }
 
     // Who the client is, not how long they have. Session length and day count
@@ -168,10 +168,6 @@ class WeekPlanGenerator(private val catalog: ExerciseCatalog) : PlanGenerator {
     }
 
     private companion object {
-        // Two candidates, not three: measured against the volume and frequency
-        // the evidence asks for, going deeper spread a week's sets thinner
-        // without buying any more variety worth having.
-        const val VARIETY_DEPTH = 2
         const val FNV_OFFSET = -2128831035
         const val FNV_PRIME = 16777619
     }

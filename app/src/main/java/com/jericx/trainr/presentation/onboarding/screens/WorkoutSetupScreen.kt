@@ -11,7 +11,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,6 +44,8 @@ import com.jericx.trainr.presentation.common.components.layout.TrainrTopBar
 import com.jericx.trainr.presentation.common.components.typography.TrainrScreenTitle
 import com.jericx.trainr.presentation.common.theme.ComponentHeight
 import com.jericx.trainr.presentation.common.theme.Spacing
+import com.jericx.trainr.presentation.common.theme.trainrColors
+import com.jericx.trainr.presentation.onboarding.WorkoutSetupEntry
 
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -47,7 +53,15 @@ import com.jericx.trainr.presentation.common.theme.Spacing
 fun WorkoutSetupScreen(
     initial: UserProfile? = null,
     isEditing: Boolean = false,
+    // How the client reads their own body, answered two steps earlier.
+    bodyUnits: UnitSystem = UnitSystem.Default,
     stockedEquipment: Set<Equipment> = EquipmentChoices.toSet(),
+    inProgress: WorkoutSetupEntry? = null,
+    onEntryChanged: (WorkoutSetupEntry) -> Unit = {},
+    // The longest session these answers can really build, which is the answer
+    // itself unless the split cannot fill it.
+    longestSessionMinutes: suspend (equipment: List<Equipment>, daysPerWeek: Int, duration: Int) -> Int =
+        { _, _, duration -> duration },
     onNextClick: (
         equipment: List<Equipment>,
         liftingUnits: UnitSystem?,
@@ -57,17 +71,41 @@ fun WorkoutSetupScreen(
     onBackClick: () -> Unit
 ) {
     var selectedEquipment by remember {
-        mutableStateOf(initial?.availableEquipment?.toSet() ?: emptySet())
+        mutableStateOf(
+            inProgress?.equipment ?: initial?.availableEquipment?.toSet() ?: emptySet()
+        )
     }
     // Nothing starts chosen: a default the client walks past would become an
     // answer the plan is built around.
-    var selectedDays by remember { mutableStateOf(initial?.workoutDaysPerWeek?.takeIf { it > 0 }) }
-    var selectedDuration by remember { mutableStateOf(initial?.workoutDuration?.takeIf { it > 0 }) }
-    var selectedLiftingUnits by remember { mutableStateOf(initial?.liftingUnitSystem) }
+    var selectedDays by remember {
+        mutableStateOf(inProgress?.daysPerWeek ?: initial?.workoutDaysPerWeek?.takeIf { it > 0 })
+    }
+    var selectedDuration by remember {
+        mutableStateOf(inProgress?.duration ?: initial?.workoutDuration?.takeIf { it > 0 })
+    }
+    var selectedLiftingUnits by remember {
+        mutableStateOf(inProgress?.liftingUnits ?: initial?.liftingUnitSystem)
+    }
+
+    // Published synchronously: a LaunchedEffect dispatches the publish, and the
+    // last thing typed or tapped before the Activity is torn down never arrives.
+    val entry = WorkoutSetupEntry(
+        selectedEquipment, selectedLiftingUnits, selectedDays, selectedDuration
+    )
+    SideEffect { onEntryChanged(entry) }
 
     // A bodyweight setup has no plates to read, so lifting units stay unasked
     // and null rather than taking a value.
     val hasLoadedEquipment = selectedEquipment.any { it in LoadedEquipment }
+
+    // Answered with the units the client already reads their own body in, which
+    // is what the profile falls back to anyway: revealed by a chip above it, the
+    // question would otherwise block NEXT from off the top of the window.
+    LaunchedEffect(hasLoadedEquipment) {
+        if (hasLoadedEquipment && selectedLiftingUnits == null) {
+            selectedLiftingUnits = bodyUnits
+        }
+    }
 
     TrainrScaffold(
         onBackClick = onBackClick,
@@ -242,6 +280,27 @@ fun WorkoutSetupScreen(
                                 modifier = Modifier.weight(1f)
                             )
                         }
+                    }
+
+                    // Off the composition thread: this builds a whole week,
+                    // and it is rerun on every chip tap.
+                    var fallsShortAt by remember { mutableStateOf<Int?>(null) }
+                    LaunchedEffect(selectedEquipment, selectedDays, selectedDuration) {
+                        val days = selectedDays
+                        val duration = selectedDuration
+                        fallsShortAt = if (days == null || duration == null) null
+                        else longestSessionMinutes(selectedEquipment.toList(), days, duration)
+                            .takeIf { it * 10 < duration * 9 }
+                    }
+                    fallsShortAt?.let { minutes ->
+                        Spacer(modifier = Modifier.height(Spacing.card))
+                        Text(
+                            text = pluralStringResource(
+                                R.plurals.sessions_fall_short_message, minutes, minutes
+                            ),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.trainrColors.onSurfaceMuted
+                        )
                     }
                 }
             }

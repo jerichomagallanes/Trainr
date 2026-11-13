@@ -23,17 +23,15 @@ import com.jericx.trainr.presentation.workout.model.StatusTone
 fun StatusChip(
     @StringRes labelRes: Int,
     tone: StatusTone,
-    modifier: Modifier = Modifier,
-    // Off by default: the day card wraps its longer labels rather than clipping.
-    singleLine: Boolean = false
+    modifier: Modifier = Modifier
 ) {
     val colors = MaterialTheme.trainrColors
+    // Always wrapped, never clipped: the label is the only thing on the card
+    // that says where the day stands.
     Text(
         text = stringResource(labelRes),
         color = colors.onStatus,
         style = MaterialTheme.typography.labelSmall,
-        maxLines = if (singleLine) 1 else Int.MAX_VALUE,
-        softWrap = !singleLine,
         modifier = modifier
             .background(
                 when (tone) {

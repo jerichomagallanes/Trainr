@@ -13,19 +13,25 @@ import com.jericx.trainr.domain.model.UserProfile
 import com.jericx.trainr.domain.generation.PlanGenerationResult
 import com.jericx.trainr.domain.generation.PlanGenerator
 import com.jericx.trainr.domain.generation.PlanRequest
+import com.jericx.trainr.domain.generation.PlanSkeletonBuilder
+import com.jericx.trainr.domain.purchases.ProGate
 import com.jericx.trainr.domain.repository.UserRepository
+import com.jericx.trainr.presentation.onboarding.util.BodyMetricsConverter
 import com.jericx.trainr.presentation.workout.util.WorkoutWeek
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
 class OnboardingViewModel @Inject constructor(
     private val userRepository: UserRepository,
     private val planGenerator: PlanGenerator,
+    private val proGate: ProGate,
     catalog: ExerciseCatalog
 ) : ViewModel() {
 
@@ -33,6 +39,25 @@ class OnboardingViewModel @Inject constructor(
     // screen, so a chip can never lead to an empty week.
     val stockedEquipment: Set<Equipment> = catalog.all.map { it.equipment }.toSet()
 
+    private val skeletons = PlanSkeletonBuilder(catalog)
+
+    // The longest session these answers can actually build, so a length no day
+    // of the split can fill is said on the screen that asks for it rather than
+    // quietly delivered two thirds of. The longest, because a recovery day is
+    // meant to be short and is no sign the answer cannot be met.
+    suspend fun longestSessionMinutes(
+        equipment: List<Equipment>,
+        daysPerWeek: Int,
+        duration: Int
+    ): Int = withContext(Dispatchers.Default) {
+        val profile = _onboardingState.value.userProfile.copy(
+            availableEquipment = equipment,
+            workoutDaysPerWeek = daysPerWeek,
+            workoutDuration = duration
+        )
+        val week = skeletons.build(PlanRequest(user = profile, weekNumber = 1, startDateMillis = 0L))
+        week.days.maxOfOrNull { it.minutes } ?: duration
+    }
 
     private val _onboardingState = MutableStateFlow(OnboardingState())
     val onboardingState: StateFlow<OnboardingState> = _onboardingState.asStateFlow()
@@ -45,11 +70,24 @@ class OnboardingViewModel @Inject constructor(
         }
     }
 
+    // What each step has in it before NEXT turns it into an answer. Held
+    // outside the state flow so a keystroke does not recompose the graph, and
+    // here rather than in saved state: a configuration change or a step popped
+    // off the back stack must not lose it, but a process kill must. Saved state
+    // would restore a half-filled form onto a profile nobody ever saved.
+    var basicInfoEntry: BasicInfoEntry? = null
+    var bodyMetricsEntry: BodyMetricsEntry? = null
+    var fitnessGoalEntry: FitnessGoalEntry? = null
+    var workoutSetupEntry: WorkoutSetupEntry? = null
+    var limitationsEntry: LimitationsEntry? = null
+
     fun updateBasicInfo(firstName: String, age: Int, gender: Gender, experience: ExperienceLevel) {
+        basicInfoEntry = null
         _onboardingState.value = _onboardingState.value.copy(
             answeredSteps = answeredWith(OnboardingStep.BASIC_INFO),
             userProfile = _onboardingState.value.userProfile.copy(
-                firstName = firstName,
+                // Stored trimmed, because every greeting in the app reads it back.
+                firstName = firstName.trim(),
                 age = age,
                 gender = gender,
                 experienceLevel = experience
@@ -58,6 +96,7 @@ class OnboardingViewModel @Inject constructor(
     }
 
     fun updateBodyMetrics(height: Float, weight: Float, units: UnitSystem) {
+        bodyMetricsEntry = null
         _onboardingState.value = _onboardingState.value.copy(
             answeredSteps = answeredWith(OnboardingStep.BODY_METRICS),
             userProfile = _onboardingState.value.userProfile.copy(
@@ -69,6 +108,7 @@ class OnboardingViewModel @Inject constructor(
     }
 
     fun updateFitnessGoal(goal: FitnessGoal) {
+        fitnessGoalEntry = null
         _onboardingState.value = _onboardingState.value.copy(
             answeredSteps = answeredWith(OnboardingStep.GOALS),
             userProfile = _onboardingState.value.userProfile.copy(
@@ -83,6 +123,7 @@ class OnboardingViewModel @Inject constructor(
         daysPerWeek: Int,
         duration: Int
     ) {
+        workoutSetupEntry = null
         _onboardingState.value = _onboardingState.value.copy(
             answeredSteps = answeredWith(OnboardingStep.SETUP),
             userProfile = _onboardingState.value.userProfile.copy(
@@ -95,6 +136,7 @@ class OnboardingViewModel @Inject constructor(
     }
 
     fun updateLimitations(injuries: List<Injury>) {
+        limitationsEntry = null
         _onboardingState.value = _onboardingState.value.copy(
             answeredSteps = answeredWith(OnboardingStep.LIMITATIONS),
             userProfile = _onboardingState.value.userProfile.copy(injuries = injuries)
@@ -103,6 +145,12 @@ class OnboardingViewModel @Inject constructor(
 
     private fun answeredWith(step: OnboardingStep): Set<OnboardingStep> =
         _onboardingState.value.answeredSteps + step
+
+    // Whether the splash has already chosen where this launch opens. It
+    // belongs beside the answers rather than in saved state: both are gone
+    // once the process is, and a decision that outlived them would restore a
+    // half-answered flow onto a profile nobody filled in.
+    var startupDecided: Boolean = false
 
     suspend fun hasCompletedOnboarding(): Boolean = userRepository.hasUsers()
 
@@ -167,8 +215,11 @@ class OnboardingViewModel @Inject constructor(
                     return@launch
                 }
 
-                val userId = userRepository.saveUser(profile)
-                userRepository.saveWeeklyWorkoutPlan(result.plan.copy(userId = userId))
+                userRepository.saveUserWithFirstWeek(profile, result.plan)
+                // Charged where the week lands, not on the screen that asked
+                // for it: this view model outlives that screen, and backing out
+                // of it leaves a week of training behind either way.
+                proGate.spend()
                 _onboardingState.value = _onboardingState.value.copy(isCompleted = true)
                 onSuccess()
             } catch (e: Exception) {
@@ -195,6 +246,42 @@ enum class OnboardingStep {
     SETUP,
     LIMITATIONS
 }
+
+// What each step currently has typed or chosen in it. Text rather than numbers
+// where a field is typed: a part-typed "5" is not an age or a height yet, and
+// "touched" is what decides whether a blank one is already an error.
+data class BasicInfoEntry(
+    val firstName: String,
+    val age: String,
+    val gender: Gender?,
+    val experience: ExperienceLevel?,
+    val nameTouched: Boolean = false,
+    val ageTouched: Boolean = false
+)
+
+// The swaps carry the measurements behind the shown text, which the index is
+// read from.
+data class BodyMetricsEntry(
+    val height: String,
+    val weight: String,
+    val useMetric: Boolean,
+    val heightSwap: BodyMetricsConverter.UnitSwap = BodyMetricsConverter.UnitSwap(),
+    val weightSwap: BodyMetricsConverter.UnitSwap = BodyMetricsConverter.UnitSwap()
+)
+
+data class FitnessGoalEntry(val goal: FitnessGoal?)
+
+data class WorkoutSetupEntry(
+    val equipment: Set<Equipment>,
+    val liftingUnits: UnitSystem?,
+    val daysPerWeek: Int?,
+    val duration: Int?
+)
+
+data class LimitationsEntry(
+    val injuries: Set<Injury>,
+    val noneSelected: Boolean
+)
 
 data class OnboardingState(
     val userProfile: UserProfile = UserProfile(),
