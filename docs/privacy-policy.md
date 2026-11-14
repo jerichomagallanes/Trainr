@@ -1,6 +1,6 @@
 # Privacy Policy for Trainr
 
-**Last updated: 2 October 2026**
+**Last updated: 14 November 2026**
 
 Trainr is a workout planning app. This policy explains what it collects, where
 that goes, and what you can do about it. It is written to be read, not to cover
@@ -35,6 +35,26 @@ uninstall the app, that data is deleted with it.
 Nothing from your profile or your training. Your weekly plan is written by the
 app itself, on your device, from an exercise catalog that ships inside it. None
 of the answers above, and nothing you log, is sent anywhere to write it.
+
+## Adjust today (version 2.0 and later)
+
+From version 2.0 a workout can be changed on the day, from the session screen.
+Four of the reasons it offers (less time, missing equipment, show me how,
+something hurts) are handled by the app's own logic, on your device, like the
+rest of the plan. The fifth lets you type what is going on in your own words.
+That note is read by a small language model that runs entirely on your device
+(LiquidAI LFM2.5-1.2B-Instruct), and what the model understood is shown back
+to you before anything in your plan changes. The note is not sent anywhere,
+and no server of ours is involved.
+
+The model is downloaded once, the first time you choose that option, from
+LiquidAI's public repository on Hugging Face (about 730 MB). That download is
+an ordinary web request: Hugging Face sees your IP address and the request for
+the file, nothing about you or your training, under the
+[Hugging Face Privacy Policy](https://huggingface.co/privacy). The file is
+checked against a known checksum before it is used and kept in the app's own
+storage; deleting the app deletes it. A phone without room for the download is
+told so, and the other four reasons keep working without it.
 
 ## The exercise videos
 
