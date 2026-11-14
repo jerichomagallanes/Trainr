@@ -1,8 +1,9 @@
-# Never guess at the gym again
+# Never guess your workout again
 
 Trainr is a workout planner that writes your week from your goals, the
-equipment you actually have, and the days you can train, then bends it to your
-day when life gets in the way. It tracks every set, rep and weight, and builds
+equipment you actually have (a gym, a pair of dumbbells, or nothing at all),
+and the days you can train, then bends it to your day when life gets in the
+way. It tracks every set, rep and weight, and builds
 next week from what you really lifted.
 
 Every exercise carries a tutorial video. The plan is built on the device, so it
