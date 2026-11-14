@@ -441,10 +441,19 @@ fun RoutineDetailScreen(
 
             if (!state.isReadOnly) {
                 if (!routine.isComplete) {
+                    // Said before the gesture, not after it: sliding fills every
+                    // unticked set at its prescription, which is the one thing a
+                    // person cannot tell from the label alone.
+                    Text(
+                        text = stringResource(R.string.log_whole_session_hint),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.trainrColors.onSurfaceMuted,
+                        modifier = Modifier.padding(top = Spacing.section + Spacing.tight)
+                    )
                     TrainrSlideToConfirm(
                         text = stringResource(R.string.slide_to_complete_routine),
                         onConfirm = onCompleteRoutine,
-                        modifier = Modifier.padding(top = Spacing.section + Spacing.tight)
+                        modifier = Modifier.padding(top = Spacing.small)
                     )
                     if (!finishedEarly) {
                         TrainrQuietButton(
