@@ -42,12 +42,23 @@ data class SkeletonSlot(
     val required: PatternRequirement? = null
 ) {
     val isDecided: Boolean get() = candidates.size == 1
+
+    companion object {
+        // How many of a slot's candidates a week really draws from. Two, not
+        // three: measured against the volume and frequency the evidence asks
+        // for, going deeper spread a week's sets thinner without buying any
+        // more variety worth having.
+        const val VARIETY_DEPTH = 2
+    }
 }
 
 data class SkeletonDay(
     val dayNumber: Int,
     val focus: SessionFocus,
-    val slots: List<SkeletonSlot>
+    val slots: List<SkeletonSlot>,
+    // What this day was budgeted at, in the same arithmetic the finished plan
+    // is measured in.
+    val minutes: Int = 0
 ) {
     val id: String get() = "day$dayNumber"
     val fallbackTitle: String get() = focus.title

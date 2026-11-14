@@ -19,8 +19,17 @@ class AdSlotViewModel @Inject constructor(
     val ads: Ads
 ) : ViewModel() {
 
-    val showAds: StateFlow<Boolean> = combine(entitlements.isPro, ads.canShowAds) { pro, allowed ->
-        allowed && !pro
+    // Nothing is requested until the store has answered. A subscriber reads as
+    // not Pro for the whole of that gap, so the banner they pay to be rid of
+    // would be fetched and drawn before the answer landed. A read that failed
+    // never answers, and this stays false for it: an impression nobody serves
+    // costs less than the one thing Pro promises to remove.
+    val showAds: StateFlow<Boolean> = combine(
+        entitlements.isPro,
+        entitlements.hasRead,
+        ads.canShowAds
+    ) { pro, answered, allowed ->
+        allowed && answered && !pro
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
     val privacyOptionsRequired: StateFlow<Boolean> = ads.privacyOptionsRequired

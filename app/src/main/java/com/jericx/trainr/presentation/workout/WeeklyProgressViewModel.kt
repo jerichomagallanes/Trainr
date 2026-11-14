@@ -3,17 +3,18 @@ package com.jericx.trainr.presentation.workout
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
-import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.domain.repository.UserRepository
 import com.jericx.trainr.presentation.workout.model.WeekProgressUi
 import com.jericx.trainr.presentation.workout.model.WeekStatus
 import com.jericx.trainr.presentation.workout.util.WorkoutWeek
+import com.jericx.trainr.presentation.workout.util.weekStartDate
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.util.TimeZone
 import javax.inject.Inject
 
 data class WeeklyProgressUiState(
@@ -79,20 +80,22 @@ class WeeklyProgressViewModel @Inject constructor(
 
         fun weekProgressOf(
             plan: WeeklyWorkoutPlan,
-            nowMillis: Long = System.currentTimeMillis()
+            nowMillis: Long = System.currentTimeMillis(),
+            zone: TimeZone = TimeZone.getDefault()
         ): WeekProgressUi {
-            val start = plan.startDateMillis ?: WorkoutWeek.startOfDay(plan.createdAt)
-            val completed = plan.workoutDays.count { it.status == WorkoutStatus.COMPLETED }
+            val start = plan.weekStartDate(zone)
+            val today = WorkoutWeek.startOfDay(nowMillis, zone)
+            val completed = plan.workoutDays.count { it.countsAsCompleted }
             val total = plan.workoutDays.size
             // Over once the day after the week has arrived, not before.
-            val over = nowMillis >= WorkoutWeek.dateOfDay(start, LAST_ISO_DAY + 1)
+            val over = today >= WorkoutWeek.dateOfDay(start, LAST_ISO_DAY + 1)
             val status = when {
                 total > 0 && completed == total -> WeekStatus.COMPLETED
                 over && completed == 0 -> WeekStatus.SKIPPED
                 over -> WeekStatus.NOT_COMPLETED
                 // Checked before UPCOMING: work logged early is not "upcoming".
                 completed > 0 -> WeekStatus.IN_PROGRESS
-                nowMillis < start -> WeekStatus.UPCOMING
+                today < start -> WeekStatus.UPCOMING
                 else -> WeekStatus.IN_PROGRESS
             }
             return WeekProgressUi(

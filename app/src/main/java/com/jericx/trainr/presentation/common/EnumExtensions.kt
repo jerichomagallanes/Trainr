@@ -1,5 +1,6 @@
 package com.jericx.trainr.presentation.common
 
+import androidx.annotation.DrawableRes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.jericx.trainr.R
@@ -7,17 +8,17 @@ import com.jericx.trainr.domain.model.*
 
 @Composable
 fun Gender.getLocalizedName(): String = when (this) {
-    Gender.MALE -> stringResource(R.string.male_gender)
-    Gender.FEMALE -> stringResource(R.string.female_gender)
-    Gender.NON_BINARY -> stringResource(R.string.other_gender)
-    Gender.PREFER_NOT_TO_SAY -> stringResource(R.string.other_gender)
+    Gender.MALE -> stringResource(R.string.male)
+    Gender.FEMALE -> stringResource(R.string.female)
+    Gender.NON_BINARY -> stringResource(R.string.other)
+    Gender.PREFER_NOT_TO_SAY -> stringResource(R.string.other)
 }
 
 @Composable
 fun ExperienceLevel.getLocalizedName(): String = when (this) {
-    ExperienceLevel.BEGINNER -> stringResource(R.string.beginner_level)
-    ExperienceLevel.INTERMEDIATE -> stringResource(R.string.intermediate_level)
-    ExperienceLevel.ADVANCED -> stringResource(R.string.advanced_level)
+    ExperienceLevel.BEGINNER -> stringResource(R.string.beginner)
+    ExperienceLevel.INTERMEDIATE -> stringResource(R.string.intermediate)
+    ExperienceLevel.ADVANCED -> stringResource(R.string.advanced)
 }
 
 @Composable
@@ -44,7 +45,7 @@ fun FitnessGoal.getFocusPhrase(): String = when (this) {
 
 @Composable
 fun Equipment.getLocalizedName(): String = when (this) {
-    Equipment.NONE -> stringResource(R.string.bodyweight_only)
+    Equipment.NONE -> stringResource(R.string.equipment_none)
     Equipment.BARBELL -> stringResource(R.string.equipment_barbell)
     Equipment.DUMBBELL -> stringResource(R.string.equipment_dumbbell)
     Equipment.KETTLEBELL -> stringResource(R.string.equipment_kettlebell)
@@ -53,6 +54,19 @@ fun Equipment.getLocalizedName(): String = when (this) {
     Equipment.RESISTANCE_BAND -> stringResource(R.string.equipment_resistance_band)
     Equipment.SUSPENSION_BAND -> stringResource(R.string.equipment_suspension_band)
     Equipment.OTHER -> stringResource(R.string.equipment_other)
+}
+
+@DrawableRes
+fun Equipment.iconRes(): Int = when (this) {
+    Equipment.NONE -> R.drawable.ic_equipment_none
+    Equipment.BARBELL -> R.drawable.ic_equipment_barbell
+    Equipment.DUMBBELL -> R.drawable.ic_equipment_dumbbell
+    Equipment.KETTLEBELL -> R.drawable.ic_equipment_kettlebell
+    Equipment.MACHINE -> R.drawable.ic_equipment_machine
+    Equipment.PLATE -> R.drawable.ic_equipment_plate
+    Equipment.RESISTANCE_BAND -> R.drawable.ic_equipment_resistance_band
+    Equipment.SUSPENSION_BAND -> R.drawable.ic_equipment_suspension_band
+    Equipment.OTHER -> R.drawable.ic_equipment_other
 }
 
 @Composable

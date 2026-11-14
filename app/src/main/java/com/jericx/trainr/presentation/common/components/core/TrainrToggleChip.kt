@@ -4,11 +4,15 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -31,38 +35,60 @@ fun TrainrToggleChip(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     height: Dp = ComponentHeight.Chip,
-    horizontalPadding: Dp = Spacing.large
+    horizontalPadding: Dp = Spacing.large,
+    // A picture before the label, which also pulls the label to the start:
+    // a thumbnail chip reads as a row, not a centred pill.
+    leading: (@Composable () -> Unit)? = null
 ) {
     val colors = MaterialTheme.trainrColors
 
-    Surface(
-        onClick = onClick,
-        modifier = modifier.height(height),
-        shape = MaterialTheme.shapes.medium,
-        color = if (selected) colors.surfaceSelected else colors.surfaceCard,
-        // The frames keep the outline on selected chips too.
-        border = BorderStroke(1.dp, colors.outlineControl)
-    ) {
-        Box(
-            modifier = Modifier.padding(horizontal = horizontalPadding),
-            contentAlignment = Alignment.Center
+    // A chip shorter than the 48dp touch target is grown to it and centred back
+    // inside the height asked for here, which for an odd difference rounds half
+    // a pixel the wrong way and leaves the chip hanging past the row it is in.
+    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
+        Surface(
+            onClick = onClick,
+            modifier = modifier.height(height),
+            shape = MaterialTheme.shapes.medium,
+            color = if (selected) colors.surfaceSelected else colors.surfaceCard,
+            // The frames keep the outline on selected chips too.
+            border = BorderStroke(1.dp, colors.outlineControl)
         ) {
-            BasicText(
-                text = text,
-                style = MaterialTheme.typography.bodyLarge.copy(
-                    fontWeight = FontWeight.Medium,
-                    color = if (selected) colors.onSurfaceSelected else colors.onSurface
-                ),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                // Phones narrower than the 412dp frame get a smaller label,
-                // never an ellipsis.
-                autoSize = TextAutoSize.StepBased(
-                    minFontSize = 12.sp,
-                    maxFontSize = 16.sp,
-                    stepSize = 0.5.sp
+            val label: @Composable () -> Unit = {
+                BasicText(
+                    text = text,
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontWeight = FontWeight.Medium,
+                        color = if (selected) colors.onSurfaceSelected else colors.onSurface
+                    ),
+                    maxLines = if (leading == null) 1 else 2,
+                    overflow = TextOverflow.Ellipsis,
+                    // Phones narrower than the 412dp frame get a smaller label,
+                    // never an ellipsis.
+                    autoSize = TextAutoSize.StepBased(
+                        minFontSize = 12.sp,
+                        maxFontSize = 16.sp,
+                        stepSize = 0.5.sp
+                    )
                 )
-            )
+            }
+            if (leading == null) {
+                Box(
+                    modifier = Modifier.padding(horizontal = horizontalPadding),
+                    contentAlignment = Alignment.Center
+                ) { label() }
+            } else {
+                Row(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .padding(horizontal = horizontalPadding),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.tight),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    leading()
+                    label()
+                }
+            }
         }
     }
 }

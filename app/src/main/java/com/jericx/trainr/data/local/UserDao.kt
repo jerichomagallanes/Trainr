@@ -31,6 +31,18 @@ interface UserDao {
     @Query("SELECT * FROM weekly_workout_plans WHERE userId = :userId AND weekNumber = :weekNumber")
     suspend fun getWeeklyWorkoutPlan(userId: Long, weekNumber: Int): WeeklyWorkoutPlanEntity?
 
+    @Query("SELECT * FROM weekly_workout_plans WHERE userId = :userId ORDER BY weekNumber DESC LIMIT 1")
+    suspend fun getLatestWeeklyWorkoutPlan(userId: Long): WeeklyWorkoutPlanEntity?
+
+    @Query(
+        """
+        SELECT p.* FROM weekly_workout_plans p
+        JOIN workout_days wd ON wd.weeklyPlanId = p.id
+        WHERE wd.id = :dayId
+        """
+    )
+    suspend fun getWeeklyWorkoutPlanOf(dayId: Long): WeeklyWorkoutPlanEntity?
+
     @Update
     suspend fun updateWeeklyWorkoutPlan(plan: WeeklyWorkoutPlanEntity)
 
@@ -55,11 +67,17 @@ interface UserDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertWorkoutExercise(exercise: WorkoutExerciseEntity): Long
 
-    @Query("SELECT * FROM workout_exercises WHERE workoutDayId = :workoutDayId")
+    @Query("SELECT * FROM workout_exercises WHERE workoutDayId = :workoutDayId ORDER BY sortOrder, id")
     suspend fun getExercisesForWorkoutDay(workoutDayId: Long): List<WorkoutExerciseEntity>
 
     @Query("SELECT * FROM workout_exercises WHERE id = :exerciseId")
     suspend fun getWorkoutExerciseById(exerciseId: Long): WorkoutExerciseEntity?
+
+    @Query("SELECT * FROM workout_exercises WHERE addedBy = :adjustmentId ORDER BY sortOrder, id")
+    suspend fun getExercisesAddedBy(adjustmentId: Long): List<WorkoutExerciseEntity>
+
+    @Query("DELETE FROM workout_exercises WHERE id = :id AND addedBy IS NOT NULL")
+    suspend fun deleteAddedExercise(id: Long)
 
     @Update
     suspend fun updateWorkoutExercise(exercise: WorkoutExerciseEntity)
@@ -78,6 +96,18 @@ interface UserDao {
 
     @Query("DELETE FROM exercise_sets WHERE id = :setId")
     suspend fun deleteExerciseSet(setId: Long)
+
+    @Query("DELETE FROM exercise_sets WHERE workoutExerciseId = :exerciseId AND isCompleted = 0")
+    suspend fun deleteUnperformedSets(exerciseId: Long)
+
+    @Query("SELECT * FROM exercise_sets WHERE id IN (:setIds)")
+    suspend fun getSetsByIds(setIds: List<Long>): List<ExerciseSetEntity>
+
+    @Query("UPDATE exercise_sets SET omittedBy = :adjustmentId WHERE id IN (:setIds) AND isCompleted = 0")
+    suspend fun omitSets(setIds: List<Long>, adjustmentId: Long): Int
+
+    @Query("UPDATE exercise_sets SET omittedBy = NULL WHERE omittedBy = :adjustmentId")
+    suspend fun restoreOmittedSets(adjustmentId: Long): Int
 
     // The most recent completed performance of the same movement, matched on
     // exerciseKey because display names drift. The EXISTS guard stops a day

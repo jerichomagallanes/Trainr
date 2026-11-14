@@ -1,5 +1,6 @@
 package com.jericx.trainr.data
 
+import android.util.Log
 import androidx.room.Room
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -11,7 +12,9 @@ import com.jericx.trainr.domain.generation.PlanRequest
 import com.jericx.trainr.domain.model.Equipment
 import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
 import com.jericx.trainr.data.local.TrainrDatabase
+import com.jericx.trainr.data.local.UserDao
 import com.jericx.trainr.data.local.UserMapper
+import com.jericx.trainr.data.local.WorkoutDayEntity
 import com.jericx.trainr.data.repository.UserRepositoryImpl
 import com.jericx.trainr.domain.model.ExerciseMeasure
 import com.jericx.trainr.domain.model.ExerciseSet
@@ -21,6 +24,7 @@ import com.jericx.trainr.domain.model.WorkoutExercise
 import com.jericx.trainr.domain.model.WorkoutStatus
 import com.jericx.trainr.presentation.workout.sample.SampleWorkoutData
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
@@ -39,7 +43,7 @@ class WorkoutPersistenceTest {
         db = Room.inMemoryDatabaseBuilder(context, TrainrDatabase::class.java)
             .allowMainThreadQueries()
             .build()
-        repository = UserRepositoryImpl(db.userDao, UserMapper())
+        repository = UserRepositoryImpl(db, db.userDao, UserMapper())
     }
 
     @After
@@ -317,4 +321,183 @@ class WorkoutPersistenceTest {
         assertThat(stored.map { it.weekNumber }).containsExactly(1, 2)
     }
 
+    @Test
+    fun aWeekOutlineListsTheDaysOfTheWeekAskedForOrTheNewest() = runTest {
+        val userId = seedSamplePlan()
+        repository.saveWeeklyWorkoutPlan(
+            SampleWorkoutData.weekOne.copy(id = 0, userId = userId, weekNumber = 2, title = "Second week")
+        )
+        val weekTwo = repository.getWeeklyWorkoutPlan(userId, 2)!!
+
+        val newest = repository.getWeekOutline(userId, weekNumber = null)!!
+        val first = repository.getWeekOutline(userId, weekNumber = 1)!!
+
+        assertThat(newest.weekNumber).isEqualTo(2)
+        assertThat(newest.id).isEqualTo(weekTwo.id)
+        assertThat(newest.startDateMillis).isEqualTo(weekTwo.startDateMillis)
+        assertThat(newest.days.map { it.id to it.dayNumber })
+            .isEqualTo(weekTwo.workoutDays.map { it.id to it.dayNumber })
+        assertThat(first.weekNumber).isEqualTo(1)
+        assertThat(first.days.map { it.id }).containsNoneIn(newest.days.map { it.id })
+        assertThat(repository.getWeekOutline(userId, weekNumber = 3)).isNull()
+    }
+
+    @Test
+    fun aDayFindsTheWeekItBelongsTo() = runTest {
+        val userId = seedSamplePlan()
+        repository.saveWeeklyWorkoutPlan(
+            SampleWorkoutData.weekOne.copy(id = 0, userId = userId, weekNumber = 2, title = "Second week")
+        )
+        val day = repository.getWeeklyWorkoutPlan(userId, 2)!!.workoutDays.last()
+
+        val week = repository.getWeekOutlineOf(day.id)!!
+
+        assertThat(week.weekNumber).isEqualTo(2)
+        assertThat(week.days.map { it.id }).contains(day.id)
+        assertThat(repository.getWeekOutlineOf(999L)).isNull()
+    }
+
+    // Finding one day used to mean reading every plan with every set; the
+    // outline costs a fixed two reads however long the history is.
+    @Test
+    fun findingTheNewestWeekDoesNotReadTheWholeHistory() = runTest {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        var queries = 0
+        val counted = Room.inMemoryDatabaseBuilder(context, TrainrDatabase::class.java)
+            .allowMainThreadQueries()
+            .setQueryCallback({ _, _ -> queries++ }, Runnable::run)
+            .build()
+        val counting = UserRepositoryImpl(counted, counted.userDao, UserMapper())
+        val catalog = ExerciseCatalogReader.read(
+            context.assets.open("exercise-catalog.json").bufferedReader().readText()
+        )
+        val profile = UserProfile(firstName = "Jericho", age = 30, weight = 80f, availableEquipment = Equipment.entries.toList())
+        val userId = counting.saveUser(profile)
+        val generator = WeekPlanGenerator(catalog)
+        listOf(1, 2).forEach { week ->
+            val built = (generator.generate(PlanRequest(profile.copy(id = userId), week, 0L))
+                as PlanGenerationResult.Generated).plan
+            counting.saveWeeklyWorkoutPlan(built.copy(userId = userId, weekNumber = week))
+        }
+
+        queries = 0
+        counting.getWeeklyWorkoutPlans(userId).first()
+        val wholeHistory = queries
+        queries = 0
+        val outline = counting.getWeekOutline(userId, weekNumber = null)!!
+        val oneWeek = queries
+        counted.close()
+
+        Log.i("WorkoutPersistenceTest", "queries: whole history $wholeHistory, one outline $oneWeek")
+        assertThat(outline.weekNumber).isEqualTo(2)
+        assertThat(oneWeek).isAtMost(2)
+        assertThat(wholeHistory).isGreaterThan(oneWeek * 10)
+    }
+
+    // The one path where getting it wrong deletes every set logged in the week:
+    // what comes back is the replacement, whole, and nothing of either week half.
+    @Test
+    fun aReplacedWeekArrivesWhole() = runTest {
+        val userId = seedSamplePlan()
+        val original = repository.getWeeklyWorkoutPlans(userId).first().single()
+        val replacement = original.copy(
+            id = 0,
+            title = "Something else",
+            workoutDays = original.workoutDays.map { day ->
+                day.copy(
+                    id = 0,
+                    title = "Rewritten ${day.dayNumber}",
+                    exercises = day.exercises.map { exercise ->
+                        exercise.copy(id = 0, sets = exercise.sets.map { it.copy(id = 0) })
+                    }
+                )
+            }
+        )
+
+        repository.replaceWeeklyWorkoutPlan(original.id, replacement)
+
+        val stored = repository.getWeeklyWorkoutPlans(userId).first().single()
+        assertThat(stored.title).isEqualTo("Something else")
+        assertThat(stored.workoutDays.map { it.title })
+            .isEqualTo(replacement.workoutDays.map { it.title })
+        assertThat(stored.workoutDays.map { day -> day.exercises.map { it.name } })
+            .isEqualTo(replacement.workoutDays.map { day -> day.exercises.map { it.name } })
+        assertThat(stored.workoutDays.map { day -> day.exercises.map { it.sets.size } })
+            .isEqualTo(replacement.workoutDays.map { day -> day.exercises.map { it.sets.size } })
+    }
+
+    @Test
+    fun aNewPlanReplacesTheClientAndTheirWeeksInOneGo() = runTest {
+        seedSamplePlan()
+        val profile = repository.getCurrentUser()!!.copy(firstName = "Again")
+
+        val userId = repository.saveUserWithFirstWeek(
+            profile,
+            SampleWorkoutData.weekOne.copy(id = 0, userId = 0, title = "Fresh start")
+        )
+
+        val stored = repository.getWeeklyWorkoutPlans(userId).first()
+        assertThat(repository.getCurrentUser()!!.firstName).isEqualTo("Again")
+        assertThat(stored.map { it.title }).containsExactly("Fresh start")
+        assertThat(stored.single().userId).isEqualTo(userId)
+    }
+
+    // Saving the user REPLACEs the row and cascades every week they trained
+    // away, so a first week that never lands has to take the new profile with
+    // it. Otherwise a client is left with a plan screen and no plan.
+    @Test
+    fun aFirstWeekCancelledPartWayLeavesTheOldPlanWhereItWas() = runTest {
+        val userId = seedSamplePlan()
+        val original = repository.getWeeklyWorkoutPlans(userId).first().single()
+        val interrupted = CancellingUserDao(db.userDao)
+        val starting = UserRepositoryImpl(db, interrupted, UserMapper())
+        val profile = repository.getCurrentUser()!!.copy(firstName = "Again")
+
+        val start = launch {
+            starting.saveUserWithFirstWeek(
+                profile,
+                original.copy(id = 0, title = "Fresh start")
+            )
+        }
+        interrupted.onDaysWritten = { start.cancel() }
+        start.join()
+
+        assertThat(repository.getCurrentUser()!!.firstName).isEqualTo("Jericho")
+        assertThat(repository.getWeeklyWorkoutPlans(userId).first().single()).isEqualTo(original)
+    }
+
+    // Cancelled between the delete and the last of the inserts, which is what
+    // leaving the screen does. A week half written is not a shorter week: it is
+    // a plan with days missing, days with no sets, and the training logged in
+    // the week it replaced gone for good.
+    @Test
+    fun aRewriteCancelledPartWayLeavesTheWeekExactlyAsItWas() = runTest {
+        val userId = seedSamplePlan()
+        val original = repository.getWeeklyWorkoutPlans(userId).first().single()
+        val interrupted = CancellingUserDao(db.userDao)
+        val rewriting = UserRepositoryImpl(db, interrupted, UserMapper())
+
+        val rewrite = launch {
+            rewriting.replaceWeeklyWorkoutPlan(
+                original.id,
+                original.copy(id = 0, title = "Something else")
+            )
+        }
+        interrupted.onDaysWritten = { rewrite.cancel() }
+        rewrite.join()
+
+        val stored = repository.getWeeklyWorkoutPlans(userId).first().single()
+        assertThat(stored).isEqualTo(original)
+    }
+}
+
+private class CancellingUserDao(private val dao: UserDao) : UserDao by dao {
+
+    var onDaysWritten: (() -> Unit)? = null
+
+    override suspend fun insertWorkoutDays(days: List<WorkoutDayEntity>): List<Long> {
+        val ids = dao.insertWorkoutDays(days)
+        onDaysWritten?.invoke()
+        return ids
+    }
 }

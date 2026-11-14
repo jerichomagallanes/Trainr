@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -20,6 +21,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
@@ -41,6 +44,7 @@ fun TrainrTextField(
     keyboardType: KeyboardType = KeyboardType.Text
 ) {
     val interactionSource = remember { MutableInteractionSource() }
+    val focusManager = LocalFocusManager.current
     val trainrColors = MaterialTheme.trainrColors
     val colors = OutlinedTextFieldDefaults.colors(
         focusedBorderColor = trainrColors.focus,
@@ -56,7 +60,13 @@ fun TrainrTextField(
             .fillMaxWidth()
             .height(ComponentHeight.Field),
         singleLine = true,
-        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+        // A number pad has no Return key of its own, so without an action of
+        // ours it stays up until the person leaves the screen.
+        keyboardOptions = KeyboardOptions(
+            keyboardType = keyboardType,
+            imeAction = if (keyboardType.isNumeric) ImeAction.Done else ImeAction.Default
+        ),
+        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
         textStyle = MaterialTheme.typography.bodyLarge.copy(
             color = trainrColors.onSurface
         ),
@@ -91,6 +101,9 @@ fun TrainrTextField(
         )
     }
 }
+
+private val KeyboardType.isNumeric: Boolean
+    get() = this == KeyboardType.Number || this == KeyboardType.Decimal
 
 @Preview(showBackground = true)
 @Composable

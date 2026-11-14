@@ -5,17 +5,37 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
 
 // SimpleDateFormat rather than java.time: minSdk is 24 and desugaring is off.
 object WorkoutDateFormatter {
 
     private const val RANGE_SEPARATOR = " – "
+    private const val DAYS_IN_WEEK = 7
+
+    // A week date carries no time of day and no zone, so it is read back in the
+    // one it was built in rather than wherever the phone has since moved to.
+    private val DATE_ZONE: TimeZone = TimeZone.getTimeZone("UTC")
 
     fun formatFullDate(dateMillis: Long, locale: Locale): String =
-        DateFormat.getDateInstance(DateFormat.FULL, locale).format(Date(dateMillis))
+        DateFormat.getDateInstance(DateFormat.FULL, locale)
+            .apply { timeZone = DATE_ZONE }
+            .format(Date(dateMillis))
 
     fun formatWeekday(dateMillis: Long, locale: Locale): String =
-        SimpleDateFormat("EEEE", locale).format(Date(dateMillis))
+        SimpleDateFormat("EEEE", locale)
+            .apply { timeZone = DATE_ZONE }
+            .format(Date(dateMillis))
+
+    fun formatMediumDate(dateMillis: Long, locale: Locale): String =
+        DateFormat.getDateInstance(DateFormat.MEDIUM, locale).format(Date(dateMillis))
+
+    // Takes the stored ISO number, Monday 1 to Sunday 7, not Calendar's own.
+    fun formatWeekdayName(isoWeekday: Int, locale: Locale): String =
+        Calendar.getInstance().run {
+            set(Calendar.DAY_OF_WEEK, isoWeekday % DAYS_IN_WEEK + 1)
+            SimpleDateFormat("EEEE", locale).format(time)
+        }
 
     fun formatWeekRange(
         startMillis: Long,
@@ -43,8 +63,10 @@ object WorkoutDateFormatter {
     }
 
     private fun calendarOf(millis: Long): Calendar =
-        Calendar.getInstance().apply { timeInMillis = millis }
+        Calendar.getInstance(DATE_ZONE).apply { timeInMillis = millis }
 
     private fun format(pattern: String, calendar: Calendar, locale: Locale): String =
-        SimpleDateFormat(pattern, locale).format(calendar.time)
+        SimpleDateFormat(pattern, locale)
+            .apply { timeZone = DATE_ZONE }
+            .format(calendar.time)
 }

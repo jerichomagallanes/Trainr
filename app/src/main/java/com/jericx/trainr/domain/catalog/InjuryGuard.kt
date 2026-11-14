@@ -13,12 +13,16 @@ object InjuryGuard {
     fun excludes(exercise: CatalogExercise, injuries: Collection<Injury>): Boolean =
         injuries.any { exercise.isRuledOutBy(it) }
 
-    // Offered, with a line on the card saying what to watch. One line, from
-    // the first injury the client declared that the movement touches.
-    fun cautionFor(exercise: CatalogExercise, injuries: List<Injury>): Injury? =
-        injuries.firstOrNull { injury ->
-            !exercise.isRuledOutBy(injury) && exercise.pattern in CautionPatterns.getValue(injury)
-        }
+    // Offered, with a line on the card for every injury the movement touches.
+    // Narrowest first, because an injury that cautions few patterns says more
+    // about this movement than one that cautions many; never the order the
+    // client happened to answer in.
+    fun cautionsFor(exercise: CatalogExercise, injuries: Collection<Injury>): List<Injury> =
+        injuries.distinct()
+            .filter {
+                !exercise.isRuledOutBy(it) && exercise.pattern in CautionPatterns.getValue(it)
+            }
+            .sortedWith(compareBy({ CautionPatterns.getValue(it).size }, { it.ordinal }))
 
     // Each clause is one the coaching brief already stated in prose; this is
     // it made enforceable.

@@ -13,6 +13,7 @@ import com.jericx.trainr.domain.catalog.InMemoryExerciseCatalog
 import com.jericx.trainr.domain.catalog.MovementPattern
 import com.jericx.trainr.domain.catalog.MuscleGroup
 import com.jericx.trainr.domain.model.Equipment
+import com.jericx.trainr.presentation.workout.util.WorkoutWeek
 
 // Written in the shape a generated plan arrives in, so the screens map either
 // source the same way. dayNumber is the ISO day of week.
@@ -24,12 +25,8 @@ object SampleWorkoutData {
 
     val weekEndMillis: Long get() = dateOf(7)
 
-    // Read per call: a cached date would freeze if the default time zone changes.
-    fun dateOf(dayNumber: Int): Long = Calendar.getInstance().apply {
-        clear()
-        set(2025, Calendar.JULY, 21)
-        add(Calendar.DAY_OF_YEAR, dayNumber - 1)
-    }.timeInMillis
+    fun dateOf(dayNumber: Int): Long =
+        WorkoutWeek.dateOfDay(WorkoutWeek.dateOf(2025, Calendar.JULY, 21), dayNumber)
 
     fun dayFor(dayNumber: Int): WorkoutDay =
         weekOne.workoutDays.firstOrNull { it.dayNumber == dayNumber }

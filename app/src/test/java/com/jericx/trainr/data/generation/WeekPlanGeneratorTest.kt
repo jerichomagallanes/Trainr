@@ -156,8 +156,10 @@ class WeekPlanGeneratorTest {
     }
 
     // Weight loss and endurance take the rest of the session as conditioning,
-    // so their sessions are the length that was asked for, never past it and
-    // never a fraction of it.
+    // so their sessions are the length that was asked for rather than a
+    // fraction of it. A tenth either way, not exactly: the week is cast after
+    // the day is sized, so the movement that fills a slot can cost a little
+    // more or less than the two it was budgeted against.
     @Test
     fun aWeightLossSessionIsAboutTheLengthThatWasAskedFor() {
         listOf(FitnessGoal.WEIGHT_LOSS, FitnessGoal.ENDURANCE).forEach { goal ->
@@ -165,7 +167,31 @@ class WeekPlanGeneratorTest {
                 listOf(30, 45, 60, 90).forEach { minutes ->
                     planFor(user(goal, 3, minutes, kit)).workoutDays.forEach { day ->
                         assertWithMessage("$goal $kit ${minutes}m day ${day.dayNumber}")
-                            .that(day.duration).isIn(minutes * 3 / 4..minutes)
+                            .that(day.duration).isIn(minutes * 9 / 10..minutes * 11 / 10)
+                    }
+                }
+            }
+        }
+    }
+
+    // The day the client is handed is the day that was budgeted. Where the two
+    // part company a week can be built that its own plan card calls ninety
+    // minutes and its day header calls sixty.
+    @Test
+    fun everyDayRunsForAboutAsLongAsItWasBudgetedFor() {
+        val kits = listOf(listOf(Equipment.NONE), listOf(Equipment.DUMBBELL), Equipment.entries.toList())
+        FitnessGoal.entries.forEach { goal ->
+            listOf(30, 60, 90).forEach { minutes ->
+                listOf(3, 5, 7).forEach { days ->
+                    kits.forEach { kit ->
+                        val answer = user(goal, days, minutes, kit)
+                        val budgets = PlanSkeletonBuilder(catalog).build(PlanRequest(answer, 1, 0L))
+                            .days.associate { it.dayNumber to it.minutes }
+                        planFor(answer).workoutDays.forEach { day ->
+                            val budgeted = budgets.getValue(day.dayNumber)
+                            assertWithMessage("$goal ${days}d ${minutes}m $kit day ${day.dayNumber}")
+                                .that(day.duration).isIn(budgeted * 9 / 10..budgeted * 11 / 10)
+                        }
                     }
                 }
             }
@@ -255,6 +281,28 @@ class WeekPlanGeneratorTest {
 
         assertThat(second.workoutDays).hasSize(4)
         assertThat(second.movements()).isNotEqualTo(first.movements())
+    }
+
+    // A substitute swapped in for one day is not one of last week's movements,
+    // so it neither breaks the carry nor earns a place next week.
+    @Test
+    fun aSubstituteAddedForOneDayIsNotCarriedIntoNextWeek() {
+        val first = planFor(user(), fresh = true).logged()
+        val spare = catalog.all.first { it.key !in first.movements().flatten() }
+        val substituted = first.copy(
+            workoutDays = first.workoutDays.mapIndexed { index, day ->
+                if (index > 0) day else day.copy(
+                    exercises = day.exercises + day.exercises.first().copy(
+                        id = 0, exerciseKey = spare.key, name = spare.name, addedBy = 1
+                    )
+                )
+            }
+        )
+
+        val second = planFor(user(), listOf(substituted))
+
+        assertThat(second.movements()).isEqualTo(first.movements())
+        assertThat(second.movements()).isNotEqualTo(planFor(user(), week = 2).movements())
     }
 
     @Test

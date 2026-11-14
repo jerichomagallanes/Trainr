@@ -16,3 +16,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Trainr"
 include(":app")
+include(":llama")

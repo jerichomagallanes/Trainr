@@ -13,3 +13,13 @@ fun notEllipsized(): SemanticsMatcher =
             ?.action?.invoke(results)
         results.firstOrNull()?.isLineEllipsized(0) == false
     }
+
+// A label given less room than its words need wraps rather than truncating, so
+// a second line is how Compose shows a column squeezed too narrow.
+fun onOneLine(): SemanticsMatcher =
+    SemanticsMatcher("label is on one line") { node ->
+        val results = mutableListOf<TextLayoutResult>()
+        node.config.getOrNull(SemanticsActions.GetTextLayoutResult)
+            ?.action?.invoke(results)
+        results.firstOrNull()?.lineCount == 1
+    }

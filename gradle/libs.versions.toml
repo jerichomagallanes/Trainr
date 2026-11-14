@@ -1,8 +1,8 @@
 [versions]
 # Gradle plugins
-agp = "9.4.0"
-kotlin = "2.4.20"
-ksp = "2.3.12"
+agp = "9.5.1"
+kotlin = "2.4.21"
+ksp = "2.3.13"
 
 # Compose
 compose-bom = "2026.09.00"
@@ -21,7 +21,7 @@ dagger = "2.60.1"
 
 # Coroutines / Serialization
 coroutines = "1.11.0"
-serialization = "1.11.0"
+serialization = "1.12.0"
 
 # Database
 room = "2.8.5"
@@ -30,7 +30,7 @@ room = "2.8.5"
 youtube-player = "13.0.0"
 firebase-bom = "34.19.0"
 revenuecat = "10.24.1"
-play-services-ads = "25.4.0"
+play-services-ads = "25.5.0"
 user-messaging-platform = "4.0.0"
 google-services = "4.5.0"
 firebase-crashlytics-plugin = "3.0.8"
@@ -81,6 +81,7 @@ kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
 room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+room-testing = { group = "androidx.room", name = "room-testing", version.ref = "room" }
 
 # Testing
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -100,6 +101,7 @@ firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashly
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
+android-library = { id = "com.android.library", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }

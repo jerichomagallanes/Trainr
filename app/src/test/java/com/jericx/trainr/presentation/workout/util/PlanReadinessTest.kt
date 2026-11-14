@@ -1,8 +1,10 @@
 package com.jericx.trainr.presentation.workout.util
 
 import com.google.common.truth.Truth.assertThat
+import com.jericx.trainr.domain.model.ExerciseSet
 import com.jericx.trainr.domain.model.WeeklyWorkoutPlan
 import com.jericx.trainr.domain.model.WorkoutDay
+import com.jericx.trainr.domain.model.WorkoutExercise
 import com.jericx.trainr.domain.model.WorkoutStatus
 import org.junit.Test
 import java.util.concurrent.TimeUnit
@@ -23,8 +25,23 @@ class PlanReadinessTest {
                 status = status,
                 duration = 45,
                 exerciseCount = 1,
-                equipment = emptyList()
+                equipment = emptyList(),
+                exercises = listOf(
+                    WorkoutExercise(
+                        name = "Movement",
+                        isCompleted = status == WorkoutStatus.COMPLETED
+                    )
+                )
             )
+        }
+    )
+
+    private fun set(number: Int, done: Boolean) =
+        ExerciseSet(setNumber = number, isCompleted = done)
+
+    private fun WeeklyWorkoutPlan.finishedEarlyWithNothingDone() = copy(
+        workoutDays = workoutDays.map { day ->
+            day.copy(exercises = day.exercises.map { it.copy(isCompleted = false) })
         }
     )
 
@@ -52,8 +69,49 @@ class PlanReadinessTest {
         assertThat(missed.isReadyForTheNextWeek(nowMillis = eightDaysOn)).isTrue()
     }
 
+    // Finishing every day early and logging nothing is not a week of training,
+    // so it must not unlock the next one before the dates run out.
+    @Test
+    fun aWeekClosedWithNothingPerformedIsNotReady() {
+        val closed = week(WorkoutStatus.COMPLETED, WorkoutStatus.COMPLETED)
+            .finishedEarlyWithNothingDone()
+
+        assertThat(closed.isReadyForTheNextWeek()).isFalse()
+    }
+
+    // Two sets of three is work done, and the exercise never ticks itself until
+    // all of them are, so the day must not read as untrained.
+    @Test
+    fun aWeekClosedEarlyWithSetsLoggedIsReady() {
+        val closed = week(WorkoutStatus.COMPLETED, WorkoutStatus.COMPLETED)
+            .finishedEarlyWithNothingDone()
+        val partlyTrained = closed.copy(
+            workoutDays = closed.workoutDays.map { day ->
+                day.copy(
+                    exercises = day.exercises.map {
+                        it.copy(sets = listOf(set(1, done = true), set(2, done = false)))
+                    }
+                )
+            }
+        )
+
+        assertThat(partlyTrained.isReadyForTheNextWeek()).isTrue()
+    }
+
     @Test
     fun aWeekWithNoDaysIsNotFinishedByBeingEmpty() {
         assertThat(week().isReadyForTheNextWeek()).isFalse()
+    }
+
+    // A plan with no stored start date is dated from the day it was made, the
+    // same week the plan screen and the progress screen give it.
+    @Test
+    fun aWeekWithNoStartDateRunsFromTheDayItWasMade() {
+        val undated = week(WorkoutStatus.NOT_STARTED, WorkoutStatus.NOT_STARTED)
+            .copy(startDateMillis = null, createdAt = start)
+
+        assertThat(undated.isReadyForTheNextWeek()).isFalse()
+        assertThat(undated.isReadyForTheNextWeek(nowMillis = WorkoutWeek.dateOfDay(start, 8)))
+            .isTrue()
     }
 }

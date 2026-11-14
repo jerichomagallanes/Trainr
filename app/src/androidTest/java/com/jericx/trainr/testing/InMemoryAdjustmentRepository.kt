@@ -1,0 +1,174 @@
+package com.jericx.trainr.testing
+
+import com.jericx.trainr.domain.repository.AdjustmentRepository
+import com.jericx.trainr.domain.unstuck.AdjustmentFeedback
+import com.jericx.trainr.domain.unstuck.AdjustmentProposal
+import com.jericx.trainr.domain.unstuck.AdjustmentReason
+import com.jericx.trainr.domain.unstuck.AppliedAdjustment
+import com.jericx.trainr.domain.unstuck.ApplyResult
+import com.jericx.trainr.domain.unstuck.PreferenceKind
+import com.jericx.trainr.domain.unstuck.SessionNote
+import com.jericx.trainr.domain.unstuck.SessionOutcome
+import com.jericx.trainr.domain.unstuck.TrainingPreference
+import com.jericx.trainr.domain.unstuck.UndoResult
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
+
+// Enough of the Unstuck records to put a route in front of a test without Room.
+class InMemoryAdjustmentRepository : AdjustmentRepository {
+
+    private var nextId = 1L
+    private val outcomes = mutableMapOf<Long, SessionOutcome>()
+    private val adjustments = mutableMapOf<Long, AppliedAdjustment>()
+    private val feedback = mutableMapOf<Long, AdjustmentFeedback>()
+    private val preferences = MutableStateFlow<Map<Long, TrainingPreference>>(emptyMap())
+    private val notes = MutableStateFlow<Map<Long, SessionNote>>(emptyMap())
+
+    private fun idFor(id: Long) = if (id == 0L) nextId++ else id
+
+    override suspend fun saveOutcome(outcome: SessionOutcome): Long {
+        val existing = outcomes.values.firstOrNull { it.workoutDayId == outcome.workoutDayId }
+        val id = existing?.id ?: idFor(outcome.id)
+        outcomes[id] = outcome.copy(id = id)
+        return id
+    }
+
+    override suspend fun getOutcome(dayId: Long): SessionOutcome? =
+        outcomes.values.firstOrNull { it.workoutDayId == dayId }
+
+    override suspend fun getOutcomes(dayIds: List<Long>): List<SessionOutcome> =
+        outcomes.values.filter { it.workoutDayId in dayIds }
+
+    override suspend fun deleteOutcome(dayId: Long) {
+        outcomes.values.removeAll { it.workoutDayId == dayId }
+    }
+
+    override suspend fun recordAdjustment(applied: AppliedAdjustment): Long {
+        val id = idFor(applied.id)
+        adjustments[id] = applied.copy(id = id)
+        return id
+    }
+
+    override suspend fun getAdjustment(proposalId: String): AppliedAdjustment? =
+        adjustments.values.firstOrNull { it.proposal.proposalId == proposalId }
+
+    override suspend fun getAdjustmentById(id: Long): AppliedAdjustment? = adjustments[id]
+
+    override suspend fun getActiveAdjustment(dayId: Long): AppliedAdjustment? =
+        adjustments.values.firstOrNull { it.workoutDayId == dayId && it.isActive }
+
+    override suspend fun getActiveAdjustments(dayIds: List<Long>): List<AppliedAdjustment> =
+        adjustments.values.filter { it.workoutDayId in dayIds && it.isActive }
+
+    override suspend fun getAdjustments(dayId: Long): List<AppliedAdjustment> =
+        adjustments.values.filter { it.workoutDayId == dayId }
+
+    override suspend fun markUndone(id: Long, at: Long) {
+        adjustments[id]?.let { adjustments[id] = it.copy(undoneAt = at) }
+    }
+
+    override suspend fun markReapplied(id: Long) {
+        adjustments[id]?.let { adjustments[id] = it.copy(undoneAt = null) }
+    }
+
+    // The records only: patching a plan is Room's job and no route test needs it.
+    override suspend fun apply(
+        proposal: AdjustmentProposal,
+        dayId: Long,
+        reason: AdjustmentReason,
+        nowMillis: Long
+    ): ApplyResult {
+        adjustments.values.firstOrNull { it.proposal.proposalId == proposal.proposalId }?.let {
+            return if (it.isActive) ApplyResult.AlreadyApplied(it) else reapply(it.id, nowMillis)
+        }
+        val id = recordAdjustment(
+            AppliedAdjustment(
+                workoutDayId = dayId,
+                proposal = proposal,
+                reason = reason,
+                appliedAt = nowMillis
+            )
+        )
+        return ApplyResult.Applied(adjustments.getValue(id), null)
+    }
+
+    override suspend fun undo(adjustmentId: Long, nowMillis: Long): UndoResult {
+        val existing = adjustments[adjustmentId] ?: return UndoResult.Unknown
+        if (!existing.isActive) return UndoResult.AlreadyUndone
+        markUndone(adjustmentId, nowMillis)
+        return UndoResult.Restored(adjustments.getValue(adjustmentId), 0)
+    }
+
+    override suspend fun withdrawUndoneSubstitutes(dayId: Long): Int = 0
+
+    override suspend fun reapply(adjustmentId: Long, nowMillis: Long): ApplyResult {
+        val existing = adjustments[adjustmentId]
+            ?: return ApplyResult.Failed(IllegalArgumentException("No adjustment $adjustmentId"))
+        if (existing.isActive) return ApplyResult.AlreadyApplied(existing)
+        markReapplied(adjustmentId)
+        return ApplyResult.Applied(adjustments.getValue(adjustmentId), null)
+    }
+
+    // One row per adjustment, as the unique index on the stored table enforces.
+    override suspend fun saveFeedback(feedback: AdjustmentFeedback): Long {
+        val existing = this.feedback.values.firstOrNull { it.adjustmentId == feedback.adjustmentId }
+        val id = existing?.id ?: idFor(feedback.id)
+        this.feedback[id] = feedback.copy(id = id)
+        return id
+    }
+
+    override suspend fun getFeedback(adjustmentId: Long): AdjustmentFeedback? =
+        feedback.values.firstOrNull { it.adjustmentId == adjustmentId }
+
+    override suspend fun savePreference(preference: TrainingPreference): Long {
+        val id = idFor(preference.id)
+        preferences.value = preferences.value + (id to preference.copy(id = id))
+        return id
+    }
+
+    override suspend fun updatePreference(preference: TrainingPreference) {
+        preferences.value = preferences.value + (preference.id to preference)
+    }
+
+    override suspend fun deletePreference(id: Long) {
+        preferences.value = preferences.value - id
+    }
+
+    override fun observePreferences(userId: Long): Flow<List<TrainingPreference>> =
+        preferences.map { all -> all.values.filter { it.userId == userId } }
+
+    override suspend fun getPreferences(userId: Long): List<TrainingPreference> =
+        preferences.value.values.filter { it.userId == userId }
+
+    override suspend fun getPreference(
+        userId: Long,
+        kind: PreferenceKind,
+        weekday: Int
+    ): TrainingPreference? = preferences.value.values.firstOrNull {
+        it.userId == userId && it.kind == kind && it.weekday == weekday
+    }
+
+    override suspend fun saveNote(note: SessionNote): Long {
+        val id = idFor(note.id)
+        notes.value = notes.value + (id to note.copy(id = id))
+        return id
+    }
+
+    override suspend fun updateNote(note: SessionNote) {
+        notes.value = notes.value + (note.id to note)
+    }
+
+    override suspend fun deleteNote(id: Long) {
+        notes.value = notes.value - id
+    }
+
+    override fun observeNotes(userId: Long): Flow<List<SessionNote>> =
+        notes.map { all -> all.values.filter { it.userId == userId } }
+
+    override suspend fun getNotes(userId: Long): List<SessionNote> =
+        notes.value.values.filter { it.userId == userId }
+
+    override suspend fun getNote(dayId: Long): SessionNote? =
+        notes.value.values.firstOrNull { it.workoutDayId == dayId }
+}

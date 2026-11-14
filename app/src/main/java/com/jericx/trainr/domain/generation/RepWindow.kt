@@ -4,6 +4,8 @@ import com.jericx.trainr.domain.catalog.CatalogExercise
 import com.jericx.trainr.domain.catalog.ExerciseRole
 import com.jericx.trainr.domain.catalog.isLowerBody
 import com.jericx.trainr.domain.catalog.role
+import com.jericx.trainr.domain.model.ExerciseMeasure
+import com.jericx.trainr.domain.model.ExperienceLevel
 import com.jericx.trainr.domain.model.FitnessGoal
 import com.jericx.trainr.domain.model.UserProfile
 
@@ -25,6 +27,16 @@ object RepWindow {
         return window.widenedFor(user)
     }
 
+    // What the first week of a movement asks for: the bottom of the window,
+    // except that twelve push-ups is not where a beginner starts.
+    fun openingReps(user: UserProfile, exercise: CatalogExercise): Int {
+        val window = forExercise(user, exercise)
+        val beginnerBodyweight = exercise.measure == ExerciseMeasure.REPS &&
+            user.experienceLevel == ExperienceLevel.BEGINNER &&
+            exercise.role == ExerciseRole.COMPOUND
+        return if (beginnerBodyweight) minOf(window.first, BEGINNER_BODYWEIGHT_REPS) else window.first
+    }
+
     // How much load a successful week adds. Bigger muscles tolerate a bigger
     // jump than a lateral raise does.
     fun loadStepFraction(user: UserProfile, exercise: CatalogExercise): Float {
@@ -40,7 +52,7 @@ object RepWindow {
     // load, and the general row is where that lives.
     private fun goalRowFor(user: UserProfile): FitnessGoal =
         if (user.fitnessGoal == FitnessGoal.STRENGTH &&
-            user.experienceLevel == com.jericx.trainr.domain.model.ExperienceLevel.BEGINNER
+            user.experienceLevel == ExperienceLevel.BEGINNER
         ) {
             FitnessGoal.GENERAL_FITNESS
         } else {
@@ -55,6 +67,7 @@ object RepWindow {
         else -> this
     }
 
+    private const val BEGINNER_BODYWEIGHT_REPS = 8
     private const val OLDER_ADULT_AGE = 65
     private const val MINOR_AGE = 18
     private const val CAUTIOUS_STEP = 0.025f

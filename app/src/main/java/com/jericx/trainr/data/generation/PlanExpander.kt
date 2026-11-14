@@ -70,7 +70,7 @@ class PlanExpander(private val catalog: ExerciseCatalog) {
                     sets = slot.sets,
                     nowMillis = request.startDateMillis + (dayNumber - 1) * DAY_MILLIS,
                     deload = deload,
-                    cautioned = InjuryGuard.cautionFor(movement, request.user.injuries) != null,
+                    cautioned = InjuryGuard.cautionsFor(movement, request.user.injuries).isNotEmpty(),
                     secondsBudget = slot.secondsPerSet
                 )
             )

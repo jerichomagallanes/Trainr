@@ -2,6 +2,8 @@ package com.jericx.trainr.presentation.onboarding.screens
 
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -72,6 +74,25 @@ class LimitationsScreenTest {
         composeTestRule.onNodeWithText(string(R.string.submit)).performClick()
 
         assertThat(capturedInjuries).containsExactly(Injury.LOWER_BACK)
+    }
+
+    // The chip was a plain clickable card with an undescribed tick, so nothing
+    // outside it could tell a ticked chip from an unticked one.
+    @Test
+    fun aChipReportsWhetherItIsTicked() {
+        composeTestRule.setContent {
+            TrainrTheme {
+                LimitationsScreen(onNextClick = {}, onBackClick = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.knee_problems_injury))
+            .performScrollTo()
+            .assertIsOff()
+            .performClick()
+
+        composeTestRule.onNodeWithText(string(R.string.knee_problems_injury))
+            .assertIsOn()
     }
 
     // Picking None after picking an injury clears it, rather than sending both.

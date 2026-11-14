@@ -50,6 +50,34 @@ class ExerciseTimerTest {
     private fun paused(seconds: Int = 58) =
         ExerciseTimerUi(position = 2, remainingSeconds = seconds, isRunning = false)
 
+    private fun finished() = ExerciseTimerUi(
+        position = 2,
+        remainingSeconds = 0,
+        isRunning = false,
+        totalSeconds = 300,
+        isFinished = true
+    )
+
+    // The row has to say the time is up; it used to tick the exercise instead.
+    @Test
+    fun aFinishedTimerSaysTheTimeIsUpAndWaitsThere() {
+        setTimer(timer = finished())
+
+        composeTestRule.onNodeWithText(string(R.string.timer_finished)).assertIsDisplayed()
+        composeTestRule.onNodeWithText("0:00").assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.exercise_in_progress)).assertDoesNotExist()
+    }
+
+    @Test
+    fun aFinishedTimerOffersNeitherPauseNorResume() {
+        setTimer(timer = finished())
+
+        composeTestRule.onNodeWithText(string(R.string.pause_timer)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.resume_timer)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.reset_timer)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.stop_timer)).assertIsDisplayed()
+    }
+
     @Test
     fun anUnstartedExerciseOffersOnlyToStart() {
         setTimer(timer = null)

@@ -13,6 +13,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -58,36 +62,44 @@ fun ExerciseTimer(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(Spacing.tight)
         ) {
+            val remaining = stringResource(R.string.timer_remaining, timer.display)
             Text(
                 text = timer.display,
                 style = MaterialTheme.typography.headlineSmall.copy(
                     fontWeight = FontWeight.SemiBold
                 ),
-                color = colors.brandStrong
+                color = colors.brandStrong,
+                modifier = Modifier.semantics { contentDescription = remaining }
             )
             Text(
                 text = stringResource(
-                    if (timer.isRunning) R.string.exercise_in_progress
-                    else R.string.timer_paused
+                    when {
+                        timer.isFinished -> R.string.timer_finished
+                        timer.isRunning -> R.string.exercise_in_progress
+                        else -> R.string.timer_paused
+                    }
                 ),
                 style = MaterialTheme.typography.bodySmall,
-                color = colors.onSurfaceMuted
+                color = if (timer.isFinished) colors.brandStrong else colors.onSurfaceMuted,
+                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
             )
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(Spacing.tight)) {
-            if (timer.isRunning) {
-                TrainrPillButton(
-                    text = stringResource(R.string.pause_timer),
-                    iconRes = R.drawable.ic_pause,
-                    onClick = onPause
-                )
-            } else {
-                TrainrPillButton(
-                    text = stringResource(R.string.resume_timer),
-                    iconRes = R.drawable.ic_play_arrow,
-                    onClick = onResume
-                )
+            if (!timer.isFinished) {
+                if (timer.isRunning) {
+                    TrainrPillButton(
+                        text = stringResource(R.string.pause_timer),
+                        iconRes = R.drawable.ic_pause,
+                        onClick = onPause
+                    )
+                } else {
+                    TrainrPillButton(
+                        text = stringResource(R.string.resume_timer),
+                        iconRes = R.drawable.ic_play_arrow,
+                        onClick = onResume
+                    )
+                }
             }
 
             TrainrPillButton(
@@ -133,6 +145,20 @@ private fun ExerciseTimerPreview() {
             )
             ExerciseTimer(
                 timer = ExerciseTimerUi(position = 4, remainingSeconds = 58, isRunning = false),
+                onStart = {},
+                onPause = {},
+                onResume = {},
+                onReset = {},
+                onStop = {}
+            )
+            ExerciseTimer(
+                timer = ExerciseTimerUi(
+                    position = 6,
+                    remainingSeconds = 0,
+                    isRunning = false,
+                    totalSeconds = 300,
+                    isFinished = true
+                ),
                 onStart = {},
                 onPause = {},
                 onResume = {},
