@@ -10,7 +10,7 @@ Every exercise carries a tutorial video. The plan is built on the device, so it
 works offline — there are no accounts, and your training history stays on your
 phone.
 
-Trainr is on the [App Store](https://apps.apple.com/app/id6809207852) and on
+Trainr is on the [App Store](https://apps.apple.com/jp/app/trainr-workout-planner/id6809207852) and on
 [Google Play](https://play.google.com/store/apps/details?id=com.jericx.trainr).
 
 ## The details
