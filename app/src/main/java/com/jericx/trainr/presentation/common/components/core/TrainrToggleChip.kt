@@ -4,6 +4,8 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
@@ -33,7 +35,10 @@ fun TrainrToggleChip(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     height: Dp = ComponentHeight.Chip,
-    horizontalPadding: Dp = Spacing.large
+    horizontalPadding: Dp = Spacing.large,
+    // A picture before the label, which also pulls the label to the start:
+    // a thumbnail chip reads as a row, not a centred pill.
+    leading: (@Composable () -> Unit)? = null
 ) {
     val colors = MaterialTheme.trainrColors
 
@@ -49,17 +54,14 @@ fun TrainrToggleChip(
             // The frames keep the outline on selected chips too.
             border = BorderStroke(1.dp, colors.outlineControl)
         ) {
-            Box(
-                modifier = Modifier.padding(horizontal = horizontalPadding),
-                contentAlignment = Alignment.Center
-            ) {
+            val label: @Composable () -> Unit = {
                 BasicText(
                     text = text,
                     style = MaterialTheme.typography.bodyLarge.copy(
                         fontWeight = FontWeight.Medium,
                         color = if (selected) colors.onSurfaceSelected else colors.onSurface
                     ),
-                    maxLines = 1,
+                    maxLines = if (leading == null) 1 else 2,
                     overflow = TextOverflow.Ellipsis,
                     // Phones narrower than the 412dp frame get a smaller label,
                     // never an ellipsis.
@@ -69,6 +71,23 @@ fun TrainrToggleChip(
                         stepSize = 0.5.sp
                     )
                 )
+            }
+            if (leading == null) {
+                Box(
+                    modifier = Modifier.padding(horizontal = horizontalPadding),
+                    contentAlignment = Alignment.Center
+                ) { label() }
+            } else {
+                Row(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .padding(horizontal = horizontalPadding),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.tight),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    leading()
+                    label()
+                }
             }
         }
     }

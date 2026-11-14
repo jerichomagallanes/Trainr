@@ -185,7 +185,7 @@ fun ReviewScreen(
 
                 val equipmentText = if (userProfile.availableEquipment.isEmpty() ||
                     userProfile.availableEquipment.contains(Equipment.NONE))
-                    stringResource(R.string.bodyweight_only_label)
+                    stringResource(R.string.equipment_none)
                 else {
                     val equipmentNames = userProfile.availableEquipment.map { equipment ->
                         equipment.getLocalizedName()

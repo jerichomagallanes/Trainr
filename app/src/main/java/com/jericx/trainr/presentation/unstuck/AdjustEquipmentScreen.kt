@@ -19,11 +19,10 @@ import com.jericx.trainr.domain.model.EquipmentChoices
 import com.jericx.trainr.presentation.common.components.core.TrainrButton
 import com.jericx.trainr.presentation.common.components.core.TrainrQuietButton
 import com.jericx.trainr.presentation.common.components.core.TrainrRadioChip
-import com.jericx.trainr.presentation.common.components.core.TrainrToggleChip
+import com.jericx.trainr.presentation.common.components.core.EquipmentChoiceChip
 import com.jericx.trainr.presentation.common.components.layout.TrainrScaffold
 import com.jericx.trainr.presentation.common.components.layout.TrainrScreenContent
 import com.jericx.trainr.presentation.common.getLocalizedName
-import com.jericx.trainr.presentation.common.theme.ComponentHeight
 import com.jericx.trainr.presentation.common.theme.Spacing
 import com.jericx.trainr.presentation.common.theme.TrainrTheme
 import com.jericx.trainr.presentation.common.theme.trainrColors
@@ -109,16 +108,17 @@ fun AdjustEquipmentScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = Spacing.small),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-                verticalArrangement = Arrangement.spacedBy(Spacing.small)
+                horizontalArrangement = Arrangement.spacedBy(Spacing.tight),
+                verticalArrangement = Arrangement.spacedBy(Spacing.tight),
+                maxItemsInEachRow = 2
             ) {
                 EquipmentChoices.forEach { equipment ->
-                    TrainrToggleChip(
-                        text = equipment.getLocalizedName(),
+                    EquipmentChoiceChip(
+                        equipment = equipment,
+                        label = equipment.getLocalizedName(),
                         selected = equipment in state.availableEquipment,
                         onClick = { onToggleEquipment(equipment) },
-                        height = ComponentHeight.Medium,
-                        horizontalPadding = Spacing.medium
+                        modifier = Modifier.weight(1f)
                     )
                 }
             }
