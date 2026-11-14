@@ -7,6 +7,7 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import com.jericx.trainr.R
@@ -80,7 +81,11 @@ class AdjustEquipmentScreenTest {
         var toggled: Equipment? = null
         setScreen(onToggleEquipment = { toggled = it })
 
-        composeTestRule.onNodeWithText(string(R.string.equipment_kettlebell)).performClick()
+        // Second row of a taller grid: off-screen until scrolled, and a click
+        // on an unclipped centre lands on whatever is drawn there instead.
+        composeTestRule.onNodeWithText(string(R.string.equipment_kettlebell))
+            .performScrollTo()
+            .performClick()
 
         assertThat(toggled).isEqualTo(Equipment.KETTLEBELL)
     }

@@ -162,7 +162,7 @@ class WorkoutSetupScreenTest {
         }
     }
 
-    // "Bodyweight only" is one of the choices, so an empty set means the
+    // "None" is one of the choices, so an empty set means the
     // question is unanswered rather than that there is nothing available.
     @Test
     fun equipmentHasToBeAnsweredRatherThanAssumed() {
@@ -276,7 +276,7 @@ class WorkoutSetupScreenTest {
     )
 
     private fun Equipment.label(): String = when (this) {
-        Equipment.NONE -> string(R.string.bodyweight_only)
+        Equipment.NONE -> string(R.string.equipment_none)
         Equipment.BARBELL -> string(R.string.equipment_barbell)
         Equipment.DUMBBELL -> string(R.string.equipment_dumbbell)
         Equipment.KETTLEBELL -> string(R.string.equipment_kettlebell)

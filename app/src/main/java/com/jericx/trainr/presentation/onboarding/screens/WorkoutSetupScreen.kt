@@ -33,6 +33,7 @@ import com.jericx.trainr.domain.model.equipmentFor
 import com.jericx.trainr.domain.model.LoadedEquipment
 import com.jericx.trainr.domain.model.UnitSystem
 import com.jericx.trainr.presentation.common.getLocalizedName
+import com.jericx.trainr.presentation.common.components.core.EquipmentChoiceChip
 import com.jericx.trainr.presentation.common.components.core.TrainrButton
 import com.jericx.trainr.presentation.common.components.core.TrainrDropdown
 import com.jericx.trainr.presentation.common.components.core.TrainrProgress
@@ -171,12 +172,15 @@ fun WorkoutSetupScreen(
                     FlowRow(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(Spacing.tight),
-                        verticalArrangement = Arrangement.spacedBy(Spacing.card)
+                        verticalArrangement = Arrangement.spacedBy(Spacing.tight),
+                        maxItemsInEachRow = 2
                     ) {
                         equipmentOptions.forEach { (equipment, label) ->
-                            TrainrToggleChip(
-                                text = label,
+                            EquipmentChoiceChip(
+                                equipment = equipment,
+                                label = label,
                                 selected = selectedEquipment.contains(equipment),
+                                modifier = Modifier.weight(1f),
                                 onClick = {
                                     // "No equipment" is an answer, not an
                                     // absence: it cannot share the row with kit.

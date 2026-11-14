@@ -75,7 +75,7 @@
     <string name="set_up_your_workout">SET UP YOUR WORKOUT</string>
     <string name="available_equipment">Available Equipment</string>
     <string name="weights_marked_in">What are the weights marked in?</string>
-    <string name="bodyweight_only">Bodyweight only</string>
+    <string name="equipment_none">None</string>
     <string name="equipment_barbell">Barbell</string>
     <string name="equipment_dumbbell">Dumbbell</string>
     <string name="equipment_kettlebell">Kettlebell</string>
@@ -521,7 +521,6 @@
     <string name="injuries_concerns_label">Injuries/Concerns</string>
     <string name="routine_preview_label">Your Workout Plan</string>
     <string name="routine_description">Based on your profile, we\'ll create a %1$s plan focused on %2$s.</string>
-    <string name="bodyweight_only_label">Bodyweight only</string>
     <string name="flexible_schedule">Flexible</string>
     <plurals name="days_per_week_format">
         <item quantity="one">%d day/week</item>

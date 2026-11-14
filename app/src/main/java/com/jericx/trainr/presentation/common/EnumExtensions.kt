@@ -1,5 +1,6 @@
 package com.jericx.trainr.presentation.common
 
+import androidx.annotation.DrawableRes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.jericx.trainr.R
@@ -44,7 +45,7 @@ fun FitnessGoal.getFocusPhrase(): String = when (this) {
 
 @Composable
 fun Equipment.getLocalizedName(): String = when (this) {
-    Equipment.NONE -> stringResource(R.string.bodyweight_only)
+    Equipment.NONE -> stringResource(R.string.equipment_none)
     Equipment.BARBELL -> stringResource(R.string.equipment_barbell)
     Equipment.DUMBBELL -> stringResource(R.string.equipment_dumbbell)
     Equipment.KETTLEBELL -> stringResource(R.string.equipment_kettlebell)
@@ -53,6 +54,19 @@ fun Equipment.getLocalizedName(): String = when (this) {
     Equipment.RESISTANCE_BAND -> stringResource(R.string.equipment_resistance_band)
     Equipment.SUSPENSION_BAND -> stringResource(R.string.equipment_suspension_band)
     Equipment.OTHER -> stringResource(R.string.equipment_other)
+}
+
+@DrawableRes
+fun Equipment.iconRes(): Int = when (this) {
+    Equipment.NONE -> R.drawable.ic_equipment_none
+    Equipment.BARBELL -> R.drawable.ic_equipment_barbell
+    Equipment.DUMBBELL -> R.drawable.ic_equipment_dumbbell
+    Equipment.KETTLEBELL -> R.drawable.ic_equipment_kettlebell
+    Equipment.MACHINE -> R.drawable.ic_equipment_machine
+    Equipment.PLATE -> R.drawable.ic_equipment_plate
+    Equipment.RESISTANCE_BAND -> R.drawable.ic_equipment_resistance_band
+    Equipment.SUSPENSION_BAND -> R.drawable.ic_equipment_suspension_band
+    Equipment.OTHER -> R.drawable.ic_equipment_other
 }
 
 @Composable
