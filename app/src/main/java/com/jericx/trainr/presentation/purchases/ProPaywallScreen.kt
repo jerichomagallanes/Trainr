@@ -521,7 +521,7 @@ private fun PurchaseBar(
 private fun callToAction(selected: PaywallPlan?): String = when {
     selected == null -> stringResource(R.string.pro_subscribe)
     !selected.renews -> stringResource(R.string.pro_buy_lifetime)
-    selected.trial != null -> stringResource(R.string.pro_start_trial, selected.trial)
+    selected.trial != null -> stringResource(R.string.pro_start_trial)
     else -> stringResource(R.string.pro_subscribe_to, stringResource(selected.termRes))
 }
 

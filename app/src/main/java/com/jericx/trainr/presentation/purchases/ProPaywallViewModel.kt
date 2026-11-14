@@ -168,20 +168,20 @@ class ProPaywallViewModel @Inject constructor(
                 ?: plans.firstOrNull { it.savePercent != null }
                 ?: plans.firstOrNull()
 
-        // Held to the unit the store reported: a seven day trial that renders
-        // as "1 week" is not the offer that was configured and not what the
-        // receipt will say.
+        // Said in days below a month, whichever unit the store used: "7 days
+        // free" is the offer as people know it, and a store that calls the same
+        // offer "1 week" should not change the copy.
         fun periodText(period: Period): String? {
-            val unit = when (period.unit) {
-                Period.Unit.DAY -> MeasureUnit.DAY
-                Period.Unit.WEEK -> MeasureUnit.WEEK
-                Period.Unit.MONTH -> MeasureUnit.MONTH
-                Period.Unit.YEAR -> MeasureUnit.YEAR
+            val (value, unit) = when (period.unit) {
+                Period.Unit.DAY -> period.value to MeasureUnit.DAY
+                Period.Unit.WEEK -> period.value * 7 to MeasureUnit.DAY
+                Period.Unit.MONTH -> period.value to MeasureUnit.MONTH
+                Period.Unit.YEAR -> period.value to MeasureUnit.YEAR
                 Period.Unit.UNKNOWN -> return null
             }
             return MeasureFormat
                 .getInstance(Locale.getDefault(), MeasureFormat.FormatWidth.WIDE)
-                .format(Measure(period.value, unit))
+                .format(Measure(value, unit))
         }
     }
 }

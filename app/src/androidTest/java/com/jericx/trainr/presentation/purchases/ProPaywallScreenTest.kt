@@ -195,7 +195,7 @@ class ProPaywallScreenTest {
         composeTestRule.onNodeWithText(string(R.string.pro_trial_badge, "7 days")).assertIsDisplayed()
         composeTestRule.onNodeWithText(string(R.string.pro_billed_annually)).assertIsDisplayed()
         composeTestRule.onNodeWithText(string(R.string.pro_save_percent, 33)).assertIsDisplayed()
-        composeTestRule.onNodeWithText(button(R.string.pro_start_trial, "7 days")).assertIsDisplayed()
+        composeTestRule.onNodeWithText(button(R.string.pro_start_trial)).assertIsDisplayed()
         composeTestRule.onNodeWithText(
             button(R.string.pro_subscribe_to, string(R.string.pro_yearly))
         ).assertDoesNotExist()
@@ -224,7 +224,7 @@ class ProPaywallScreenTest {
 
         composeTestRule.onAllNodesWithText(string(R.string.pro_trial_badge, "7 days"))
             .assertCountEquals(2)
-        composeTestRule.onNodeWithText(button(R.string.pro_start_trial, "7 days")).assertIsDisplayed()
+        composeTestRule.onNodeWithText(button(R.string.pro_start_trial)).assertIsDisplayed()
         composeTestRule.onNodeWithText(string(R.string.pro_trial_then, "7 days", "$9.99"))
             .assertIsDisplayed()
     }
@@ -255,7 +255,7 @@ class ProPaywallScreenTest {
         composeTestRule.onNodeWithText(string(R.string.pro_yearly)).assertIsDisplayed()
         composeTestRule.onNodeWithText(string(R.string.pro_trial_badge, "7 days")).assertIsDisplayed()
         composeTestRule.onNodeWithText(
-            button(R.string.pro_start_trial, "7 days")
+            button(R.string.pro_start_trial)
         ).assertIsDisplayed()
 
         // Nothing that belongs to a product we are not selling.
@@ -419,7 +419,7 @@ class ProPaywallScreenTest {
     }
 
     private fun callToActionBounds() = composeTestRule.onNodeWithText(
-        button(R.string.pro_start_trial, "7 days")
+        button(R.string.pro_start_trial)
     ).getUnclippedBoundsInRoot()
 
     // The bar is pinned and its one unbounded part is the list of plans, so the
