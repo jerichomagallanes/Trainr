@@ -1,14 +1,17 @@
-# A workout planner that builds your week on your phone
+# Never guess your workout again
 
-Trainr writes you a weekly workout plan from your goals, the equipment you
-actually have, and the days you can train. It tracks every set, rep and weight,
-and builds next week from what you really lifted.
+Trainr is a workout planner that writes your week from your goals, the
+equipment you actually have (a gym, a pair of dumbbells, or nothing at all),
+and the days you can train, then bends it to your day when life gets in the
+way. It tracks every set, rep and weight, and builds
+next week from what you really lifted.
 
 Every exercise carries a tutorial video. The plan is built on the device, so it
 works offline — there are no accounts, and your training history stays on your
 phone.
 
-Trainr is coming soon to the App Store and Google Play.
+Trainr is on the [App Store](https://apps.apple.com/app/id6809207852) and on
+[Google Play](https://play.google.com/store/apps/details?id=com.jericx.trainr).
 
 ## The details
 
