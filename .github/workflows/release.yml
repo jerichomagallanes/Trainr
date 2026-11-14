@@ -1,0 +1,147 @@
+name: Release
+
+# Fires when main moves. main is fast-forwarded onto pre-release once the store
+# release is live; the tag goes on the commit the shipped bundle was built from,
+# found through the artifact the Test release run kept.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  release:
+    name: Tag what shipped and publish the release
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6.0.2
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Find the newest shipped bundle in this branch's history
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # The Test release run keeps the bundle it uploaded as an artifact named
+          # after the version code, with the commit it was built from. The newest
+          # one whose commit is in main's history is the release to tag.
+          found=
+          while read -r name run sha _; do
+            git merge-base --is-ancestor "$sha" HEAD 2>/dev/null || continue
+            found="$name $run $sha"; break
+          done < <(gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?per_page=100" \
+            --jq '.artifacts[] | select(.expired == false and (.name | startswith("trainr-prod-release-")))
+                  | "\(.name) \(.workflow_run.id) \(.workflow_run.head_sha) \(.created_at)"' | sort -k4 -r)
+          if [ -z "$found" ]; then
+            echo "nothing=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::No unexpired Test release bundle was built from a commit in this history, so there is nothing to tag. If a release is live and its artifact has expired (90 days), tag by hand."
+            exit 0
+          fi
+          read -r name run sha <<< "$found"
+          code=${name#trainr-prod-release-}
+          version=$(git show "$sha:app/build.gradle.kts" | sed -nE 's/^ *versionName = "([^"]+)".*/\1/p' | head -1)
+          [ -n "$version" ] || { echo "::error::No versionName at $sha"; exit 1; }
+          {
+            echo "name=$version"
+            echo "code=$code"
+            echo "sha=$sha"
+            echo "run=$run"
+            echo "artifact=$name"
+            echo "tag=v$version"
+            echo "previous=$(git tag --list 'v*' --sort=-v:refname | head -1)"
+          } >> "$GITHUB_OUTPUT"
+          echo "Newest shipped bundle in history: $name from run $run, built from ${sha:0:7} ($version)."
+
+      - name: Stop if this version is already released
+        id: existing
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          if [ -n "$TAG" ] && git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            echo "released=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::$TAG already exists at $(git rev-parse --short "$TAG^{commit}"); nothing to do."
+          fi
+
+      - name: Check Google Play carries this build on production
+        if: steps.existing.outputs.released != 'true' && steps.version.outputs.nothing != 'true'
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          VERSION_CODE: ${{ steps.version.outputs.code }}
+          VERSION_NAME: ${{ steps.version.outputs.name }}
+        run: |
+          [ -n "$PLAY_SERVICE_ACCOUNT_JSON" ] || { echo "::error::Missing repository secret PLAY_SERVICE_ACCOUNT_JSON"; exit 1; }
+          python3 - <<'PY'
+          import base64, json, os, subprocess, sys, tempfile, time, urllib.parse, urllib.request
+          sa = json.loads(os.environ["PLAY_SERVICE_ACCOUNT_JSON"])
+          code, name = os.environ["VERSION_CODE"], os.environ["VERSION_NAME"]
+          b64 = lambda b: base64.urlsafe_b64encode(b).rstrip(b"=")
+          now = int(time.time())
+          header = b64(json.dumps({"alg": "RS256", "typ": "JWT"}).encode())
+          claims = b64(json.dumps({"iss": sa["client_email"], "scope": "https://www.googleapis.com/auth/androidpublisher",
+                                   "aud": sa["token_uri"], "iat": now, "exp": now + 600}).encode())
+          with tempfile.NamedTemporaryFile("w", suffix=".pem", delete=False) as f:
+              f.write(sa["private_key"]); pem = f.name
+          sig = subprocess.run(["openssl", "dgst", "-sha256", "-sign", pem], input=header + b"." + claims, capture_output=True, check=True).stdout
+          os.unlink(pem)
+          body = urllib.parse.urlencode({"grant_type": "urn:ietf:params:oauth:grant-type:jwt-bearer",
+                                         "assertion": (header + b"." + claims + b"." + b64(sig)).decode()}).encode()
+          token = json.load(urllib.request.urlopen(urllib.request.Request(sa["token_uri"], data=body)))["access_token"]
+          h = {"Authorization": "Bearer " + token, "Content-Type": "application/json"}
+          base = "https://androidpublisher.googleapis.com/androidpublisher/v3/applications/com.jericx.trainr"
+          edit = json.load(urllib.request.urlopen(urllib.request.Request(base + "/edits", data=b"{}", headers=h)))["id"]
+          track = json.load(urllib.request.urlopen(urllib.request.Request(f"{base}/edits/{edit}/tracks/production", headers=h)))
+          urllib.request.urlopen(urllib.request.Request(f"{base}/edits/{edit}", headers=h, method="DELETE"))
+          live = [r for r in track.get("releases", []) if r.get("status") in ("completed", "inProgress") and code in r.get("versionCodes", [])]
+          if not live:
+              seen = [(r.get("name"), r.get("versionCodes"), r.get("status")) for r in track.get("releases", [])]
+              print(f"::error::Play production does not carry versionCode {code} ({name}); it has {seen}. "
+                    "Fast-forward main only once the release is live, then re-run this workflow.")
+              sys.exit(1)
+          print(f"Play production has {code} ({name}): {live[0].get('name')} {live[0].get('status')}.")
+          PY
+
+      - name: Fetch the bundle the test release built
+        if: steps.existing.outputs.released != 'true' && steps.version.outputs.nothing != 'true'
+        id: bundle
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NAME: ${{ steps.version.outputs.artifact }}
+          RUN_ID: ${{ steps.version.outputs.run }}
+          VERSION_NAME: ${{ steps.version.outputs.name }}
+          VERSION_CODE: ${{ steps.version.outputs.code }}
+        run: |
+          gh run download "$RUN_ID" -n "$NAME" -D dist
+          aab=$(find dist -name '*.aab' | head -1)
+          mv "$aab" "dist/Trainr-$VERSION_NAME-$VERSION_CODE.aab"
+          echo "file=dist/Trainr-$VERSION_NAME-$VERSION_CODE.aab" >> "$GITHUB_OUTPUT"
+          echo "Took the bundle from Test release run $RUN_ID."
+
+      - name: Tag the commit and publish the release
+        if: steps.existing.outputs.released != 'true' && steps.version.outputs.nothing != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+          SHA: ${{ steps.version.outputs.sha }}
+          PREVIOUS: ${{ steps.version.outputs.previous }}
+          FILE: ${{ steps.bundle.outputs.file }}
+        run: |
+          args=(--target "$SHA" --title "$TAG" --generate-notes --latest)
+          [ -n "$PREVIOUS" ] && args+=(--notes-start-tag "$PREVIOUS")
+          [ -n "$FILE" ] && args+=("$FILE")
+          gh release create "$TAG" "${args[@]}"
+          {
+            echo "### Released $TAG"
+            echo
+            echo "Tag on \`${SHA:0:7}\`, the commit the bundle was built from; notes from ${PREVIOUS:-the first commit}; ${FILE:+bundle attached}${FILE:-no bundle found}."
+          } >> "$GITHUB_STEP_SUMMARY"
