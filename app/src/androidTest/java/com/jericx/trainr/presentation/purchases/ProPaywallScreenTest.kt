@@ -185,6 +185,50 @@ class ProPaywallScreenTest {
             .assertIsDisplayed()
     }
 
+    // The strip on the card is the first thing a buyer reads, so the trial takes
+    // it; the saving is still on the card, on its own line under the billing
+    // term, and the button starts the trial rather than a subscription.
+    @Test
+    fun theTrialIsTheBannerOnItsCard() {
+        setScreen(selectedId = "yearly")
+
+        composeTestRule.onNodeWithText(string(R.string.pro_trial_badge, "7 days")).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.pro_billed_annually)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.pro_save_percent, 33)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(button(R.string.pro_start_trial, "7 days")).assertIsDisplayed()
+        composeTestRule.onNodeWithText(
+            button(R.string.pro_subscribe_to, string(R.string.pro_yearly))
+        ).assertDoesNotExist()
+    }
+
+    @Test
+    fun withoutATrialTheSavingKeepsTheBanner() {
+        setScreen(plans = listOf(monthly, yearly.copy(trial = null)), selectedId = "yearly")
+
+        composeTestRule.onNodeWithText(string(R.string.pro_save_percent, 33)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.pro_billed_annually)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(
+            button(R.string.pro_subscribe_to, string(R.string.pro_yearly))
+        ).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.pro_trial_badge, "7 days")).assertDoesNotExist()
+    }
+
+    // Both plans can carry the trial; each card wears it and the button follows
+    // whichever is selected.
+    @Test
+    fun aTrialOnEveryPlanIsOfferedOnEveryCard() {
+        setScreen(
+            plans = listOf(monthly.copy(trial = "7 days"), yearly, lifetime),
+            selectedId = "monthly"
+        )
+
+        composeTestRule.onAllNodesWithText(string(R.string.pro_trial_badge, "7 days"))
+            .assertCountEquals(2)
+        composeTestRule.onNodeWithText(button(R.string.pro_start_trial, "7 days")).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.pro_trial_then, "7 days", "$9.99"))
+            .assertIsDisplayed()
+    }
+
     @Test
     fun withNoTrialItSaysTheSubscriptionCanBeCancelled() {
         setScreen(selectedId = "monthly")
@@ -209,9 +253,9 @@ class ProPaywallScreenTest {
 
         composeTestRule.onNodeWithText(string(R.string.pro_monthly)).assertIsDisplayed()
         composeTestRule.onNodeWithText(string(R.string.pro_yearly)).assertIsDisplayed()
-        composeTestRule.onNodeWithText(string(R.string.pro_save_percent, 33)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.pro_trial_badge, "7 days")).assertIsDisplayed()
         composeTestRule.onNodeWithText(
-            button(R.string.pro_subscribe_to, string(R.string.pro_yearly))
+            button(R.string.pro_start_trial, "7 days")
         ).assertIsDisplayed()
 
         // Nothing that belongs to a product we are not selling.
@@ -375,7 +419,7 @@ class ProPaywallScreenTest {
     }
 
     private fun callToActionBounds() = composeTestRule.onNodeWithText(
-        button(R.string.pro_subscribe_to, string(R.string.pro_yearly))
+        button(R.string.pro_start_trial, "7 days")
     ).getUnclippedBoundsInRoot()
 
     // The bar is pinned and its one unbounded part is the list of plans, so the

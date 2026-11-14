@@ -159,11 +159,14 @@ class ProPaywallViewModel @Inject constructor(
     private fun settled(): Boolean? =
         entitlements.isPro.value.takeIf { entitlements.hasRead.value }
 
-    private fun preferred(plans: List<PaywallPlan>) =
-        plans.firstOrNull { it.savePercent != null } ?: plans.firstOrNull()
-
     companion object {
         private val SOLD = setOf(PackageType.MONTHLY, PackageType.ANNUAL, PackageType.LIFETIME)
+
+        internal fun preferred(plans: List<PaywallPlan>): PaywallPlan? =
+            plans.firstOrNull { it.trial != null && it.savePercent != null }
+                ?: plans.firstOrNull { it.trial != null }
+                ?: plans.firstOrNull { it.savePercent != null }
+                ?: plans.firstOrNull()
 
         // Held to the unit the store reported: a seven day trial that renders
         // as "1 week" is not the offer that was configured and not what the

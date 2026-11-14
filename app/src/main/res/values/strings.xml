@@ -612,6 +612,8 @@
     <string name="pro_billed_annually">Billed annually</string>
     <string name="pro_pay_once">Pay once</string>
     <string name="pro_save_percent">Save %1$d%%</string>
+    <string name="pro_trial_badge">%1$s free</string>
+    <string name="pro_start_trial">Try %1$s free</string>
     <string name="pro_subscribe_to">Subscribe to %1$s plan</string>
     <string name="pro_buy_lifetime">Unlock Pro forever</string>
     <string name="pro_cancel_anytime">Cancel your subscription at any time.</string>

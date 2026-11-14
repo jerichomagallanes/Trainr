@@ -521,8 +521,22 @@ private fun PurchaseBar(
 private fun callToAction(selected: PaywallPlan?): String = when {
     selected == null -> stringResource(R.string.pro_subscribe)
     !selected.renews -> stringResource(R.string.pro_buy_lifetime)
+    selected.trial != null -> stringResource(R.string.pro_start_trial, selected.trial)
     else -> stringResource(R.string.pro_subscribe_to, stringResource(selected.termRes))
 }
+
+// The trial takes the strip where there is one, and the saving moves down to
+// a line of its own under the billing term rather than disappearing.
+@Composable
+private fun PaywallPlan.banner(): String? = when {
+    trial != null -> stringResource(R.string.pro_trial_badge, trial)
+    savePercent != null -> stringResource(R.string.pro_save_percent, savePercent)
+    else -> null
+}
+
+@Composable
+private fun PaywallPlan.savingLine(): String? =
+    savePercent?.takeIf { trial != null }?.let { stringResource(R.string.pro_save_percent, it) }
 
 @Composable
 private fun renewalNote(selected: PaywallPlan?): String? = when {
@@ -577,9 +591,10 @@ private fun PlanChooser(
 // width out of it, and a term broken mid-word is a plan the screen has not
 // stated.
 @Composable
-private fun StackedPlan(plan: PaywallPlan, ink: Color, subdued: Color) {
+private fun StackedPlan(plan: PaywallPlan, ink: Color, subdued: Color, accent: Color) {
     val term = stringResource(plan.termRes)
     val billing = stringResource(plan.billingRes)
+    val saving = plan.savingLine()
     val priceStyle = MaterialTheme.typography.titleSmall
     val measurer = rememberTextMeasurer()
 
@@ -591,7 +606,8 @@ private fun StackedPlan(plan: PaywallPlan, ink: Color, subdued: Color) {
         val wanted = with(LocalDensity.current) {
             maxOf(
                 measurer.measure(term, MaterialTheme.typography.labelMedium).size.width,
-                measurer.measure(billing, MaterialTheme.typography.bodySmall).size.width
+                measurer.measure(billing, MaterialTheme.typography.bodySmall).size.width,
+                measurer.measure(saving.orEmpty(), MaterialTheme.typography.bodySmall).size.width
             ).toDp() + measurer.measure(plan.price, priceStyle).size.width.toDp()
         }
 
@@ -601,7 +617,7 @@ private fun StackedPlan(plan: PaywallPlan, ink: Color, subdued: Color) {
                 horizontalArrangement = Arrangement.spacedBy(Spacing.small),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                PlanTerms(term, billing, ink, subdued, Modifier.weight(1f))
+                PlanTerms(term, billing, saving, ink, subdued, accent, Modifier.weight(1f))
                 Text(text = plan.price, style = priceStyle, color = ink)
             }
         } else {
@@ -609,7 +625,7 @@ private fun StackedPlan(plan: PaywallPlan, ink: Color, subdued: Color) {
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
-                PlanTerms(term, billing, ink, subdued)
+                PlanTerms(term, billing, saving, ink, subdued, accent)
                 Text(text = plan.price, style = priceStyle, color = ink)
             }
         }
@@ -620,13 +636,16 @@ private fun StackedPlan(plan: PaywallPlan, ink: Color, subdued: Color) {
 private fun PlanTerms(
     term: String,
     billing: String,
+    saving: String?,
     ink: Color,
     subdued: Color,
+    accent: Color,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
         Text(text = term, style = MaterialTheme.typography.labelMedium, color = ink)
         Text(text = billing, style = MaterialTheme.typography.bodySmall, color = subdued)
+        saving?.let { Text(text = it, style = MaterialTheme.typography.bodySmall, color = accent) }
     }
 }
 
@@ -641,6 +660,7 @@ private fun PlanCard(
     val colors = MaterialTheme.trainrColors
     val ink = if (isSelected) colors.onSurfaceSelected else colors.onSurface
     val subdued = if (isSelected) colors.onSurfaceSelected else colors.onSurfaceMuted
+    val accent = if (isSelected) colors.onSurfaceSelected else colors.brandStrong
 
     Column(
         modifier = modifier
@@ -650,9 +670,9 @@ private fun PlanCard(
                 MaterialTheme.shapes.medium)
             .clickable(onClick = onClick)
     ) {
-        plan.savePercent?.let { saved ->
+        plan.banner()?.let { banner ->
             Text(
-                text = stringResource(R.string.pro_save_percent, saved),
+                text = banner,
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.onBrand,
                 textAlign = TextAlign.Center,
@@ -663,7 +683,7 @@ private fun PlanCard(
             )
         }
         if (stacked) {
-            StackedPlan(plan = plan, ink = ink, subdued = subdued)
+            StackedPlan(plan = plan, ink = ink, subdued = subdued, accent = accent)
         } else {
             Column(
                 modifier = Modifier
@@ -683,6 +703,9 @@ private fun PlanCard(
                     style = MaterialTheme.typography.bodySmall,
                     color = subdued
                 )
+                plan.savingLine()?.let { saving ->
+                    Text(text = saving, style = MaterialTheme.typography.bodySmall, color = accent)
+                }
             }
         }
     }
