@@ -1,6 +1,6 @@
 # 🏋️ Trainr - Workout Planner
 
-Trainr is an Android workout planner that writes your week from your goal, your equipment and your days, bends it when life gets in the way, and builds next week from what you actually did. Everything runs on the phone: the plan is generated on-device, and a small language model reads the free-text "Adjust today" note without anything leaving the device. Built with Kotlin and Jetpack Compose, it follows Clean Architecture principles.
+Trainr is an Android workout planner that writes your week from your goal, your equipment and your days, adjusts it when life gets in the way, and builds next week from what you actually did. Everything runs on the phone: the plan is generated on-device, and a small language model reads the free-text "Adjust today" note without anything leaving the device. Built with Kotlin and Jetpack Compose, it follows Clean Architecture principles.
 
 [<img src="https://jerichomagallanes.github.io/Trainr/assets/badges/google-play.png" alt="Get it on Google Play" height="56">](https://play.google.com/store/apps/details?id=com.jericx.trainr)
 
