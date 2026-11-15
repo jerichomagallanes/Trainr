@@ -18,7 +18,7 @@ name: UI tests
 # does, and the default branch is what ships today.
 on:
   pull_request:
-    branches: [main, version/2.0, pre-release]
+    branches: [main, 'version/**', pre-release]
     paths-ignore:
       - '**/*.md'
       - 'docs/**'
@@ -26,7 +26,7 @@ on:
       - '.gitignore'
       - '.editorconfig'
   push:
-    branches: [version/2.0]
+    branches: ['version/**']
   schedule:
     - cron: '0 18 * * *'  # 03:00 JST daily, against main
   workflow_dispatch:
